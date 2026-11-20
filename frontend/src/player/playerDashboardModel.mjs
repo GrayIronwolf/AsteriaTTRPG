@@ -2,6 +2,11 @@ import {CAMPAIGN_ID} from '../campaigns/campaignForgeModel.mjs';
 import {gmSessionState} from '../dashboard/gmDashboardModel.mjs';
 import {layoutFromPlayerPreferences} from '../../../src/state/dashboardLayoutModel.mjs';
 import {safeDashboardArtwork} from '../../../src/state/playerHudMedia.mjs';
+import {projectPlayerSystems} from './playerSystemsProjection.mjs';
+import {projectJournal} from './playerJournalModel.mjs';
+import {projectGallery} from './playerGalleryModel.mjs';
+import {playerQuestProjection} from './playerQuestModel.mjs';
+import {ownedActivityProjection} from './playerInformationModel.mjs';
 
 const obj=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 const txt=(value,fallback='',size=150)=>typeof value==='string'?value.slice(0,size):fallback;
@@ -36,24 +41,53 @@ function skills(value){
       row?.rank??row?.value!=null?String(row?.rank??row?.value):'','',50)
   })).filter(row=>row.name).map(Object.freeze));
 }
+function spellRecords(value){
+  return Object.freeze(rows(value,24).map(row=>{
+    const data=typeof row==='string'?{name:row}:obj(row)?row:{};
+    const name=txt(data.name||data.title,'',100);
+    if(!name)return null;
+    const costSource=data.costs?.mp??data.costs?.MP??data.resourceCosts?.mp??
+      data.manaCost??(typeof data.cost==='number'?data.cost:data.cost?.mp);
+    const cost=costSource==null?null:Number(costSource);
+    return Object.freeze({
+      name,element:txt(data.element||data.magicType,'',80),
+      rank:txt(data.rank,'',48),
+      summary:txt(data.summary||data.description,'',640),
+      mpCost:cost!==null&&Number.isFinite(cost)&&cost>=0?cost:null
+    });
+  }).filter(Boolean));
+}
 function items(value,max=24){
   return Object.freeze(rows(value,max).map(row=>Object.freeze({
     name:txt(row?.name||row?.title||row,'',100),
     quantity:Math.min(99999,Math.max(0,Number(row?.qty??row?.quantity??1)||0))
   })).filter(row=>row.name));
 }
-function notes(value){
-  return Object.freeze(rows(value,16).map(row=>{
-    if(typeof row==='string')return Object.freeze({title:'Journal entry',content:txt(row,'',1000)});
-    return Object.freeze({title:txt(row.title||row.name||'Journal entry','',120),
-      content:txt(row.content||row.text||row.body||row.note,'',1000)});
-  }).filter(row=>row.title||row.content));
+const EQUIPMENT_SLOT_KEYS=Object.freeze([
+  'Head','Chest','Hands','Feet','Back','Torso','Waist','Shoulders',
+  'Main Weapon','Secondary Weapon','Off Weapon','Quiver','Shield'
+]);
+function readEquipmentSlot(source,name){
+  if(!obj(source))return null;
+  const token=name.toLowerCase().replace(/[^a-z0-9]/g,'');
+  const key=Object.keys(source).find(entry=>entry.toLowerCase().replace(/[^a-z0-9]/g,'')===token);
+  const item=key?source[key]:null;
+  if(!item||typeof item!=='string'&&!obj(item))return null;
+  const value=typeof item==='string'?{name:item}:item;
+  const title=txt(value.name||value.title,'',100);
+  return title?Object.freeze({name:title,
+    image:safeDashboardArtwork(value.image,value.icon,value.artwork),
+    rarity:txt(value.itemClass||value.rarity,'',36)}):null;
+}
+function equipmentSlots(source){
+  return Object.freeze(Object.fromEntries(EQUIPMENT_SLOT_KEYS.map(key=>
+    [key,readEquipmentSlot(source,key)])));
 }
 function traits(character){
   return labels(character?.racialTraits||character?.raceInfo?.traits||character?.character?.race?.traits,12);
 }
 /** UI is intentionally a strict projection; owner-only journals never enter GM snapshots. */
-export function playerCharacterProjection(value,{owned=false}={}){
+export function playerCharacterProjection(value,{owned=false,ownerSource=null}={}){
   if(!obj(value)||!DASHBOARD_ID.test(String(value.id||''))||!DASHBOARD_ID.test(String(value.ownerUid||'')))
     throw Error('A verified character record is required.');
   const characteristics=obj(value.characteristics)?value.characteristics:{};
@@ -62,7 +96,8 @@ export function playerCharacterProjection(value,{owned=false}={}){
       k,Number.isFinite(Number(characteristics[k]))?Number(characteristics[k]):null
     ]));
   const classes=typeof value.class==='string'?value.class:value.class?.title||value.character?.class?.title||'';
-  const spells=labels(value.spells||value.knownSpells,24);
+  const spellSource=value.spells||value.activeSpells||value.knownSpells;
+  const spells=labels(spellSource,24);
   const talents=labels(value.classTalents||value.talents||value.character?.startingTalents,24);
   const result={
     id:value.id,name:txt(value.name,'Unnamed Character',120),
@@ -70,18 +105,41 @@ export function playerCharacterProjection(value,{owned=false}={}){
     race:txt(value.race||value.character?.race?.title,'Unknown',100),
     klass:txt(value.klass||classes,'Unknown',120),level:count(value.level),
     xp:count(value.xp),xpMax:count(value.xpMax),tp:count(value.tp),cp:count(value.cp),
+    coreRevision:count(value.coreRevision),
     hp:safePair(value.hp),sp:safePair(value.sp),mp:safePair(value.mp),
     characteristics:Object.freeze(stats),
     naturalAC:Number.isFinite(Number(value.naturalAC))?Number(value.naturalAC):null,
-    skills:skills(value.skills||value.selectedSkills),spells,talents,
+    skills:skills(value.skills||value.selectedSkills),spells,spellDetails:spellRecords(spellSource),talents,
     magic:labels(value.magicTypes||value.character?.magic?.types,24),
     racialTraits:traits(value),
     conditions:labels(value.conditions,16),
+    ...projectPlayerSystems(value),
     inventory:items(value.inventory),
     equipment:items(value.equipment?.items||value.equipment,16),
-    quests:items(value.quests||value.questAssignments,12),
+    equipmentSlots:equipmentSlots(value.equipment),
+    quickSlots:Object.freeze(Array.from({length:4},(_,index)=>{
+      const slot=Array.isArray(value.quickSlots)?value.quickSlots[index]:null;
+      const rawId=typeof slot==='string'?slot:obj(slot)?
+        slot.itemId||slot.instanceId||slot.id:'';
+      const id=typeof rawId==='string'&&/^[a-zA-Z0-9][a-zA-Z0-9_.:-]{0,159}$/.test(rawId)?rawId:'';
+      const saved=rows(value.inventory,500).find(item=>obj(item)&&
+        (item.instanceId===id||item.id===id));
+      const found=obj(saved)?saved:obj(slot)?slot:null;
+      const unidentified=found?.identified===false;
+      const name=id?(unidentified?'Unidentified Item':
+        txt(found?.name||found?.title||id,'',100)):'';
+      const quantity=Number(found?.qty??found?.quantity??0);
+      const remaining=Number.isSafeInteger(quantity)&&quantity>0?quantity:0;
+      return id?Object.freeze({id,name,quantity:remaining,
+        usable:remaining>0&&!unidentified&&Boolean(found?.effect||found?.effects),
+        image:unidentified?'':safeDashboardArtwork(found?.image,found?.icon,found?.artwork)}):null;
+    })),
+    quests:playerQuestProjection(value),
+    noticeActivity:ownedActivityProjection(value,owned).activity,
+    notificationRead:ownedActivityProjection(value,owned).read,
     dashboardLayout:owned?layoutFromPlayerPreferences(value.dashboardPreferences||{}):null,
-    journal:owned?notes(value.journal):Object.freeze([]),
+    journal:owned?projectJournal(value.journal):Object.freeze([]),
+    gallery:projectGallery(value,ownerSource||{},owned),
     backstory:owned?txt(value.backstory?.history||value.backstory?.backstory||
       (typeof value.backstory==='string'?value.backstory:''),'',2400):'',
     links:owned?Object.freeze([...new Set([

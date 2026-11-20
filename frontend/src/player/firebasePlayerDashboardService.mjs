@@ -1,13 +1,24 @@
 import {normalizeDashboardLayout,layoutFromPlayerPreferences} from '../../../src/state/dashboardLayoutModel.mjs';
+import {gmSessionState} from '../dashboard/gmDashboardModel.mjs';
 import {validateOwnedRecord} from '../../../src/state/ownedCharacterRecords.mjs';
-import {requireDashboardId,playerCharacterProjection,playerCampaignAccess,
+import {validateJournalDraft,changeJournalRows} from './playerJournalModel.mjs';
+import {validateGalleryUpload,mergedGalleryRows,galleryStoragePath,
+  assertOwnedGalleryPath,MAX_GALLERY_IMAGES} from './playerGalleryModel.mjs';
+import {validatePlayerQuestAction} from './playerQuestModel.mjs';
+import {publishedInformation,scopedEventProjection,assertNoticeAction} from './playerInformationModel.mjs';
+import {projectPartyMembers,projectPartyWorkspace,projectPartyMessages,
+  projectPartyPresence,validatePartyMessage,validatePartyNotes,
+  validatePartyOrganization} from './playerPartyModel.mjs';
+import {DASHBOARD_ID,requireDashboardId,playerCharacterProjection,playerCampaignAccess,
   linkedCharacterAccess,matchesOwnedSource,playerCampaignProjection} from './playerDashboardModel.mjs';
 
 /** Phase 6.2: ONE existing Firebase Auth/Firestore runtime and strict user scope.
  * Reads only; gameplay actions and dashboard-layout writes are later phases.
  */
 export function createFirebasePlayerDashboardService({
-  auth,db,firestoreSdk,readCanonical,enabled=false,layoutEnabled=false
+  auth,db,firestoreSdk,readCanonical,functions=null,functionsSdk=null,
+  storage=null,storageSdk=null,
+  enabled=false,layoutEnabled=false
 }){
   if(!auth||!db||!firestoreSdk||typeof readCanonical!=='function')
     throw Error('A verified Firebase adapter is required.');
@@ -142,7 +153,7 @@ export function createFirebasePlayerDashboardService({
               character:playerCharacterProjection(relationship.owned&&
                 !data.character.dashboardPreferences?.dashboardLayout&&data.source?.dashboardPreferences?.dashboardLayout
                 ?{...data.character,dashboardPreferences:data.source.dashboardPreferences}:data.character,
-                {owned:relationship.owned}),
+                {owned:relationship.owned,ownerSource:relationship.owned?data.source:null}),
               campaign:playerCampaignProjection(data.campaign,access,data.session)
             }));
           }catch(err){fail(err);}
@@ -255,5 +266,622 @@ export function createFirebasePlayerDashboardService({
     same(uid);return {ok:true};
   }
 
-  return Object.freeze({availability:()=>flags,watchOwned,watchCampaign,saveOwnedLayout,saveCampaignLayout});
+  /** Original HP/SP/MP +/- actions use the existing receipt-backed callable,
+   * with fresh linked-owner verification and server-enforced live-session rules.
+   * No direct Firestore resource writes or second Firebase app. */
+  async function adjustResource(cid,id,key,delta){
+    requireDashboardId(cid);requireDashboardId(id);
+    const resource=String(key||'').toLowerCase();
+    const amount=Number(delta);
+    if(!['hp','sp','mp'].includes(resource)||!Number.isSafeInteger(amount)||
+      amount===0||Math.abs(amount)>10000)
+      throw Error('Invalid resource adjustment.');
+    if(!functions||!functionsSdk?.httpsCallable)
+      throw Error('Live character resource actions are unavailable.');
+    const {uid,relationship}=await resolveCampaign(cid,id);
+    if(!relationship.owned)
+      throw Error('Only the linked character owner can adjust resources.');
+    const session=await guarded(sessionRef(cid),'Live session is unavailable.');
+    same(uid);
+    if(!session.exists()||gmSessionState(session.data()).editable!==true)
+      throw Error('Start an editable campaign session to adjust resources.');
+    const callable=functionsSdk.httpsCallable(functions,'asteriaAction');
+    const result=await callable({action:'updateCampaignCharacterResource',
+      args:[cid,id,resource,amount,{source:'React Player Dashboard HUD'}],
+      requestId:crypto.randomUUID()});
+    same(uid);
+    if(result.data?.ok!==true)throw Error(result.data?.error||'Resource update rejected.');
+    return result.data;
+  }
+
+  // All existing character-system mutations remain authoritative server actions.
+  // The player cannot apply GM-only conditions or directly alter Firestore fields.
+  async function characterSystemAction(cid,id,action,args=[]){
+    requireDashboardId(cid);requireDashboardId(id);
+    if(!['manageCharacterCondition','takeCampaignCharacterRest',
+      'updateCampaignCharacterCurrency','updateCharacterInventory','castCharacterSpell',
+      'updateCharacterQuest','updateQuestProgress'].includes(action))
+      throw Error('Unsupported character system action.');
+    if(!functions||!functionsSdk?.httpsCallable)
+      throw Error('Character system actions are unavailable.');
+    const {uid,relationship}=await resolveCampaign(cid,id);
+    if(!relationship.owned)throw Error('Only the linked character owner can perform this action.');
+    const snapshot=await guarded(sessionRef(cid),'Live session is unavailable.');
+    same(uid);
+    if(!snapshot.exists()||gmSessionState(snapshot.data()).editable!==true)
+      throw Error('Start an editable campaign session to use character actions.');
+    const callable=functionsSdk.httpsCallable(functions,'asteriaAction');
+    const result=await callable({action,args:[cid,id,...args],
+      requestId:crypto.randomUUID()});
+    same(uid);
+    if(result.data?.ok!==true)
+      throw Error(result.data?.error||'Character system action rejected.');
+    return result.data;
+  }
+  async function questCommand(cid,id,kind,questId,value){
+    const valid=validatePlayerQuestAction(questId,kind,value);
+    const command=kind==='status'?'updateCharacterQuest':'updateQuestProgress';
+    const args=kind==='status'?[valid.questId,valid.status]:[valid.questId,valid.patch];
+    return characterSystemAction(cid,id,command,args);
+  }
+  const updateQuestStatus=(cid,id,questId,status)=>
+    questCommand(cid,id,'status',questId,status);
+  const updateQuestProgress=(cid,id,questId,patch)=>
+    questCommand(cid,id,'progress',questId,patch);
+  async function removeCondition(cid,id,conditionId){
+    if(typeof conditionId!=='string'||!DASHBOARD_ID.test(conditionId))
+      throw Error('Invalid condition identifier.');
+    return characterSystemAction(cid,id,'manageCharacterCondition',
+      [{action:'remove',id:conditionId}]);
+  }
+  async function takeRest(cid,id,type,options={}){
+    if(!['short','long'].includes(type))throw Error('Invalid rest type.');
+    const soulRecovery=Number(options.soulRecovery??0);
+    const expectedSequence=Number(options.expectedSequence);
+    if(!Number.isSafeInteger(soulRecovery)||soulRecovery<0||soulRecovery>1000000||
+      !Number.isSafeInteger(expectedSequence)||expectedSequence<0)
+      throw Error('Invalid rest request.');
+    return characterSystemAction(cid,id,'takeCampaignCharacterRest',
+      [type,{soulRecovery,expectedSequence}]);
+  }
+  async function adjustCurrency(cid,id,denomination,delta){
+    if(typeof denomination!=='string'||!/^[a-zA-Z][a-zA-Z0-9_-]{0,63}$/.test(denomination))
+      throw Error('Invalid currency type.');
+    const amount=Number(delta);
+    if(!Number.isSafeInteger(amount)||amount===0||Math.abs(amount)>1000000)
+      throw Error('Invalid currency amount.');
+    return characterSystemAction(cid,id,'updateCampaignCharacterCurrency',
+      [denomination,amount,{source:'React Player Dashboard Currency'}]);
+  }
+
+  async function useQuickItem(cid,id,itemId,expectedRevision){
+    if(typeof itemId!=='string'||!/^[a-zA-Z0-9][a-zA-Z0-9_.:-]{0,159}$/.test(itemId))
+      throw Error('Invalid quick-item identifier.');
+    if(!Number.isSafeInteger(expectedRevision)||expectedRevision<0)
+      throw Error('Invalid character revision.');
+    return characterSystemAction(cid,id,'updateCharacterInventory',
+      [{type:'use',itemId,expectedCoreRevision:expectedRevision}]);
+  }
+
+  async function castSpell(cid,id,spellName){
+    if(typeof spellName!=='string'||!spellName.trim()||spellName.length>100)
+      throw Error('Select a known spell.');
+    // The server checks that the character knows the spell and computes
+    // canonical MP cost. Never trust a cost supplied by the browser.
+    return characterSystemAction(cid,id,'castCharacterSpell',
+      [{name:spellName.trim()},{}]);
+  }
+
+
+  /** All journal writes reuse the same owner, campaign-link and live-session
+   * verification; edits/deletes compare the original entry on BOTH copies. */
+  async function writeJournal(cid,id,operation,payload){
+    requireDashboardId(cid);requireDashboardId(id);
+    if(!['add','update','delete'].includes(operation))
+      throw Error('Unsupported journal operation.');
+    const entry=operation==='add'?validateJournalDraft(payload):null;
+    const {uid,relationship}=await resolveCampaign(cid,id);
+    if(!relationship.owned)throw Error('Only the character owner may edit their journal.');
+    await firestoreSdk.runTransaction(db,async tx=>{
+      const campaignSnap=await tx.get(campaignRef(cid));
+      const memberSnap=campaignSnap.exists()&&campaignSnap.data().membershipSchemaVersion===2&&
+        campaignSnap.data().ownerUid!==uid?await tx.get(memberRef(cid,uid)):null;
+      const characterSnap=await tx.get(sharedRef(cid,id));
+      const sourceId=characterSnap.exists()?(characterSnap.data().sourceCharacterId||id):id;
+      requireDashboardId(sourceId);
+      const privateSnap=await tx.get(ownedRef(uid,sourceId));
+      const sessionSnap=await tx.get(sessionRef(cid));
+      same(uid);
+      if(!campaignSnap.exists()||!characterSnap.exists()||
+        !playerCampaignAccess({...campaignSnap.data(),id:cid},
+          memberSnap?.exists()?memberSnap.data():null,uid,cid).allowed||
+        !linkedCharacterAccess({...campaignSnap.data(),id:cid},
+          {...characterSnap.data(),id},uid,{allowed:true,isGM:false}).owned)
+        throw Error('Character ownership or campaign access changed.');
+      if(!privateSnap.exists()||privateSnap.data().ownerUid!==uid||
+        !matchesOwnedSource({...privateSnap.data(),id:sourceId},
+          {...characterSnap.data(),id},cid,uid,campaignSnap.data().membershipSchemaVersion??1))
+        throw Error('Original saved character link changed.');
+      if(!sessionSnap.exists()||gmSessionState(sessionSnap.data()).editable!==true)
+        throw Error('Start an editable campaign session to change journal entries.');
+      const sharedRows=Array.isArray(characterSnap.data().journal)?characterSnap.data().journal:[];
+      const privateRows=Array.isArray(privateSnap.data().journal)?privateSnap.data().journal:[];
+      let updatedShared,updatedPrivate;
+      if(operation==='add'){
+        if(sharedRows.length>=500||privateRows.length>=500)
+          throw Error('Journal is full. Archive older entries before adding more.');
+        const added={id:'journal-'+crypto.randomUUID(),title:entry.title,body:entry.body,
+          createdAt:new Date().toISOString()};
+        updatedShared=[added,...sharedRows];
+        updatedPrivate=[added,...privateRows];
+      }else{
+        const timestamp=new Date().toISOString(),replacementId='journal-'+crypto.randomUUID();
+        const changes={action:operation,entryId:payload?.entryId,
+          expected:payload?.expected,draft:payload?.draft,
+          replacementId,updatedAt:timestamp};
+        // If older copies differ, reject rather than editing the wrong row.
+        updatedShared=changeJournalRows(sharedRows,changes);
+        updatedPrivate=changeJournalRows(privateRows,changes);
+      }
+      tx.update(sharedRef(cid,id),{journal:updatedShared});
+      tx.update(ownedRef(uid,sourceId),{journal:updatedPrivate});
+    });
+    same(uid);return {ok:true};
+  }
+  const addJournalEntry=(cid,id,draft)=>writeJournal(cid,id,'add',draft);
+  const updateJournalEntry=(cid,id,change)=>writeJournal(cid,id,'update',change);
+  const deleteJournalEntry=(cid,id,change)=>writeJournal(cid,id,'delete',change);
+
+
+  function galleryStorage(){
+    if(!storage||!storageSdk?.ref||!storageSdk?.uploadBytes||
+      !storageSdk?.getDownloadURL||!storageSdk?.deleteObject)
+      throw Error('Character Gallery storage is unavailable.');
+    return storageSdk;
+  }
+  async function verifiedGallery(cid,id,{editable=false}={}){
+    requireDashboardId(cid);requireDashboardId(id);
+    const context=await resolveCampaign(cid,id);
+    if(!context.relationship.owned)
+      throw Error('Only the linked character owner may manage gallery images.');
+    const sourceId=context.character.sourceCharacterId||id;
+    requireDashboardId(sourceId);
+    if(editable){
+      const session=await guarded(sessionRef(cid),'Live session is unavailable.');
+      same(context.uid);
+      if(!session.exists()||gmSessionState(session.data()).editable!==true)
+        throw Error('Start an editable campaign session to manage the gallery.');
+    }
+    return {...context,sourceId};
+  }
+  async function galleryTransaction(cid,id,operation){
+    const {uid}=await verifiedGallery(cid,id,{editable:true});
+    let removed=null;
+    await firestoreSdk.runTransaction(db,async tx=>{
+      const campaignSnap=await tx.get(campaignRef(cid));
+      const memberSnap=campaignSnap.exists()&&campaignSnap.data().membershipSchemaVersion===2&&
+        campaignSnap.data().ownerUid!==uid?await tx.get(memberRef(cid,uid)):null;
+      const characterSnap=await tx.get(sharedRef(cid,id));
+      const sourceId=characterSnap.exists()?(characterSnap.data().sourceCharacterId||id):id;
+      requireDashboardId(sourceId);
+      const privateSnap=await tx.get(ownedRef(uid,sourceId));
+      const sessionSnap=await tx.get(sessionRef(cid));
+      same(uid);
+      if(!campaignSnap.exists()||!characterSnap.exists()||
+        !playerCampaignAccess({...campaignSnap.data(),id:cid},
+          memberSnap?.exists()?memberSnap.data():null,uid,cid).allowed||
+        !linkedCharacterAccess({...campaignSnap.data(),id:cid},
+          {...characterSnap.data(),id},uid,{allowed:true,isGM:false}).owned)
+        throw Error('Character ownership or campaign access changed.');
+      if(!privateSnap.exists()||privateSnap.data().ownerUid!==uid||
+        !matchesOwnedSource({...privateSnap.data(),id:sourceId},
+          {...characterSnap.data(),id},cid,uid,campaignSnap.data().membershipSchemaVersion??1))
+        throw Error('Original saved character link changed.');
+      if(!sessionSnap.exists()||gmSessionState(sessionSnap.data()).editable!==true)
+        throw Error('Start an editable campaign session to manage the gallery.');
+      const shared=characterSnap.data(),owner=privateSnap.data();
+      const combined=mergedGalleryRows(shared.gallery,owner.gallery);
+      const find=imageId=>combined.find(row=>
+        row&&typeof row==='object'&&row.id===imageId);
+      let next,portrait=null;
+      if(operation.type==='add'){
+        if(combined.length>=MAX_GALLERY_IMAGES)
+          throw Error('Gallery image limit reached.');
+        if(find(operation.image.id))throw Error('Gallery image already exists.');
+        next=[...combined,operation.image];
+        if(!shared.image&&!shared.portrait&&!owner.image&&!owner.portrait)
+          portrait=operation.image.url;
+      }else if(operation.type==='portrait'){
+        const image=find(operation.imageId);
+        if(!image?.url)throw Error('The selected gallery image is unavailable.');
+        next=combined;portrait=image.url;
+      }else if(operation.type==='delete'){
+        const image=find(operation.imageId);
+        if(!image)throw Error('Gallery image no longer exists.');
+        removed=image;
+        next=combined.filter(row=>!(row&&typeof row==='object'&&row.id===operation.imageId));
+        if([shared.image,shared.portrait,shared.characterImage,
+          owner.image,owner.portrait,owner.characterImage].includes(image.url))
+          portrait=next.find(row=>row&&typeof row==='object'&&row.url)?.url||'';
+      }else throw Error('Unsupported gallery action.');
+      const patch={gallery:next,updatedAt:firestoreSdk.serverTimestamp()};
+      if(portrait!==null)Object.assign(patch,{
+        image:portrait,portrait,characterImage:portrait
+      });
+      tx.update(sharedRef(cid,id),patch);
+      tx.update(ownedRef(uid,sourceId),patch);
+    });
+    same(uid);return {ok:true,removed};
+  }
+  async function uploadGalleryImage(cid,id,file){
+    const details=validateGalleryUpload(file);
+    const sdk=galleryStorage();
+    const {uid,sourceId}=await verifiedGallery(cid,id,{editable:true});
+    const imageId='gallery-'+crypto.randomUUID();
+    const path=galleryStoragePath(uid,sourceId,imageId,details.extension);
+    const reference=sdk.ref(storage,path);
+    let uploaded=false,committed=false;
+    try{
+      await sdk.uploadBytes(reference,file,{contentType:details.type,
+        cacheControl:'private,max-age=0,no-store',
+        customMetadata:{campaignId:cid,campaignCharacterId:id,sourceCharacterId:sourceId}});
+      uploaded=true;same(uid);
+      const url=await sdk.getDownloadURL(reference);
+      same(uid);
+      if(typeof url!=='string'||!(/^(?:https:\/\/|http:\/\/(?:127\.0\.0\.1|localhost)(?::\d+)?\/)/.test(url))||
+        url.length>2048)throw Error('Firebase returned an invalid gallery image URL.');
+      const image={id:imageId,url,path,name:details.name,createdAt:new Date().toISOString()};
+      await galleryTransaction(cid,id,{type:'add',image});
+      committed=true;
+      same(uid);return {ok:true,image};
+    }catch(error){
+      if(uploaded&&!committed)await sdk.deleteObject(reference).catch(()=>{});
+      throw error;
+    }
+  }
+  async function setGalleryPortrait(cid,id,imageId){
+    requireDashboardId(imageId);
+    return galleryTransaction(cid,id,{type:'portrait',imageId});
+  }
+  async function deleteGalleryImage(cid,id,imageId){
+    requireDashboardId(imageId);
+    const sdk=galleryStorage(),context=await verifiedGallery(cid,id,{editable:true});
+    const result=await galleryTransaction(cid,id,{type:'delete',imageId});
+    const path=result.removed?.path;
+    if(path){
+      // An old gallery may contain external or migrated paths. Never delete
+      // unrelated Storage objects based on untrusted saved metadata.
+      try{
+        assertOwnedGalleryPath(path,context.uid,context.sourceId);
+        await sdk.deleteObject(sdk.ref(storage,path));
+      }catch(error){
+        if(error?.code!=='storage/object-not-found')return {ok:true,storageCleanupPending:true};
+      }
+    }
+    return {ok:true};
+  }
+  async function refreshGalleryImage(cid,id,imageId){
+    requireDashboardId(imageId);
+    const sdk=galleryStorage(),context=await verifiedGallery(cid,id);
+    const rows=mergedGalleryRows(context.character.gallery,context.source?.gallery);
+    const image=rows.find(row=>row&&typeof row==='object'&&row.id===imageId);
+    if(!image)throw Error('Gallery image is no longer available.');
+    if(!image.path){
+      if(typeof image.url==='string'&&image.url.startsWith('https://'))
+        return {ok:true,url:image.url};
+      throw Error('The original image must be uploaded again.');
+    }
+    const path=assertOwnedGalleryPath(image.path,context.uid,context.sourceId);
+    const url=await sdk.getDownloadURL(sdk.ref(storage,path));
+    same(context.uid);
+    if(typeof url!=='string'||url.length>2048)throw Error('Gallery image URL is invalid.');
+    return {ok:true,url};
+  }
+
+
+  /** Player-visible information comes only from the public party-workspace
+   * document. Event history is restricted to the verified character owner.
+   * Membership and character listeners revoke the feed immediately. */
+  function watchInformation(cid,id,onUpdate,onError){
+    requireDashboardId(cid);requireDashboardId(id);
+    let active=true;const stops=[];const state={
+      campaign:null,member:null,character:null,source:null,
+      party:null,events:[],owner:false
+    };
+    let ready={campaign:false,member:false,character:false,source:false,
+      party:false,events:false};
+    const close=()=>{active=false;while(stops.length)try{stops.pop()();}catch{}};
+    const fail=error=>{if(!active)return;close();onError?.(error instanceof Error?
+      error:Error('Campaign information is unavailable.'));};
+    (async()=>{
+      try{
+        const initial=await resolveCampaign(cid,id);
+        if(!active)return;
+        const {uid,usesMember,relationship}=initial;
+        state.owner=relationship.owned;
+        ready.member=!usesMember;
+        ready.source=!relationship.owned;
+        ready.events=!relationship.owned;
+        const publish=()=>{
+          if(!active||!Object.values(ready).every(Boolean))return;
+          try{
+            same(uid);
+            const access=playerCampaignAccess(state.campaign,state.member,uid,cid);
+            const linked=linkedCharacterAccess(state.campaign,state.character,uid,access);
+            if(!linked.allowed||linked.owned!==state.owner)
+              throw Error('Campaign information access changed.');
+            if(linked.owned&&!matchesOwnedSource(state.source,state.character,cid,uid,
+              state.campaign.membershipSchemaVersion??1))
+              throw Error('Saved character link changed.');
+            onUpdate?.(Object.freeze({
+              published:publishedInformation(state.party||{}),
+              events:linked.owned?scopedEventProjection(state.events,uid,id):Object.freeze([]),
+              owner:linked.owned
+            }));
+          }catch(error){fail(error);}
+        };
+        const attach=(key,reference,decode,{optional=false}={})=>{
+          const stop=firestoreSdk.onSnapshot(reference,{includeMetadataChanges:true},snapshot=>{
+            if(!active||snapshot.metadata?.fromCache||snapshot.metadata?.hasPendingWrites)return;
+            try{
+              same(uid);
+              if(!optional&&!snapshot.exists())throw Error('Campaign information access was revoked.');
+              state[key]=snapshot.exists()?decode(snapshot):null;
+              ready[key]=true;publish();
+            }catch(error){fail(error);}
+          },fail);
+          if(active)stops.push(stop);else stop();
+        };
+        attach('campaign',campaignRef(cid),snap=>({...snap.data(),id:snap.id}));
+        if(usesMember)attach('member',memberRef(cid,uid),snap=>snap.data());
+        attach('character',sharedRef(cid,id),snap=>({...snap.data(),id:snap.id}));
+        if(relationship.owned){
+          const sourceId=initial.character.sourceCharacterId||id;
+          attach('source',ownedRef(uid,sourceId),snap=>({...snap.data(),id:snap.id}));
+        }
+        attach('party',firestoreSdk.doc(db,'campaigns',cid,'systems','party-workspace'),
+          snap=>snap.data(),{optional:true});
+        if(relationship.owned){
+          const query=firestoreSdk.query(
+            firestoreSdk.collection(db,'campaigns',cid,'events'),
+            firestoreSdk.where('targetOwnerUid','==',uid),
+            firestoreSdk.orderBy('createdAt','desc'),firestoreSdk.limit(100));
+          const stop=firestoreSdk.onSnapshot(query,{includeMetadataChanges:true},snap=>{
+            if(!active||snap.metadata?.fromCache||snap.metadata?.hasPendingWrites)return;
+            try{
+              same(uid);state.events=snap.docs.map(row=>({...row.data(),id:row.id}));
+              ready.events=true;publish();
+            }catch(error){fail(error);}
+          },fail);
+          if(active)stops.push(stop);else stop();
+        }
+      }catch(error){fail(error);}
+    })();
+    return close;
+  }
+  async function fetchInformationHistory(cid,id,beforeId=''){
+    requireDashboardId(cid);requireDashboardId(id);
+    if(beforeId!==''&&(typeof beforeId!=='string'||!DASHBOARD_ID.test(beforeId)))
+      throw Error('Invalid notification page cursor.');
+    const {uid,relationship}=await resolveCampaign(cid,id);
+    if(!relationship.owned)throw Error('Only the character owner may view notification history.');
+    const constraints=[firestoreSdk.where('targetOwnerUid','==',uid),
+      firestoreSdk.orderBy('createdAt','desc')];
+    if(beforeId){
+      const cursor=await guarded(firestoreSdk.doc(db,'campaigns',cid,'events',beforeId),
+        'Notification page is unavailable.');
+      same(uid);
+      if(!cursor.exists()||cursor.data().targetOwnerUid!==uid)
+        throw Error('Invalid notification page cursor.');
+      constraints.push(firestoreSdk.startAfter(cursor));
+    }
+    constraints.push(firestoreSdk.limit(100));
+    const snap=await firestoreSdk.getDocsFromServer(firestoreSdk.query(
+      firestoreSdk.collection(db,'campaigns',cid,'events'),...constraints));
+    same(uid);
+    const raw=snap.docs.map(row=>({...row.data(),id:row.id}));
+    return Object.freeze({
+      events:scopedEventProjection(raw,uid,id),
+      cursor:snap.docs.length===100?snap.docs.at(-1).id:'',
+      more:snap.docs.length===100
+    });
+  }
+  async function markInformationRead(cid,id,source,noticeId,read){
+    requireDashboardId(cid);requireDashboardId(id);
+    const input=assertNoticeAction(source,noticeId,read);
+    if(!functions||!functionsSdk?.httpsCallable)
+      throw Error('Notification read actions are unavailable.');
+    const {uid,relationship}=await resolveCampaign(cid,id);
+    if(!relationship.owned)throw Error('Only the character owner can change notification state.');
+    const callable=functionsSdk.httpsCallable(functions,'asteriaAction');
+    const result=await callable({action:'markNotificationRead',
+      args:[cid,id,input.source,input.id,input.read],
+      requestId:crypto.randomUUID()});
+    same(uid);
+    if(result.data?.ok!==true)throw Error(result.data?.error||'Notification could not be updated.');
+    return result.data;
+  }
+
+  /** Party sources use only campaign-visible characters, published workspace,
+   * session-scoped presence and the existing partyChat collection. All streams
+   * revoke together when membership or linked-character access is lost. */
+  function watchParty(cid,id,onUpdate,onError){
+    requireDashboardId(cid);requireDashboardId(id);
+    let active=true,stops=[],presenceStop=()=>{},presenceSession='';
+    const state={campaign:null,member:null,character:null,source:null,session:null,
+      workspace:null,members:[],chat:[],presence:[]};
+    const ready={campaign:false,member:false,character:false,source:false,
+      session:false,workspace:false,members:false,chat:false,presence:true};
+    const close=()=>{active=false;presenceStop();while(stops.length)try{stops.pop()();}catch{}};
+    const fail=error=>{if(!active)return;close();
+      onError?.(error instanceof Error?error:Error('Party access is unavailable.'));};
+    (async()=>{
+      try{
+        const initial=await resolveCampaign(cid,id);
+        if(!active)return;
+        const {uid,usesMember,relationship}=initial;
+        ready.member=!usesMember;
+        ready.source=!relationship.owned;
+        const publish=()=>{
+          if(!active||!Object.values(ready).every(Boolean))return;
+          try{
+            same(uid);
+            const access=playerCampaignAccess(state.campaign,state.member,uid,cid);
+            const linked=linkedCharacterAccess(state.campaign,state.character,uid,access);
+            if(!linked.allowed||linked.owned!==relationship.owned)
+              throw Error('Party membership or character link changed.');
+            if(linked.owned&&!matchesOwnedSource(state.source,state.character,cid,uid,
+              state.campaign.membershipSchemaVersion??1))
+              throw Error('Saved character link changed.');
+            const members=projectPartyMembers(state.campaign,state.members);
+            const workspace=projectPartyWorkspace(state.workspace||{},members);
+            onUpdate?.(Object.freeze({...workspace,members,
+              chat:projectPartyMessages(state.chat,members),
+              presence:projectPartyPresence(state.presence,members),
+              owner:linked.owned,editable:gmSessionState(state.session).editable===true}));
+          }catch(error){fail(error);}
+        };
+        const attach=(key,reference,decode,{optional=false}={})=>{
+          const stop=firestoreSdk.onSnapshot(reference,{includeMetadataChanges:true},snapshot=>{
+            if(!active||snapshot.metadata?.fromCache||snapshot.metadata?.hasPendingWrites)return;
+            try{
+              same(uid);
+              if(!optional&&!snapshot.exists())throw Error('Party membership or character link revoked.');
+              state[key]=snapshot.exists()?decode(snapshot):null;
+              ready[key]=true;
+              if(key==='session'){
+                const sid=typeof state.session?.id==='string'&&DASHBOARD_ID.test(state.session.id)?
+                  state.session.id:'';
+                if(sid!==presenceSession){
+                  presenceStop();presenceSession=sid;state.presence=[];
+                  ready.presence=!sid;
+                  if(sid){
+                    presenceStop=firestoreSdk.onSnapshot(
+                      firestoreSdk.query(firestoreSdk.collection(db,'campaigns',cid,
+                        'sessions',sid,'presence'),firestoreSdk.limit(100)),
+                      {includeMetadataChanges:true},result=>{
+                        if(!active||result.metadata?.fromCache||result.metadata?.hasPendingWrites)return;
+                        try{same(uid);state.presence=result.docs.map(row=>({...row.data(),uid:row.id}));
+                          ready.presence=true;publish();
+                        }catch(error){fail(error);}
+                      },fail);
+                  }
+                }
+              }
+              publish();
+            }catch(error){fail(error);}
+          },fail);
+          if(active)stops.push(stop);else stop();
+        };
+        attach('campaign',campaignRef(cid),snap=>({...snap.data(),id:snap.id}));
+        if(usesMember)attach('member',memberRef(cid,uid),snap=>snap.data());
+        attach('character',sharedRef(cid,id),snap=>({...snap.data(),id:snap.id}));
+        if(relationship.owned){
+          const sid=initial.character.sourceCharacterId||id;
+          attach('source',ownedRef(uid,sid),snap=>({...snap.data(),id:snap.id}));
+        }
+        attach('session',sessionRef(cid),snap=>snap.data(),{optional:true});
+        attach('workspace',firestoreSdk.doc(db,'campaigns',cid,'systems','party-workspace'),
+          snap=>snap.data(),{optional:true});
+        const list=(key,query)=>{
+          const stop=firestoreSdk.onSnapshot(query,{includeMetadataChanges:true},snapshot=>{
+            if(!active||snapshot.metadata?.fromCache||snapshot.metadata?.hasPendingWrites)return;
+            try{same(uid);state[key]=snapshot.docs.map(row=>({...row.data(),id:row.id}));
+              ready[key]=true;publish();
+            }catch(error){fail(error);}
+          },fail);
+          if(active)stops.push(stop);else stop();
+        };
+        list('members',firestoreSdk.query(
+          firestoreSdk.collection(db,'campaigns',cid,'characters'),firestoreSdk.limit(100)));
+        list('chat',firestoreSdk.query(
+          firestoreSdk.collection(db,'campaigns',cid,'partyChat'),
+          firestoreSdk.orderBy('createdAt','desc'),firestoreSdk.limit(100)));
+      }catch(error){fail(error);}
+    })();
+    return close;
+  }
+  async function partyEditContext(cid,id){
+    const context=await resolveCampaign(cid,id);
+    if(!context.relationship.owned)throw Error('Only the linked character owner can modify the party.');
+    const live=await guarded(sessionRef(cid),'Live session is unavailable.');
+    same(context.uid);
+    if(!live.exists()||gmSessionState(live.data()).editable!==true)
+      throw Error('Start an editable campaign session to use party actions.');
+    return {...context,session:live.data()};
+  }
+  async function updatePartyNotes(cid,id,text,expected){
+    requireDashboardId(cid);requireDashboardId(id);
+    validatePartyNotes(text);validatePartyNotes(expected);
+    const {uid}=await partyEditContext(cid,id);
+    await firestoreSdk.runTransaction(db,async tx=>{
+      const campaignSnap=await tx.get(campaignRef(cid));
+      const memberSnap=campaignSnap.exists()&&campaignSnap.data().membershipSchemaVersion===2&&
+        campaignSnap.data().ownerUid!==uid?await tx.get(memberRef(cid,uid)):null;
+      const characterSnap=await tx.get(sharedRef(cid,id));
+      const sessionSnap=await tx.get(sessionRef(cid));
+      const workspaceRef=firestoreSdk.doc(db,'campaigns',cid,'systems','party-workspace');
+      const workspaceSnap=await tx.get(workspaceRef);
+      same(uid);
+      if(!campaignSnap.exists()||!characterSnap.exists()||
+        !playerCampaignAccess({...campaignSnap.data(),id:cid},
+          memberSnap?.exists()?memberSnap.data():null,uid,cid).allowed||
+        !linkedCharacterAccess({...campaignSnap.data(),id:cid},
+          {...characterSnap.data(),id},uid,{allowed:true,isGM:false}).owned||
+        !sessionSnap.exists()||gmSessionState(sessionSnap.data()).editable!==true)
+        throw Error('Party permission or live session changed.');
+      if(String(workspaceSnap.exists()?workspaceSnap.data().sharedNotes||'':'')!==expected)
+        throw Error('Shared party notes changed in another session. Reload before saving.');
+      tx.set(workspaceRef,{sharedNotes:text,sessionId:sessionSnap.data().id||'',
+        updatedBy:uid,updatedAt:firestoreSdk.serverTimestamp()},{merge:true});
+    });
+    same(uid);return {ok:true};
+  }
+  async function sendPartyMessage(cid,id,text){
+    requireDashboardId(cid);requireDashboardId(id);
+    const content=validatePartyMessage(text);
+    const {uid}=await partyEditContext(cid,id);
+    const chatRef=firestoreSdk.doc(firestoreSdk.collection(db,'campaigns',cid,'partyChat'));
+    await firestoreSdk.runTransaction(db,async tx=>{
+      const campaignSnap=await tx.get(campaignRef(cid));
+      const memberSnap=campaignSnap.exists()&&campaignSnap.data().membershipSchemaVersion===2&&
+        campaignSnap.data().ownerUid!==uid?await tx.get(memberRef(cid,uid)):null;
+      const characterSnap=await tx.get(sharedRef(cid,id));
+      const sessionSnap=await tx.get(sessionRef(cid));
+      same(uid);
+      if(!campaignSnap.exists()||!characterSnap.exists()||
+        !playerCampaignAccess({...campaignSnap.data(),id:cid},
+          memberSnap?.exists()?memberSnap.data():null,uid,cid).allowed||
+        !linkedCharacterAccess({...campaignSnap.data(),id:cid},
+          {...characterSnap.data(),id},uid,{allowed:true,isGM:false}).owned||
+        !sessionSnap.exists()||gmSessionState(sessionSnap.data()).editable!==true)
+        throw Error('Party permission or live session changed.');
+      tx.set(chatRef,{id:chatRef.id,campaignId:cid,
+        sessionId:sessionSnap.data().id||'',characterId:id,ownerUid:uid,
+        characterName:String(characterSnap.data().name||'Character').slice(0,120),
+        text:content,createdAt:firestoreSdk.serverTimestamp()});
+    });
+    same(uid);return {ok:true};
+  }
+  async function createPartyOrganization(cid,id,details){
+    requireDashboardId(cid);requireDashboardId(id);
+    const value=validatePartyOrganization(details);
+    const {uid}=await partyEditContext(cid,id);
+    if(!functions||!functionsSdk?.httpsCallable)throw Error('Party organization actions are unavailable.');
+    const res=await functionsSdk.httpsCallable(functions,'asteriaAction')({
+      action:'createPartyOrganization',args:[cid,id,value],requestId:crypto.randomUUID()
+    });
+    same(uid);
+    if(res.data?.ok!==true)throw Error(res.data?.error||'Organization creation rejected.');
+    return res.data;
+  }
+
+  return Object.freeze({availability:()=>flags,watchOwned,watchCampaign,
+    saveOwnedLayout,saveCampaignLayout,adjustResource,removeCondition,
+    takeRest,adjustCurrency,useQuickItem,castSpell,
+    addJournalEntry,updateJournalEntry,deleteJournalEntry,
+    uploadGalleryImage,setGalleryPortrait,deleteGalleryImage,refreshGalleryImage,
+    updateQuestStatus,updateQuestProgress,
+    watchInformation,fetchInformationHistory,markInformationRead,
+    watchParty,updatePartyNotes,sendPartyMessage,createPartyOrganization});
 }

@@ -8,14 +8,27 @@ import {CrystalButton} from '../components/ui/CrystalButton.jsx';
 import {Eyebrow,Heading,BodyText} from '../components/ui/Typography.jsx';
 import {STATS} from '../forge/forgeModel.mjs';
 import {DashboardLayoutManager} from '../layout/DashboardLayoutManager.jsx';
+import {PlayerOverviewPanel} from '../player/PlayerOverviewPanels.jsx';
+import {PlayerGalleryWorkspace} from '../player/PlayerGalleryWorkspace.jsx';
+import {PlayerQuestWorkspace} from '../player/PlayerQuestWorkspace.jsx';
+import {PlayerInformationWorkspace} from '../player/PlayerInformationWorkspace.jsx';
+import {PlayerPartyWorkspace} from '../player/PlayerPartyWorkspace.jsx';
 import {CampaignMapWorkspace,CampaignAtlasWorkspace} from '../dashboard/CampaignMapWorkspace.jsx';
 import {PlayerCombatWorkspace} from '../combat/CombatWorkspace.jsx';
 import {PlayerProgressionWorkspace,PlayerCheckRequests} from '../progression/ProgressionWorkspace.jsx';
 import {PlayerEconomyWorkspace} from '../economy/EconomyWorkspace.jsx';
 import {PlayerDigitalGMWorkspace} from '../digitalGM/DigitalGMWorkspace.jsx';
+import {AdvancedDiceWorkspace} from '../dice/AdvancedDiceWorkspace.jsx';
 import styles from './PlayerDashboardPage.module.css';
 
-const TABS=Object.freeze(['Overview','Character','Skills & Talents','Magic','Equipment','Quests','Journal']);
+// Preserve original tab order. Route to authenticated workspaces or report when
+// an unavailable campaign service prevents access. Never leave a blank page.
+const TABS=Object.freeze([
+  'Dashboard','Character','Class/Talent Tree','Skills','Spells','Inventory',
+  'Crafting','Quests','News / Events / History','Journal','Party','Gallery',
+  'Battle Maps','Advanced Dice','Calendar','Weather','World Map','Campaign Library',
+  'Campaign Audio','Recording & Archives','Dashboard Settings'
+]);
 function StatPanel({record}){
   return <div className={styles.stats}>
     {STATS.map(key=><div className={styles.stat} key={key}>
@@ -24,21 +37,33 @@ function StatPanel({record}){
     </div>)}
   </div>;
 }
-function Resources({character}){
+function Resources({character,editable=false,busy=false,onAdjust}){
   return <div className={styles.resources} data-testid="site-player-resources">
     {['hp','sp','mp'].map(key=>{
       const pair=character[key];
-      return <div className={styles.resource} key={key}>
-        <div><strong>{key.toUpperCase()}</strong><span>{pair?pair[0]+' / '+pair[1]:'Not recorded'}</span></div>
-        <progress aria-label={key.toUpperCase()+' resources'} value={pair?Math.min(pair[0],pair[1]):0}
-          max={pair?.[1]||1}/>
+      const current=pair?Number(pair[0])||0:0;
+      const maximum=pair?Math.max(0,Number(pair[1])||0):0;
+      const percent=maximum?Math.min(100,Math.max(0,current/maximum*100)):0;
+      return <div className={styles.resource} data-resource={key} key={key}>
+        <div><strong>{key.toUpperCase()}</strong><span>{pair?current+' / '+maximum:'Not recorded'}</span></div>
+        <div className={styles.meter} role="progressbar"
+          aria-label={key.toUpperCase()+' resources'} aria-valuemin={0}
+          aria-valuemax={maximum} aria-valuenow={Math.max(0,Math.min(maximum,current))}>
+          <span className={styles.meterFill} style={{width:percent+'%'}}/>
+        </div>
+        <div className={styles.resourceActions}>
+          <CrystalButton size="icon" aria-label={'Decrease '+key.toUpperCase()}
+            disabled={!editable||busy||current<=0} onClick={()=>onAdjust(key,-1)}>−</CrystalButton>
+          <CrystalButton size="icon" aria-label={'Increase '+key.toUpperCase()}
+            disabled={!editable||busy||current>=maximum} onClick={()=>onAdjust(key,1)}>+</CrystalButton>
+        </div>
       </div>;
     })}
   </div>;
 }
-function ClassicPlayerHeader({character,campaign,owned}){
+function ClassicPlayerHeader({character,campaign,owned,editable,resourceBusy,onAdjust}){
   const progress=character.xpMax>0?Math.min(100,Math.max(0,character.xp/character.xpMax*100)):0;
-  return <section className={styles.classicHeader} aria-label="Character and campaign information">
+  return <section className={styles.classicHeader} data-testid="site-player-hero" aria-label="Character and campaign information">
     <div className={styles.portraitColumn}>
       {character.image?<img className={styles.heroImage} src={character.image} alt="" loading="eager"/>:
         <div className={styles.portraitFallback} aria-hidden="true">{character.name.charAt(0)}</div>}
@@ -53,7 +78,7 @@ function ClassicPlayerHeader({character,campaign,owned}){
     </div>
     <div className={styles.coreColumn}>
       <h3>Core Resources</h3>
-      <Resources character={character}/>
+      <Resources character={character} editable={editable} busy={resourceBusy} onAdjust={onAdjust}/>
       <h3>Characteristics</h3>
       <StatPanel record={character}/>
     </div>
@@ -78,8 +103,120 @@ function Names({name,entries}){
       <BodyText muted>None recorded.</BodyText>}
   </SurfacePanel>;
 }
-function Sections({character,tab,owned}){
-  if(tab==='Overview')return <>
+function Spellbook({character,editable=false,busy=false,onAction}){
+  const [query,setQuery]=useState(''),[element,setElement]=useState('All');
+  const spells=character.spellDetails||[];
+  const elements=[...new Set(spells.map(spell=>spell.element).filter(Boolean))];
+  const visible=spells.filter(spell=>(element==='All'||spell.element===element)&&
+    (spell.name+' '+spell.element+' '+spell.rank+' '+spell.summary).toLowerCase()
+      .includes(query.trim().toLowerCase()));
+  return <SurfacePanel as="section" className={styles.panel} data-testid="site-player-spellbook">
+    <h3>Known Spells</h3>
+    <div className={styles.spellFilters}>
+      <label>Search spells<input type="search" value={query}
+        onChange={event=>setQuery(event.target.value)} placeholder="Search your spellbook"/></label>
+      <label>Element<select value={element} onChange={event=>setElement(event.target.value)}>
+        <option value="All">All</option>
+        {elements.map(name=><option key={name} value={name}>{name}</option>)}
+      </select></label>
+    </div>
+    {visible.length?<div className={styles.spellGrid}>{visible.map((spell,index)=>
+      <article className={styles.spellCard} key={spell.name+':'+index}>
+        <h4>{spell.name}</h4>
+        <p>{[spell.element,spell.rank].filter(Boolean).join(' · ')||'Known spell'}</p>
+        {spell.summary?<p>{spell.summary}</p>:null}
+        <p>{spell.mpCost===null?'MP cost verified by the server':
+          'Recorded MP cost: '+spell.mpCost}</p>
+        <button type="button" disabled={!editable||busy}
+          onClick={()=>{
+            if(window.confirm('Cast '+spell.name+'? The campaign server will verify the spell and its cost.'))
+              onAction?.('castSpell',spell.name);
+          }}>Cast Spell</button>
+      </article>)}</div>:
+      <BodyText muted>{spells.length?'No spells match the filters.':'No known spells recorded.'}</BodyText>}
+    {!editable?<BodyText muted>Spell casting requires an active, editable campaign session and character ownership.</BodyText>:null}
+    <Names name="Known Magic" entries={character.magic}/>
+  </SurfacePanel>;
+}
+function PlayerJournal({character,editable,busy,onAction}){
+  const [title,setTitle]=useState('');
+  const [body,setBody]=useState('');
+  const [confirmation,setConfirmation]=useState(false);
+  const [editing,setEditing]=useState(null);
+  const [editTitle,setEditTitle]=useState('');
+  const [editBody,setEditBody]=useState('');
+  const [editBusy,setEditBusy]=useState(false);
+  const expected=entry=>({title:entry.title,content:entry.content,createdAt:entry.createdAt||''});
+  const submit=async event=>{
+    event.preventDefault();
+    if(!body.trim()||busy||!editable)return;
+    setConfirmation(true);
+    try{
+      const result=await onAction?.('addJournalEntry',{title,body});
+      if(result?.ok){setTitle('');setBody('');}
+    }finally{setConfirmation(false);}
+  };
+  const startEdit=entry=>{
+    setEditing({...entry});
+    setEditTitle(entry.title);setEditBody(entry.content);
+  };
+  const saveEdit=async event=>{
+    event.preventDefault();
+    if(!editable||busy||editBusy||!editing||!editBody.trim())return;
+    setEditBusy(true);
+    try{
+      const result=await onAction?.('updateJournalEntry',{
+        entryId:editing.id,expected:expected(editing),draft:{title:editTitle,body:editBody}
+      });
+      if(result?.ok)setEditing(null);
+    }finally{setEditBusy(false);}
+  };
+  const deleteEntry=async entry=>{
+    if(!editable||busy||editBusy||!window.confirm('Delete this journal entry permanently?'))return;
+    setEditBusy(true);
+    try{
+      const result=await onAction?.('deleteJournalEntry',{
+        entryId:entry.id,expected:expected(entry)
+      });
+      if(result?.ok&&editing?.id===entry.id)setEditing(null);
+    }finally{setEditBusy(false);}
+  };
+  const locked=!editable||busy||confirmation||editBusy;
+  return <SurfacePanel className={styles.panel} as="section" data-testid="site-player-journal">
+    <h3>Personal Journal</h3>
+    {character.journal.length?<div className={styles.journal}>{character.journal.map((entry,i)=>
+      <article key={entry.id||i}><h4>{entry.title}</h4>
+        {entry.createdAt?<small>{entry.createdAt}</small>:null}
+        {entry.updatedAt?<small> · Updated {entry.updatedAt}</small>:null}
+        {editing?.id===entry.id?<form onSubmit={saveEdit}>
+          <label>Edit title<input type="text" value={editTitle} maxLength={120}
+            onChange={event=>setEditTitle(event.target.value)} disabled={locked}/></label>
+          <label>Edit entry<textarea value={editBody} required maxLength={20000} rows={5}
+            onChange={event=>setEditBody(event.target.value)} disabled={locked}/></label>
+          <button type="submit" disabled={locked||!editBody.trim()}>Save Changes</button>
+          <button type="button" disabled={locked} onClick={()=>setEditing(null)}>Cancel Editing</button>
+        </form>:<p className={styles.prose}>{entry.content}</p>}
+        {editable?<div>
+          <button type="button" disabled={locked} aria-label={'Edit journal entry: '+entry.title}
+            onClick={()=>startEdit(entry)}>Edit</button>
+          <button type="button" disabled={locked} aria-label={'Delete journal entry: '+entry.title}
+            onClick={()=>deleteEntry(entry)}>Delete</button>
+        </div>:null}
+      </article>)}</div>:
+      <BodyText muted>No journal entries recorded.</BodyText>}
+    <form onSubmit={submit} className={styles.journal}>
+      <h4>Add Journal Entry</h4>
+      <label>Title<input type="text" value={title} maxLength={120}
+        onChange={event=>setTitle(event.target.value)} disabled={locked}/></label>
+      <label>Entry<textarea value={body} required maxLength={20000} rows={5}
+        onChange={event=>setBody(event.target.value)} disabled={locked}/></label>
+      <button type="submit" disabled={locked||!body.trim()}>Save Journal Entry</button>
+      {!editable?<BodyText muted>Writing requires character ownership and an editable campaign session.</BodyText>:null}
+    </form>
+  </SurfacePanel>;
+}
+function Sections({character,tab,owned,editable=false,busy=false,onAction,campaign=null}){
+  if(tab==='Dashboard')return <>
     <div className={styles.overview}>
       <SurfacePanel className={styles.panel}><h3>Experience</h3>
         <p>Level {character.level} · XP {character.xp}{character.xpMax?' / '+character.xpMax:''}</p>
@@ -98,19 +235,28 @@ function Sections({character,tab,owned}){
     {owned&&character.backstory?<SurfacePanel className={styles.panel}>
       <h3>Personal History</h3><p className={styles.prose}>{character.backstory}</p>
     </SurfacePanel>:null}
+    <div className={styles.overview} data-testid="site-player-character-systems">
+      {[
+        ['conditions','Active Conditions'],['effects','Active Effects'],
+        ['specialDamage','Soul Damage'],['rest','Rest & Recovery'],
+        ['currency','Currency']
+      ].map(([id,title])=><SurfacePanel className={styles.panel} key={id}>
+        <h3>{title}</h3>
+        <PlayerOverviewPanel id={id} character={character} campaign={campaign}
+          editable={editable} busy={busy} onAction={onAction}/>
+      </SurfacePanel>)}
+    </div>
   </>;
-  if(tab==='Skills & Talents')return <div className={styles.overview}>
+  if(tab==='Class/Talent Tree')return <div className={styles.overview}>
     <SurfacePanel className={styles.panel}><h3>Skills</h3>
       {character.skills.length?<ul className={styles.list}>{character.skills.map((s,i)=>
         <li key={i}>{s.name}{s.rank?' — '+s.rank:''}</li>)}</ul>:<BodyText muted>No skills recorded.</BodyText>}
     </SurfacePanel>
     <Names name="Class Talents" entries={character.talents}/>
   </div>;
-  if(tab==='Magic')return <div className={styles.overview}>
-    <Names name="Known Magic" entries={character.magic}/>
-    <Names name="Known Spells" entries={character.spells}/>
-  </div>;
-  if(tab==='Equipment')return <div className={styles.overview}>
+  if(tab==='Spells')return <Spellbook character={character} editable={editable}
+    busy={busy} onAction={onAction}/>;
+  if(tab==='Inventory')return <div className={styles.overview}>
     {['inventory','equipment'].map(key=><SurfacePanel className={styles.panel} key={key}>
       <h3>{key==='inventory'?'Inventory':'Equipment'}</h3>
       {character[key].length?<ul className={styles.list}>{character[key].map((item,i)=>
@@ -118,27 +264,39 @@ function Sections({character,tab,owned}){
         <BodyText muted>No items recorded.</BodyText>}
     </SurfacePanel>)}
   </div>;
-  if(tab==='Quests')return <SurfacePanel className={styles.panel}>
-    <h3>Quest Log</h3>
-    {character.quests.length?<ul className={styles.list}>{character.quests.map((quest,i)=>
-      <li key={i}>{quest.name}</li>)}</ul>:<BodyText muted>No quests recorded on this character sheet.</BodyText>}
+  if(tab==='Skills')return <SurfacePanel className={styles.panel}>
+    <h3>Skills</h3>
+    {character.skills.length?<ul className={styles.list}>{character.skills.map((skill,i)=>
+      <li key={i}>{skill.name}{skill.rank?' — '+skill.rank:''}</li>)}</ul>:
+      <BodyText muted>No skills recorded.</BodyText>}
   </SurfacePanel>;
-  if(tab==='Journal')return <SurfacePanel className={styles.panel}>
-    <h3>Personal Journal</h3>
-    {!owned?<BodyText muted>Only the character owner may read personal journal entries.</BodyText>:
-      character.journal.length?<div className={styles.journal}>{character.journal.map((entry,i)=>
-        <article key={i}><h4>{entry.title}</h4><p className={styles.prose}>{entry.content}</p></article>)}</div>:
-        <BodyText muted>No journal entries recorded.</BodyText>}
+  if(tab==='News / Events / History'&&!campaign)return <SurfacePanel className={styles.panel}>
+    <h3>News / Events / History</h3>
+    <BodyText muted>Link this character to a campaign to view published information and personal notifications.</BodyText>
   </SurfacePanel>;
+  if(['Crafting','Advanced Dice','Calendar','Weather','Campaign Library',
+      'Campaign Audio','Recording & Archives','Battle Maps','World Map',
+      'Combat','Progression','Check History','Inventory & Trading',
+      'Campaign World & Session','Dashboard Settings'].includes(tab))
+    return <SurfacePanel className={styles.panel} role="status">
+      <h3>{tab}</h3>
+      <BodyText muted>{!campaign
+        ?'Link this character to a campaign to use this workspace.'
+        :'This workspace is unavailable for the current account or campaign. No action has been taken.'}</BodyText>
+    </SurfacePanel>;
+  if(tab==='Journal')return owned?<PlayerJournal key={character.id+':'+(campaign?.id||'')} character={character} editable={editable} busy={busy} onAction={onAction}/>:
+    <SurfacePanel className={styles.panel}><BodyText muted>Only the character owner may read personal journal entries.</BodyText></SurfacePanel>;
   return null;
 }
-function Dashboard({api,media,combat,progression,economy,digitalGM,uid,campaignId='',characterId}){
+function Dashboard({api,media,combat,progression,economy,digitalGM,dice,uid,campaignId='',characterId}){
   const [data,setData]=useState(null),[loading,setLoading]=useState(true),
-    [error,setError]=useState(''),[tab,setTab]=useState('Overview');
+    [error,setError]=useState(''),[tab,setTab]=useState('Dashboard'),
+    [resourceBusy,setResourceBusy]=useState(''),[resourceError,setResourceError]=useState(''),
+    [resourceMessage,setResourceMessage]=useState('');
   const generation=useRef(0);
   useEffect(()=>{
     const token=++generation.current;
-    setData(null);setLoading(true);setError('');setTab('Overview');
+    setData(null);setLoading(true);setError('');setTab('Dashboard');
     const ok=value=>{if(generation.current!==token)return;setData(value);setLoading(false);};
     const fail=e=>{if(generation.current!==token)return;setData(null);
       setError(e?.message||'The character could not be connected.');setLoading(false);};
@@ -156,59 +314,114 @@ function Dashboard({api,media,combat,progression,economy,digitalGM,uid,campaignI
     <CrystalButton href="#/character-forge">Back to Character Forge</CrystalButton>
   </SurfacePanel>;
   const ch=data.character,c=data.campaign;
+  const mediaEnabled=Boolean(c&&media?.availability().enabled);
   const combatEnabled=Boolean(c&&data.owner&&combat?.availability().enabled);
   const progressionEnabled=Boolean(c&&data.owner&&progression?.availability().enabled);
   const economyEnabled=Boolean(c&&data.owner&&economy?.availability().enabled);
   const digitalGMEnabled=Boolean(c&&digitalGM?.availability().enabled);
+  const resourceEditable=Boolean(c&&data.owner&&c.session.editable&&api.adjustResource);
+  const adjustResource=async(key,amount)=>{
+    if(!resourceEditable||resourceBusy)return;
+    setResourceBusy(key);setResourceError('');
+    try{await api.adjustResource(campaignId,characterId,key,amount);}
+    catch(reason){setResourceError(reason?.message||'Resource update failed.');}
+    finally{setResourceBusy('');}
+  };
+  const panelAction=async(type,details)=>{
+    if(!resourceEditable||resourceBusy)return;
+    setResourceBusy(type);setResourceError('');setResourceMessage('');
+    try{
+      if(type==='removeCondition')await api.removeCondition(campaignId,characterId,details);
+      else if(type==='takeRest')await api.takeRest(campaignId,characterId,details.type,{
+        soulRecovery:details.soulRecovery,expectedSequence:ch.restSequence});
+      else if(type==='adjustCurrency')await api.adjustCurrency(campaignId,characterId,
+        details.key,details.delta);
+      else if(type==='useQuickItem')await api.useQuickItem(campaignId,characterId,
+        details.itemId,details.revision);
+      else if(type==='castSpell')await api.castSpell(campaignId,characterId,details);
+      else if(type==='addJournalEntry')await api.addJournalEntry(campaignId,characterId,details);
+      else if(type==='updateJournalEntry')await api.updateJournalEntry(campaignId,characterId,details);
+      else if(type==='deleteJournalEntry')await api.deleteJournalEntry(campaignId,characterId,details);
+      setResourceMessage(({castSpell:'Spell cast.',useQuickItem:'Quick item used.',
+        removeCondition:'Condition removed.',takeRest:'Rest request submitted.',
+        adjustCurrency:'Currency updated.',addJournalEntry:'Journal entry saved.',
+        updateJournalEntry:'Journal entry updated.',deleteJournalEntry:'Journal entry deleted.'})[type]||'Character action completed.');
+      return {ok:true};
+    }catch(e){setResourceError(e?.message||'Character action failed.');return {ok:false};}
+    finally{setResourceBusy('');}
+  };
   return <>
-    <ClassicPlayerHeader character={ch} campaign={c} owned={data.owner}/>
+    <ClassicPlayerHeader character={ch} campaign={c} owned={data.owner}
+      editable={resourceEditable} resourceBusy={Boolean(resourceBusy)} onAdjust={adjustResource}/>
+    {resourceError?<p role="alert">{resourceError}</p>:null}
+    {resourceMessage?<p role="status">{resourceMessage}</p>:null}
     <div className={styles.sessionStrip} role="status">
       {c?(c.session.editable?'Live editing enabled':'Session is not active. Gameplay actions are unavailable.'):'Unassigned character — link to a campaign to enable live gameplay.'}
       <CrystalButton href="#/character-forge" size="compact">Character Forge</CrystalButton>
     </div>
     <nav className={styles.tabs} aria-label="Character dashboard sections">
-      {[...TABS.filter(x=>data.owner||x!=='Journal'),...(combatEnabled?['Combat']:[]),...(progressionEnabled?['Progression','Skills','Talents','Check History']:[]),...(economyEnabled?['Inventory & Trading']:[]),...(digitalGMEnabled?['Campaign World & Session']:[]),...(c&&media?.availability().enabled?['Battle Maps','World Atlas']:[])].map(value=><CrystalButton type="button" size="compact" key={value} active={tab===value}
+      {[...TABS.filter(x=>data.owner||!['Journal','Gallery','Dashboard Settings'].includes(x)),...(combatEnabled?['Combat']:[]),...(progressionEnabled?['Progression','Check History']:[]),...(economyEnabled?['Inventory & Trading']:[]),...(digitalGMEnabled?['Campaign World & Session']:[])].map(value=><CrystalButton type="button" size="compact" key={value} active={tab===value}
         onClick={()=>setTab(value)}>{value}</CrystalButton>)}
     </nav>
-    {digitalGMEnabled&&tab==='Campaign World & Session'?<PlayerDigitalGMWorkspace
-      key={campaignId} api={digitalGM} campaignId={campaignId}/>:null}
-    {economyEnabled&&tab==='Inventory & Trading'?<PlayerEconomyWorkspace
-      key={campaignId+':'+characterId} api={economy} campaignId={campaignId} characterId={characterId}/>:null}
+    {digitalGMEnabled&&['Campaign World & Session','Calendar','Weather','Campaign Library',
+      'Campaign Audio','Recording & Archives'].includes(tab)?<PlayerDigitalGMWorkspace
+      key={campaignId+':'+tab} api={digitalGM} campaignId={campaignId}
+      initialSection={{Calendar:'calendar',Weather:'weather','Campaign Library':'handouts',
+        'Campaign Audio':'soundboard','Recording & Archives':'recording'}[tab]||'calendar'}/>:null}
+    {economyEnabled&&['Inventory & Trading','Inventory','Crafting'].includes(tab)?<PlayerEconomyWorkspace
+      key={campaignId+':'+characterId+':'+tab} api={economy}
+      initialTab={tab==='Crafting'?'Crafting':'Inventory'}
+      campaignId={campaignId} characterId={characterId}/>:null}
     {progressionEnabled&&tab==='Progression'?<PlayerProgressionWorkspace
       api={progression} campaignId={campaignId} characterId={characterId} section="progression"/>:null}
     {progressionEnabled&&tab==='Skills'?<PlayerProgressionWorkspace
       api={progression} campaignId={campaignId} characterId={characterId} section="skills"/>:null}
-    {progressionEnabled&&tab==='Talents'?<PlayerProgressionWorkspace
+    {progressionEnabled&&tab==='Class/Talent Tree'?<PlayerProgressionWorkspace
       api={progression} campaignId={campaignId} characterId={characterId} section="talents"/>:null}
     {progressionEnabled?<PlayerCheckRequests key={campaignId+':'+characterId}
       api={progression} campaignId={campaignId} characterId={characterId}
       showHistory={tab==='Check History'}/>:null}
     {tab==='Combat'&&combatEnabled?<PlayerCombatWorkspace key={campaignId+':'+characterId}
       api={combat} campaignId={campaignId} characterId={characterId}/>:null}
-    {tab==='Battle Maps'&&media?.availability().enabled?
+    {tab==='Battle Maps'&&mediaEnabled?
       <CampaignMapWorkspace api={media} campaignId={campaignId} role="player"/>:null}
-    {tab==='World Atlas'&&media?.availability().enabled?
+    {tab==='World Map'&&mediaEnabled?
       <CampaignAtlasWorkspace api={media} campaignId={campaignId}/>:null}
-    {tab==='Overview'&&data.owner&&api.availability().layoutEnabled?
+    {tab==='Advanced Dice'&&dice?.availability().enabled?
+      <AdvancedDiceWorkspace api={dice} role="player"/>:null}
+    {tab==='Party'&&c?<PlayerPartyWorkspace api={api}
+      campaignId={campaignId} characterId={characterId} owned={data.owner}/>:null}
+    {tab==='Party'&&!c?<SurfacePanel className={styles.panel}>
+      <h3>Party</h3><BodyText muted>Link this character to a campaign to access party features.</BodyText>
+    </SurfacePanel>:null}
+    {tab==='News / Events / History'&&c?<PlayerInformationWorkspace
+      api={api} character={ch} campaignId={campaignId} characterId={characterId}
+      ownerUid={uid} owned={data.owner}/>:null}
+    {tab==='Quests'?<PlayerQuestWorkspace api={api} character={ch}
+      campaignId={campaignId} characterId={characterId} editable={resourceEditable}/>:null}
+    {tab==='Gallery'&&data.owner?<PlayerGalleryWorkspace
+      api={api} character={ch} campaignId={campaignId} characterId={characterId}
+      editable={resourceEditable}/>:null}
+    {['Dashboard','Dashboard Settings'].includes(tab)&&api.availability().layoutEnabled?
       <DashboardLayoutManager role="player" uid={uid} api={api}
         owner={data.owner} campaignId={campaignId} characterId={characterId}
         initialLayout={ch.dashboardLayout}
-        renderPanel={id=>{
-          if(id==='armour')return <p>Natural Armour Class: {ch.naturalAC??'Not recorded'}</p>;
-          if(id==='skills')return <ul>{ch.skills.map((s,i)=><li key={i}>{s.name} {s.rank}</li>)}</ul>;
-          if(id==='talents')return <ul>{ch.talents.map((s,i)=><li key={i}>{s}</li>)}</ul>;
-          if(id==='spells')return <ul>{ch.spells.map((s,i)=><li key={i}>{s}</li>)}</ul>;
-          if(id==='conditions')return <ul>{ch.conditions.map((s,i)=><li key={i}>{s}</li>)}</ul>;
-          if(id==='quests')return <ul>{ch.quests.map((s,i)=><li key={i}>{s.name}</li>)}</ul>;
-          if(id==='journal')return <ul>{ch.journal.map((s,i)=><li key={i}>{s.title}</li>)}</ul>;
-          if(id==='party')return <ul>{(c?.party||[]).map(s=><li key={s.id}>{s.name}</li>)}</ul>;
-          if(id==='weapons'||id==='quick')return <ul>{ch.equipment.map((s,i)=><li key={i}>{s.name}</li>)}</ul>;
-          if(id==='shortcutCharacter')return <p>Open the Character tab to inspect your sheet.</p>;
-          if(id==='shortcutInventory')return <p>Open the Equipment tab to inspect inventory.</p>;
-          return null;
-        }}/>
-      :['Battle Maps','World Atlas','Combat','Progression','Skills','Talents','Check History','Inventory & Trading','Campaign World & Session'].includes(tab)?null:
-        <Sections character={ch} owned={data.owner} tab={tab}/>}
+        renderPanel={id=><PlayerOverviewPanel id={id} character={ch}
+          campaign={c} onNavigate={setTab} editable={resourceEditable}
+          busy={Boolean(resourceBusy)} onAction={panelAction}
+          available={{combatEnabled,progressionEnabled,economyEnabled}}/>}/>
+      :(economyEnabled&&['Inventory','Crafting','Inventory & Trading'].includes(tab))||
+        (digitalGMEnabled&&['Calendar','Weather','Campaign Library','Campaign Audio','Recording & Archives','Campaign World & Session'].includes(tab))||
+        (tab==='Advanced Dice'&&dice?.availability().enabled)||
+        (mediaEnabled&&['Battle Maps','World Map'].includes(tab))||
+        (combatEnabled&&tab==='Combat')||
+        (progressionEnabled&&['Progression','Skills','Class/Talent Tree','Check History'].includes(tab))||
+        (tab==='Party')||
+        (tab==='Quests')||
+        (tab==='Gallery'&&data.owner)||
+        (tab==='News / Events / History'&&Boolean(c))?null:
+        <Sections character={ch} owned={data.owner} tab={tab} editable={resourceEditable}
+          busy={Boolean(resourceBusy)} onAction={panelAction} campaign={c}/>}
     
   </>;
 }
@@ -222,6 +435,7 @@ export function PlayerDashboardPage({route}){
   const progression=services.get('gameplay')?.progression;
   const economy=services.get('gameplay')?.economy;
   const digitalGM=services.get('gameplay')?.digitalGM;
+  const dice=services.get('gameplay')?.dice;
   const {campaignId='',characterId=''}=route.params||{};
   return <PageLayout as="section" width="wide" variant="workspace" labelledBy="site-player-title"
     className={styles.page} data-testid="site-player-dashboard">
@@ -230,7 +444,7 @@ export function PlayerDashboardPage({route}){
       <BodyText>Sign in with a verified account to view a character dashboard.</BodyText>
       <CrystalButton href="#/account/login">Login</CrystalButton>
     </SurfacePanel>:<Dashboard key={uid+':'+campaignId+':'+characterId}
-      uid={uid} api={api} media={media} combat={combat} progression={progression} economy={economy} digitalGM={digitalGM}
+      uid={uid} api={api} media={media} combat={combat} progression={progression} economy={economy} digitalGM={digitalGM} dice={dice}
       campaignId={campaignId} characterId={characterId}/>}
   </PageLayout>;
 }

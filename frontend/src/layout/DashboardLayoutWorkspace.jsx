@@ -1,4 +1,4 @@
-import React,{useEffect,useMemo,useState} from 'react';
+import React,{useEffect,useMemo,useRef,useState} from 'react';
 import {
   DASHBOARD_PANEL_REGISTRY,dashboardLayoutForViewport,dashboardViewportFromWidth,
   gridRowCount,visibleDashboardPanels
@@ -8,38 +8,52 @@ import styles from './DashboardLayoutWorkspace.module.css';
 export function DashboardLayoutWorkspace({
   role='player',layout,renderPanel,title='Dashboard panels'
 }){
+  const workspaceRef=useRef(null);
   const [viewport,setViewport]=useState(()=>
     dashboardViewportFromWidth(typeof window==='undefined'?1200:window.innerWidth));
   useEffect(()=>{
-    const refresh=()=>setViewport(dashboardViewportFromWidth(window.innerWidth));
+    // The original dashboard selects saved layouts using available workspace
+    // width, not window width: GM sidebars can make a wide screen narrow.
+    const host=workspaceRef.current;
+    const refresh=()=>{
+      const width=host?.getBoundingClientRect().width||window.innerWidth;
+      setViewport(dashboardViewportFromWidth(width));
+    };
+    refresh();
+    const observer=typeof ResizeObserver==='undefined'||!host
+      ?null:new ResizeObserver(refresh);
+    observer?.observe(host);
     window.addEventListener('resize',refresh);
-    return ()=>window.removeEventListener('resize',refresh);
+    return ()=>{observer?.disconnect();window.removeEventListener('resize',refresh);};
   },[]);
   const view=useMemo(()=>dashboardLayoutForViewport(layout,role,viewport),[layout,role,viewport]);
   const registry=DASHBOARD_PANEL_REGISTRY[role==='gm'?'gm':'player'];
   const names=new Map(registry.map(item=>[item.id,item.label]));
   const ids=visibleDashboardPanels(view,role);
-  const ordered=viewport==='desktop'?ids:ids.slice().sort((a,b)=>
+  // Physical grid order should match keyboard and reading order even when
+  // desktop-size browsers contain a narrow, stacked dashboard workspace.
+  const ordered=ids.slice().sort((a,b)=>
     (view.placements[a]?.y||0)-(view.placements[b]?.y||0)||
     (view.placements[a]?.x||0)-(view.placements[b]?.x||0));
-  if(!ordered.length)return <section className={styles.empty} aria-label={title}>
+  if(!ordered.length)return <section className={styles.empty} ref={workspaceRef} aria-label={title}>
     No dashboard panels are visible. Open the Dashboard Layout Editor to enable panels.
   </section>;
-  return <section className={styles.workspace} aria-label={title}
+  return <section className={styles.workspace} ref={workspaceRef} aria-label={title}
     data-testid={'site-'+role+'-layout-workspace'}>
     <div className={styles.grid} data-dashboard-viewport={viewport}
       style={{'--layout-rows':gridRowCount(view.placements,ids)}}>
       {ordered.map(id=>{
         const pos=view.placements[id];
         if(!pos)return null;
+        const frame=pos.h>pos.w*1.4?'tall':pos.w>=pos.h*2.5?'ultrawide':pos.w>=pos.h*1.45?'wide':'square';
         return <article key={id} className={styles.tile}
-          data-panel-id={id} data-panel-size={`${pos.w}x${pos.h}`}
+          data-panel-id={id} data-panel-size={`${pos.w}x${pos.h}`} data-frame-family={frame}
           data-panel-background={view.panelBackgrounds[id]||view.backgroundStyle}
           style={{
             gridColumn:(pos.x+1)+' / span '+pos.w,
             gridRow:(pos.y+1)+' / span '+pos.h
           }}>
-          <h3 className={styles.title}>{names.get(id)||'Dashboard Panel'}</h3>
+          <h3 className={styles.title}><span>{names.get(id)||'Dashboard Panel'}</span></h3>
           <div className={styles.content}>{renderPanel(id)}</div>
         </article>;
       })}

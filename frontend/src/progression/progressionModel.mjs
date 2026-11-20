@@ -2,6 +2,8 @@ import {UNIVERSAL_CHECK_TYPES,UNIVERSAL_CHARACTERISTICS,UNIVERSAL_CHECK_RANKS} f
 import {CHARACTERISTICS,characteristicCap,characteristicValue,talentRankCost,talentTierUnlocked,nextSkillProgress} from '../../../src/state/liveWorkspaceModel.mjs';
 import {buildTalentCatalog,talentRank,rankDefined,prerequisiteProblem} from '../../../src/state/talentModel.mjs';
 import {talentRules} from '../../../src/state/talentMechanics.mjs';
+import {characterCheck} from '../../../src/state/effectsEngine.mjs';
+import {talentEffectActive} from '../../../src/state/talentModel.mjs';
 
 const array=v=>Array.isArray(v)?v:[];
 const record=v=>v&&typeof v==='object'&&!Array.isArray(v);
@@ -43,9 +45,19 @@ export function skillProjection(character={}){
     // Only display existing progress, never auto-advance it when viewing.
     const successes=Math.max(0,Number(progress.successes)||0);
     const target=Number(progress.target??projected.target)||0;
-    return Object.freeze({id:text(row.id,160)||slug(name)||'skill-'+index,name,
+    const id=text(row.id,160)||slug(name)||'skill-'+index;
+    const result=characterCheck(character,'skills.'+id,0);
+    const techniques=array(row.techniques).slice(0,30).map(technique=>Object.freeze({
+      name:text(typeof technique==='string'?technique:technique?.name||technique?.title,100),
+      detail:text(technique?.description||technique?.summary,700)
+    })).filter(technique=>technique.name);
+    return Object.freeze({id,name,
       rank:String(oldRank),successes,target,
-      category:text(row.category||row.type,80)||'Skill'});
+      category:text(row.category||row.type,80)||'Skill',
+      summary:text(row.summary||row.description,700),
+      modifier:Number.isFinite(result.value)?result.value:0,
+      advantage:result.advantage===true,disadvantage:result.disadvantage===true,
+      techniques:Object.freeze(techniques)});
   }).filter(row=>row.name));
 }
 /** Published rank text is public but backend still resolves its own catalog.
@@ -60,6 +72,20 @@ export function publishedTalentCatalog(character,forgeTalents=[],entryRows=[]){
         prerequisite:row.rules?.prerequisite||'None',ranks:5}};
   });
   return Object.freeze(buildTalentCatalog(character,entries));
+}
+/** Owner-scoped, read-only active effects. Mutations go through the existing
+ * endCharacterTalentEffect callable and must be independently authorised. */
+export function activeTalentEffectProjection(character={}){
+  return Object.freeze(array(character.talentEffects).filter(effect=>
+    record(effect)&&typeof effect.id==='string'&&
+    /^[A-Za-z0-9][A-Za-z0-9:_.-]{0,159}$/.test(effect.id)&&
+    talentEffectActive(effect)).slice(0,60).map(effect=>Object.freeze({
+    id:effect.id,name:text(effect.name||'Talent effect',120),
+    description:text(effect.description,1500),
+    ac:Number.isFinite(Number(effect.ac))?Number(effect.ac):0,
+    untilRound:Number.isSafeInteger(Number(effect.untilRound))?Number(effect.untilRound):0,
+    expiresAt:Number.isFinite(Number(effect.expiresAt))?Number(effect.expiresAt):0
+  })));
 }
 export function talentProjection(character,catalog=[]){
   return Object.freeze(array(catalog).map(talent=>{
@@ -76,6 +102,8 @@ export function talentProjection(character,catalog=[]){
       tier:talent.tier,rank,maxRank:talent.maxRank,cost,reason,
       canBuy:!reason,canUse:rank>0&&active?.activation===true&&!active.blocked,
       activationBlocked:active?.blocked||'',kind:active?.passive?'Passive':'Active',
+      requiresTrigger:active?.requiresTrigger===true,
+      targetChoice:active?.targetChoice===true,
       requiresChoice:Boolean(active?.choices?.length),choices:active?.choices?.map(x=>({
         id:x.id,label:x.label
       }))||[],needsSpell:active?.needsSpell===true,sourceId:talent.sourceId
@@ -93,6 +121,9 @@ export function checkProjection(rows,mode='player',characterId=''){
     modifiers:Object.freeze(array(row.modifiers).slice(0,30).map(m=>Object.freeze({
       label:text(m.label,120),value:Number(m.value)||0}))),
     description:text(row.description,500),npcName:text(row.npcName,100),
+    // Server-validated NPC origin; only the GM uses this ID to scope related history.
+    contextNpcId:mode==='gm'&&row.context?.kind==='npc'&&validId(row.context?.npcId)?
+      row.context.npcId:'',
     advantage:row.advantage===true,disadvantage:row.disadvantage===true,
     attempt:Number(row.attempt)||1,notificationRevision:Number(row.notificationRevision)||0,
     groupId:validId(row.groupId)?row.groupId:'',groupOutcome:row.groupOutcome||null,

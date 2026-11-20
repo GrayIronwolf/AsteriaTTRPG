@@ -2,6 +2,10 @@ import {gmCampaignAccess,gmSessionState} from '../dashboard/gmDashboardModel.mjs
 import {playerCampaignAccess} from '../player/playerDashboardModel.mjs';
 import {assertGMId,GM_AREAS,gmToolkitProjection,worldMutation} from './digitalGMModel.mjs';
 import {sessionPdfFileError,sessionPdfPath} from '../../../src/state/sessionLibraryModel.mjs';
+import {audioFileError,audioUploadDetails,audioTrackPath}
+  from '../../../src/state/campaignAudioModel.mjs';
+import {recordingFileError,recordingMetadata,recordingPath}
+  from '../../../src/state/sessionRecordingModel.mjs';
 
 /**
  * Authenticated single-app Phase 7.4 reader. GM world and notes use the same
@@ -70,6 +74,7 @@ export function createFirebaseDigitalGMService({
       weatherReports:'weatherReports'},
     archives:{sessionNotes:'sessionNotes',sessionPdfs:'sessionPdfs'},
     audio:{audioTracks:'audioTracks',audioLive:'audioLive/current'},
+    world:{},
     recordings:{recordingControl:'recordingControl/current',recordingArchives:'recordingArchives',
       recordingConsents:'recordingConsents'}
   });
@@ -166,7 +171,8 @@ export function createFirebaseDigitalGMService({
     return res.data;
   }
   const worldOps=new Set(['library-save','library-delete','card-save',
-    'relationship-save','relationship-delete','reputation-save','reputation-delete']);
+    'relationship-save','relationship-delete','reputation-save','reputation-delete',
+    'world-state-save','world-entry-save','world-entry-delete']);
   async function writeWorkspace(cid,operation={}){
     assertGMId(cid);
     const {uid}=await authorize(cid,'gm');
@@ -253,10 +259,68 @@ export function createFirebaseDigitalGMService({
     const saved=await command(cid,'sessionLibrary',{type:'finish-pdf',id,expectedRevision:1});
     same(uid);return saved;
   }
+  async function uploadCampaignAudio(cid,file,details){
+    if(!storage||!storageSdk)throw Error('Audio uploads are unavailable.');
+    const reason=audioFileError(file);if(reason)throw Error(reason);
+    const payload=audioUploadDetails({...details,
+      fileName:file.name,size:file.size,contentType:file.type});
+    const {uid}=await authorize(cid,'gm');
+    const id='audio-'+crypto.randomUUID();
+    await command(cid,'audio',{type:'reserve-track',id,details:payload});
+    same(uid);
+    await storageSdk.uploadBytes(storageSdk.ref(storage,
+      audioTrackPath(cid,id,file.type)),file,{
+        contentType:file.type,cacheControl:'private,max-age=300'
+      });
+    const result=await command(cid,'audio',{type:'finish-track',id,expectedRevision:1});
+    same(uid);return result;
+  }
+  async function uploadRecordingArchive(cid,file,details){
+    if(!storage||!storageSdk)throw Error('Recording archive uploads are unavailable.');
+    const reason=recordingFileError(file);if(reason)throw Error(reason);
+    const payload=recordingMetadata({...details,size:file.size,contentType:file.type});
+    const {uid}=await authorize(cid,'gm');
+    const id='recording-'+crypto.randomUUID();
+    await command(cid,'recording',{type:'reserve-archive',id,details:payload});
+    same(uid);
+    await storageSdk.uploadBytes(storageSdk.ref(storage,
+      recordingPath(cid,id,file.type)),file,{
+        contentType:file.type,cacheControl:'private,max-age=300'
+      });
+    const result=await command(cid,'recording',{
+      type:'finish-archive',id,expectedRevision:1
+    });
+    same(uid);return result;
+  }
+  async function fetchSessionPdf(cid,row){
+    if(!storage||!storageSdk?.getBlob)throw Error('Private PDF previews are unavailable.');
+    const {uid}=await authorize(cid,'gm');
+    if(row?.status!=='ready')throw Error('PDF is not ready.');
+    const blob=await storageSdk.getBlob(storageSdk.ref(storage,sessionPdfPath(cid,row.id)));
+    same(uid);return blob;
+  }
+  async function fetchCampaignAudio(cid,row){
+    if(!storage||!storageSdk?.getBlob)throw Error('Private audio previews are unavailable.');
+    const {uid}=await authorize(cid,'gm');
+    if(row?.status!=='ready')throw Error('Audio track is not ready.');
+    const blob=await storageSdk.getBlob(storageSdk.ref(storage,
+      audioTrackPath(cid,row.id,row.contentType)));
+    same(uid);return blob;
+  }
+  async function fetchRecordingArchive(cid,row){
+    if(!storage||!storageSdk?.getBlob)throw Error('Recording playback is unavailable.');
+    const {uid}=await authorize(cid,'gm');
+    if(row?.status!=='ready')throw Error('Recording is not ready.');
+    const blob=await storageSdk.getBlob(storageSdk.ref(storage,
+      recordingPath(cid,row.id,row.contentType)));
+    same(uid);return blob;
+  }
   return Object.freeze({
     availability:()=>flags,
     watchGM:(cid,area,ok,fail)=>watch(cid,'gm',area,ok,fail),
     watchPlayer:(cid,ok,fail)=>watch(cid,'player','public',ok,fail),
-    world:writeWorkspace,command,rollDice,uploadSessionPdf
+    world:writeWorkspace,command,rollDice,uploadSessionPdf,
+    uploadCampaignAudio,uploadRecordingArchive,
+    fetchSessionPdf,fetchCampaignAudio,fetchRecordingArchive
   });
 }

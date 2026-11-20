@@ -175,9 +175,9 @@ try{
  const privateRoute=player.url();
  assert.match(privateRoute,/#\/react\/owned-character\//);
  const sourceId=decodeURIComponent(privateRoute.split('/').at(-1));
- await player.getByRole('button',{name:'Skills & Talents'}).click();
+ await player.getByRole('button',{name:'Skills',exact:true}).click();
  await player.getByRole('heading',{name:'Skills'}).waitFor();
- await player.getByRole('button',{name:'Overview'}).click();
+ await player.getByRole('button',{name:'Dashboard',exact:true}).click();
  await player.getByTestId('site-player-resources').waitFor();
  await player.getByRole('link',{name:'Character Forge'}).first().click();
  await player.getByRole('heading',{name:'Joined Forge Hero'}).waitFor({timeout:30000});
@@ -203,7 +203,7 @@ try{
  await owner.getByRole('button',{name:'Close editor'}).click();
  // Phase 6.4: same campaign and accounts, live Firestore/Storage/Functions.
  await owner.goto(base+'#/react/gm/'+encodeURIComponent(ownerCampaignId),{waitUntil:'domcontentloaded'});
- await owner.getByRole('button',{name:'Battle-maps',exact:false}).click();
+ await owner.getByRole('button',{name:'Battle Maps',exact:true}).click();
  await owner.getByTestId('site-gm-campaign-maps').waitFor({timeout:30000});
  const gmMaps=owner.getByTestId('site-gm-campaign-maps');
  await gmMaps.getByRole('textbox',{name:'Map name'}).fill('Looping Frostwind Map');
@@ -225,7 +225,7 @@ try{
  await player.getByTestId('site-player-campaign-maps').getByRole('combobox',{name:'Battle map'}).locator('option').filter({hasText:'Looping Frostwind Map'}).waitFor({state:'attached',timeout:30000});
  assert.match(await player.getByTestId('site-player-campaign-maps').getByRole('combobox',{name:'Battle map'}).innerText(),/Looping Frostwind Map/);
  assert.equal(await player.locator('[data-testid="site-player-campaign-maps"] input[type="file"]').count(),0);
- await owner.getByRole('button',{name:'Presentation',exact:true}).click();
+ await owner.getByRole('button',{name:'Player Display',exact:true}).click();
  await owner.getByTestId('site-gm-presentation').waitFor({timeout:30000});
  await owner.getByTestId('site-gm-presentation').getByRole('combobox',{name:'Scene'}).selectOption('battle-map');
  try{await owner.getByTestId('site-gm-presentation').getByRole('combobox',{name:'Published map'}).selectOption({label:'Looping Frostwind Map'},{timeout:7000});}
@@ -236,7 +236,7 @@ try{
  await player.getByTestId('site-player-presentation').waitFor({timeout:30000});
  await player.getByTestId('site-media-map-canvas').waitFor({timeout:30000});
  await owner.goto(base+'#/react/gm/'+encodeURIComponent(ownerCampaignId),{waitUntil:'domcontentloaded'});
- await owner.getByRole('button',{name:'Presentation',exact:true}).click();
+ await owner.getByRole('button',{name:'Player Display',exact:true}).click();
  await owner.getByRole('button',{name:'Blackout'}).click();
  await owner.getByText('Presentation updated.').waitFor({timeout:30000});
  await player.getByText('Display is blacked out.').waitFor({timeout:30000});
@@ -256,15 +256,15 @@ try{
  await owner.goto(base+'#/react/gm/'+encodeURIComponent(ownerCampaignId),{waitUntil:'domcontentloaded'});
  await owner.getByTestId('site-gm-session-start').click();
  await owner.getByTestId('site-gm-session-status').getByText('ACTIVE').waitFor({timeout:30000});
- await owner.getByRole('button',{name:'Combat',exact:true}).click();
+ await owner.getByRole('button',{name:'Gameplay Systems'}).click();
  const gmCombat=owner.getByTestId('site-gm-combat');
  await gmCombat.waitFor({timeout:30000});
  await gmCombat.getByRole('button',{name:'Add Linked Players'}).click();
  await gmCombat.getByText('Joined Forge Hero',{exact:true}).first().waitFor({timeout:30000});
- await gmCombat.getByRole('button',{name:'Start Combat'}).click();
+ await gmCombat.locator('button:enabled').filter({hasText:/^Start Combat$/}).click();
  await gmCombat.getByText(/ACTIVE · Round 1/).waitFor({timeout:30000});
  await gmCombat.getByTestId('site-combat-initiative').getByText(/Current turn/).waitFor({timeout:30000});
- await gmCombat.getByRole('button',{name:'Record 1 AP action'}).click();
+ await gmCombat.locator('button:enabled').filter({hasText:/^Record 1 AP action$/}).click();
  await gmCombat.getByText('2 AP · Bonus available').waitFor({timeout:30000});
  await player.goto(base+'#/react/character/'+encodeURIComponent(ownerCampaignId)+'/'+encodeURIComponent(linkedId),
    {waitUntil:'domcontentloaded'});
@@ -278,20 +278,20 @@ try{
  await playerCombat.getByText('Turn complete').waitFor({timeout:30000});
  // Ensure GM received the new revision before advancing the server-owned turn.
  await gmCombat.getByText('Turn complete').waitFor({timeout:30000});
- await gmCombat.getByRole('button',{name:'Next Turn'}).click();
+ await gmCombat.locator('button:enabled').filter({hasText:/^Next Turn$/}).click();
  try{await gmCombat.getByText(/ACTIVE · Round 2/).waitFor({timeout:30000});}
  catch(error){
    console.error('COMBAT NEXT TURN DIAGNOSTICS',await gmCombat.innerText());
    throw error;
  }
  owner.once('dialog',dialog=>dialog.accept());
- await owner.getByRole('button',{name:'End Combat'}).click();
+ await gmCombat.locator('button:enabled').filter({hasText:/^End Combat$/}).click();
  await gmCombat.getByText(/ENDED/).waitFor({timeout:30000});
  // A non-GM may never manage the encounter.
  assert.equal(await playerCombat.getByRole('button',{name:'Start Combat'}).count(),0);
  // Phase 7.2: authenticated XP, progression, and Universal Check Requests.
  await owner.goto(base+'#/react/gm/'+encodeURIComponent(ownerCampaignId),{waitUntil:'domcontentloaded'});
- await owner.getByRole('button',{name:'Checks-progression'}).click();
+ await owner.getByRole('button',{name:'Gameplay Systems'}).click();
  const gmProgress=owner.getByTestId('site-gm-progression');
  await gmProgress.waitFor({timeout:30000});
  await gmProgress.getByLabel('Linked character').selectOption(linkedId);
@@ -332,9 +332,11 @@ try{
  await gmProgress.getByText(/Earlier attempts \(1\)/).first().waitFor({timeout:30000});
  // Phase 7.3: shared GM party stash and treasure are the existing callable records.
  await owner.goto(base+'#/react/gm/'+encodeURIComponent(ownerCampaignId),{waitUntil:'domcontentloaded'});
- await owner.getByRole('button',{name:'Inventory-loot-crafting'}).click();
+ await owner.getByRole('button',{name:'PC Inventory'}).click();
  const gmEconomy=owner.getByTestId('site-gm-economy');
  await gmEconomy.waitFor({timeout:30000});
+ await gmEconomy.getByRole('button',{name:'Party Loot',exact:true}).click();
+ await gmEconomy.getByTestId('site-economy-loot').waitFor({timeout:30000});
  await gmEconomy.getByLabel('Name').first().fill('Emulator Party Chest');
  await gmEconomy.getByRole('button',{name:'Create Container'}).click();
  await gmEconomy.getByText('Shared container created.').waitFor({timeout:30000});
@@ -359,7 +361,7 @@ try{
  await gmEconomy.getByText('Currency distributed.').waitFor({timeout:30000});
  await playerEconomy.getByText('Emulator Coins').first().waitFor({timeout:30000});
  await owner.goto(base+'#/react/gm/'+encodeURIComponent(ownerCampaignId),{waitUntil:'domcontentloaded'});
- await owner.getByRole('button',{name:'Inventory-loot-crafting'}).click();
+ await owner.getByRole('button',{name:'PC Inventory'}).click();
  const gmReturn=owner.getByTestId('site-gm-economy');
  await gmReturn.getByRole('button',{name:'Shops'}).click();
  await gmReturn.getByLabel('Shop name').fill('Emulator Blacksmith');

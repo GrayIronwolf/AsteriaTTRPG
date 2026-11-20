@@ -7,6 +7,9 @@ import {GM_CARD_TEMPLATES,GM_CARD_THEMES,normalizeGMCharacterCard} from '../../.
 import {RANDOM_TABLE_CATEGORIES} from '../../../src/state/randomTableModel.mjs';
 import {ASTERIA_MONTHS,ASTERIA_ERAS,formatAsteriaDate} from '../../../src/state/asteriaCalendarModel.mjs';
 import {WEATHER_BIOMES,WEATHER_VOLATILITY} from '../../../src/state/weatherEnvironmentModel.mjs';
+import {recordingSupportedMime,recordingBaseMime,RECORDING_FORMATS,
+  RECORDING_MAX_SECONDS,RECORDING_MAX_BYTES}
+  from '../../../src/state/sessionRecordingModel.mjs';
 import styles from './DigitalGMWorkspace.module.css';
 
 const newid=prefix=>prefix+'-'+crypto.randomUUID();
@@ -352,68 +355,442 @@ function Weather({data,action}){
   </section>;
 }
 function Archives({data,action}){
-  const [title,setTitle]=useState(''),[body,setBody]=useState(''),[kind,setKind]=useState('prep');
+  const [title,setTitle]=useState(''),[body,setBody]=useState(''),[kind,setKind]=useState('prep'),
+    [sessionLabel,setSessionLabel]=useState(''),[editing,setEditing]=useState(null);
+  const [pdfTitle,setPdfTitle]=useState(''),[pdfDescription,setPdfDescription]=useState(''),
+    [pdfFile,setPdfFile]=useState(null),[pdfEdit,setPdfEdit]=useState(null);
+  const [preview,setPreview]=useState(null),[localError,setLocalError]=useState('');
+  useEffect(()=>()=>{if(preview?.url)URL.revokeObjectURL(preview.url);},[preview?.url]);
+  const notes=rows(data.sections.sessionNotes).filter(x=>x.status!=='archived');
+  const pdfs=rows(data.sections.sessionPdfs).filter(x=>x.status!=='archived');
+  const saveNote=async()=>{
+    const op=editing?{type:'update-note',id:editing.id,expectedRevision:editing.revision}:
+      {type:'create-note',id:newid('note')};
+    const result=await action.command('sessionLibrary',{
+      ...op,note:{title,body,kind,sessionLabel}
+    },editing?'Private session note updated.':'Private session note saved.');
+    if(result){setTitle('');setBody('');setSessionLabel('');setKind('prep');setEditing(null);}
+  };
+  const openPdf=async row=>{
+    setLocalError('');
+    try{
+      const blob=await action.api.fetchSessionPdf(action.campaignId,row);
+      const url=URL.createObjectURL(blob);
+      setPreview(old=>{if(old?.url)URL.revokeObjectURL(old.url);return {id:row.id,url};});
+    }catch(e){setLocalError(e?.message||'Unable to open PDF.');}
+  };
+  const upload=async()=>{
+    if(!pdfFile)return;
+    const result=await action.uploadPdf(pdfFile,{
+      title:pdfTitle.trim(),description:pdfDescription.trim()},'Private PDF uploaded.');
+    if(result){setPdfFile(null);setPdfTitle('');setPdfDescription('');}
+  };
   return <section className={styles.section} data-testid="site-digital-gm-archives">
-    <h3>GM Session Notes &amp; PDFs</h3>
-    <div className={styles.fields}>{field('Note title',title,setTitle)}
-      {options(['prep','session','recap','lore'],kind,setKind,'Note category')}</div>
-    <label>Note<textarea rows="5" value={body} onChange={e=>setBody(e.target.value)}/></label>
-    <button disabled={action.busy||!title.trim()} onClick={()=>action.command('sessionLibrary',{
-      type:'create-note',id:newid('note'),note:{title,body,kind,sessionLabel:''}
-    },'Private session note saved.')}>Save Private Note</button>
-    <div className={styles.cards}>{rows(data.sections.sessionNotes).map(row=><article className={styles.card} key={row.id}>
-      <strong>{row.title}</strong><span>{row.kind} · Revision {row.revision}</span>
-      <p>{row.body}</p></article>)}</div>
-    <h4>Document Library</h4>
-    <p>Use the authenticated upload action to store a private PDF; player access is controlled by explicit publication.</p>
-    {rows(data.sections.sessionPdfs).map(row=><article className={styles.card} key={row.id}>
-      <strong>{row.title}</strong><span>{row.status} · {row.visibility}</span>
-      {row.status==='ready'?<button disabled={action.busy} onClick={()=>action.command('sessionLibrary',{
-        type:row.visibility==='players'?'unpublish-pdf':'publish-pdf',
-        id:row.id,expectedRevision:row.revision
-      },'PDF publication updated.')}>{row.visibility==='players'?'Unpublish':'Publish to players'}</button>:null}
-    </article>)}
-  </section>;
-}
-function Audio({data,action}){
-  const [track,setTrack]=useState('');
-  return <section className={styles.section} data-testid="site-digital-gm-audio">
-    <h3>Campaign Soundboard</h3>
-    <p>Only GM-approved and already uploaded audio tracks may be broadcast. Playback is opt-in for players.</p>
-    <div className={styles.cards}>{rows(data.sections.audioTracks).map(row=><article className={styles.card} key={row.id}>
-      <strong>{row.title||row.name}</strong><span>{row.status} · {row.visibility||'Private'}</span>
-      <button disabled={action.busy||row.status!=='ready'} onClick={()=>action.command('audio',{
-        type:row.visibility==='players'?'unpublish-track':'publish-track',
-        id:row.id,expectedRevision:row.revision
-      },'Track publication updated.')}>{row.visibility==='players'?'Unpublish':'Publish'}</button>
-    </article>)}</div>
-    {options([{id:'',label:'Select approved track'},...rows(data.sections.audioTracks)
-      .filter(row=>row.status==='ready'&&row.visibility==='players')
-      .map(row=>({id:row.id,label:row.title||row.name}))],track,setTrack,'Broadcast track')}
-    <div className={styles.actions}>
-      <button disabled={action.busy||!track} onClick={()=>action.command('audio',{
-        type:'play-ambient',trackId:track,
-        expectedLiveRevision:data.sections.audioLive?.revision||0
-      },'GM ambient audio cue sent.')}>Play Ambient Track</button>
-      <button disabled={action.busy} onClick={()=>action.command('audio',{
-        type:'stop-ambient',expectedLiveRevision:data.sections.audioLive?.revision||0
-      },'Ambient audio stopped.')}>Stop Ambient Track</button>
+    <h3>GM Session Notes &amp; PDF Library</h3>
+    <p>Structured notes stay GM-private. PDFs are private until explicitly published.</p>
+    {localError?<p role="alert">{localError}</p>:null}
+    <div className={styles.box}>
+      <h4>{editing?'Edit Private Note':'Create Private Note'}</h4>
+      <div className={styles.fields}>
+        <label>Note title<input maxLength={140} value={title}
+          onChange={e=>setTitle(e.target.value)}/></label>
+        {options(['prep','session','recap','lore'],kind,setKind,'Note category')}
+        <label>Session label<input maxLength={100} value={sessionLabel}
+          onChange={e=>setSessionLabel(e.target.value)}/></label>
+      </div>
+      <label>Note<textarea rows={5} maxLength={16000} value={body}
+        onChange={e=>setBody(e.target.value)}/></label>
+      <div className={styles.actions}>
+        <button type="button" disabled={action.busy||!title.trim()} onClick={saveNote}>
+          {editing?'Update Private Note':'Save Private Note'}</button>
+        {editing?<button type="button" disabled={action.busy} onClick={()=>{
+          setEditing(null);setTitle('');setBody('');setKind('prep');setSessionLabel('');
+        }}>Cancel Editing</button>:null}
+      </div>
     </div>
+    <div className={styles.cards}>{notes.map(row=><article className={styles.card} key={row.id}>
+      <strong>{row.title}</strong><span>{row.kind} · Revision {row.revision}</span>
+      <p>{row.body}</p>
+      <div className={styles.actions}>
+        <button type="button" disabled={action.busy} onClick={()=>{
+          setEditing(row);setTitle(row.title);setBody(row.body||'');
+          setKind(row.kind||'prep');setSessionLabel(row.sessionLabel||'');
+        }}>Edit</button>
+        <button type="button" disabled={action.busy}
+          onClick={()=>action.command('sessionLibrary',{
+            type:'delete-note',id:row.id,expectedRevision:row.revision
+          },'Private note archived.')}>Archive</button>
+      </div>
+    </article>)}</div>
+    {!notes.length?<p>No private session notes saved.</p>:null}
+    <div className={styles.box}>
+      <h4>Upload Private PDF Handout</h4>
+      <div className={styles.fields}>
+        <label>PDF title<input maxLength={140} value={pdfTitle}
+          onChange={e=>setPdfTitle(e.target.value)}/></label>
+        <label>PDF file<input type="file" accept="application/pdf,.pdf"
+          onChange={e=>setPdfFile(e.target.files?.[0]||null)}/></label>
+      </div>
+      <label>Description<textarea maxLength={600} rows={2} value={pdfDescription}
+        onChange={e=>setPdfDescription(e.target.value)}/></label>
+      <button type="button" disabled={action.busy||!pdfFile||!pdfTitle.trim()}
+        onClick={upload}>Upload Private PDF</button>
+    </div>
+    <h4>PDF Document Library</h4>
+    <div className={styles.cards}>{pdfs.map(row=><article className={styles.card} key={row.id}>
+      <strong>{row.title}</strong><span>{row.status} · {row.visibility==='players'?'Shared with players':'GM private'} · Revision {row.revision}</span>
+      {row.description?<p>{row.description}</p>:null}
+      {row.status==='ready'?<div className={styles.actions}>
+        <button type="button" disabled={action.busy} onClick={()=>openPdf(row)}>Open PDF</button>
+        <button type="button" disabled={action.busy} onClick={()=>action.command('sessionLibrary',{
+          type:row.visibility==='players'?'unpublish-pdf':'publish-pdf',
+          id:row.id,expectedRevision:row.revision
+        },'PDF publication updated.')}>{row.visibility==='players'?'Unpublish':'Publish to Players'}</button>
+        <button type="button" disabled={action.busy} onClick={()=>{
+          setPdfEdit(row);setPdfTitle(row.title);setPdfDescription(row.description||'');
+        }}>Edit Details</button>
+      </div>:null}
+      {pdfEdit?.id===row.id?<div className={styles.box}>
+        <label>PDF title<input maxLength={140} value={pdfTitle}
+          onChange={e=>setPdfTitle(e.target.value)}/></label>
+        <label>Description<textarea maxLength={600} value={pdfDescription}
+          onChange={e=>setPdfDescription(e.target.value)}/></label>
+        <div className={styles.actions}>
+          <button type="button" disabled={action.busy||!pdfTitle.trim()} onClick={async()=>{
+            const result=await action.command('sessionLibrary',{
+              type:'update-pdf',id:row.id,expectedRevision:row.revision,
+              title:pdfTitle,description:pdfDescription
+            },'PDF details updated.');
+            if(result)setPdfEdit(null);
+          }}>Save PDF Details</button>
+          <button type="button" onClick={()=>setPdfEdit(null)}>Cancel</button>
+        </div>
+      </div>:null}
+      <button type="button" disabled={action.busy} onClick={()=>action.command('sessionLibrary',{
+        type:'archive-pdf',id:row.id,expectedRevision:row.revision
+      },'PDF archived and player access revoked.')}>Archive PDF</button>
+      {preview?.id===row.id?<a href={preview.url} target="_blank" rel="noreferrer">
+        Open Private PDF Preview</a>:null}
+    </article>)}</div>
+    {!pdfs.length?<p>No PDFs uploaded for this campaign.</p>:null}
   </section>;
 }
-function Recordings({data}){
-  const control=data.sections.recordingControl;
+
+function Audio({data,action}){
+  const [track,setTrack]=useState(''),[file,setFile]=useState(null),
+    [title,setTitle]=useState(''),[description,setDescription]=useState(''),
+    [category,setCategory]=useState('ambient'),[volume,setVolume]=useState('70'),
+    [loop,setLoop]=useState(true),[preview,setPreview]=useState(null),
+    [localError,setLocalError]=useState('');
+  const tracks=rows(data.sections.audioTracks).filter(x=>x.status!=='archived');
+  const live=data.sections.audioLive||{};
+  useEffect(()=>()=>{if(preview?.url)URL.revokeObjectURL(preview.url);},[preview?.url]);
+  const upload=async()=>{
+    if(!file||!title.trim())return;
+    const result=await action.uploadAudio(file,{
+      name:title.trim(),description:description.trim(),category,
+      loop,volume:Number(volume)
+    },'Private audio track uploaded.');
+    if(result){setFile(null);setTitle('');setDescription('');}
+  };
+  const showPreview=async row=>{
+    setLocalError('');
+    try{
+      const blob=await action.api.fetchCampaignAudio(action.campaignId,row);
+      const url=URL.createObjectURL(blob);
+      setPreview(old=>{if(old?.url)URL.revokeObjectURL(old.url);return {id:row.id,url};});
+    }catch(err){setLocalError(err?.message||'Audio preview unavailable.');}
+  };
+  const cue=(type,id)=>{
+    const op={type,expectedLiveRevision:live.revision||0};
+    if(id)op.trackId=id;
+    return action.command('audio',op,'Campaign audio cue updated.');
+  };
+  return <section className={styles.section} data-testid="site-digital-gm-audio">
+    <h3>Campaign Soundboard &amp; Ambient Audio</h3>
+    <p>Upload private audio, publish approved tracks and broadcast cues. Players must opt in to playback on their own device.</p>
+    {localError?<p role="alert">{localError}</p>:null}
+    <div className={styles.box}>
+      <h4>Upload Private Audio</h4>
+      <div className={styles.fields}>
+        <label>Track name<input maxLength={120} value={title}
+          onChange={e=>setTitle(e.target.value)}/></label>
+        <label>Audio file<input type="file" accept=".mp3,.ogg,.wav,.webm,audio/mpeg,audio/ogg,audio/wav,audio/webm"
+          onChange={e=>setFile(e.target.files?.[0]||null)}/></label>
+        {options(['ambient','music','effect'],category,setCategory,'Track category')}
+        <label>Volume<input type="number" min={0} max={100} step={1} value={volume}
+          onChange={e=>setVolume(e.target.value)}/></label>
+        <label>Loop<input type="checkbox" checked={loop}
+          onChange={e=>setLoop(e.target.checked)}/></label>
+      </div>
+      <label>Description<textarea rows={2} maxLength={500} value={description}
+        onChange={e=>setDescription(e.target.value)}/></label>
+      <button type="button" disabled={action.busy||!file||!title.trim()||
+        !Number.isSafeInteger(Number(volume))||Number(volume)<0||Number(volume)>100}
+        onClick={upload}>Upload Private Audio</button>
+    </div>
+    <div className={styles.box}>
+      <h4>Live Audio Controls</h4>
+      <p>Ambient status: {live.ambient?.status||'Stopped'}.
+        {live.ambient?.trackId?' Current track: '+live.ambient.trackId:''}</p>
+      {options([{id:'',label:'Select published ambient track'},...tracks
+        .filter(row=>row.status==='ready'&&row.visibility==='players'&&row.category!=='effect')
+        .map(row=>({id:row.id,label:row.name}))],track,setTrack,'Broadcast ambient track')}
+      <div className={styles.actions}>
+        <button type="button" disabled={action.busy||!track}
+          onClick={()=>cue('play-ambient',track)}>Play Ambient Track</button>
+        <button type="button" disabled={action.busy||live.ambient?.status!=='playing'}
+          onClick={()=>cue('pause-ambient')}>Pause Ambience</button>
+        <button type="button" disabled={action.busy||live.ambient?.status!=='paused'}
+          onClick={()=>cue('resume-ambient')}>Resume Ambience</button>
+        <button type="button" disabled={action.busy||!live.ambient}
+          onClick={()=>cue('stop-ambient')}>Stop Ambience</button>
+        <button type="button" disabled={action.busy||!live.effect}
+          onClick={()=>cue('stop-effect')}>Clear Sound Effect</button>
+      </div>
+    </div>
+    <h4>Audio Library ({tracks.length})</h4>
+    <div className={styles.cards}>{tracks.map(row=><article className={styles.card} key={row.id}>
+      <strong>{row.name||row.id}</strong>
+      <span>{row.category} · {row.status} · {row.visibility==='players'?'Published':'GM private'}</span>
+      {row.description?<p>{row.description}</p>:null}
+      <div className={styles.actions}>
+        {row.status==='ready'?<>
+          <button type="button" disabled={action.busy}
+            onClick={()=>showPreview(row)}>Preview Privately</button>
+          <button type="button" disabled={action.busy} onClick={()=>action.command('audio',{
+            type:row.visibility==='players'?'unpublish-track':'publish-track',
+            id:row.id,expectedRevision:row.revision
+          },'Track publication updated.')}>{row.visibility==='players'?'Unpublish':'Publish'}</button>
+          {row.visibility==='players'?<button type="button" disabled={action.busy}
+            onClick={()=>cue(row.category==='effect'?'play-effect':'play-ambient',row.id)}>
+            {row.category==='effect'?'Play Sound Effect':'Broadcast Track'}</button>:null}
+        </>:null}
+        <button type="button" disabled={action.busy} onClick={()=>action.command('audio',{
+          type:'archive-track',id:row.id,expectedRevision:row.revision
+        },'Audio track archived and player access revoked.')}>Archive</button>
+      </div>
+      {preview?.id===row.id?<audio controls src={preview.url} preload="metadata"/>:null}
+    </article>)}</div>
+    {!tracks.length?<p>No campaign audio tracks uploaded.</p>:null}
+  </section>;
+}
+
+function Recordings({data,action}){
+  const control=data.sections.recordingControl||{status:'idle',revision:0};
+  const consents=rows(data.sections.recordingConsents);
+  const archives=rows(data.sections.recordingArchives).filter(row=>row.status!=='archived');
+  const [mode,setMode]=useState('microphone'),[ack,setAck]=useState(false),
+    [active,setActive]=useState(null),[clip,setClip]=useState(null),
+    [title,setTitle]=useState(''),[summary,setSummary]=useState(''),
+    [error,setError]=useState(''),[message,setMessage]=useState(''),
+    [preview,setPreview]=useState(null);
+  const recorder=React.useRef(null),stream=React.useRef(null),
+    cutoff=React.useRef(null),activeRef=React.useRef(null),
+    discarded=React.useRef(false);
+  const stopTracks=()=>{if(cutoff.current)clearTimeout(cutoff.current);cutoff.current=null;
+    stream.current?.getTracks?.().forEach(track=>track.stop());stream.current=null;};
+  useEffect(()=>()=>{discarded.current=true;
+    if(recorder.current?.state!=='inactive')recorder.current?.stop();
+    stopTracks();
+  },[]);
+  useEffect(()=>{
+    if(active&&control.status==='recording'&&control.requestId===active.requestId)
+      activeRef.current.seenRecording=true;
+    if(active&&(control.requestId!==active.requestId||
+      activeRef.current?.seenRecording&&control.status!=='recording')){
+      discarded.current=true;
+      if(recorder.current?.state==='recording')recorder.current.stop();
+      stopTracks();setActive(null);setClip(null);
+      setMessage('Recording stopped because authoritative consent or recording status changed.');
+    }
+  },[control.requestId,control.status,active?.requestId]);
+  useEffect(()=>()=>{if(preview?.url)URL.revokeObjectURL(preview.url);},[preview?.url]);
+  const currentConsents=consents.filter(row=>row.requestId===control.requestId);
+  const agreed=(control.participants||[]).filter(uid=>
+    currentConsents.some(row=>row.uid===uid&&row.decision==='agree')).length;
+  const declined=currentConsents.some(row=>row.decision==='decline');
+  const ready=control.status==='consent'&&!declined&&
+    agreed===(control.participants||[]).length;
+  const requestConsent=async()=>{
+    if(!ack||data.session?.status!=='active')return;
+    const result=await action.command('recording',{
+      type:'request-consent',requestId:'rec-'+crypto.randomUUID(),
+      sessionId:data.session.id,mode,actorConsent:true,
+      expectedRevision:control.revision||0
+    },'Recording consent requested from active campaign participants.');
+    if(result){setClip(null);setMessage('All active participants must agree before capture starts.');}
+  };
+  const start=async()=>{
+    if(!ready||active||action.busy)return;
+    setError('');setMessage('');
+    if(typeof window.MediaRecorder!=='function'){
+      setError('Audio recording is not supported in this browser.');return;
+    }
+    const mime=recordingSupportedMime(window.MediaRecorder);
+    if(!mime){setError('No supported recording format was found.');return;}
+    let media=null;
+    try{
+      media=mode==='tab-audio'?
+        await navigator.mediaDevices?.getDisplayMedia?.({video:true,audio:true}):
+        await navigator.mediaDevices?.getUserMedia?.({audio:true});
+      if(!media||media.getAudioTracks().length===0)
+        throw Error('No audio track was shared. Choose an audio-enabled source.');
+      const capture=new MediaStream(media.getAudioTracks());
+      const nextRecorder=new window.MediaRecorder(capture,{
+        mimeType:mime,audioBitsPerSecond:96000
+      });
+      const result=await action.command('recording',{
+        type:'start-recording',requestId:control.requestId,
+        expectedRevision:control.revision
+      },'Recording started after verified participant consent.');
+      if(!result){media.getTracks().forEach(t=>t.stop());return;}
+      discarded.current=false;
+      const token={requestId:control.requestId,sessionId:control.sessionId,
+        revision:result.revision,started:Date.now(),mime:recordingBaseMime(mime),seenRecording:false};
+      activeRef.current=token;setActive(token);stream.current=media;recorder.current=nextRecorder;
+      const chunks=[];
+      nextRecorder.ondataavailable=event=>{if(event.data?.size)chunks.push(event.data);};
+      nextRecorder.onerror=()=>{discarded.current=true;
+        setError('The browser recorder failed. The capture has been discarded.');
+        if(nextRecorder.state!=='inactive')nextRecorder.stop();};
+      nextRecorder.onstop=async()=>{
+        stopTracks();recorder.current=null;
+        setActive(null);activeRef.current=null;
+        if(discarded.current){setClip(null);return;}
+        const blob=new Blob(chunks,{type:token.mime});
+        const durationSeconds=Math.min(RECORDING_MAX_SECONDS,
+          Math.max(1,Math.ceil((Date.now()-token.started)/1000)));
+        const finished=await action.command('recording',{
+          type:'stop-recording',requestId:token.requestId,
+          expectedRevision:token.revision
+        },'Recording stopped. Your local clip is ready for review.');
+        if(!finished||!blob.size){setClip(null);setError('The capture could not be confirmed by the server. No archive will be uploaded.');return;}
+        const ext=RECORDING_FORMATS[token.mime]?.extension||'webm';
+        const file=new File([blob],'asteria-session-'+token.requestId+'.'+ext,{
+          type:token.mime
+        });
+        if(file.size>RECORDING_MAX_BYTES){
+          setError('The recording exceeds 40 MB. Download locally; cloud archive is unavailable.');
+        }
+        setClip({file,requestId:token.requestId,sessionId:token.sessionId,
+          durationSeconds});setMessage('Recording is local and private until you explicitly save an archive.');
+      };
+      nextRecorder.start(1000);
+      cutoff.current=window.setTimeout(()=>{
+        if(nextRecorder.state==='recording')nextRecorder.stop();
+      },RECORDING_MAX_SECONDS*1000);
+    }catch(err){media?.getTracks?.().forEach(t=>t.stop());
+      setError(err?.message||'Recording could not start.');}
+  };
+  const download=()=>{
+    if(!clip?.file)return;
+    const url=URL.createObjectURL(clip.file);
+    const link=document.createElement('a');link.href=url;link.download=clip.file.name;
+    document.body.appendChild(link);link.click();link.remove();
+    window.setTimeout(()=>URL.revokeObjectURL(url),1000);
+  };
+  const saveArchive=async()=>{
+    if(!clip?.file||clip.file.size>RECORDING_MAX_BYTES||!title.trim())return;
+    const result=await action.uploadRecording(clip.file,{
+      title,summary,sessionId:clip.sessionId,requestId:clip.requestId,
+      durationSeconds:clip.durationSeconds
+    },'Private recording archive uploaded.');
+    if(result){setClip(null);setTitle('');setSummary('');}
+  };
+  const showPreview=async row=>{
+    try{
+      const blob=await action.api.fetchRecordingArchive(action.campaignId,row);
+      const url=URL.createObjectURL(blob);
+      setPreview(previous=>{if(previous?.url)URL.revokeObjectURL(previous.url);
+        return {id:row.id,url};});
+    }catch(err){setError(err?.message||'Recording playback unavailable.');}
+  };
   return <section className={styles.section} data-testid="site-digital-gm-recordings">
-    <h3>Session Recordings &amp; Consent</h3>
-    <p>Recording requests, participant consent, browser capture and archive publication require their existing verified recording controls. A recording cannot be started without prior consent.</p>
-    <p>Controller status: {control?.status||'Idle'}</p>
-    <h4>GM Archives</h4>
-    {rows(data.sections.recordingArchives).map(row=><article className={styles.card} key={row.id}>
-      <strong>{row.title||row.id}</strong><span>{row.status} · {row.visibility||'Private'}</span></article>)}
+    <h3>Session Recordings, Consent &amp; Private Archives</h3>
+    <p>Browser audio capture requires explicit consent from every active participant.
+      No microphone or tab audio is captured until the GM starts recording.</p>
+    {error?<p role="alert">{error}</p>:null}
+    {message?<p role="status">{message}</p>:null}
+    <div className={styles.box}>
+      <h4>Recording Consent Controller</h4>
+      <p>Session: {data.session?.status||'idle'} · Controller: {control.status||'idle'}</p>
+      <p>Participant agreements: {agreed}/{(control.participants||[]).length}
+        {declined?' · A participant declined':''}</p>
+      {options([{id:'microphone',label:'Microphone'},
+        {id:'tab-audio',label:'Browser Tab Audio'}],mode,setMode,'Capture source')}
+      <label><input type="checkbox" checked={ack} onChange={e=>setAck(e.target.checked)}/>
+        I consent to recording my own audio and have permission to capture the selected source.</label>
+      <div className={styles.actions}>
+        <button type="button" disabled={action.busy||!ack||data.session?.status!=='active'||
+          !['idle','cancelled'].includes(control.status||'idle')}
+          onClick={requestConsent}>Request Participant Consent</button>
+        {control.status==='consent'?<>
+          <button type="button" disabled={action.busy||!ready||!ack}
+            onClick={start}>Start Browser Recording</button>
+          <button type="button" disabled={action.busy} onClick={()=>action.command('recording',{
+            type:'cancel-consent',requestId:control.requestId,
+            expectedRevision:control.revision
+          },'Recording consent request cancelled.')}>Cancel Consent Request</button>
+        </>:null}
+        {active?<button type="button" onClick={()=>{
+          if(recorder.current?.state==='recording')recorder.current.stop();
+        }}>Stop Recording</button>:null}
+        {control.status==='recording'&&!active?<button type="button"
+          disabled={action.busy} onClick={()=>action.command('recording',{
+            type:'stop-recording',requestId:control.requestId,
+            expectedRevision:control.revision
+          },'Stale recording controller stopped.')}>Stop Remote Recording State</button>:null}
+      </div>
+      {active?<p role="status">Recording active. Stop it before leaving this workspace.</p>:null}
+    </div>
+    {clip?<div className={styles.box}>
+      <h4>Local Recording Review</h4>
+      <p>{clip.durationSeconds} seconds · {Math.ceil(clip.file.size/1024)} KB.
+        Private unless explicitly archived and later shared.</p>
+      <div className={styles.fields}>
+        <label>Archive title<input maxLength={140} value={title}
+          onChange={e=>setTitle(e.target.value)}/></label>
+        <label>Archive summary<textarea rows={3} maxLength={2000} value={summary}
+          onChange={e=>setSummary(e.target.value)}/></label>
+      </div>
+      <div className={styles.actions}>
+        <button type="button" disabled={action.busy} onClick={download}>Download Local Recording</button>
+        <button type="button" disabled={action.busy||!title.trim()||
+          clip.file.size>RECORDING_MAX_BYTES} onClick={saveArchive}>
+          Save Private Cloud Archive</button>
+        <button type="button" onClick={()=>{setClip(null);setMessage('Local recording discarded.');}}>
+          Discard Local Recording</button>
+      </div>
+    </div>:null}
+    <h4>GM Recording Archives ({archives.length})</h4>
+    <div className={styles.cards}>{archives.map(row=><article key={row.id} className={styles.card}>
+      <strong>{row.title||row.id}</strong>
+      <span>{row.status} · {row.visibility==='players'?'Shared with players':'GM private'}
+        {' · '+Math.ceil((row.durationSeconds||0)/60)+' min'}</span>
+      {row.summary?<p>{row.summary}</p>:null}
+      <div className={styles.actions}>
+        {row.status==='ready'?<>
+          <button type="button" disabled={action.busy}
+            onClick={()=>showPreview(row)}>Load Recording</button>
+          <button type="button" disabled={action.busy} onClick={()=>action.command('recording',{
+            type:row.visibility==='players'?'unpublish-archive':'publish-archive',
+            id:row.id,expectedRevision:row.revision
+          },'Recording archive publication updated.')}>
+            {row.visibility==='players'?'Unshare Recording':'Share With Players'}</button>
+        </>:null}
+        <button type="button" disabled={action.busy} onClick={()=>action.command('recording',{
+          type:'archive-archive',id:row.id,expectedRevision:row.revision
+        },'Recording archived and player access revoked.')}>Archive Recording</button>
+      </div>
+      {preview?.id===row.id?<audio controls preload="metadata" src={preview.url}/>:null}
+    </article>)}</div>
+    {!archives.length?<p>No session recording archives.</p>:null}
   </section>;
 }
-export function GMDigitalGMWorkspace({api,campaignId}){
-  const [area,setArea]=useState('library'),[snapshot,setSnapshot]=useState({area:'',data:null}),
+
+export function GMDigitalGMWorkspace({api,campaignId,initialArea='library'}){
+  const [area,setArea]=useState(()=>GM_AREAS.includes(initialArea)?initialArea:'library'),[snapshot,setSnapshot]=useState({area:'',data:null}),
     [error,setError]=useState(''),[message,setMessage]=useState(''),[busy,setBusy]=useState(false),
     [search,setSearch]=useState('');
   // Never render a different tab's stale snapshot. Area-change effects run
@@ -425,7 +802,7 @@ export function GMDigitalGMWorkspace({api,campaignId}){
   const fail=React.useCallback(e=>{setSnapshot({area,data:null});
     setError(e?.message||'GM access denied.');},[area]);
   const action={
-    busy,
+    busy,api,campaignId,
     async world(op,success){if(busy)return false;setBusy(true);setError('');setMessage('');
       try{await api.world(campaignId,op);setMessage(success);return true;}
       catch(e){setError(e?.message||'Unable to update GM workspace.');return false;}
@@ -435,6 +812,27 @@ export function GMDigitalGMWorkspace({api,campaignId}){
       try{const result=await api.command(campaignId,kind,op);setMessage(success);return result;}
       catch(e){setError(e?.message||'GM request failed.');return null;}
       finally{setBusy(false);}
+    },
+    async uploadPdf(file,details,success){
+      if(busy)return null;setBusy(true);setError('');setMessage('');
+      try{const result=await api.uploadSessionPdf(campaignId,file,details);
+        setMessage(success);return result;}
+      catch(e){setError(e?.message||'PDF upload failed.');return null;}
+      finally{setBusy(false);}
+    },
+    async uploadAudio(file,details,success){
+      if(busy)return null;setBusy(true);setError('');setMessage('');
+      try{const result=await api.uploadCampaignAudio(campaignId,file,details);
+        setMessage(success);return result;}
+      catch(e){setError(e?.message||'Audio upload failed.');return null;}
+      finally{setBusy(false);}
+    },
+    async uploadRecording(file,details,success){
+      if(busy)return null;setBusy(true);setError('');setMessage('');
+      try{const result=await api.uploadRecordingArchive(campaignId,file,details);
+        setMessage(success);return result;}
+      catch(e){setError(e?.message||'Recording archive upload failed.');return null;}
+      finally{setBusy(false);}
     }
   };
   const results=useMemo(()=>data&&search.trim()?localGMSearch(data,data.sections,search):[],
@@ -443,7 +841,7 @@ export function GMDigitalGMWorkspace({api,campaignId}){
     <h2>Digital GM Toolkit</h2>
     <Area api={api} campaignId={campaignId} area={area} onData={update} onError={fail}/>
     <nav className={styles.tabs} aria-label="Digital GM sections">
-      {GM_AREAS.map(id=><button key={id} aria-current={id===area?'page':undefined}
+      {GM_AREAS.filter(id=>id!=='world').map(id=><button key={id} aria-current={id===area?'page':undefined}
         onClick={()=>setArea(id)}>{({library:'NPC Library',relationships:'Reputation',
           stories:'Quests & Notes',tables:'Generators',calendar:'Calendar',
           weather:'Weather',archives:'Documents',audio:'Soundboard',
@@ -464,14 +862,14 @@ export function GMDigitalGMWorkspace({api,campaignId}){
       {area==='weather'?<Weather data={data} action={action}/>:null}
       {area==='archives'?<Archives data={data} action={action}/>:null}
       {area==='audio'?<Audio data={data} action={action}/>:null}
-      {area==='recordings'?<Recordings data={data}/>:null}
+      {area==='recordings'?<Recordings data={data} action={action}/>:null}
     </>:null}
   </section>;
 }
 /** Public read-only projections: these are separate from GM-private source data. */
-export function PlayerDigitalGMWorkspace({api,campaignId}){
+export function PlayerDigitalGMWorkspace({api,campaignId,initialSection='calendar'}){
   const [data,setData]=useState(null),[error,setError]=useState(''),
-    [selected,setSelected]=useState('calendar');
+    [selected,setSelected]=useState(()=>['calendar','weather','handouts','soundboard','recording'].includes(initialSection)?initialSection:'calendar');
   useEffect(()=>{
     setData(null);setError('');
     return api.watchPlayer(campaignId,setData,e=>{setData(null);

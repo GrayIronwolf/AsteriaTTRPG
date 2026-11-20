@@ -1,0 +1,100 @@
+/* Phase 3.4: GM library + toolkit. Scoped React-only presentation. */
+.shell{display:grid;gap:16px;min-width:0;padding:var(--ast-page-panel-padding,18px);
+  background:var(--ast-color-panel-raised);color:var(--ast-color-text-bright)}
+.shell h2,.shell h3,.shell h4,.shell p,.shell dl,.shell dd{margin:0}
+.shell h2{font-family:var(--ast-font-display,serif);font-size:clamp(1.2rem,2vw,1.65rem)}
+.shell h3{font-size:1.08rem}
+.shell h4{font-size:1rem}
+.shell p{line-height:1.5;overflow-wrap:anywhere}
+.head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;min-width:0}
+.head>div{display:grid;gap:8px;min-width:0}
+.head small{color:var(--ast-color-text-muted)}
+.counts{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.counts span{display:grid;gap:4px;font-size:.8rem}
+.counts strong{font-size:1.4rem;color:var(--ast-color-text-bright)}
+.metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.metrics>div{display:grid;gap:5px;padding:12px;min-width:0;
+  background:var(--ast-color-panel);border:1px solid var(--ast-color-outline-soft)}
+.metrics small,.muted{color:var(--ast-color-text-muted)}
+.metrics strong{overflow-wrap:anywhere}
+.toolbar{display:flex;gap:10px;align-items:end;flex-wrap:wrap}
+.toolbar>.field{flex:1 1 240px}
+.form{display:grid;gap:14px;min-width:0}
+.form label,.field{display:grid;gap:6px;min-width:0;font-size:.92rem}
+.form input:not([type='checkbox']):not([type='radio']),
+.form textarea,.form select,
+.field input,.shell input:not([type='checkbox']):not([type='radio']),
+.shell textarea,.shell select{
+  width:100%;max-width:100%;min-width:0;min-height:42px;padding:9px 10px;
+  font:inherit;border-radius:3px;color:var(--ast-color-text-bright);
+  border:1px solid var(--ast-color-outline-soft);
+  background:var(--ast-color-panel)}
+.form textarea,.shell textarea{resize:vertical}
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:12px;min-width:0}
+.actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.actions button,.shell button,.shell a{
+  min-height:42px;padding:9px 12px;border-radius:3px;font:inherit;
+  background:var(--ast-color-panel-raised);color:var(--ast-color-text-bright);
+  border:1px solid var(--ast-color-outline-soft);cursor:pointer;
+  text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+.shell a{min-height:42px}
+.shell button:hover:not(:disabled),.shell a:hover{
+  border-color:var(--ast-color-outline-active)}
+.shell button[aria-pressed='true']{
+  border-color:var(--ast-color-outline-active);
+  background:var(--ast-color-panel)}
+.shell button:focus-visible,.shell a:focus-visible,.shell input:focus-visible,
+.shell textarea:focus-visible,.shell select:focus-visible{
+  outline:2px solid var(--ast-color-focus);outline-offset:2px}
+.shell button:disabled{opacity:.52;cursor:not-allowed}
+.shell .inline{display:inline-flex;gap:8px;align-items:center;font-weight:normal}
+.inline input{width:18px;height:18px;flex:none}
+.choices{display:flex;gap:12px;flex-wrap:wrap}
+.fieldset{display:grid;gap:12px;padding:12px;border:1px solid var(--ast-color-outline-soft);min-width:0}
+.fieldset legend{padding:0 6px}
+.subpanel{display:grid;gap:13px;padding:14px;min-width:0;border:1px solid var(--ast-color-outline-soft);
+  background:var(--ast-color-panel)}
+.records{display:grid;gap:11px;min-width:0}
+.record{display:grid;gap:10px;min-width:0;padding:13px;border:1px solid var(--ast-color-outline-soft);
+  background:var(--ast-color-panel)}
+.record small,.record>span{color:var(--ast-color-text-muted)}
+.toolSection{display:grid;gap:12px}
+.toolSection>header{display:grid;gap:6px}
+.toolGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,235px),1fr));gap:12px}
+.toolCard{display:grid;align-content:start;gap:10px;min-width:0;
+  padding:14px;border:1px solid var(--ast-color-outline-soft);
+  background:var(--ast-color-panel)}
+.toolCard button{margin-top:auto}
+.toolCard small{color:var(--ast-color-text-muted)}
+.empty,.quick{display:grid;gap:12px}
+.quick{padding:14px}
+.characterCard{display:grid;gap:0;min-width:0;border:2px solid var(--ast-color-outline-active);
+  background:var(--ast-color-panel);color:var(--ast-color-text-bright);overflow:hidden}
+.characterCard[data-theme='slate']{background:var(--ast-color-panel-slate);border-color:var(--ast-color-outline)}
+.characterCard[data-theme='parchment']{background:var(--ast-color-panel-slate);color:var(--ast-color-text-bright);border-color:var(--ast-color-outline-active)}
+.characterCard>header,.characterCard>footer{display:flex;flex-wrap:wrap;gap:8px;
+  justify-content:space-between;padding:8px 12px;border-bottom:1px solid currentColor;
+  font-size:.75rem;letter-spacing:.04em}
+.characterCard>footer{border-top:1px solid currentColor;border-bottom:none}
+.cardBody{display:flex;gap:12px;min-width:0;padding:12px;align-items:flex-start}
+.cardPortrait{display:grid;place-items:center;width:112px;min-width:72px;max-width:35%;aspect-ratio:3/4;
+  background:var(--ast-color-panel-raised);border:1px solid var(--ast-color-outline-soft);color:var(--ast-color-text-bright);font:2rem/1 serif;overflow:hidden}
+.cardPortrait img{width:100%;height:100%;object-fit:cover}
+.cardFacts{display:grid;gap:8px;min-width:0;flex:1}
+.cardFacts h3{font-size:1.25rem;overflow-wrap:anywhere}
+.cardFacts dl{display:grid;gap:6px}
+.cardFacts dl>div{display:grid;gap:2px}
+.cardFacts dt{font-size:.72rem;font-weight:600;opacity:.8}
+.cardFacts dd{font-size:.88rem;overflow-wrap:anywhere}
+.characterCard[data-compact='true'] .cardBody{gap:8px;padding:8px}
+.characterCard[data-compact='true'] .cardPortrait{width:65px}
+.characterCard[data-compact='true'] .cardFacts dl>div:nth-child(n+5){display:none}
+.cardGrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;min-width:0}
+.cardGrid>div{min-width:0;display:grid;align-content:start;gap:12px}
+.cardSetting{display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:8px 0;border-bottom:1px solid var(--ast-color-outline-soft);flex-wrap:wrap}
+.cardSetting>div{min-width:0}
+.cardSetting p{margin-top:5px}
+@media(max-width:820px){.cardGrid{grid-template-columns:1fr}.metrics{grid-template-columns:1fr 1fr}}
+@media(max-width:540px){.shell{padding:12px}.metrics{grid-template-columns:1fr}
+  .cardBody{flex-direction:column}.cardPortrait{width:100%;max-width:120px}}

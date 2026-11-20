@@ -8,20 +8,63 @@ import {CrystalButton} from '../components/ui/CrystalButton.jsx';
 import {Eyebrow,Heading,BodyText} from '../components/ui/Typography.jsx';
 import {gmSessionCommands} from '../dashboard/gmDashboardModel.mjs';
 import {DashboardLayoutManager} from '../layout/DashboardLayoutManager.jsx';
-import {CampaignMapWorkspace} from '../dashboard/CampaignMapWorkspace.jsx';
+import {GMOverviewPanel} from '../dashboard/GMOverviewPanels.jsx';
+import {GMPartyManagement} from '../dashboard/GMPartyManagement.jsx';
+import {GMQuestManagement} from '../dashboard/GMQuestManagement.jsx';
+import {GMCampaignManagement} from '../dashboard/GMCampaignManagement.jsx';
+import {GMNotesManagement} from '../dashboard/GMNotesManagement.jsx';
+import {GMInformationManagement} from '../dashboard/GMInformationManagement.jsx';
+import {GMNpcCreatureWorkspace} from '../dashboard/GMNpcCreatureWorkspace.jsx';
+import {GMWorldSystemsWorkspace} from '../dashboard/GMWorldSystemsWorkspace.jsx';
+import {GMToolkitWorkspace,GMToolkitQuickAccess} from '../dashboard/GMToolkitWorkspace.jsx';
+import {CampaignMapWorkspace,CampaignAtlasWorkspace} from '../dashboard/CampaignMapWorkspace.jsx';
 import {CampaignPresentationController} from '../dashboard/CampaignPresentationWorkspace.jsx';
 import {GMCombatWorkspace} from '../combat/CombatWorkspace.jsx';
 import {GMChecksAndProgression} from '../progression/ProgressionWorkspace.jsx';
 import {GMEconomyWorkspace} from '../economy/EconomyWorkspace.jsx';
 import {GMDigitalGMWorkspace} from '../digitalGM/DigitalGMWorkspace.jsx';
+import {AdvancedDiceWorkspace} from '../dice/AdvancedDiceWorkspace.jsx';
 import styles from './GMDashboardPage.module.css';
+
+const GM_TABS=Object.freeze([
+  {id:'main',label:'GM Main'},
+  {id:'toolkit',label:'GM Toolkit'},
+  {id:'bestiary',label:'NPC & Creature Library'},
+  {id:'settings',label:'Dashboard Settings'},
+  {id:'inventory',label:'PC Inventory'},
+  {id:'information',label:'News & Events'},
+  {id:'quests',label:'Quests'},
+  {id:'notes',label:'GM Notes'},
+  {id:'session-library',label:'Session Library',area:'archives'},
+  {id:'soundboard',label:'Soundboard & Ambience',area:'audio'},
+  {id:'session-recordings',label:'Session Recordings',area:'recordings'},
+  {id:'presentation',label:'Player Display'},
+  {id:'economy',label:'Economy'},
+  {id:'crafting',label:'Crafting'},
+  {id:'tools',label:'GM Tools',area:'tables'},
+  {id:'gameplay',label:'Gameplay Systems'},
+  {id:'world',label:'World Systems'},
+  {id:'battle-maps',label:'Battle Maps'},
+  {id:'advanced-dice',label:'Advanced Dice'},
+  {id:'random-tables',label:'Random Tables',area:'tables'},
+  {id:'encounter-rewards',label:'Encounter Generator',area:'tables'},
+  {id:'asteria-calendar',label:'Asteria Calendar',area:'calendar'},
+  {id:'weather-environment',label:'Weather Generator',area:'weather'},
+  {id:'world-atlas',label:'World Atlas'}
+]);
+const GM_TOOL_AREAS=Object.fromEntries(GM_TABS.filter(tab=>tab.area)
+  .map(tab=>[tab.id,tab.area]));
 
 function ResourceMeter({label,value}) {
   const current=Array.isArray(value)?Number(value[0])||0:0;
   const maximum=Array.isArray(value)?Math.max(0,Number(value[1])||0):0;
+  const percent=maximum?Math.min(100,Math.max(0,current/maximum*100)):0;
   return <div className={styles.resourceMeter} data-resource={label.toLowerCase()}>
     <div><span>{label}</span><strong>{maximum?current+' / '+maximum:'—'}</strong></div>
-    <progress aria-label={label+' resources'} max={maximum||1} value={Math.max(0,Math.min(current,maximum))}/>
+    <div className={styles.meter} role="progressbar" aria-label={label+' resources'}
+      aria-valuemin={0} aria-valuemax={maximum} aria-valuenow={Math.max(0,Math.min(current,maximum))}>
+      <span className={styles.meterFill} style={{width:percent+'%'}}/>
+    </div>
   </div>;
 }
 function Party({party}) {
@@ -97,16 +140,27 @@ function LiveSession({session,loading,busy,onRun}) {
 function CampaignGM({api,uid,campaignId}) {
   const [snapshot,setSnapshot]=useState(null),[loading,setLoading]=useState(true);
   const [error,setError]=useState(''),[message,setMessage]=useState('');
-  const [busy,setBusy]=useState(false),[tab,setTab]=useState('overview');
+  const [busy,setBusy]=useState(false),[tab,setTab]=useState('main');
+  const [management,setManagement]=useState(null),[managementError,setManagementError]=useState('');
   const mediaEnabled=api.media?.availability().enabled===true;
   const combatEnabled=api.combat?.availability().enabled===true;
   const progressionEnabled=api.progression?.availability().enabled===true;
   const economyEnabled=api.economy?.availability().enabled===true;
   const digitalGMEnabled=api.digitalGM?.availability().enabled===true;
+  const toolkitCapabilities={
+    gm:true,
+    digitalGM:digitalGMEnabled,
+    economy:economyEnabled,
+    progression:progressionEnabled,
+    media:mediaEnabled,
+    dice:api.dice?.availability().enabled===true,
+    layout:api.availability().layoutEnabled===true
+  };
+  const gmTabIds=GM_TABS.map(item=>item.id);
   const scope=useRef(0);
   useEffect(()=>{
     const token=++scope.current;
-    setSnapshot(null);setLoading(true);setError('');setMessage('');setBusy(false);setTab('overview');
+    setSnapshot(null);setLoading(true);setError('');setMessage('');setBusy(false);setTab('main');
     const close=api.watch(campaignId,data=>{
       if(scope.current!==token)return;
       setSnapshot(data);setLoading(false);
@@ -116,6 +170,18 @@ function CampaignGM({api,uid,campaignId}) {
       setError(err.message||'GM access could not be verified.');
     });
     return ()=>{++scope.current;close();};
+  },[api,campaignId,uid]);
+  useEffect(()=>{
+    let active=true;
+    setManagement(null);setManagementError('');
+    const close=api.watchManagement(campaignId,data=>{
+      if(!active)return;
+      setManagement(data);setManagementError('');
+    },err=>{
+      if(!active)return;
+      setManagement(null);setManagementError(err?.message||'GM campaign systems could not be loaded.');
+    });
+    return ()=>{active=false;close();};
   },[api,campaignId,uid]);
   const run=async action=>{
     if(busy||!snapshot||loading)return;
@@ -131,6 +197,36 @@ function CampaignGM({api,uid,campaignId}) {
       if(scope.current===token)setBusy(false);
     }
   };
+  const manageCondition=async(characterId,input)=>{
+    if(busy||!snapshot)return;
+    setBusy(true);setError('');setMessage('');
+    const token=scope.current;
+    try{
+      await api.manageCondition(campaignId,characterId,input);
+      if(scope.current===token)setMessage('Condition updated.');
+      return true;
+    }catch(e){
+      if(scope.current===token)setError(e?.message||'Condition update failed.');
+      return false;
+    }finally{
+      if(scope.current===token)setBusy(false);
+    }
+  };
+  const reviewRest=async(characterId,requestId,status)=>{
+    if(busy||!snapshot)return;
+    setBusy(true);setError('');setMessage('');
+    const token=scope.current;
+    try{
+      await api.reviewRest(campaignId,characterId,requestId,status);
+      if(scope.current===token)setMessage('Long Rest '+status+'.');
+      return true;
+    }catch(e){
+      if(scope.current===token)setError(e?.message||'Rest review failed.');
+      return false;
+    }finally{
+      if(scope.current===token)setBusy(false);
+    }
+  };
   if(loading)return <SurfacePanel className={styles.panel}>
     <BodyText>Verifying GM membership and connecting to campaign data…</BodyText>
   </SurfacePanel>;
@@ -141,7 +237,7 @@ function CampaignGM({api,uid,campaignId}) {
   if(!snapshot)return null;
   const live=snapshot.session;
   return <>
-    <div className={styles.gmHero}>
+    <div className={styles.gmHero} data-testid="site-gm-hero">
       {snapshot.campaign.image?<img className={styles.gmHeroImage} src={snapshot.campaign.image} alt="" loading="lazy"/>:null}
       <div className={styles.head}>
       <div><Eyebrow>GM Dashboard · {snapshot.role}</Eyebrow>
@@ -157,46 +253,88 @@ function CampaignGM({api,uid,campaignId}) {
       <SurfacePanel className={styles.metric}><strong>{live.status}</strong><span>Session Status</span></SurfacePanel>
     </div>
     <div className={styles.gmWorkspaceColumns}>
-      <aside className={styles.partySidebar} aria-label="Player resources">
+      <aside className={styles.partySidebar} data-testid="site-gm-party-sidebar" aria-label="Player resources">
         <h2>Player Resources</h2>
         <Party party={snapshot.party}/>
       </aside>
       <div className={styles.gmWorkspaceMain}>
     <nav aria-label="GM dashboard sections" className={styles.tabs}>
-      {['overview','party','session',...(combatEnabled?['combat']:[]),...(progressionEnabled?['checks-progression']:[]),...(economyEnabled?['inventory-loot-crafting']:[]),...(digitalGMEnabled?['digital-gm-toolkit']:[]),...(mediaEnabled?['battle-maps','presentation']:[])].map(item=><CrystalButton key={item} type="button" size="compact" active={tab===item}
-        onClick={()=>setTab(item)}>{item[0].toUpperCase()+item.slice(1)}</CrystalButton>)}
+      {GM_TABS.map(item=><CrystalButton key={item.id} type="button" size="compact" active={tab===item.id}
+        onClick={()=>setTab(item.id)}>{item.label}</CrystalButton>)}
     </nav>
     {error?<p role="alert" className={styles.notice}>{error}</p>:null}
     {message?<p role="status" className={styles.notice}>{message}</p>:null}
-    {(tab==='overview'||tab==='session')?<LiveSession session={live} loading={loading} busy={busy} onRun={run}/>:null}
-    {api.availability().layoutEnabled?
+    {tab==='main'?<><LiveSession session={live} loading={loading} busy={busy} onRun={run}/>
+      <GMPartyManagement party={snapshot.party} campaignId={campaignId} session={live}
+        busy={busy} onNavigate={setTab} onCondition={manageCondition}
+        onReviewRest={reviewRest}/>
+      <GMToolkitQuickAccess onNavigate={setTab} enabled={toolkitCapabilities} tabs={gmTabIds}/></>:null}
+    {api.availability().layoutEnabled&&['main','settings'].includes(tab)?
       <DashboardLayoutManager role="gm" api={api} uid={uid} campaignId={campaignId}
-        renderPanel={id=>{
-          if(id==='partySummary')return <Party party={snapshot.party}/>;
-          if(id==='encounter')return combatEnabled?
-            <button type="button" onClick={()=>setTab('combat')}>
-              Open Combat · Session {live.status}
-            </button>:
-            <p>Session: {live.status}. Combat commands migrate in Phase 7.</p>;
-          if(id==='restRequests')return <p>Rest requests migrate in Phase 7.</p>;
-          if(id==='xp')return progressionEnabled?<button type="button" onClick={()=>setTab('checks-progression')}>
-            Open XP &amp; Check Requests</button>:<p>XP distribution migrates in Phase 7.</p>;
-          return null;
-        }}/>
+        renderPanel={id=><GMOverviewPanel id={id} party={snapshot.party}
+          session={live} onNavigate={setTab} onReviewRest={reviewRest}
+          onCondition={manageCondition} busy={busy}
+          available={{combat:combatEnabled,
+            progression:progressionEnabled,economy:economyEnabled,digitalGM:digitalGMEnabled}}/>}/>
       :null}
-    {combatEnabled&&tab==='combat'?<GMCombatWorkspace
+    {['quests','tools','notes','information','toolkit'].includes(tab)&&managementError?<p role="alert">{managementError}</p>:null}
+    {['quests','tools','notes','information','toolkit'].includes(tab)&&!management&&!managementError?
+      <BodyText>Connecting to the private GM campaign workspace…</BodyText>:null}
+    {tab==='quests'&&management?<GMQuestManagement api={api} campaignId={campaignId}
+      workspace={management} party={snapshot.party} session={live}/>:null}
+    {tab==='tools'&&management?<GMCampaignManagement api={api} campaignId={campaignId}
+      campaign={snapshot.campaign} workspace={management}
+      party={snapshot.party} session={live}/>:null}
+    {tab==='notes'&&management?<GMNotesManagement api={api} campaignId={campaignId}
+      workspace={management} session={live}/>:null}
+    {tab==='information'&&management?<GMInformationManagement api={api}
+      campaignId={campaignId} campaign={snapshot.campaign}
+      workspace={management} party={snapshot.party}/>:null}
+    {tab==='toolkit'&&management?<GMToolkitWorkspace
+      session={live} party={snapshot.party} quests={management.quests}
+      tabs={gmTabIds} enabled={toolkitCapabilities} onNavigate={setTab}/>:null}
+    {tab==='bestiary'&&digitalGMEnabled?<GMNpcCreatureWorkspace
+      api={api} campaignId={campaignId} party={snapshot.party}
+      onNavigate={setTab}/>:null}
+    {tab==='bestiary'&&!digitalGMEnabled?<SurfacePanel className={styles.panel}>
+      <h2>NPC &amp; Creature Library</h2>
+      <BodyText muted>The authenticated Digital GM service is not enabled for this campaign.</BodyText>
+    </SurfacePanel>:null}
+    {tab==='world'&&digitalGMEnabled?<GMWorldSystemsWorkspace
+      api={api.digitalGM} campaignId={campaignId} onNavigate={setTab}/>:null}
+    {tab==='world'&&!digitalGMEnabled?<SurfacePanel className={styles.panel}>
+      <h2>World Systems</h2>
+      <BodyText muted>The authenticated World Systems service is not enabled for this campaign.</BodyText>
+    </SurfacePanel>:null}
+    {digitalGMEnabled&&GM_TOOL_AREAS[tab]?<GMDigitalGMWorkspace
+      key={uid+':'+campaignId+':'+tab} api={api.digitalGM} campaignId={campaignId}
+      initialArea={GM_TOOL_AREAS[tab]}/>:null}
+    {economyEnabled&&['inventory','economy','crafting'].includes(tab)?<GMEconomyWorkspace
+      key={uid+':'+campaignId+':'+tab} api={api.economy} campaignId={campaignId}
+      initialTab={tab==='inventory'?'Inventory':tab==='crafting'?'Crafting':'Party Loot'}/>:null}
+    {combatEnabled&&tab==='gameplay'?<GMCombatWorkspace
       key={uid+':'+campaignId} api={api.combat} campaignId={campaignId}/>:null}
-    {digitalGMEnabled&&tab==='digital-gm-toolkit'?<GMDigitalGMWorkspace
-      key={uid+':'+campaignId} api={api.digitalGM} campaignId={campaignId}/>:null}
-    {economyEnabled&&tab==='inventory-loot-crafting'?<GMEconomyWorkspace
-      key={uid+':'+campaignId} api={api.economy} campaignId={campaignId}/>:null}
-    {progressionEnabled&&tab==='checks-progression'?<GMChecksAndProgression
+    {progressionEnabled&&tab==='gameplay'?<GMChecksAndProgression
       key={uid+':'+campaignId} api={api.progression} campaignId={campaignId}/>:null}
     {mediaEnabled&&tab==='battle-maps'?<CampaignMapWorkspace key={uid+':'+campaignId}
       api={api.media} campaignId={campaignId} role="gm"/>:null}
+    {mediaEnabled&&tab==='world-atlas'?<CampaignAtlasWorkspace key={uid+':'+campaignId}
+      api={api.media} campaignId={campaignId}/>:null}
     {mediaEnabled&&tab==='presentation'?<CampaignPresentationController
       key={uid+':'+campaignId} api={api.media} campaignId={campaignId}
       party={snapshot.party}/>:null}
+    {tab==='advanced-dice'&&api.dice?.availability().enabled?
+      <AdvancedDiceWorkspace api={api.dice} role="gm"/>:null}
+    {tab==='advanced-dice'&&!api.dice?.availability().enabled?
+      <p role="status">Advanced Dice are unavailable for this account.</p>:null}
+    {((GM_TOOL_AREAS[tab]&&!digitalGMEnabled)||
+      (['inventory','economy','crafting'].includes(tab)&&!economyEnabled)||
+      (tab==='gameplay'&&!combatEnabled&&!progressionEnabled)||
+      (['battle-maps','world-atlas','presentation'].includes(tab)&&!mediaEnabled))?
+      <SurfacePanel className={styles.panel}>
+        <h2>{GM_TABS.find(item=>item.id===tab)?.label}</h2>
+        <BodyText muted>This campaign feature is not enabled for the current account or campaign.</BodyText>
+      </SurfacePanel>:null}
     </div>
     </div>
   </>;

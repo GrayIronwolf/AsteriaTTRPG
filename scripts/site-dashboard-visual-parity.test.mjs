@@ -1,6 +1,8 @@
+import './site-dashboard-journal-parity.test.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {createRequire} from 'node:module';
 import {playerCharacterProjection,playerCampaignProjection} from '../frontend/src/player/playerDashboardModel.mjs';
 import {gmCampaignSummary,gmPartySummary} from '../frontend/src/dashboard/gmDashboardModel.mjs';
 import {safeDashboardArtwork} from '../src/state/playerHudMedia.mjs';
@@ -21,7 +23,7 @@ test('player restores original portrait, campaign image, HP SP MP and 9 characte
   const css=read('frontend/src/pages/PlayerDashboardPage.module.css');
   for(const marker of ['classicHeader','portraitColumn','coreColumn','campaignColumn','Resources','StatPanel','sessionStrip'])
     assert.ok(jsx.includes(marker),marker);
-  assert.match(css,/grid-template-columns:minmax\(200px,30%\)/);
+  assert.match(css,/grid-template-columns:minmax\(180px,30fr\)/);
   assert.doesNotMatch(jsx,/<h3>Dashboard Migration<\/h3>/);
 });
 test('GM has original resource sidebar, framed panels and reusable session backend',()=>{
@@ -44,4 +46,223 @@ test('only safe image URLs cross React projection boundary, never expose private
   assert.equal(playerCampaignProjection(c,{allowed:true,isGM:false},null).image,'/assets/campaign.webp');
   assert.equal(gmCampaignSummary({...c,ownerUid:owner},{allowed:true,role:'owner'}).image,'/assets/campaign.webp');
   assert.equal(gmPartySummary([{id,name:'Hero',image:'https://example.com/hero.webp'}])[0].image,'https://example.com/hero.webp');
+});
+
+test('restored frame uses original square cell ratios, sliced artwork, and four frame families',()=>{
+  const css=read('frontend/src/layout/DashboardLayoutWorkspace.module.css');
+  const jsx=read('frontend/src/layout/DashboardLayoutWorkspace.jsx');
+  assert.match(css,/grid-auto-rows: calc\(\(100cqw - 66px\) \/ 12\)/);
+  assert.match(css,/border-image-source:\s*var\(--ast-dashboard-frame\)/);
+  assert.match(css,/border-image-slice:\s*12%/);
+  assert.doesNotMatch(css,/grid-auto-rows:minmax\(42px/);
+  assert.match(jsx,/data-frame-family=\{frame\}/);
+  for(const kind of ['wide','ultrawide','tall','square'])assert.ok(jsx.includes("'"+kind+"'"));
+});
+test('Phase 4.1 matches final legacy border sizes, plaque rails and content containers',()=>{
+  const original=read('css/asteria-dashboard-responsive-content.css');
+  const plaque=read('css/asteria-panel-headers.css');
+  const css=read('frontend/src/layout/DashboardLayoutWorkspace.module.css');
+  assert.ok(original.includes('--asteria-frame-border:clamp(9px,2cqi,18px)'));
+  assert.ok(css.includes('--ast-dashboard-frame-border:clamp(9px,2cqi,18px)'));
+  assert.ok(css.includes('border:var(--ast-dashboard-frame-border) solid transparent'));
+  assert.ok(css.includes('border-image-width:1'));
+  assert.ok(css.includes('top:calc(var(--ast-dashboard-frame-border) * var(--ast-dashboard-header-rail-ratio))'));
+  for(const ratio of ['.333333','.833333','.233333']){
+    assert.ok(plaque.includes('--asteria-header-rail-ratio:'+ratio));
+    assert.ok(css.includes('--ast-dashboard-header-rail-ratio:'+ratio));
+  }
+  assert.ok(css.includes('container-name:asteria-panel;container-type:inline-size'));
+  assert.doesNotMatch(css,/--ast-dashboard-header-rail-y/);
+});
+test('Phase 4.1 HP SP MP controls reuse approved icon crystal rather than rectangles',()=>{
+  const jsx=read('frontend/src/pages/PlayerDashboardPage.jsx');
+  const css=read('frontend/src/pages/PlayerDashboardPage.module.css');
+  assert.ok(jsx.includes('<CrystalButton size="icon" aria-label={\'Decrease \''));
+  assert.ok(jsx.includes('<CrystalButton size="icon" aria-label={\'Increase \''));
+  assert.match(css,/\.coreColumn \.resourceActions button\{[^}]*background:transparent;border:0;box-shadow:none/);
+  assert.doesNotMatch(css,/\.coreColumn \.resourceActions button\{[^}]*background:rgb/);
+});
+test('Phase 4.3 saved layouts depend on workspace width, as in the approved original',()=>{
+  const old=read('src/components/DashboardCustomisation.jsx');
+  const current=read('frontend/src/layout/DashboardLayoutWorkspace.jsx');
+  assert.match(old,/ResizeObserver\(update\)/);
+  assert.match(old,/getBoundingClientRect\(\)\.width/);
+  assert.match(current,/new ResizeObserver\(refresh\)/);
+  assert.match(current,/workspaceRef=useRef\(null\)/);
+  assert.match(current,/getBoundingClientRect\(\)\.width\|\|window\.innerWidth/);
+  assert.match(current,/ref=\{workspaceRef\}/);
+  assert.match(current,/observer\?\.disconnect\(\)/);
+});
+test('Phase 4.3 original armour and equipment content breakpoints are retained',()=>{
+  const old=read('css/asteria-dashboard-responsive-content.css');
+  const current=read('frontend/src/player/PlayerOverviewPanels.module.css');
+  for(const w of [520,420,300,260]){
+    assert.ok(old.includes('(max-width:'+w+'px)'),w+' original breakpoint');
+    assert.ok(current.includes('(max-width:'+w+'px)'),w+' React breakpoint');
+  }
+  for(const declaration of [
+    '.armourClass{grid-column:1/-1;grid-row:1;min-height:76px}',
+    '.armourSlots:first-child{grid-column:1;grid-row:2}',
+    '.armourSlots:last-child{grid-column:1;grid-row:3}',
+    '.weaponSlots{grid-template-columns:minmax(0,1fr)}',
+    '.slotArt{width:26px;height:30px}'
+  ])assert.ok(current.includes(declaration),declaration);
+});
+test('Phase 4.3 CI captures all six authenticated React role/width pairs',()=>{
+  const script=read('scripts/site-layout-phase6-3-browser.cjs');
+  for(const name of ['player-mobile','player-desktop','gm-mobile','gm-desktop',
+    'gm-readonly-mobile','gm-readonly-desktop'])assert.ok(script.includes("'"+name+"'"),name);
+  assert.ok(script.includes('captureResponsiveLayoutEvidence'));
+});
+test('Phase 4.4 captures the full approved dashboard shell in six authenticated cases',()=>{
+  const browser=read('scripts/site-layout-phase6-3-browser.cjs');
+  const player=read('frontend/src/pages/PlayerDashboardPage.jsx');
+  const gm=read('frontend/src/pages/GMDashboardPage.jsx');
+  const workflow=read('.github/workflows/frontend-phase6-3-acceptance.yml');
+  assert.ok(player.includes('data-testid="site-player-hero"'));
+  assert.ok(gm.includes('data-testid="site-gm-hero"'));
+  assert.ok(gm.includes('data-testid="site-gm-party-sidebar"'));
+  assert.ok(browser.includes("name+'-full-page.png'"));
+  assert.ok(browser.includes("name+'-shell.json'"));
+  assert.ok(browser.includes('Rectangular navigation background returned'));
+  assert.ok(browser.includes('GM party/resource sidebar missing'));
+  assert.ok(browser.includes('HP/SP/MP colors differ from original'));
+  assert.ok(workflow.includes('asteria-phase-4-4-full-dashboard-evidence'));
+});
+test('Phase 4.4 original-vs-React visual gate rejects substituted references and cropped views',()=>{
+  const gate=read('scripts/site-dashboard-approved-screenshot-parity.cjs');
+  for(const text of [
+    "const {createHash}=require('node:crypto')",
+    'Duplicate role and viewport reference',
+    'Approved legacy screenshot reviewer must be identified',
+    'Authentic original source commit SHA must be documented',
+    'Original screenshot SHA-256 is required',
+    'Approved original reference hash mismatch',
+    'Visual comparisons must capture the complete authenticated dashboard',
+    'site-player-dashboard',
+    'site-gm-dashboard',
+    "name+'-comparison.json'"
+  ])assert.ok(gate.includes(text),text);
+});
+test('Phase 4.5 never certifies original screenshot parity when references are missing',()=>{
+  const require=createRequire(import.meta.url);
+  const {auditReferences,REQUIRED_PAIRS}=require('./site-dashboard-reference-preflight.cjs');
+  const result=auditReferences(null);
+  assert.equal(result.status,'blocked');
+  assert.equal(REQUIRED_PAIRS.length,6);
+  assert.equal(result.verifiedReferences,0);
+  for(const pair of REQUIRED_PAIRS)
+    assert.ok(result.blockers.some(text=>text.includes(pair)),pair);
+  const missing=auditReferences('/not/a/real/dashboard-approved-original-manifest.json');
+  assert.equal(missing.status,'blocked');
+  assert.equal(missing.verifiedReferences,0);
+});
+test('Phase 4.5 comparator uses complete pages and strict manual release gating',()=>{
+  const gate=read('scripts/site-dashboard-approved-screenshot-parity.cjs');
+  const browser=read('scripts/site-layout-phase6-3-browser.cjs');
+  const check=read('scripts/site-dashboard-reference-preflight.cjs');
+  const pkg=JSON.parse(read('package.json'));
+  assert.ok(gate.includes("const {auditReferences}=require('./site-dashboard-reference-preflight.cjs')"));
+  assert.ok(gate.includes('readiness.status'));
+  assert.ok(gate.includes("page.screenshot({fullPage:true,animations:'disabled'})"));
+  assert.ok(!gate.includes('target.screenshot({animations:'));
+  assert.ok(browser.includes("name+'-full-page.png'"));
+  assert.ok(check.includes('PNG_MAGIC'));
+  assert.ok(check.includes("createHash('sha256')"));
+  assert.ok(pkg.scripts['site:dashboard-release-visual-gate'].includes('--require-ready'));
+  assert.ok(pkg.scripts['site:dashboard-release-visual-gate'].includes('site:dashboard-approved-screenshot-parity'));
+});
+test('resource tracks are rendered with original HP SP MP colour roles',()=>{
+  const page=read('frontend/src/pages/PlayerDashboardPage.jsx');
+  const css=read('frontend/src/pages/PlayerDashboardPage.module.css');
+  const gm=read('frontend/src/pages/GMDashboardPage.jsx');
+  assert.match(page,/role="progressbar"/);
+  assert.match(gm,/role="progressbar"/);
+  assert.doesNotMatch(page,/<progress aria-label=\{key\.toUpperCase\(\)\+' resources'/);
+  for(const selector of ["data-resource='sp'","data-resource='mp'"])
+    assert.ok(css.includes(selector),selector);
+  assert.match(css,/rgb\(237 88 138\)/);
+  assert.match(css,/rgb\(42 216 167\)/);
+  assert.match(css,/rgb\(52 191 242\)/);
+});
+test('original player navigation remains enumerated rather than silently removed',()=>{
+  const jsx=read('frontend/src/pages/PlayerDashboardPage.jsx');
+  for(const label of ['Dashboard','Character','Class/Talent Tree','Skills','Spells',
+    'Inventory','Crafting','Quests','News / Events / History','Journal','Party',
+    'Gallery','Battle Maps','Advanced Dice','Calendar','Weather','World Map',
+    'Campaign Library','Campaign Audio','Recording & Archives','Dashboard Settings'])
+    assert.ok(jsx.includes("'"+label+"'"),label);
+  assert.doesNotMatch(jsx,/not yet connected to the new React route/);
+  assert.ok(jsx.includes('This workspace is unavailable for the current account or campaign'));
+  assert.ok(jsx.includes('mediaEnabled=Boolean(c&&media?.availability().enabled)'));
+  assert.ok(jsx.includes("tab==='News / Events / History'&&!campaign"));
+  assert.ok(jsx.includes("mediaEnabled&&['Battle Maps','World Map']"));
+  assert.ok(jsx.includes("progressionEnabled&&['Progression','Skills','Class/Talent Tree','Check History']"));
+  const css=read('frontend/src/pages/PlayerDashboardPage.module.css');
+  assert.doesNotMatch(css,/\.tabs button\{[^}]*background:var\(--ast-color-panel-raised\)/);
+});
+
+test('GM navigation retains the 24 original destinations with scoped tool entry points',()=>{
+  const gm=read('frontend/src/pages/GMDashboardPage.jsx');
+  for(const label of ['GM Main','GM Toolkit','NPC & Creature Library','Dashboard Settings',
+    'PC Inventory','News & Events','Quests','GM Notes','Session Library',
+    'Soundboard & Ambience','Session Recordings','Player Display','Economy',
+    'Crafting','GM Tools','Gameplay Systems','World Systems','Battle Maps',
+    'Advanced Dice','Random Tables','Encounter Generator','Asteria Calendar',
+    'Weather Generator','World Atlas'])
+    assert.ok(gm.includes("label:'"+label+"'"),'Missing original GM destination: '+label);
+  assert.match(gm,/GMDigitalGMWorkspace/);
+  assert.match(gm,/GMCombatWorkspace/);
+  assert.match(gm,/GMEconomyWorkspace/);
+  assert.match(gm,/GMChecksAndProgression/);
+  assert.match(gm,/CampaignAtlasWorkspace/);
+});
+test('original campaign calendar and weather destinations use secured existing Digital GM service',()=>{
+  const player=read('frontend/src/pages/PlayerDashboardPage.jsx');
+  const digital=read('frontend/src/digitalGM/DigitalGMWorkspace.jsx');
+  for(const name of ['Calendar','Weather','Campaign Library','Campaign Audio','Recording & Archives'])
+    assert.ok(player.includes("'"+name+"'"),name);
+  assert.match(player,/initialSection=/);
+  assert.match(digital,/initialSection='calendar'/);
+  assert.match(digital,/initialArea='library'/);
+});
+
+test('Phase 3.6 approved visual parity requires authenticated role and device evidence',()=>{
+  const gate=read('scripts/site-dashboard-approved-screenshot-parity.cjs');
+  assert.ok(gate.includes("for(const role of ['player','gm','readonly'])"));
+  assert.ok(gate.includes('width<=480'));
+  assert.ok(gate.includes('width>=1024'));
+  assert.ok(gate.includes('GM Read-only'));
+  assert.ok(gate.includes('Approved reference PNG missing'));
+  assert.ok(gate.includes('pixel.difference<=max'));
+});
+test('original Advanced Dice uses existing server callable and private record',()=>{
+  const service=read('frontend/src/dice/firebaseDiceService.mjs');
+  const ui=read('frontend/src/dice/AdvancedDiceWorkspace.jsx');
+  const adapter=read('frontend/src/auth/firebaseAuthAdapter.mjs');
+  const player=read('frontend/src/pages/PlayerDashboardPage.jsx');
+  const gm=read('frontend/src/pages/GMDashboardPage.jsx');
+  assert.match(service,/asteriaAdvancedDice/);
+  assert.match(service,/diceWorkspace','current'/);
+  assert.match(service,/validateDiceAction/);
+  assert.match(ui,/MAX_DICE_PRESETS/);
+  assert.match(ui,/clear-history/);
+  assert.match(ui,/diceExpression/);
+  assert.match(player,/AdvancedDiceWorkspace/);
+  assert.match(gm,/AdvancedDiceWorkspace/);
+  assert.match(adapter,/createFirebaseDiceService/);
+  assert.doesNotMatch(service,/window\.AsteriaFirebase|firebaseService|legacyBridge/);
+});
+test('Player resource adjustments run only through the original authenticated session callable',()=>{
+  const service=read('frontend/src/player/firebasePlayerDashboardService.mjs');
+  const adapter=read('frontend/src/auth/firebaseAuthAdapter.mjs');
+  const player=read('frontend/src/pages/PlayerDashboardPage.jsx');
+  assert.match(service,/async function adjustResource/);
+  assert.match(service,/relationship\.owned/);
+  assert.match(service,/gmSessionState\(session\.data\(\)\)\.editable/);
+  assert.match(service,/updateCampaignCharacterResource/);
+  assert.match(service,/functionsSdk\.httpsCallable/);
+  assert.match(adapter,/functionsSdk:safeFunctionsSdk/);
+  assert.match(player,/Decrease /);
+  assert.match(player,/Increase /);
 });

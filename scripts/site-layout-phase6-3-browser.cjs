@@ -1,6 +1,7 @@
 /* Phase 6.2: real two-account dashboard integration from Forge creation to campaign\n * invitation, membership, character approval, gameplay lifecycle and isolation.\n */
 'use strict';
 const assert=require('node:assert/strict');
+const fs=require('node:fs');
 const {spawn}=require('node:child_process');
 const path=require('node:path');
 const {chromium}=require('playwright');
@@ -30,6 +31,171 @@ async function account(page,email,username){
  await page.locator('#asteria-confirm').fill('ExamplePassword123!');
  await page.getByTestId('site-auth-submit').click();
  await page.getByTestId('site-header-profile').waitFor({timeout:30000});
+}
+// Phase 4.1: Chromium-computed geometry of the approved frame art (not a
+// replacement for genuine approved pre-migration pixel screenshots).
+async function assertFrameAndPlaque(page,role){
+ const root=page.getByTestId('site-'+role+'-layout-workspace');
+ await root.waitFor({timeout:30000});
+ const state=await root.evaluate(node=>{
+   const tile=node.querySelector('[data-panel-id]');
+   const title=tile?.querySelector('h3');
+   const content=title?.nextElementSibling;
+   if(!tile||!title||!content)return null;
+   const frame=getComputedStyle(tile,'::before');
+   return {
+     family:tile.getAttribute('data-frame-family'),
+     border:parseFloat(frame.borderTopWidth),
+     art:frame.borderImageSource,
+     plaque:getComputedStyle(title,'::after').backgroundImage,
+     top:parseFloat(getComputedStyle(title).top),
+     containerType:getComputedStyle(content).containerType,
+     containerName:getComputedStyle(content).containerName
+   };
+ });
+ assert.ok(state,'Expected visible '+role+' dashboard panel');
+ assert.match(state.art,/panel-frame-(3x3|3x6|6x3|9x3)(?:-[A-Za-z0-9_-]+)?\.webp/);
+ assert.match(state.plaque,/10006(?:-[A-Za-z0-9_-]+)?\.png/);
+ assert.equal(state.containerType,'inline-size');
+ assert.equal(state.containerName,'asteria-panel');
+ const ratio={square:.333333,tall:.233333,wide:.833333,ultrawide:.833333}[state.family];
+ assert.ok(Number.isFinite(ratio),'Unknown approved frame family: '+state.family);
+ assert.ok(state.border>=9&&state.border<=18,'Nine-slice frame border width');
+ assert.ok(Math.abs(state.top-state.border*ratio)<1,'Plaque rail parity: '+JSON.stringify(state));
+}
+async function assertSquareEditorCanvas(page){
+ const actual=await page.getByTestId('site-layout-canvas').evaluate(node=>{
+   const style=getComputedStyle(node);
+   return {columns:style.gridTemplateColumns.split(/\s+/).map(Number.parseFloat),
+     row:parseFloat(style.gridAutoRows),width:node.scrollWidth};
+ });
+ assert.equal(actual.columns.length,12,'Editor requires twelve square tracks');
+ for(const width of actual.columns)
+   assert.ok(Math.abs(width-48)<.5,'Track width should match original 48px cells');
+ assert.ok(Math.abs(actual.row-48)<.5,'Original row height is 48px');
+ assert.ok(actual.width>0);
+}
+async function captureLayoutEvidence(page,role,name){
+ if(!process.env.RUNNER_TEMP)return;
+ const root=page.getByTestId('site-'+role+'-layout-workspace');
+ await root.waitFor({timeout:30000});
+ const folder=path.join(process.env.RUNNER_TEMP,'asteria-phase-4-4-full-dashboard-evidence');
+ fs.mkdirSync(folder,{recursive:true});
+ const geometry=await root.evaluate(node=>({
+   viewport:{width:window.innerWidth,height:window.innerHeight},
+   layoutViewport:node.querySelector('[data-dashboard-viewport]')?.dataset.dashboardViewport,
+   panels:[...node.querySelectorAll('[data-panel-id]')].map(tile=>({
+     id:tile.dataset.panelId,size:tile.dataset.panelSize,
+     frame:tile.dataset.frameFamily,background:tile.dataset.panelBackground,
+     column:tile.style.gridColumn,row:tile.style.gridRow
+   }))
+ }));
+ fs.writeFileSync(path.join(folder,name+'.json'),JSON.stringify(geometry,null,2));
+ await root.screenshot({path:path.join(folder,name+'.png'),animations:'disabled'});
+ // Earlier captures only included dashboard tiles, not the original HUD,
+ // crystal menu or GM sidebar. Preserve full-page context for each role.
+ const gm=role==='gm';
+ const dashboard=page.getByTestId(gm?'site-gm-dashboard':'site-player-dashboard');
+ await dashboard.waitFor({timeout:30000});
+ const shell=await dashboard.evaluate((node,isGM)=>{
+   const rect=element=>{
+     if(!element)return null;
+     const r=element.getBoundingClientRect();
+     return {x:r.x,y:r.y,width:r.width,height:r.height};
+   };
+   const hero=node.querySelector('[data-testid="'+(isGM?'site-gm-hero':'site-player-hero')+'"]');
+   const sidebar=isGM?node.querySelector('[data-testid="site-gm-party-sidebar"]'):null;
+   const nav=node.querySelector('nav[aria-label="'+(isGM?'GM dashboard sections':'Character dashboard sections')+'"]');
+   const button=nav?.querySelector('button');
+   const style=button?getComputedStyle(button):null;
+   const frame=button?getComputedStyle(button,'::before'):null;
+   const fills=Object.fromEntries(['hp','sp','mp'].map(key=>{
+     const element=node.querySelector('[data-resource="'+key+'"] [role="progressbar"] > span');
+     return [key,element?getComputedStyle(element).backgroundColor:null];
+   }));
+   return {
+     viewport:{width:innerWidth,height:innerHeight},
+     documentWidth:document.documentElement.scrollWidth,
+     hero:rect(hero),sidebar:rect(sidebar),navigation:rect(nav),
+     menuCount:nav?.querySelectorAll('button').length||0,
+     menuStyle:style?{background:style.backgroundColor,border:style.borderTopWidth,
+       artwork:frame?.borderImageSource}:null,
+     resourceColours:fills
+   };
+ },gm);
+ assert.ok(shell.hero?.height>0,'The dashboard header is missing: '+name);
+ assert.ok(shell.navigation?.width>0,'The dashboard navigation is missing: '+name);
+ assert.ok(shell.menuStyle?.artwork?.includes('url('),'Crystal artwork missing: '+name);
+ assert.equal(shell.menuStyle.background,'rgba(0, 0, 0, 0)',
+   'Rectangular navigation background returned: '+name);
+ assert.equal(shell.menuStyle.border,'0px',
+   'Rectangular navigation border returned: '+name);
+ assert.ok(shell.documentWidth<=shell.viewport.width+1,
+   'Dashboard has full-page horizontal overflow: '+name);
+ if(gm){
+   assert.ok(shell.sidebar?.width>0,'GM party/resource sidebar missing: '+name);
+   assert.equal(shell.menuCount,24,'Original GM navigation destinations missing: '+name);
+ }else{
+   assert.ok(shell.menuCount>=18,'Original Player menu has missing destinations: '+name);
+   assert.deepEqual(shell.resourceColours,{
+     hp:'rgb(237, 88, 138)',sp:'rgb(42, 216, 167)',mp:'rgb(52, 191, 242)'
+   },'HP/SP/MP colors differ from original: '+name);
+ }
+ fs.writeFileSync(path.join(folder,name+'-shell.json'),JSON.stringify(shell,null,2));
+ await page.screenshot({path:path.join(folder,name+'-full-page.png'),
+   fullPage:true,animations:'disabled'});
+}
+// Save actual authenticated React screenshots and geometry, not fabricated
+// pre-migration reference images. Final original-vs-React parity is separate.
+async function captureResponsiveLayoutEvidence(page,role,name,width){
+ const initial=page.viewportSize();
+ await page.setViewportSize({width,height:width<=480?850:900});
+ const waitForViewport=async()=>page.waitForFunction(role=>{
+   const root=document.querySelector('[data-testid="site-'+role+'-layout-workspace"]');
+   if(!root)return false;
+   const width=root.getBoundingClientRect().width;
+   const expected=width>900?'desktop':width>620?'tablet':'mobile';
+   return root.querySelector('[data-dashboard-viewport]')?.dataset.dashboardViewport===expected;
+ },role,{timeout:15000});
+ try{
+   const root=page.getByTestId('site-'+role+'-layout-workspace');
+   await root.waitFor({timeout:30000});
+   await waitForViewport();
+   const actual=await root.evaluate(node=>{
+     const width=node.getBoundingClientRect().width;
+     const armour=node.querySelector('[data-panel-id="armour"] > div > div');
+     return {
+       expectedViewport:width>900?'desktop':width>620?'tablet':'mobile',
+       layoutViewport:node.querySelector('[data-dashboard-viewport]')?.dataset.dashboardViewport,
+       armourWidth:armour?.getBoundingClientRect().width,
+       armourColumns:armour?getComputedStyle(armour).gridTemplateColumns.split(/\s+/).length:null,
+       count:node.querySelectorAll('[data-panel-id]').length
+     };
+   });
+   assert.equal(actual.layoutViewport,actual.expectedViewport,
+     'Saved layout must follow workspace width: '+name);
+   assert.ok(actual.count>0,'No visible panels for '+name);
+   if(actual.armourWidth!==undefined&&actual.armourWidth<=520)
+     assert.equal(actual.armourColumns,actual.armourWidth<=300?1:2,
+       'Armour columns must match content width: '+name+' '+JSON.stringify(actual));
+   await captureLayoutEvidence(page,role,name);
+ }finally{
+   await page.setViewportSize(initial);
+   await waitForViewport();
+ }
+}
+async function assertCrystalResources(page){
+ const actual=await page.getByTestId('site-player-resources').evaluate(node=>{
+   const button=node.querySelector('button[aria-label="Increase HP"]');
+   if(!button)return null;
+   const style=getComputedStyle(button);
+   return {background:style.backgroundColor,border:style.borderTopWidth,
+     art:getComputedStyle(button,'::before').backgroundImage};
+ });
+ assert.ok(actual,'HP increase button must exist');
+ assert.ok(['rgba(0, 0, 0, 0)','transparent'].includes(actual.background));
+ assert.equal(actual.border,'0px','Resource buttons must not have rectangular borders');
+ assert.match(actual.art,/url\(/,'Icon frame artwork must render');
 }
 (async()=>{let browser;
 try{
@@ -158,10 +324,15 @@ try{
  await player.getByRole('heading',{name:'Joined Forge Hero'}).waitFor({timeout:30000});
  await player.getByTestId('site-player-resources').waitFor({timeout:30000});
  await player.getByTestId('site-player-layout-manager').waitFor({timeout:30000});
+ await assertFrameAndPlaque(player,'player');
+ await assertCrystalResources(player);
+ await captureResponsiveLayoutEvidence(player,'player','player-mobile',390);
+ await captureResponsiveLayoutEvidence(player,'player','player-desktop',1440);
  await player.getByTestId('site-layout-open').click();
  try{await player.getByTestId('site-layout-editor').waitFor({timeout:6000});}
  catch(error){console.error('EDITOR PAGE DEBUG',await player.locator('body').innerText());
  console.error('EDITOR DOM', (await player.locator('html').innerHTML()).slice(0,10000));throw error;}
+ await assertSquareEditorCanvas(player);
  await player.getByRole('button',{name:'Lock Skills',exact:true}).click();
  await player.getByTestId('site-layout-undo').click();
  await player.getByTestId('site-layout-redo').click();
@@ -175,9 +346,9 @@ try{
  const privateRoute=player.url();
  assert.match(privateRoute,/#\/react\/owned-character\//);
  const sourceId=decodeURIComponent(privateRoute.split('/').at(-1));
- await player.getByRole('button',{name:'Skills & Talents'}).click();
+ await player.getByRole('button',{name:'Skills',exact:true}).click();
  await player.getByRole('heading',{name:'Skills'}).waitFor();
- await player.getByRole('button',{name:'Overview'}).click();
+ await player.getByRole('button',{name:'Dashboard',exact:true}).click();
  await player.getByTestId('site-player-resources').waitFor();
  await player.getByRole('link',{name:'Character Forge'}).first().click();
  await player.getByRole('heading',{name:'Joined Forge Hero'}).waitFor({timeout:30000});
@@ -192,7 +363,11 @@ try{
  await player.getByRole('heading',{name:'Joined Forge Hero'}).waitFor({timeout:30000});
  await owner.goto(base+'#/react/gm/'+encodeURIComponent(ownerCampaignId),{waitUntil:'domcontentloaded'});
  await owner.getByTestId('site-gm-layout-manager').waitFor({timeout:30000});
+ await assertFrameAndPlaque(owner,'gm');
+ await captureResponsiveLayoutEvidence(owner,'gm','gm-desktop',1440);
+ await captureResponsiveLayoutEvidence(owner,'gm','gm-mobile',390);
  await owner.getByTestId('site-layout-open').click();
+ await assertSquareEditorCanvas(owner);
  await owner.getByRole('button',{name:'Lock Campaign Encounter'}).click();
  await owner.getByTestId('site-layout-save').click();
  await owner.getByTestId('site-layout-editor').waitFor({state:'detached',timeout:30000});
@@ -206,6 +381,14 @@ try{
  await owner.getByTestId('site-player-campaign').waitFor({timeout:30000});
  await owner.getByRole('heading',{name:'Joined Forge Hero'}).waitFor({timeout:30000});
  await owner.getByText(/GM Read-only/).waitFor({timeout:30000});
+ await owner.getByTestId('site-player-layout-readonly').waitFor({timeout:30000});
+ await assertFrameAndPlaque(owner,'player');
+ await captureResponsiveLayoutEvidence(owner,'player','gm-readonly-desktop',1440);
+ await captureResponsiveLayoutEvidence(owner,'player','gm-readonly-mobile',390);
+ assert.equal(await owner.getByTestId('site-layout-open').count(),0,
+   'GM cannot edit another character layout');
+ assert.equal(await owner.locator('[data-panel-id="journal"]').count(),0,
+   'GM cannot view private journal panel');
  await owner.getByTestId('site-player-dashboard').getByRole('button',{name:'Journal'}).count().then(n=>
   assert.equal(n,0,'GM must not see private journal tab'));
 

@@ -1,7 +1,9 @@
 import test from 'node:test';
+import {readFileSync} from 'node:fs';
 import assert from 'node:assert/strict';
 import {gridRectanglesOverlap} from '../src/state/dashboardGridModel.mjs';
 import {defaultDashboardLayout,normalizeDashboardLayout,dashboardLayoutForViewport,
+  setDashboardViewportLayout,setDashboardBackground,dashboardViewportFromWidth,
   lockDashboardGridPanel,placeDashboardGridPanel,fitDashboardGridPanel,
   visibleDashboardPanels,applyDashboardPreset} from '../src/state/dashboardLayoutModel.mjs';
 import {createLayoutHistory,pushLayoutHistory,undoLayoutHistory,redoLayoutHistory,
@@ -39,6 +41,49 @@ function mock(who,records=fixtures){
   };
   return {state,auth,db:{},firestoreSdk:sdk,readCanonical:async user=>({uid:user.uid})};
 }
+const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
+test('Phase 4.2 editor retains original 48px square canvas and accurate pointer snapping',()=>{
+  const original=read('css/asteria-freeform-dashboard.css');
+  const css=read('frontend/src/layout/DashboardLayoutEditor.module.css');
+  const editor=read('frontend/src/layout/DashboardLayoutEditor.jsx');
+  assert.match(original,/grid-template-columns:repeat\(12,48px\)/);
+  assert.ok(css.includes('--ast-editor-cell:48px'));
+  assert.ok(css.includes('grid-template-columns:repeat(12,var(--ast-editor-cell))'));
+  assert.ok(css.includes('grid-auto-rows:var(--ast-editor-cell)'));
+  assert.ok(css.includes('width:max-content'));
+  assert.ok(editor.includes('style.gridTemplateColumns.split(/\\s+/)[0]'));
+  assert.doesNotMatch(editor,/bounds\.width-11\*columnGap/);
+});
+test('Phase 4.2 respects saved visual panel order and GM read-only boundaries',()=>{
+  const workspace=read('frontend/src/layout/DashboardLayoutWorkspace.jsx');
+  const manager=read('frontend/src/layout/DashboardLayoutManager.jsx');
+  const page=read('frontend/src/pages/PlayerDashboardPage.jsx');
+  assert.ok(workspace.includes('const ordered=ids.slice().sort'));
+  assert.ok(manager.includes('if(!owner&&!isGM)'));
+  assert.ok(manager.includes('data-testid="site-player-layout-readonly"'));
+  assert.ok(manager.includes("hidden:[...readonly.hidden,'journal']"));
+  assert.ok(page.includes("['Dashboard','Dashboard Settings'].includes(tab)&&api.availability().layoutEnabled"));
+});
+test('Phase 4.2 independently saved mobile/tablet/desktop layouts survive normalisation',()=>{
+  assert.equal(dashboardViewportFromWidth(1440),'desktop');
+  assert.equal(dashboardViewportFromWidth(800),'tablet');
+  assert.equal(dashboardViewportFromWidth(390),'mobile');
+  for(const role of ['player','gm']){
+    const base=defaultDashboardLayout(role);
+    const first=visibleDashboardPanels(base,role)[0];
+    const mobile=lockDashboardGridPanel(setDashboardBackground(base,role,'slate',first),role,first,true);
+    const tablet=placeDashboardGridPanel(base,role,first,0,25);
+    let saved=setDashboardViewportLayout(base,role,'mobile',mobile);
+    saved=setDashboardViewportLayout(saved,role,'tablet',tablet);
+    const restored=normalizeDashboardLayout(JSON.parse(JSON.stringify(saved)),role);
+    assert.deepEqual(dashboardLayoutForViewport(restored,role,'desktop').placements,base.placements);
+    assert.deepEqual(dashboardLayoutForViewport(restored,role,'mobile').placements,mobile.placements);
+    assert.deepEqual(dashboardLayoutForViewport(restored,role,'tablet').placements,tablet.placements);
+    assert.ok(dashboardLayoutForViewport(restored,role,'mobile').lockedPositions.includes(first));
+    assert.equal(dashboardLayoutForViewport(restored,role,'mobile').panelBackgrounds[first],'slate');
+    assert.equal(dashboardLayoutForViewport(restored,role,'desktop').panelBackgrounds[first],undefined);
+  }
+});
 test('grid snapping honors locked positions and never overlaps',()=>{
   for(const role of ['gm','player']){
     const original=defaultDashboardLayout(role);

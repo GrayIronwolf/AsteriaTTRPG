@@ -8,6 +8,11 @@ on:
       - "package.json"
       - ".github/workflows/frontend-phase8-3-acceptance.yml"
   workflow_dispatch:
+# Cancel obsolete PR checks when a newer commit is pushed.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   connection-resilience-acceptance:
     runs-on: ubuntu-24.04

@@ -48,7 +48,7 @@ function Inventory({data,action,editable,role='player',selectedCharacter=null}){
     [slot,setSlot]=useState(''),[quantity,setQuantity]=useState('1'),
     [name,setName]=useState(''),[rows,setRows]=useState('4'),[cols,setCols]=useState('4'),
     [type,setType]=useState('move-storage'),[equipSlot,setEquipSlot]=useState(''),
-    [newQuantity,setNewQuantity]=useState('1');
+    [newQuantity,setNewQuantity]=useState('1'),[quickSlot,setQuickSlot]=useState('0');
   if(!ch)return <p>Choose a linked character to manage inventory.</p>;
   const items=ch.items||[],containers=ch.storages||[],item=items.find(x=>x.id===itemId);
   const write=op=>action.perform('inventory',[op],'Inventory updated.');
@@ -70,6 +70,25 @@ function Inventory({data,action,editable,role='player',selectedCharacter=null}){
       {menu(storage,setStorage,containers,'Destination container')}
       <Amount value={quantity} set={setQuantity}/>
     </div>:<p>There are no inventory items.</p>}
+    {role==='player'?<fieldset className={styles.panel} data-testid="site-player-quick-slots">
+      <legend>Quick item slots</legend>
+      <div className={styles.cards}>{Array.from({length:4},(_,index)=>{
+        const assigned=ch.quickSlots?.[index]||null;
+        return <div className={styles.card} key={index}>
+          <strong>Quick {index+1}: {assigned?.name||'Empty'}</strong>
+          <div className={styles.actions}>
+            <button type="button" disabled={!editable||action.busy||!item?.id||item.quantity<1||!item.identified}
+              onClick={()=>write({type:'quick',itemId:item.id,index,
+                expectedCoreRevision:ch.coreRevision})}>Assign selected item</button>
+            <button type="button" disabled={!editable||action.busy||!assigned?.hasEffect||assigned.quantity<1}
+              onClick={()=>{
+                if(window.confirm('Use '+assigned.name+' from quick slot '+(index+1)+'?'))
+                  write({type:'use',itemId:assigned.id,expectedCoreRevision:ch.coreRevision});
+              }}>Use</button>
+          </div>
+        </div>;
+      })}</div>
+    </fieldset>:null}
     {item?<div className={styles.panel}>
       <p><strong>{item.name}</strong> · {item.type} · {item.quantity} units</p>
       <p>{item.equipped?'Equipped in '+item.equippedSlot:'Not equipped'}{item.locked?' · Locked':''}</p>
@@ -79,6 +98,9 @@ function Inventory({data,action,editable,role='player',selectedCharacter=null}){
       </select></label>
       {['move-storage','split-stack'].includes(type)?<label>Storage slot (blank = first free)
         <input type="number" min="0" max="399" value={slot} onChange={e=>setSlot(e.target.value)}/></label>:null}
+      {type==='quick'?<label>Quick slot<select value={quickSlot} onChange={e=>setQuickSlot(e.target.value)}>
+        {[0,1,2,3].map(i=><option key={i} value={i}>Slot {i+1}</option>)}
+      </select></label>:null}
       {type==='equip'?<label>Equipment slot<input value={equipSlot} onChange={e=>setEquipSlot(e.target.value)}
         placeholder="e.g. Main Hand"/></label>:null}
       {type==='set-quantity'?<Amount title="New total quantity" value={newQuantity} set={setNewQuantity} min={0}/>:null}
@@ -95,7 +117,7 @@ function Inventory({data,action,editable,role='player',selectedCharacter=null}){
             storageId:storage,...(slot!==''?{storageSlot:Number(slot)}:{})});
           if(type==='equip')op.slot=equipSlot;
           if(type==='set-quantity')Object.assign(op,{quantity:Number(newQuantity),expectedQuantity:item.quantity});
-          if(type==='quick')op.index=0;
+          if(type==='quick')op.index=Number(quickSlot);
           write(op);
         }}>Apply Item Action</button>
     </div>:null}
@@ -502,10 +524,10 @@ function Crafting({data,action,editable,gm=false}){
     </div>:null}
   </section>;
 }
-export function PlayerEconomyWorkspace({api,campaignId,characterId}){
+export function PlayerEconomyWorkspace({api,campaignId,characterId,initialTab='Inventory'}){
   const stream=useEconomy(api,'player',campaignId,characterId);
   const action=useActions(api,campaignId,'player',characterId);
-  const [tab,setTab]=useState('Inventory');
+  const [tab,setTab]=useState(()=>['Inventory','Trades','Party Loot','Shops','Crafting'].includes(initialTab)?initialTab:'Inventory');
   return <section className={styles.workspace} data-testid="site-player-economy">
     <h2>Inventory &amp; Trading</h2>
     {stream.loading?<p>Verifying character ownership and loading inventory…</p>:null}
@@ -528,9 +550,9 @@ export function PlayerEconomyWorkspace({api,campaignId,characterId}){
     </>:null}
   </section>;
 }
-export function GMEconomyWorkspace({api,campaignId}){
+export function GMEconomyWorkspace({api,campaignId,initialTab='Party Loot'}){
   const stream=useEconomy(api,'gm',campaignId,'');
-  const [tab,setTab]=useState('Party Loot'),[target,setTarget]=useState('');
+  const [tab,setTab]=useState(()=>['Party Loot','Shops','Crafting','Inventory','Trades'].includes(initialTab)?initialTab:'Party Loot'),[target,setTarget]=useState('');
   const action=useActions(api,campaignId,'gm',target);
   const selected=stream.data?.party.find(x=>x.id===target)||null;
   return <section className={styles.workspace} data-testid="site-gm-economy">

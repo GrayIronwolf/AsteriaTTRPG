@@ -11,6 +11,11 @@ on:
       - ".github/workflows/forge-phase5-4-acceptance.yml"
   workflow_dispatch:
 
+# Keep one validation run per workflow and PR; never cancel push or manual runs.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   full-forge-acceptance:
     runs-on: ubuntu-24.04

@@ -13,6 +13,11 @@ on:
       - "package.json"
       - ".github/workflows/frontend-phase9-4-acceptance.yml"
   workflow_dispatch:
+# Cancel obsolete PR checks when a newer commit is pushed.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   architecture-parity:
     runs-on: ubuntu-24.04

@@ -1,6 +1,7 @@
 import React,{useEffect,useState} from 'react';
 import {DashboardLayoutEditor} from './DashboardLayoutEditor.jsx';
 import {DashboardLayoutWorkspace} from './DashboardLayoutWorkspace.jsx';
+import {GMSessionLayoutControls} from './GMSessionLayoutControls.jsx';
 import {normalizeDashboardLayout} from '../../../src/state/dashboardLayoutModel.mjs';
 import styles from './DashboardLayoutManager.module.css';
 
@@ -46,6 +47,18 @@ export function DashboardLayoutManager({role,api,uid,campaignId='',characterId='
     setServer(normalizeDashboardLayout(next,role));setNotice('Dashboard layout saved.');
     return {ok:true};
   };
+  if(!owner&&!isGM){
+    // A GM may inspect the linked Player's authorised panel content, not the
+    // owner's private saved layout, journal or dashboard editor.
+    const readonly=normalizeDashboardLayout(null,'player');
+    const safeLayout={...readonly,hidden:[...readonly.hidden,'journal']};
+    return <section className={styles.manager} data-testid="site-player-layout-readonly">
+      <p className={styles.status}>Read-only dashboard. Layout editing belongs to the character owner.</p>
+      <DashboardLayoutWorkspace role="player" layout={safeLayout}
+        title="Player Main Dashboard (read-only)"
+        renderPanel={id=>renderPanel?.(id)||<p className={styles.pending}>{PENDING}</p>}/>
+    </section>;
+  }
   if(!available)return <p className={styles.status}>Dashboard editor is not enabled.</p>;
   if(loading)return <p role="status">Connecting your saved dashboard layout…</p>;
   if(error)return <p role="alert" data-testid="site-layout-error">{error}</p>;
@@ -60,6 +73,8 @@ export function DashboardLayoutManager({role,api,uid,campaignId='',characterId='
         {editing?'Close layout editor':'Customise Dashboard Layout'}
       </button>
     </div>
+    {isGM?<GMSessionLayoutControls layout={server} disabled={!available||loading}
+      onCommit={next=>save(next,server)}/>:null}
     {editing?<DashboardLayoutEditor key={uid+':'+campaignId+':'+characterId}
       role={role} layout={server} onSave={save} onClose={()=>setEditing(false)}/>:null}
     <DashboardLayoutWorkspace role={role} layout={server}
