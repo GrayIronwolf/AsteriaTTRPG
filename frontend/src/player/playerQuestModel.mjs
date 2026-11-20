@@ -13,7 +13,8 @@ const QUEST_ID=/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,159}$/;
  */
 export function playerQuestProjection(character={}){
   const entries=Array.isArray(character.quests)?character.quests:
-    Array.isArray(character.questLog)?character.questLog:[];
+    Array.isArray(character.questLog)?character.questLog:
+    Array.isArray(character.questAssignments)?character.questAssignments:[];
   return Object.freeze(entries.slice(0,120).map((raw,index)=>{
     const source=typeof raw==='string'?{name:raw}:object(raw)?raw:null;
     if(!source)return null;
