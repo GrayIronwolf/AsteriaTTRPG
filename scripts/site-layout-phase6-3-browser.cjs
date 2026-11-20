@@ -79,7 +79,7 @@ async function captureLayoutEvidence(page,role,name){
  if(!process.env.RUNNER_TEMP)return;
  const root=page.getByTestId('site-'+role+'-layout-workspace');
  await root.waitFor({timeout:30000});
- const folder=path.join(process.env.RUNNER_TEMP,'asteria-phase-4-2-layout-evidence');
+ const folder=path.join(process.env.RUNNER_TEMP,'asteria-phase-4-3-responsive-evidence');
  fs.mkdirSync(folder,{recursive:true});
  const geometry=await root.evaluate(node=>({
    viewport:{width:window.innerWidth,height:window.innerHeight},
@@ -92,6 +92,45 @@ async function captureLayoutEvidence(page,role,name){
  }));
  fs.writeFileSync(path.join(folder,name+'.json'),JSON.stringify(geometry,null,2));
  await root.screenshot({path:path.join(folder,name+'.png'),animations:'disabled'});
+}
+// Save actual authenticated React screenshots and geometry, not fabricated
+// pre-migration reference images. Final original-vs-React parity is separate.
+async function captureResponsiveLayoutEvidence(page,role,name,width){
+ const initial=page.viewportSize();
+ await page.setViewportSize({width,height:width<=480?850:900});
+ const waitForViewport=async()=>page.waitForFunction(role=>{
+   const root=document.querySelector('[data-testid="site-'+role+'-layout-workspace"]');
+   if(!root)return false;
+   const width=root.getBoundingClientRect().width;
+   const expected=width>900?'desktop':width>620?'tablet':'mobile';
+   return root.querySelector('[data-dashboard-viewport]')?.dataset.dashboardViewport===expected;
+ },role,{timeout:15000});
+ try{
+   const root=page.getByTestId('site-'+role+'-layout-workspace');
+   await root.waitFor({timeout:30000});
+   await waitForViewport();
+   const actual=await root.evaluate(node=>{
+     const width=node.getBoundingClientRect().width;
+     const armour=node.querySelector('[data-panel-id="armour"] > div > div');
+     return {
+       expectedViewport:width>900?'desktop':width>620?'tablet':'mobile',
+       layoutViewport:node.querySelector('[data-dashboard-viewport]')?.dataset.dashboardViewport,
+       armourWidth:armour?.getBoundingClientRect().width,
+       armourColumns:armour?getComputedStyle(armour).gridTemplateColumns.split(/\s+/).length:null,
+       count:node.querySelectorAll('[data-panel-id]').length
+     };
+   });
+   assert.equal(actual.layoutViewport,actual.expectedViewport,
+     'Saved layout must follow workspace width: '+name);
+   assert.ok(actual.count>0,'No visible panels for '+name);
+   if(actual.armourWidth!==undefined&&actual.armourWidth<=520)
+     assert.equal(actual.armourColumns,actual.armourWidth<=300?1:2,
+       'Armour columns must match content width: '+name+' '+JSON.stringify(actual));
+   await captureLayoutEvidence(page,role,name);
+ }finally{
+   await page.setViewportSize(initial);
+   await waitForViewport();
+ }
 }
 async function assertCrystalResources(page){
  const actual=await page.getByTestId('site-player-resources').evaluate(node=>{
@@ -235,7 +274,8 @@ try{
  await player.getByTestId('site-player-layout-manager').waitFor({timeout:30000});
  await assertFrameAndPlaque(player,'player');
  await assertCrystalResources(player);
- await captureLayoutEvidence(player,'player','player-mobile');
+ await captureResponsiveLayoutEvidence(player,'player','player-mobile',390);
+ await captureResponsiveLayoutEvidence(player,'player','player-desktop',1440);
  await player.getByTestId('site-layout-open').click();
  try{await player.getByTestId('site-layout-editor').waitFor({timeout:6000});}
  catch(error){console.error('EDITOR PAGE DEBUG',await player.locator('body').innerText());
@@ -272,7 +312,8 @@ try{
  await owner.goto(base+'#/react/gm/'+encodeURIComponent(ownerCampaignId),{waitUntil:'domcontentloaded'});
  await owner.getByTestId('site-gm-layout-manager').waitFor({timeout:30000});
  await assertFrameAndPlaque(owner,'gm');
- await captureLayoutEvidence(owner,'gm','gm-desktop');
+ await captureResponsiveLayoutEvidence(owner,'gm','gm-desktop',1440);
+ await captureResponsiveLayoutEvidence(owner,'gm','gm-mobile',390);
  await owner.getByTestId('site-layout-open').click();
  await assertSquareEditorCanvas(owner);
  await owner.getByRole('button',{name:'Lock Campaign Encounter'}).click();
@@ -290,7 +331,8 @@ try{
  await owner.getByText(/GM Read-only/).waitFor({timeout:30000});
  await owner.getByTestId('site-player-layout-readonly').waitFor({timeout:30000});
  await assertFrameAndPlaque(owner,'player');
- await captureLayoutEvidence(owner,'player','gm-readonly-desktop');
+ await captureResponsiveLayoutEvidence(owner,'player','gm-readonly-desktop',1440);
+ await captureResponsiveLayoutEvidence(owner,'player','gm-readonly-mobile',390);
  assert.equal(await owner.getByTestId('site-layout-open').count(),0,
    'GM cannot edit another character layout');
  assert.equal(await owner.locator('[data-panel-id="journal"]').count(),0,

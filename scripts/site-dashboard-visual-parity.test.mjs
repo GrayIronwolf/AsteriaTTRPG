@@ -81,6 +81,38 @@ test('Phase 4.1 HP SP MP controls reuse approved icon crystal rather than rectan
   assert.match(css,/\.coreColumn \.resourceActions button\{[^}]*background:transparent;border:0;box-shadow:none/);
   assert.doesNotMatch(css,/\.coreColumn \.resourceActions button\{[^}]*background:rgb/);
 });
+test('Phase 4.3 saved layouts depend on workspace width, as in the approved original',()=>{
+  const old=read('src/components/DashboardCustomisation.jsx');
+  const current=read('frontend/src/layout/DashboardLayoutWorkspace.jsx');
+  assert.match(old,/ResizeObserver\(update\)/);
+  assert.match(old,/getBoundingClientRect\(\)\.width/);
+  assert.match(current,/new ResizeObserver\(refresh\)/);
+  assert.match(current,/workspaceRef=useRef\(null\)/);
+  assert.match(current,/getBoundingClientRect\(\)\.width\|\|window\.innerWidth/);
+  assert.match(current,/ref=\{workspaceRef\}/);
+  assert.match(current,/observer\?\.disconnect\(\)/);
+});
+test('Phase 4.3 original armour and equipment content breakpoints are retained',()=>{
+  const old=read('css/asteria-dashboard-responsive-content.css');
+  const current=read('frontend/src/player/PlayerOverviewPanels.module.css');
+  for(const w of [520,420,300,260]){
+    assert.ok(old.includes('(max-width:'+w+'px)'),w+' original breakpoint');
+    assert.ok(current.includes('(max-width:'+w+'px)'),w+' React breakpoint');
+  }
+  for(const declaration of [
+    '.armourClass{grid-column:1/-1;grid-row:1;min-height:76px}',
+    '.armourSlots:first-child{grid-column:1;grid-row:2}',
+    '.armourSlots:last-child{grid-column:1;grid-row:3}',
+    '.weaponSlots{grid-template-columns:minmax(0,1fr)}',
+    '.slotArt{width:26px;height:30px}'
+  ])assert.ok(current.includes(declaration),declaration);
+});
+test('Phase 4.3 CI captures all six authenticated React role/width pairs',()=>{
+  const script=read('scripts/site-layout-phase6-3-browser.cjs');
+  for(const name of ['player-mobile','player-desktop','gm-mobile','gm-desktop',
+    'gm-readonly-mobile','gm-readonly-desktop'])assert.ok(script.includes("'"+name+"'"),name);
+  assert.ok(script.includes('captureResponsiveLayoutEvidence'));
+});
 test('resource tracks are rendered with original HP SP MP colour roles',()=>{
   const page=read('frontend/src/pages/PlayerDashboardPage.jsx');
   const css=read('frontend/src/pages/PlayerDashboardPage.module.css');

@@ -77,3 +77,22 @@ GM Main; GM Toolkit; NPC & Creature Library; Dashboard Settings; PC Inventory; N
 - Added a framed but **non-editable GM read-only view** of the public Player panels. No private owner layout is loaded and the private journal panel and layout editor are hidden. Gameplay data remains filtered by the authenticated player projection.
 - Added round-trip tests for mobile/tablet/desktop placements, locked positions and per-panel background preferences. The existing Firebase/Chromium two-account browser test now checks editor square tracks and read-only isolation, and saves labelled React screenshot/geometry evidence to a CI artifact.
 - This React screenshot evidence **does not replace** approved pre-migration originals. Six authenticated paired comparisons (Player, GM, GM read-only on mobile/desktop) still need authentic original screenshots for final visual release acceptance. Do not merge/deploy PR #334 yet.
+
+## Phase 4.3 — Responsive content and authenticated six-view evidence
+
+- Audited original dashboard workspace sizing in `src/components/DashboardCustomisation.jsx`
+  and restored a `ResizeObserver`-based viewport choice in the React/Vite
+  workspace. The layout now selects independently saved mobile/tablet/desktop
+  configurations from the *actual available workspace width*, important for
+  GM sidebar arrangements, rather than window width alone.
+- Restored panel-content responsive breakpoints (520, 420, 300, 260 px) for
+  the armour and weapon/quick-item layouts in the existing React stylesheet.
+  Kept all eight armour slots, AC navigation and live item controls.
+- Added authenticated Chromium captures and measured layout assertions for
+  Player, GM, and GM read-only at 390px mobile and 1440px desktop widths.
+  Each of six screenshots and panel geometry JSON files is collected in
+  `asteria-phase-4-3-responsive-evidence` by the dashboard editor workflow.
+- Source-level tests verify original behavior and all six React cases.
+- These are **new React screenshots**, not approved old originals. The
+  original-vs-React authenticated pixel gate and full release audit remain
+  outstanding. Keep PR #334 draft and unmerged; user controls deployment.
