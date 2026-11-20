@@ -3,6 +3,7 @@ import {gmSessionState} from '../dashboard/gmDashboardModel.mjs';
 import {layoutFromPlayerPreferences} from '../../../src/state/dashboardLayoutModel.mjs';
 import {safeDashboardArtwork} from '../../../src/state/playerHudMedia.mjs';
 import {projectPlayerSystems} from './playerSystemsProjection.mjs';
+import {projectJournal} from './playerJournalModel.mjs';
 
 const obj=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 const txt=(value,fallback='',size=150)=>typeof value==='string'?value.slice(0,size):fallback;
@@ -136,7 +137,7 @@ export function playerCharacterProjection(value,{owned=false}={}){
     })),
     quests:items(value.quests||value.questAssignments,12),
     dashboardLayout:owned?layoutFromPlayerPreferences(value.dashboardPreferences||{}):null,
-    journal:owned?notes(value.journal):Object.freeze([]),
+    journal:owned?projectJournal(value.journal):Object.freeze([]),
     backstory:owned?txt(value.backstory?.history||value.backstory?.backstory||
       (typeof value.backstory==='string'?value.backstory:''),'',2400):'',
     links:owned?Object.freeze([...new Set([
