@@ -356,7 +356,7 @@ try{
  await training.waitFor({timeout:30000});
  assert.equal(await training.isEnabled(),true,'A linked starting skill should be trainable.');
  await training.click();
- await skills.getByText('Successful skill check recorded.').waitFor({timeout:30000});
+ await player.getByTestId('site-player-progression').getByText('Successful skill check recorded.').waitFor({timeout:30000});
  await skills.getByRole('button',{name:'Techniques'}).first().click();
  await skills.getByTestId('site-player-skill-details').waitFor({timeout:30000});
  await player.getByRole('button',{name:'Class/Talent Tree',exact:true}).click();
