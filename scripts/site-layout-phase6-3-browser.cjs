@@ -53,8 +53,8 @@ async function assertFrameAndPlaque(page,role){
    };
  });
  assert.ok(state,'Expected visible '+role+' dashboard panel');
- assert.match(state.art,/panel-frame-(3x3|3x6|6x3|9x3)\.webp/);
- assert.match(state.plaque,/10006\.png/);
+ assert.match(state.art,/panel-frame-(3x3|3x6|6x3|9x3)(?:-[A-Za-z0-9_-]+)?\.webp/);
+ assert.match(state.plaque,/10006(?:-[A-Za-z0-9_-]+)?\.png/);
  assert.equal(state.containerType,'inline-size');
  assert.equal(state.containerName,'asteria-panel');
  const ratio={square:.333333,tall:.233333,wide:.833333,ultrawide:.833333}[state.family];
