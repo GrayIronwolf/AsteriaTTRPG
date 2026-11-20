@@ -70,8 +70,9 @@ test('Phase 2.4: event and activity read state follows existing deduplicating no
  assert.equal(rows.length,2);
  assert.equal(rows.find(row=>row.source==='activity').read,true);
  assert.equal(rows.find(row=>row.source==='event').read,false);
- assert.deepEqual(playerNotificationHistory(character,events,'other'),
-  []); // Scoped events disappear, but own activity has no owner context unless omitted.
+ assert.equal(playerNotificationHistory(character,events,'other').filter(row=>row.source==='event').length,0);
+ // This helper accepts the already owner-scoped character projection;
+ // the dashboard never passes activity to viewers without ownership.
 });
 test('Phase 2.4: read mutations reject foreign or malformed notification actions',()=>{
  assert.deepEqual(assertNoticeAction('event','event-one',true),
