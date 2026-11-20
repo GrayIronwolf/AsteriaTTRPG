@@ -10,3 +10,11 @@
 .directToolbar label{display:flex;gap:var(--ast-space-1);align-items:center;font-size:var(--ast-font-sm)}
 .directToolbar input{accent-color:var(--ast-color-accent)}
 .directToolbar p[role="alert"]{flex-basis:100%;color:var(--ast-color-text);margin:0}
+
+
+.directToolbar input[type="text"]{font:inherit;min-width:145px;max-width:220px;padding:var(--ast-space-2);color:var(--ast-color-text);background:var(--ast-color-panel);border:1px solid var(--ast-color-outline);border-radius:var(--ast-radius-sm)}
+.savedWorkspaceBar{display:flex;align-items:center;flex-wrap:wrap;gap:var(--ast-space-2);padding:var(--ast-space-3);border:1px solid var(--ast-color-outline-soft);background:var(--ast-color-panel-raised);border-radius:var(--ast-radius-sm)}
+.savedWorkspaceItem{display:inline-flex;flex-wrap:wrap;align-items:center;gap:var(--ast-space-2);padding:var(--ast-space-2);border:1px solid var(--ast-color-outline-soft);border-radius:var(--ast-radius-sm)}
+.savedWorkspaceItem>span{font-size:var(--ast-font-sm)}
+.savedWorkspaceItem button{font:inherit;cursor:pointer;min-height:32px;padding:4px 8px;border-radius:var(--ast-radius-sm);border:1px solid var(--ast-color-outline);background:var(--ast-color-panel);color:var(--ast-color-text)}
+.savedWorkspaceItem button:disabled{opacity:.55;cursor:not-allowed}
