@@ -113,8 +113,6 @@ test('7.3: published state cannot be forged in Firestore or Storage by browser',
     await assertFails(updateDoc(doc(firestore(uid),accessRef),{
       viewerExpiries:{invitee:new Date(now+600000)}
     }));
-    await assertFails(deleteObject(ref(storage(uid),path)).catch(error=>{
-      if(uid==='gm')throw error;return Promise.reject(error);
-    }).catch(error=>{if(uid!=='gm')throw error;}));
+    if(uid!=='gm')await assertFails(deleteObject(ref(storage(uid),path)));
   }
 });
