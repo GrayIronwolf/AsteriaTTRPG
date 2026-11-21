@@ -12,6 +12,16 @@ const campaign={
   playerCharacterLinks:{hero:'alice'}
 };
 const image='campaigns/camp/battleMaps/static-map/scene.png';
+const publicMap=id=>'campaigns/camp/battleMapsPublic/'+id;
+// Public projections are produced by trusted backend code, never by a player.
+const publishPublic=async id=>env.withSecurityRulesDisabled(async ctx=>{
+  const db=ctx.firestore(),source=await getDoc(doc(db,'campaigns/camp/battleMaps/'+id));
+  await setDoc(doc(db,publicMap(id)),{
+    id,visibility:'players',name:source.data().name,kind:source.data().kind,
+    contentType:source.data().contentType,gridColumns:20,gridRows:15,
+    fogEnabled:false,fogCells:'1'.repeat(300),tokens:[]
+  });
+});
 const video='campaigns/camp/battleMaps/video-map/scene.mp4';
 const map=(id,visibility,contentType,kind)=>({
   id,campaignId:'camp',name:'Test '+id,description:'Scene',
@@ -59,17 +69,23 @@ test('published image and video maps are readable only by active campaign member
   await assertSucceeds(setDoc(doc(firestore('gm'),'campaigns/camp/battleMaps/video-map'),
     map('video-map','players','video/mp4','video')));
   await assertSucceeds(updateDoc(doc(firestore('gm'),'campaigns/camp/battleMaps/static-map'),{visibility:'players'}));
-  await assertSucceeds(getDoc(doc(firestore('alice'),'campaigns/camp/battleMaps/static-map')));
-  await assertSucceeds(getDocs(query(collection(firestore('alice'),'campaigns/camp/battleMaps'),where('visibility','==','players'))));
+  await publishPublic('static-map');
+  await publishPublic('video-map');
+  await assertFails(getDoc(doc(firestore('alice'),'campaigns/camp/battleMaps/static-map')));
+  await assertSucceeds(getDoc(doc(firestore('alice'),publicMap('static-map'))));
+  await assertSucceeds(getDocs(collection(firestore('alice'),'campaigns/camp/battleMapsPublic')));
   await assertFails(getDocs(collection(firestore('alice'),'campaigns/camp/battleMaps')));
   assert.ok((await assertSucceeds(getBytes(ref(storage('alice'),image)))).byteLength>0);
   assert.ok((await assertSucceeds(getBytes(ref(storage('alice'),video)))).byteLength>0);
   await assertFails(getBytes(ref(storage('visitor'),video)));
-  await assertFails(getDoc(doc(firestore('suspended'),'campaigns/camp/battleMaps/video-map')));
+  await assertFails(getDoc(doc(firestore('suspended'),publicMap('video-map')));
 });
 test('unpublishing immediately revokes both Firestore and authenticated Storage reads',async()=>{
   await assertSucceeds(updateDoc(doc(firestore('co'),'campaigns/camp/battleMaps/video-map'),{visibility:'gm'}));
-  await assertFails(getDoc(doc(firestore('alice'),'campaigns/camp/battleMaps/video-map')));
+  await env.withSecurityRulesDisabled(async ctx=>{
+    await deleteDoc(doc(ctx.firestore(),publicMap('video-map')));
+  });
+  await assertFails(getDoc(doc(firestore('alice'),publicMap('video-map'))));
   await assertFails(getBytes(ref(storage('alice'),video)));
   await assertSucceeds(getBytes(ref(storage('co'),video)));
 });
@@ -88,6 +104,9 @@ test('bounded fields, immutable file references, and media types are enforced',a
 });
 test('GM deletion removes published map access and storage can be cleaned',async()=>{
   await assertSucceeds(deleteDoc(doc(firestore('gm'),'campaigns/camp/battleMaps/static-map')));
+  await env.withSecurityRulesDisabled(async ctx=>{
+    await deleteDoc(doc(ctx.firestore(),publicMap('static-map')));
+  });
   await assertFails(getBytes(ref(storage('alice'),image)));
   await assertSucceeds(deleteObject(ref(storage('gm'),image)));
 });
