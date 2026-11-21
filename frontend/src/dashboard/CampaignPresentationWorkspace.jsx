@@ -163,6 +163,18 @@ export function CampaignPresentationController({api,campaignId,party=[]}){
     <label>Signed-in second-screen URL<input readOnly value={link} onFocus={e=>e.target.select()}/></label>
     <p>Current: {names[control.data?.scene||'blank']} · Revision {control.data?.revision||0}</p>
     <GMPresentationAssets api={api} campaignId={campaignId}/>
+    <button type="button" disabled={busy||control.loading||Boolean(control.error)}
+      onClick={async()=>{
+        setBusy(true);setMessage('');
+        try{
+          const answer=await api.rebuildPresentationProjections(campaignId);
+          setMessage('Safe battle map and combat feeds refreshed ('+
+            answer.mapsChecked+' maps checked).');
+        }catch(error){setMessage(error?.message||'Display refresh unavailable.');}
+        finally{setBusy(false);}
+      }}>
+      Refresh Safe Combat &amp; Map Feeds
+    </button>
     <HybridSessionManager api={api} campaignId={campaignId}/>
     {message?<p role="status">{message}</p>:null}
   </section>;
