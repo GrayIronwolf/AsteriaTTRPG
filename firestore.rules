@@ -598,6 +598,35 @@ service cloud.firestore {
         allow get, list: if isCampaignGM(campaignId);
         allow create, update, delete: if false;
       }
+      // Phase 7: one recipient's explicitly published text per audience.
+      // A document never grants campaign, media or presentation access itself.
+      // The current scene revision/epoch must still match for every read.
+      match /presentationAudienceReveals/{recipientKey} {
+        allow get: if isCampaignGM(campaignId) ||
+          (signedIn() &&
+           ((recipientKey == 'member_' + request.auth.uid &&
+             canUseCampaignSystems(campaignId) &&
+             (resource == null || (
+               resource.data.get('targetUid','') == request.auth.uid &&
+               resource.data.get('audience','') == 'member' &&
+               get(/databases/$(database)/documents/campaigns/$(campaignId)/presentationShared/current).data.get('scene','blank') != 'blank' &&
+               resource.data.get('sceneRevision',-1) ==
+                 get(/databases/$(database)/documents/campaigns/$(campaignId)/presentationShared/current).data.get('revision',0)
+             ))) ||
+           (recipientKey == 'restricted_' + request.auth.uid &&
+             activeHybridViewer(campaignId) &&
+             (resource == null || (
+               resource.data.get('targetUid','') == request.auth.uid &&
+               resource.data.get('audience','') == 'restricted' &&
+               get(/databases/$(database)/documents/campaigns/$(campaignId)/presentationRestricted/current).data.get('scene','blank') != 'blank' &&
+               resource.data.get('sessionEpoch','') ==
+                 get(/databases/$(database)/documents/campaigns/$(campaignId)/hybridSessionControl/current).data.get('epoch','') &&
+               resource.data.get('sceneRevision',-1) ==
+                 get(/databases/$(database)/documents/campaigns/$(campaignId)/presentationRestricted/current).data.get('revision',0)
+             )))));
+        allow list: if isCampaignGM(campaignId);
+        allow create, update, delete: if false;
+      }
       match /presentationPlaylists/{documentId} {
         allow get, list: if isCampaignGM(campaignId);
         allow create, update, delete: if false;
