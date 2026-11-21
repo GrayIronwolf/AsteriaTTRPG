@@ -3,6 +3,10 @@ import {playerCampaignAccess} from '../player/playerDashboardModel.mjs';
 import {battleMapPrivatePins} from '../../../src/state/battleMapFogModel.mjs';
 import {validatePresentationAction} from '../../../src/state/playerPresentationModel.mjs';
 import {
+  CAMPAIGN_MEDIA_LIBRARY_SOURCES,CAMPAIGN_MEDIA_LIBRARY_LIMIT_PER_SOURCE,
+  buildCampaignMediaLibrary,campaignMediaLibraryReference,classifyCampaignMediaRecord
+} from '../../../src/state/campaignMediaLibraryModel.mjs';
+import {
   mapId,mapForViewer,publishedAtlas,presentationForViewer,timestampRevision,
   battleMapEditableSettings,battleMapDimensions,battleMapFileError,battleMapFileKind,
   battleMapAssetPath,atlasMapCanPreview,BATTLE_MAP_MAX_RECORDS
@@ -140,6 +144,98 @@ export function createFirebaseCampaignMediaService({
     const ref=firestoreSdk.doc(db,'campaigns',id,'systems','encounter');
     return watch(id,'player',ref,raw=>raw||{},onUpdate,onError,'document');
   }
+  /**
+   * GM-only aggregated view of the five existing canonical media collections.
+   * No client-side publish/write access. Every source plus membership must have
+   * a fresh server snapshot before the first library result is emitted.
+   */
+  function watchGMMediaLibrary(id,onUpdate,onError){
+    assertGMCampaignId(id);
+    let active=true,stops=[];
+    const close=()=>{active=false;stops.splice(0).forEach(stop=>{try{stop();}catch{}});};
+    const fail=error=>{
+      if(!active)return;
+      close();onError?.(error instanceof Error?error:Error('Media library unavailable.'));
+    };
+    (async()=>{
+      try{
+        const initial=await check(id,'gm');
+        if(!active)return;
+        const {uid,v2}=initial;
+        let campaign=initial.campaign,member=initial.member;
+        const values=Object.fromEntries(CAMPAIGN_MEDIA_LIBRARY_SOURCES
+          .map(source=>[source,[]]));
+        const ready=Object.fromEntries([
+          ['campaign',false],['member',!v2],
+          ...CAMPAIGN_MEDIA_LIBRARY_SOURCES.map(source=>[source,false])
+        ]);
+        const publish=()=>{
+          if(!active||!Object.values(ready).every(Boolean))return;
+          try{
+            same(uid);
+            if(!access(campaign,member,uid,id,'gm'))
+              throw Error('GM library access was revoked.');
+            onUpdate(buildCampaignMediaLibrary(id,values));
+          }catch(error){fail(error);}
+        };
+        const listen=(reference,key,project)=>{
+          const stop=firestoreSdk.onSnapshot(reference,
+            {includeMetadataChanges:true},snapshot=>{
+              if(!active||snapshot.metadata?.fromCache||
+                snapshot.metadata?.hasPendingWrites)return;
+              try{
+                same(uid);
+                if((key==='campaign'||key==='member')&&!snapshot.exists())
+                  throw Error('Campaign library membership ended.');
+                const value=project(snapshot);
+                if(key==='campaign')campaign=value;
+                else if(key==='member')member=value;
+                else values[key]=value;
+                ready[key]=true;publish();
+              }catch(error){fail(error);}
+            },fail);
+          if(active)stops.push(stop);else stop();
+        };
+        listen(cRef(id),'campaign',snapshot=>({...snapshot.data(),id:snapshot.id}));
+        if(v2)listen(memberRef(id,uid),'member',snapshot=>
+          snapshot.exists()?snapshot.data():null);
+        for(const source of CAMPAIGN_MEDIA_LIBRARY_SOURCES){
+          const query=firestoreSdk.query(
+            firestoreSdk.collection(db,'campaigns',id,source),
+            firestoreSdk.limit(CAMPAIGN_MEDIA_LIBRARY_LIMIT_PER_SOURCE)
+          );
+          listen(query,source,snapshot=>snapshot.docs.map(row=>({
+            ...row.data(),id:row.id
+          })));
+        }
+      }catch(error){fail(error);}
+    })();
+    return close;
+  }
+
+  /**
+   * GM previews are fresh-source-checked and fetched with existing Storage
+   * permissions. No source URL or token is returned to an unverified user.
+   * Any object URL is temporary and owned/revoked by the calling component.
+   */
+  async function fetchGMMediaLibraryPreview(id,reference){
+    const ref=campaignMediaLibraryReference(reference);
+    const {uid}=await check(id,'gm');
+    const snapshot=await firestoreSdk.getDocFromServer(firestoreSdk.doc(
+      db,'campaigns',id,ref.source,ref.sourceId
+    ));
+    same(uid);
+    if(!snapshot.exists())throw Error('Original campaign media was removed.');
+    const raw={...snapshot.data(),id:snapshot.id};
+    const record=classifyCampaignMediaRecord(id,ref.source,raw);
+    if(!record||!record.previewable)
+      throw Error('The original media is not available for preview.');
+    // Verify against the canonical model; never accept a path from the browser.
+    const blob=await storageSdk.getBlob(storageSdk.ref(storage,raw.storagePath));
+    same(uid);
+    return {blob,contentType:record.contentType};
+  }
+
   async function fetchMapMedia(id,map,mode='player'){
     const {uid}=await check(id,mode);
     if(!mapForViewer(map,id,mode))throw Error('Invalid map media reference.');
@@ -278,7 +374,8 @@ export function createFirebaseCampaignMediaService({
   }
   return Object.freeze({
     availability:()=>flags,watchMaps,watchAtlas,watchPresentation,watchPrivatePins,
-    watchParty,watchEncounter,fetchMapMedia,fetchAtlasMedia,uploadMap,
+    watchParty,watchEncounter,watchGMMediaLibrary,fetchGMMediaLibraryPreview,
+    fetchMapMedia,fetchAtlasMedia,uploadMap,
     saveMap,removeMap,savePrivatePins,managePresentation
   });
 }
