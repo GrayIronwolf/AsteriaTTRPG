@@ -3,6 +3,8 @@ import {playerCampaignAccess} from '../player/playerDashboardModel.mjs';
 import {battleMapPrivatePins} from '../../../src/state/battleMapFogModel.mjs';
 import {validatePresentationAction} from '../../../src/state/playerPresentationModel.mjs';
 import {validateHybridSessionAction,hybridViewerCanRead,sanitizeRestrictedPresentation} from '../../../src/state/hybridPresentationSessionModel.mjs';
+import {validateHybridInvitationResponse,hybridInvitationSummary}
+  from '../../../src/state/hybridInvitationModel.mjs';
 import {
   presentationAssetFileError,presentationAssetDetails,
   presentationAssetPath,presentationAssetId,safePresentationAssetCard,
@@ -461,6 +463,61 @@ export function createFirebaseCampaignMediaService({
     return close;
   }
 
+  // A pending viewer reads only their own UID grant and limited session data;
+  // private stage and original media are never subscribed before acceptance.
+  function watchOwnHybridInvitation(id,onUpdate,onError){
+    assertGMCampaignId(id);
+    let active=true,stops=[];
+    const close=()=>{active=false;stops.splice(0).forEach(stop=>{try{stop();}catch{}});};
+    const fail=error=>{if(!active)return;close();onError?.(error);};
+    (async()=>{
+      try{
+        const uid=await verified();
+        const initial=await firestoreSdk.getDocFromServer(hybridGrantRef(id,uid));
+        same(uid);
+        if(!active)return;
+        if(!initial.exists()||initial.data()?.uid!==uid)
+          throw Error('No invitation exists for this signed-in account.');
+        const values={grant:null,session:null},ready={grant:false,session:false};
+        const publish=()=>{
+          if(!active||!ready.grant||!ready.session)return;
+          try{same(uid);
+            onUpdate(hybridInvitationSummary(values.session,values.grant,uid));
+          }catch(error){fail(error);}
+        };
+        const subscribe=(ref,key)=>{
+          const stop=firestoreSdk.onSnapshot(ref,{includeMetadataChanges:true},snap=>{
+            if(!active)return;
+            if(snap.metadata?.fromCache)
+              return fail(Error('Invitation verification interrupted. Reconnect to confirm access.'));
+            if(snap.metadata?.hasPendingWrites)return;
+            try{
+              same(uid);
+              if(!snap.exists())throw Error('This invitation is no longer available.');
+              values[key]=snap.data();ready[key]=true;publish();
+            }catch(error){fail(error);}
+          },fail);
+          if(active)stops.push(stop);else stop();
+        };
+        subscribe(hybridGrantRef(id,uid),'grant');
+        subscribe(hybridSessionRef(id),'session');
+      }catch(error){fail(error);}
+    })();
+    return close;
+  }
+  async function respondHybridInvitation(id,input){
+    assertGMCampaignId(id);
+    const uid=await verified();
+    validateHybridInvitationResponse(input);
+    const response=await functionsSdk.httpsCallable(functions,'asteriaAction')({
+      action:'respondHybridPresentationInvitation',
+      args:[id,'viewer-scope',input],requestId:crypto.randomUUID()
+    });
+    same(uid);
+    if(response.data?.ok!==true)
+      throw Error(response.data?.error||'Invitation response could not be confirmed.');
+    return response.data;
+  }
   // An invited account may NOT be a campaign member. Only the recipient's
   // exact per-UID grant, session status and text-only safe feed are watched.
   function watchRestrictedViewer(id,onUpdate,onError){
@@ -707,7 +764,8 @@ export function createFirebaseCampaignMediaService({
     watchParty,watchEncounter,watchPresentationPlaylists,watchGMMediaLibrary,fetchGMMediaLibraryPreview,
     fetchMapMedia,fetchAtlasMedia,uploadMap,
     saveMap,removeMap,savePrivatePins,managePresentation,managePresentationPlaylist,emergencyStopPresentation,
-    manageHybridSession,watchGMHybridSession,watchRestrictedViewer,
+    manageHybridSession,watchGMHybridSession,watchOwnHybridInvitation,
+    respondHybridInvitation,watchRestrictedViewer,
     watchPresentationAssets,managePresentationAsset,uploadPresentationAsset,
     fetchPresentationAsset,
     watchRestrictedMap,watchRestrictedCombat,fetchRestrictedMapMedia,rebuildPresentationProjections
