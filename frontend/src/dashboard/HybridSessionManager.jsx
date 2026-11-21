@@ -107,6 +107,44 @@ export function HybridSessionManager({api,campaignId}){
       are never shared.</p>
   </section>;
 }
+function RestrictedInvitationGate({api,campaignId}){
+  const invitation=useCampaignStream(api,'watchOwnHybridInvitation',[campaignId]);
+  const [busy,setBusy]=useState(false),[error,setError]=useState('');
+  const [notice,setNotice]=useState('');
+  const status=invitation.data;
+  const answer=async type=>{
+    if(busy||!status?.canRespond)return;
+    setBusy(true);setError('');setNotice('');
+    try{
+      await api.respondHybridInvitation(campaignId,{
+        type,expectedGrantRevision:status.revision
+      });
+      setNotice(type==='accept'?'Invitation accepted. Verifying access…':
+        'Invitation declined.');
+    }catch(failure){setError(failure?.message||'Invitation response failed.');}
+    finally{setBusy(false);}
+  };
+  if(invitation.loading)return <p role="status">Checking your invitation…</p>;
+  if(invitation.error)return <p role="alert">{invitation.error}</p>;
+  if(status?.authorized)return <ActiveRestrictedPresentation api={api}
+    campaignId={campaignId}/>;
+  return <section className={styles.invitation} data-testid="site-restricted-invitation">
+    <h2>Viewer Invitation</h2>
+    <p>Status: {status?.status||'unavailable'}</p>
+    {status?.canRespond?<><p>The GM has invited this signed-in account to view
+      approved presentation content only. Accepting does not make you a
+      campaign member or reveal GM notes, character records or hidden maps.</p>
+      <p>Access expires {new Date(status.expiresAt).toLocaleString()}.</p>
+      <div className={styles.controls}>
+        <button type="button" disabled={busy}
+          onClick={()=>void answer('accept')}>Accept Invitation</button>
+        <button type="button" disabled={busy}
+          onClick={()=>void answer('decline')}>Decline Invitation</button>
+      </div></>:<p>Ask the GM to send a new invitation if access is needed.</p>}
+    {notice?<p role="status">{notice}</p>:null}
+    {error?<p role="alert">{error}</p>:null}
+  </section>;
+}
 function RestrictedCombatScene({api,campaignId,active}){
   const result=useCampaignStream(api,'watchRestrictedCombat',[campaignId],active);
   if(!active)return null;
@@ -168,7 +206,7 @@ export function RestrictedPresentationDisplay({api,campaignId}){
     </header>
     {!runtime.ready?<p role="alert">Connection or display interrupted.
       Private content is hidden until your invitation is verified again.</p>:
-      <ActiveRestrictedPresentation key={campaignId+':'+runtime.generation}
+      <RestrictedInvitationGate key={campaignId+':'+runtime.generation}
         api={api} campaignId={campaignId}/>}
     {runtime.error?<p role="alert">{runtime.error}</p>:null}
   </section>;
