@@ -3,6 +3,7 @@ import {
   validatePresentationAction
 } from '../src/state/playerPresentationModel.mjs';
 import {restrictedPresentationProjection,sessionTimestampMs} from '../src/state/hybridPresentationSessionModel.mjs';
+import {PRESENTATION_MEDIA_SCENES,publishedPresentationAsset} from '../src/state/presentationAssetModel.mjs';
 const exists=s=>typeof s?.exists==='function'?s.exists():Boolean(s?.exists);
 
 /** All edits are GM-only, server-authorized, revision checked and published as
@@ -44,9 +45,18 @@ export function createPlayerPresentationCommands(context,{requireCampaignGM}){
               (record.data().id&&record.data().id!==draft.characterIds[i])))
               throw Error('A selected campaign character is no longer available.');
           }
+          if(PRESENTATION_MEDIA_SCENES.includes(draft.scene)){
+            const media=await transaction.get(doc(db,'campaigns',campaignId,
+              'presentationAssets',draft.assetId));
+            if(!exists(media)||!publishedPresentationAsset(media.data(),draft.scene))
+              throw Error('The selected media is not ready and published.');
+          }
           const hybridRef=doc(db,'campaigns',campaignId,'hybridSessionControl','current');
           const hybridSnap=await transaction.get(hybridRef);
           const hybrid=exists(hybridSnap)?hybridSnap.data():null;
+          const accessRef=doc(db,'campaigns',campaignId,'presentationAssetAccess','current');
+          const accessSnap=await transaction.get(accessRef);
+          const existingAccess=exists(accessSnap)?accessSnap.data():{};
           const revision=action.expectedRevision+1;
           const safe=publicPresentation(draft,revision);
           transaction.set(controlRef,{...safe,updatedBy:currentUser.uid,updatedAt:serverTimestamp()});
@@ -57,6 +67,15 @@ export function createPlayerPresentationCommands(context,{requireCampaignGM}){
             transaction.set(doc(db,'campaigns',campaignId,'presentationRestricted','current'),{
               ...restrictedPresentationProjection(safe,revision),
               epoch:hybrid.epoch,updatedAt:serverTimestamp()
+            });
+            transaction.set(accessRef,{
+              epoch:hybrid.epoch,
+              assetId:PRESENTATION_MEDIA_SCENES.includes(safe.scene)?safe.assetId:'',
+              scene:PRESENTATION_MEDIA_SCENES.includes(safe.scene)?safe.scene:'blank',
+              expiresAt:hybrid.expiresAt,
+              viewerExpiries:existingAccess.epoch===hybrid.epoch?
+                {...existingAccess.viewerExpiries}:{},
+              updatedAt:serverTimestamp()
             });
           }
           return {revision,scene:safe.scene};
