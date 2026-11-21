@@ -86,7 +86,10 @@ export function projectGMLivePending(state={}){
     reactionChoices:Object.freeze((Array.isArray(pending.window?.[pending.windowIndex||0]?.choices)?
       pending.window[pending.windowIndex||0].choices:[]).filter(value=>
       typeof value==='string'&&value.length<=40).slice(0,8)),
-    reactionCommitted:Boolean(pending.reaction)
+    reactionCommitted:Boolean(pending.reaction),
+    reactionCount:Array.isArray(pending.window)?Math.min(24,pending.window.length):0,
+    reactionIndex:int(pending.windowIndex),
+    reactionKey:boundedText(pending.reaction?.key,40)
   });
 }
 export function projectGMLiveLog(log){
