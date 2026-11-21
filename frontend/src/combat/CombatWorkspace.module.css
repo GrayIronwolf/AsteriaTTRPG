@@ -22,3 +22,14 @@
 .section details{display:grid;gap:var(--ast-space-3)}
 .section details[open]>*{margin-block:var(--ast-space-3)}
 @media(max-width:600px){.workspace,.section{padding:var(--ast-space-3)}.fields{grid-template-columns:1fr}.roster li{align-items:flex-start}.badges{grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--ast-space-3)}}
+
+.actionDeclaration{display:grid;gap:var(--ast-space-2);min-width:0;max-width:100%;
+  padding:var(--ast-space-3);border:1px solid var(--ast-color-outline-soft);
+  border-radius:var(--ast-radius-sm)}
+.actionDeclaration legend{padding-inline:var(--ast-space-1)}
+.actionDeclaration label{display:grid;gap:var(--ast-space-1)}
+.actionDeclaration select{max-width:100%;min-width:0;
+  padding:var(--ast-space-1);color:var(--ast-color-text);
+  border:1px solid var(--ast-color-outline-soft);
+  background:var(--ast-color-panel-raised)}
+.actionDeclaration small{color:var(--ast-color-text-muted);line-height:1.45}
