@@ -1,0 +1,38 @@
+name: Share & Present Improvement 3 — Scene Playlists
+on:
+  push:
+    branches: [feature/share-present-improvement-3-scene-playlists]
+  pull_request:
+    paths:
+      - 'src/state/presentationPlaylistModel.mjs'
+      - 'functions/playerPresentationCommands.mjs'
+      - 'functions/handler.mjs'
+      - 'firestore.rules'
+      - 'frontend/src/dashboard/firebaseCampaignMediaService.mjs'
+      - 'frontend/src/dashboard/CampaignPresentationWorkspace.jsx'
+      - 'frontend/src/dashboard/GMPresentationPlaylists.jsx'
+      - 'frontend/src/dashboard/GMPresentationPlaylists.module.css'
+      - 'scripts/share-present-improvement-3.test.mjs'
+      - '.github/workflows/share-present-improvement-3-playlists.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  playlists-and-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Playlists and inherited security tests
+        run: node --test scripts/share-present-improvement-3.test.mjs scripts/share-present-improvement-2.test.mjs scripts/share-present-improvement-1.test.mjs scripts/site-share-present-phase7-7.test.mjs
+      - name: Firebase rules, private GM viewer access and player security
+        run: npx firebase emulators:exec --project demo-asteria-share-present-phase77 --only firestore,storage "node --test scripts/site-share-present-phase7-7-emulator.test.mjs"
+      - name: Source lint
+        run: npx eslint src/state/presentationPlaylistModel.mjs functions/playerPresentationCommands.mjs functions/handler.mjs frontend/src/dashboard/firebaseCampaignMediaService.mjs frontend/src/dashboard/GMPresentationPlaylists.jsx frontend/src/dashboard/CampaignPresentationWorkspace.jsx scripts/share-present-improvement-3.test.mjs
+      - name: React source build and verified artifacts
+        run: npm run site:check && npm run site:build && npm run site:verify-dist
