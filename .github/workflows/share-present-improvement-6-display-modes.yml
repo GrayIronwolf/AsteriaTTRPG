@@ -1,0 +1,38 @@
+name: Share & Present Improvement 6 — Dedicated Display Modes
+on:
+  push:
+    branches: [feature/share-present-improvement-6-display-modes]
+  pull_request:
+    paths:
+      - 'src/state/presentationDisplayModeModel.mjs'
+      - 'frontend/src/dashboard/PresentationDisplayModes.jsx'
+      - 'frontend/src/dashboard/PresentationDisplayModes.module.css'
+      - 'frontend/src/dashboard/CampaignPresentationWorkspace.jsx'
+      - 'frontend/src/dashboard/CampaignPresentationWorkspace.module.css'
+      - 'frontend/src/dashboard/HybridSessionManager.jsx'
+      - 'frontend/src/dashboard/HybridSessionManager.module.css'
+      - 'frontend/src/pages/PresentationPage.jsx'
+      - 'scripts/share-present-improvement-6.test.mjs'
+      - '.github/workflows/share-present-improvement-6-display-modes.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  display-modes-and-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Display preferences and inherited security regressions
+        run: node --test scripts/share-present-improvement-6.test.mjs scripts/share-present-improvement-5.test.mjs scripts/share-present-improvement-4.test.mjs scripts/share-present-improvement-3.test.mjs scripts/share-present-improvement-2.test.mjs scripts/share-present-improvement-1.test.mjs scripts/site-share-present-phase7-5.test.mjs scripts/site-share-present-phase7-7.test.mjs
+      - name: Firebase rules emulator for inherited invitee privacy
+        run: npx firebase emulators:exec --project demo-asteria-invite5 --only firestore "node --test scripts/share-present-improvement-5-emulator.test.mjs"
+      - name: Lint React and display model
+        run: npx eslint src/state/presentationDisplayModeModel.mjs frontend/src/dashboard/PresentationDisplayModes.jsx frontend/src/dashboard/CampaignPresentationWorkspace.jsx frontend/src/dashboard/HybridSessionManager.jsx frontend/src/pages/PresentationPage.jsx scripts/share-present-improvement-6.test.mjs
+      - name: React/Vite source and website bundle checks
+        run: npm run site:check && npm run site:build && npm run site:verify-dist
