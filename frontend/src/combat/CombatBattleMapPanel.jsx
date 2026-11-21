@@ -1,5 +1,6 @@
 import React from 'react';
 import {CampaignMapCanvas,useCampaignStream} from '../dashboard/CampaignMapWorkspace.jsx';
+const EMPTY_MEDIA_API=Object.freeze({});
 
 /**
  * Read-only GM combat map view. All changes to maps, fog and movement remain
@@ -8,7 +9,7 @@ import {CampaignMapCanvas,useCampaignStream} from '../dashboard/CampaignMapWorks
  */
 export function CombatBattleMapPanel({mediaApi,campaignId,combat}){
   const enabled=Boolean(mediaApi);
-  const stream=useCampaignStream(mediaApi||{},'watchMaps',[campaignId,'gm'],enabled);
+  const stream=useCampaignStream(mediaApi||EMPTY_MEDIA_API,'watchMaps',[campaignId,'gm'],enabled);
   const selectedId=combat?.battleMapId||combat?.preparedMapId||'';
   const map=(stream.data||[]).find(row=>row.id===selectedId)||null;
   if(!enabled)return <p>Battle map media is unavailable in this campaign.</p>;
