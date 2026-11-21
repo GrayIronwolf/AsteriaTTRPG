@@ -124,6 +124,7 @@ test('7.4: server-side trigger updates only safe documents, never raw source',as
   const writes=[],deleted=[];
   const db={
     doc:path=>({
+      path,
       get:async()=>({exists:path.endsWith('/presentationShared/current')||
         path.endsWith('/hybridSessionControl/current'),
       data:()=>path.endsWith('presentationShared/current')?{scene:'combat'}:
@@ -132,7 +133,7 @@ test('7.4: server-side trigger updates only safe documents, never raw source',as
       delete:async()=>{deleted.push(path);}
     }),
     runTransaction:async callback=>callback({
-      set:(path,data)=>writes.push([path,data])
+      set:(ref,data)=>writes.push([ref.path,data])
     })
   };
   const projected=await synchronizeCombatPresentation(db,cid,encounter);
