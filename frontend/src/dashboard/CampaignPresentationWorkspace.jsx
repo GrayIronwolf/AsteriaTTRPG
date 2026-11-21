@@ -7,6 +7,7 @@ import {HybridSessionManager} from './HybridSessionManager.jsx';
 import {sessionTimestampMs} from '../../../src/state/hybridPresentationSessionModel.mjs';
 import {GMPresentationStudio} from './GMPresentationStudio.jsx';
 import {GMPresentationPlaylists} from './GMPresentationPlaylists.jsx';
+import {GMPreparedPresentationPanel} from './GMPreparedPresentationPanel.jsx';
 import {GMScreenCaptureControls} from './GMScreenCaptureControls.jsx';
 import {GMPresentationAssets} from './GMPresentationAssets.jsx';
 import {PresentationMediaFrame} from './PresentationMediaFrame.jsx';
@@ -138,7 +139,7 @@ function GMViewerStatus({api,campaignId}){
   </div>;
 }
 
-export function CampaignPresentationController({api,campaignId,uid,party=[]}){
+export function CampaignPresentationController({api,campaignId,uid,party=[],combatApi=null,onNavigate=null}){
   const control=useCampaignStream(api,'watchPresentation',[campaignId,'gm']);
   const maps=useCampaignStream(api,'watchMaps',[campaignId,'player']);
   const atlas=useCampaignStream(api,'watchAtlas',[campaignId]);
@@ -274,5 +275,9 @@ export function CampaignPresentationController({api,campaignId,uid,party=[]}){
     }}/>
     <GMPresentationPlaylists api={api} campaignId={campaignId} draft={draft}
       onStage={setDraft} onPresent={publishPlaylistScene} publishing={busy}/>
+    <GMPreparedPresentationPanel combatApi={combatApi} campaignId={campaignId}
+      publishedMaps={maps.data||[]} publishedLoading={maps.loading}
+      publishedError={maps.error} theme={draft.theme} onStageScene={setDraft}
+      onPresentScene={publishPlaylistScene} onNavigate={onNavigate}/>
   </section>;
 }
