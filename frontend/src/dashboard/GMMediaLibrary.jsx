@@ -1,7 +1,7 @@
 import React,{useEffect,useMemo,useState} from 'react';
 import {
   CAMPAIGN_MEDIA_LIBRARY_TYPES,filterCampaignMediaLibrary,
-  campaignMediaLibraryCounts,CAMPAIGN_MEDIA_LIBRARY_TABS
+  campaignMediaLibraryCounts
 } from '../../../src/state/campaignMediaLibraryModel.mjs';
 import styles from './GMMediaLibrary.module.css';
 
