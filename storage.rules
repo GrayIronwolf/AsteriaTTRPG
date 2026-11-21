@@ -40,6 +40,55 @@ service firebase.storage {
           ))
       );
     }
+    // Phase 7.3: original presentation-only upload path, never a token URL.
+    // A viewer grant alone cannot read bytes; publication AND active scene,
+    // current session, per-UID expiry and media kind must all match.
+    function presentationAssetMeta(campaignId,assetId) {
+      return firestore.get(/databases/(default)/documents/campaigns/$(campaignId)/presentationAssets/$(assetId)).data;
+    }
+    function presentationManifest(campaignId) {
+      return firestore.get(/databases/(default)/documents/campaigns/$(campaignId)/presentationAssetAccess/current).data;
+    }
+    function activePresentationMedia(campaignId,assetId) {
+      let asset = presentationAssetMeta(campaignId,assetId);
+      let manifest = presentationManifest(campaignId);
+      return request.auth != null &&
+        asset.get('status','') == 'ready' &&
+        asset.get('visibility','gm') == 'players' &&
+        asset.get('id','') == assetId &&
+        manifest.get('assetId','') == assetId &&
+        manifest.get('scene','') == asset.get('kind','') &&
+        manifest.get('expiresAt',request.time) > request.time &&
+        manifest.get('viewerExpiries',{}).get(request.auth.uid,request.time) > request.time;
+    }
+    match /campaigns/{campaignId}/presentationAssets/{assetId}/content {
+      allow get: if campaignGM(campaignId) ||
+        (request.auth != null &&
+          firestore.exists(/databases/(default)/documents/campaigns/$(campaignId)/presentationAssets/$(assetId)) &&
+          (
+            (campaignMember(campaignId) &&
+              presentationAssetMeta(campaignId,assetId).get('status','') == 'ready' &&
+              presentationAssetMeta(campaignId,assetId).get('visibility','gm') == 'players') ||
+            activePresentationMedia(campaignId,assetId)
+          ));
+      allow list: if false;
+      allow create: if campaignGM(campaignId) && resource == null &&
+        firestore.exists(/databases/(default)/documents/campaigns/$(campaignId)/presentationAssets/$(assetId)) &&
+        presentationAssetMeta(campaignId,assetId).get('status','') == 'uploading' &&
+        presentationAssetMeta(campaignId,assetId).get('contentType','') == request.resource.contentType &&
+        presentationAssetMeta(campaignId,assetId).get('size',0) == request.resource.size &&
+        request.resource.size > 0 &&
+        (
+          (request.resource.contentType.matches('image/(png|jpeg|webp|gif)') &&
+           request.resource.size <= 8 * 1024 * 1024) ||
+          (request.resource.contentType.matches('video/(mp4|webm)') &&
+           request.resource.size <= 48 * 1024 * 1024) ||
+          (request.resource.contentType == 'application/pdf' &&
+           request.resource.size <= 20 * 1024 * 1024)
+        );
+      allow update: if false;
+      allow delete: if campaignGM(campaignId);
+    }
     match /campaigns/{campaignId}/sessionRecordings/{archiveId}/{fileName} {
       // Private recording bytes; published recordings are only readable by
       // active members. No downloadable token or Storage listing is exposed.
