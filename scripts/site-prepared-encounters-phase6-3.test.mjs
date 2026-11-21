@@ -69,7 +69,9 @@ test('Phase 6.3: archive cannot bypass server combat admission',()=>{
   const service=read('frontend/src/combat/firebaseCombatService.mjs');
   const library=read('frontend/src/combat/PreparedEncounterLibrary.jsx');
   const styles=read('frontend/src/combat/PreparedEncounterLibrary.module.css');
-  assert.match(server,/if\(prepared\.archived===true\)throw new Error/);
+  assert.match(server,/validatePreparedLoadRequest\(input,prepared,encounter\)/);
+  const loadModel=read('src/state/preparedEncounterLoadModel.mjs');
+  assert.match(loadModel,/if\(plan\.archived===true\)/);
   assert.match(server,/Only the campaign GM may load a prepared encounter/);
   assert.match(service,/GM permission was revoked before saving/);
   assert.match(service,/Prepared encounter changed in another session/);
