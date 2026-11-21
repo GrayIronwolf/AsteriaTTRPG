@@ -612,7 +612,8 @@ export function createFirebaseCampaignMediaService({
             if(delay<=0)throw Error('Viewer session expired.');
             timer=setTimeout(()=>fail(Error('Viewer session expired.')),
               Math.min(delay,2147483647));
-            onUpdate(sanitizeRestrictedPresentation(state.scene));
+            onUpdate({...sanitizeRestrictedPresentation(state.scene),
+              epoch:state.session.epoch});
           }catch(error){fail(error);}
         };
         const listen=(ref,key,project)=>{
