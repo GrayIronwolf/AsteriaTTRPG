@@ -1,6 +1,8 @@
 import { createInformationCommands } from './informationCommands.mjs';
 import { isCampaignGM, readCampaignMember } from './characterPermissions.mjs';
 import { createCombatCommands } from './combatCommands.mjs';
+import {createEncounterCompletionCommands} from './encounterCompletionCommands.mjs';
+import {assertApprovedEncounterDelivery,encounterDeliveryPatch} from '../src/state/encounterCompletionModel.mjs';
 import { isDeepStrictEqual } from 'node:util';
 import { createCoreCommands } from './coreCommands.mjs';
 import { reconcileCharacterSystems } from '../src/state/characterSystems.mjs';
@@ -442,7 +444,7 @@ const commands = {
   },
   // Phase 7.2: authenticated and idempotent GM XP using the existing
   // progression engine, action receipt and canonical character mirrors.
-  grantCharacterXP: async function(campaignId,characterId,amount,reason=''){
+  grantCharacterXP: async function(campaignId,characterId,amount,reason='',encounterHistoryId=''){
     const xp=Number(amount),why=String(reason||'').trim().slice(0,300);
     if(!Number.isSafeInteger(xp)||xp<1||xp>1000000)
       return {ok:false,error:'Choose between 1 and 1,000,000 XP.'};
@@ -455,6 +457,16 @@ const commands = {
         const snapshot=await transaction.get(refs.campaign);
         if(!snapshot.exists())throw Error('The linked character is unavailable.');
         const character={id:characterId,...snapshot.data()},owner=character.ownerUid;
+        let completionRef=null,completion=null;
+        if(encounterHistoryId){
+          if(!/^[A-Za-z0-9_-]{1,160}$/.test(encounterHistoryId))
+            throw Error('Invalid completed encounter identifier.');
+          completionRef=doc(db,'campaigns',campaignId,'encounterHistory',encounterHistoryId);
+          const record=await transaction.get(completionRef);
+          if(!record.exists())throw Error('Completed encounter is unavailable.');
+          completion=record.data();
+          assertApprovedEncounterDelivery(completion,characterId,'xp',xp);
+        }
         if(!owner || !(campaign.playerCharacterLinks?.[characterId]===owner ||
           campaign.characters?.[characterId]?.ownerUid===owner ||
           (campaign.players?.[owner]?.characterIds||[]).includes(characterId)))
@@ -470,6 +482,10 @@ const commands = {
         const applied=window.AsteriaProgression.grantXP(character,xp);
         appendActivity(character,{type:'xp-reward',message:'GM awarded '+xp+' XP: '+why+'.'});
         writeLiveCharacter(transaction,refs,character);
+        if(completionRef)transaction.update(completionRef,{
+          ...encounterDeliveryPatch(completion,characterId,'xp',requestId,Date.now(),
+            currentUser.uid),updatedAt:serverTimestamp()
+        });
         return {amount:xp,level:character.level,xp:character.xp,xpMax:character.xpMax,
           levels:Number(applied.levels||0),messages:applied.messages||[]};
       });
@@ -632,7 +648,9 @@ const commands = {
     if(!db || !currentUser || !campaignId || !characterId) return {ok:false,error:'Choose a linked character.'};
     const refs=liveCharacterRefs(campaignId,characterId);
     try {
-      const reward=validateGMRewardPayload(input);
+      const encounterHistoryId=String(input.encounterHistoryId||'');
+      const {encounterHistoryId:_ignored,...rewardInput}=input;
+      const reward=validateGMRewardPayload(rewardInput);
       const ids=reward.items.map((_,index)=>`gm-reward-${requestId}-${index}`);
       const eventRefs=ids.map(id=>doc(db,'campaigns',campaignId,'events',id));
       const currencyRef=reward.currency.amount
@@ -643,6 +661,16 @@ const commands = {
         const snapshot=await transaction.get(refs.campaign);
         if(!snapshot.exists()) throw new Error('The linked campaign character was not found.');
         const character={...snapshot.data(),id:characterId};
+        let completionRef=null,completion=null;
+        if(encounterHistoryId){
+          if(!/^[A-Za-z0-9_-]{1,160}$/.test(encounterHistoryId))
+            throw Error('Invalid completed encounter identifier.');
+          completionRef=doc(db,'campaigns',campaignId,'encounterHistory',encounterHistoryId);
+          const record=await transaction.get(completionRef);
+          if(!record.exists())throw Error('Completed encounter is unavailable.');
+          completion=record.data();
+          assertApprovedEncounterDelivery(completion,characterId,'bundle',reward);
+        }
         if(!character.ownerUid ||
           !(campaign.playerCharacterLinks?.[characterId]===character.ownerUid ||
             campaign.characters?.[characterId]?.ownerUid===character.ownerUid ||
@@ -703,6 +731,10 @@ const commands = {
           });
         }
         writeLiveCharacter(transaction,refs,character);
+        if(completionRef)transaction.update(completionRef,{
+          ...encounterDeliveryPatch(completion,characterId,'bundle',requestId,Date.now(),
+            currentUser.uid),updatedAt:serverTimestamp()
+        });
         return {itemEvents:ids,currencyEvent:currencyRef?.id||'',itemCount:reward.items.length,currency:reward.currency};
       });
       return {ok:true,...result};
@@ -1649,5 +1681,5 @@ const commands = {
     }catch(error){return {ok:false,error:error.message||String(error)};}
   },
 };
-return {...commands,...createCoreCommands(context),...createInformationCommands(context),...createCombatCommands(context),...createItemStoreCommands(context),...createCraftingCommands(context,{requireCampaignGM,requireLiveSession,liveCharacterRefs,verifyOwnedLiveCharacter,writeLiveCharacter,characterInventory,placeCharacterItem,appendActivity}),...createEnhancementCommands(context,{requireCampaignGM,requireLiveSession,liveCharacterRefs,verifyOwnedLiveCharacter,writeLiveCharacter,characterInventory,liveItemId,appendActivity}),...createCraftingServiceCommands(context,{requireCampaignGM,requireLiveSession,liveCharacterRefs,verifyOwnedLiveCharacter,writeLiveCharacter,characterInventory,liveItemId,appendActivity,currencyTotal,setCurrencyTotal}),...createItemLoreCommands(context),...createLootTableCommands(context,{requireCampaignGM}),...createRandomTableCommands(context,{requireCampaignGM}),...createEncounterRewardCommands(context,{requireCampaignGM}),...createAsteriaCalendarCommands(context,{requireCampaignGM}),...createWeatherEnvironmentCommands(context,{requireCampaignGM}),...createWorldAtlasCommands(context,{requireCampaignGM}),...createSessionLibraryCommands(context,{requireCampaignGM}),...createCampaignAudioCommands(context,{requireCampaignGM}),...createSessionRecordingCommands(context,{requireCampaignGM}),...createPlayerPresentationCommands(context,{requireCampaignGM}),...createPartyLootCommands(context,{requireLiveSession,requireCampaignGM,liveCharacterRefs,verifyOwnedLiveCharacter,verifyLiveTradeCounterparty,writeLiveCharacter,characterInventory,liveItemId,placeCharacterItem,appendActivity,currencyTotal,setCurrencyTotal})};
+return {...commands,...createEncounterCompletionCommands(context,{requireCampaignGM}),...createCoreCommands(context),...createInformationCommands(context),...createCombatCommands(context),...createItemStoreCommands(context),...createCraftingCommands(context,{requireCampaignGM,requireLiveSession,liveCharacterRefs,verifyOwnedLiveCharacter,writeLiveCharacter,characterInventory,placeCharacterItem,appendActivity}),...createEnhancementCommands(context,{requireCampaignGM,requireLiveSession,liveCharacterRefs,verifyOwnedLiveCharacter,writeLiveCharacter,characterInventory,liveItemId,appendActivity}),...createCraftingServiceCommands(context,{requireCampaignGM,requireLiveSession,liveCharacterRefs,verifyOwnedLiveCharacter,writeLiveCharacter,characterInventory,liveItemId,appendActivity,currencyTotal,setCurrencyTotal}),...createItemLoreCommands(context),...createLootTableCommands(context,{requireCampaignGM}),...createRandomTableCommands(context,{requireCampaignGM}),...createEncounterRewardCommands(context,{requireCampaignGM}),...createAsteriaCalendarCommands(context,{requireCampaignGM}),...createWeatherEnvironmentCommands(context,{requireCampaignGM}),...createWorldAtlasCommands(context,{requireCampaignGM}),...createSessionLibraryCommands(context,{requireCampaignGM}),...createCampaignAudioCommands(context,{requireCampaignGM}),...createSessionRecordingCommands(context,{requireCampaignGM}),...createPlayerPresentationCommands(context,{requireCampaignGM}),...createPartyLootCommands(context,{requireLiveSession,requireCampaignGM,liveCharacterRefs,verifyOwnedLiveCharacter,verifyLiveTradeCounterparty,writeLiveCharacter,characterInventory,liveItemId,placeCharacterItem,appendActivity,currencyTotal,setCurrencyTotal})};
 }
