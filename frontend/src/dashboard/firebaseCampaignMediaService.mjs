@@ -118,6 +118,8 @@ export function createFirebaseCampaignMediaService({
                 fail(Error('Presentation connection interrupted. Reconnect to verify access.'));
               if(project===playlistProject)
                 fail(Error('Private playlist connection interrupted. Reconnect to verify GM access.'));
+              if(project===audienceProject)
+                fail(Error('Audience reveal connection interrupted. Reconnect to verify access.'));
               return;
             }
             if(snap.metadata.hasPendingWrites)return;
@@ -149,6 +151,7 @@ export function createFirebaseCampaignMediaService({
     .filter(Boolean).sort((a,b)=>a.name.localeCompare(b.name));
   const presentationProject=raw=>presentationForViewer(raw);
   const playlistProject=raw=>raw||{version:1,revision:0,playlists:[]};
+  const audienceProject=raw=>raw||null;
   const notesProject=rows=>battleMapPrivatePins(rows);
   const partyProject=rows=>gmPartySummary(rows);
   function watchMaps(id,mode,onUpdate,onError){
@@ -191,7 +194,7 @@ export function createFirebaseCampaignMediaService({
     if(audience==='member'){
       // Existing player stream verifies member status and rejects cached permissions.
       return watch(id,'player',audienceRef(id,'member',uid),
-        row=>row||null,onUpdate,onError,'document');
+        audienceProject,onUpdate,onError,'document');
     }
     // Invited guests cannot fetch campaign documents; bind only their own UID
     // and the per-document active-viewer Firestore rules.
