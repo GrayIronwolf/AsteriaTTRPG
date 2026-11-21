@@ -2,6 +2,7 @@ import React,{useEffect,useState} from 'react';
 import {COMBAT_AP_ACTIONS,customEnemy,libraryEnemy} from './combatModel.mjs';
 import {CombatCommandCentre,CombatCommandPanel} from './CombatCommandCentre.jsx';
 import {PreparedEncounterLibrary} from './PreparedEncounterLibrary.jsx';
+import {CombatBattleMapPanel} from './CombatBattleMapPanel.jsx';
 import styles from './CombatWorkspace.module.css';
 import {ForgedBadge} from '../components/ui/ForgedBadge.jsx';
 
@@ -238,6 +239,7 @@ export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigat
             <option value="">No map</option>
             {(stream.data.maps||[]).map(map=><option key={map.id} value={map.id}>{map.name}</option>)}
           </select></label>:null}
+          <CombatBattleMapPanel mediaApi={mediaApi} campaignId={campaignId} combat={combat}/>
           <div className={styles.controls}>
             {canSetup?<button type="button" disabled={busy||!combat.sessionEditable}
               onClick={()=>submit('encounter',{operation:'map-prepare',
