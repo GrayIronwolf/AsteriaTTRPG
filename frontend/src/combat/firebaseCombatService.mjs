@@ -10,6 +10,7 @@ import {
 } from '../../../src/state/preparedEncounterModel.mjs';
 import {projectGMLivePending,projectGMLiveLog}
   from '../../../src/state/liveCombatCommandModel.mjs';
+import {encounterScheduleForGM} from '../../../src/state/encounterWaveModel.mjs';
 
 /** React/Vite Phase 7.1. Existing authenticated Firebase app, paths and
  * asteriaAction combatCommand transaction are the only sources of authority. */
@@ -136,6 +137,7 @@ export function createFirebaseCombatService({
                 library:gmEncounterCandidates(data.workspace?.world),
                 pending:projectGMLivePending(data.workspace?.combatState),
                 combatLog:projectGMLiveLog(data.encounter?.combat?.log),
+                encounterSchedule:encounterScheduleForGM(data.workspace?.combatState),
                 party:gmPartySummary(data.roster),
                 preparedEncounters:normalizePreparedEncounters(data.workspace?.preparedEncounters),
                 maps:data.maps
