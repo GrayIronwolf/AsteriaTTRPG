@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import { createCommands } from './commands.mjs';
 import { validateEquipmentChange } from '../src/systems/armour/armourSystem.mjs';
+import {respondHybridPresentationInvitation} from './hybridInvitationResponse.mjs';
 
 // Reuse the existing, trusted repository progression implementation. No request
 // text is evaluated and this context has no network, filesystem or credentials.
@@ -33,6 +34,8 @@ export async function executeAction(db,uid,data,serverTimestamp) {
   if(!uid) throw new Error('Sign in to use this action.');
   validateRequest(data);
   if(data.action==='repairCampaignCharacterLink') return repairCharacterLink(db,uid,data,serverTimestamp);
+  if(data.action==='respondHybridPresentationInvitation')
+    return respondHybridPresentationInvitation(db,uid,data,serverTimestamp);
   const {action,requestId}=data;
   const args=data.args.map(value=>value===null?undefined:value);
   const campaignId=args[0];
