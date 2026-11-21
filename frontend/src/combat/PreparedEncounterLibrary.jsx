@@ -8,6 +8,9 @@ import {
   queryPreparedEncounterLibrary,preparedEncounterFolders,duplicatePreparedEncounter
 } from '../../../src/state/preparedEncounterLibraryModel.mjs';
 import {previewPreparedEncounterLoad} from '../../../src/state/preparedEncounterLoadModel.mjs';
+import {preparedBattleMapPreview,setPreparedEnemySpawn,clearPreparedEnemySpawns}
+  from '../../../src/state/preparedBattleMapModel.mjs';
+import {CampaignMapCanvas} from '../dashboard/CampaignMapWorkspace.jsx';
 import styles from './PreparedEncounterLibrary.module.css';
 
 const blank={name:'',notes:'',mapId:'',enemies:[],folder:'',tags:[],archived:false};
@@ -21,7 +24,7 @@ const displayHP=row=>Array.isArray(row.hp)?row.hp[1]:row.hp||0;
 
 /** GM-specific private template storage via the existing combat adapter. */
 export function PreparedEncounterLibrary({
-  api,campaignId,combat,plans=[],maps=[],library=[],onLoaded
+  api,campaignId,combat,plans=[],maps=[],mediaApi=null,library=[],onLoaded
 }){
   const [editId,setEditId]=useState(''),[revision,setRevision]=useState(0);
   const [draft,setDraft]=useState(draftFrom(null)),[enemy,setEnemy]=useState(enemyBlank);
@@ -31,6 +34,16 @@ export function PreparedEncounterLibrary({
   const [folderFilter,setFolderFilter]=useState(''),[sort,setSort]=useState('recent');
   const [previewId,setPreviewId]=useState(''),[tagInput,setTagInput]=useState('');
   const [loadReview,setLoadReview]=useState(null);
+  const [fullMaps,setFullMaps]=useState([]),[mapError,setMapError]=useState('');
+  const [placingEnemy,setPlacingEnemy]=useState('');
+  useEffect(()=>{
+    if(!mediaApi){setFullMaps([]);return undefined;}
+    setFullMaps([]);setMapError('');
+    return mediaApi.watchMaps(campaignId,'gm',setFullMaps,
+      error=>setMapError(error.message||'Map media is unavailable.'));
+  },[mediaApi,campaignId]);
+  const activeMap=fullMaps.find(map=>map.id===draft.mapId)||null;
+  const mapPreview=activeMap?preparedBattleMapPreview(activeMap,draft.enemies):null;
   const reviewPlan=plans.find(row=>row.id===loadReview?.id);
   const currentReview=loadReview&&reviewPlan?
     previewPreparedEncounterLoad(reviewPlan,combat,maps):null;
@@ -45,13 +58,13 @@ export function PreparedEncounterLibrary({
     setEditId('');setRevision(0);setDraft(draftFrom(null));
     setError('');setMessage('');setSearch('');setStatus('active');
     setFolderFilter('');setSort('recent');setPreviewId('');setTagInput('');
-    setLoadReview(null);
+    setLoadReview(null);setPlacingEnemy('');
   },[campaignId]);
   const reset=()=>{
-    setEditId('');setRevision(0);setDraft(draftFrom(null));setError('');setTagInput('');
+    setEditId('');setRevision(0);setDraft(draftFrom(null));setError('');setTagInput('');setPlacingEnemy('');
   };
   const loadEditor=plan=>{
-    setEditId(plan.id);setRevision(plan.revision);setDraft(draftFrom(plan));
+    setEditId(plan.id);setRevision(plan.revision);setDraft(draftFrom(plan));setPlacingEnemy('');
     setTagInput((plan.tags||[]).join(', '));
     setError('');setMessage('');
   };
@@ -241,15 +254,46 @@ export function PreparedEncounterLibrary({
         onChange={event=>setDraft(row=>({...row,archived:event.target.checked}))}/>
         Archived — unavailable for combat loading</label>
       <label>Battle Map<select value={draft.mapId}
-        onChange={event=>setDraft(row=>({...row,mapId:event.target.value}))}>
+        onChange={event=>{
+          const id=event.target.value;
+          setDraft(row=>({...row,mapId:id,
+            enemies:row.mapId===id?row.enemies:clearPreparedEnemySpawns(row.enemies)}));
+          setPlacingEnemy('');
+        }}>
         <option value="">No map selected</option>
         {maps.map(row=><option value={row.id} key={row.id}>{row.name}</option>)}
       </select></label>
-      <p>Map selection is retained as an encounter reference. Live map binding remains a separate secured GM action.</p>
+      <p>Set optional enemy starting positions on an existing map. Starting combat
+        links the prepared map and its combatant tokens through a secured GM action.</p>
+      {mapError?<p role="alert">{mapError}</p>:null}
+      {draft.mapId&&mediaApi&&mapPreview?<div className={styles.mapPreparation}
+        data-testid="site-prepared-map-placement">
+        <h4>Enemy Starting Positions</h4>
+        <label>Place enemy<select value={placingEnemy}
+          onChange={event=>setPlacingEnemy(event.target.value)}>
+          <option value="">Preview only</option>
+          {draft.enemies.map((row,index)=><option value={String(index)} key={index}>
+            {index+1}. {row.name}{row.spawn?' · Positioned':''}
+          </option>)}
+        </select></label>
+        <CampaignMapCanvas api={mediaApi} campaignId={campaignId}
+          map={mapPreview} mode="gm" editing={placingEnemy!==''}
+          onPoint={point=>{
+            try{
+              setDraft(row=>({...row,enemies:setPreparedEnemySpawn(row.enemies,
+                Number(placingEnemy),point,activeMap)}));
+              setError('');
+            }catch(error){setError(error.message);}
+          }}/>
+        <p>Select an enemy, then click the map to set its grid-snapped square.
+          Positions are saved privately in the encounter, not on the shared map.</p>
+        <button type="button" onClick={()=>setDraft(row=>({...row,
+          enemies:clearPreparedEnemySpawns(row.enemies)}))}>Clear Enemy Positions</button>
+      </div>:null}
       <div className={styles.entries}>
         <h4>Enemy Roster ({draft.enemies.length}/{PREPARED_ENCOUNTER_MAX_ENEMIES})</h4>
         {draft.enemies.map((row,index)=><div key={index}>
-          <span>{index+1}. {row.name} · HP {displayHP(row)}</span>
+          <span>{index+1}. {row.name} · HP {displayHP(row)}{row.spawn?' · Positioned':' · Auto placement'}</span>
           <button type="button" disabled={busy} aria-label={'Remove '+row.name+' '+(index+1)}
             onClick={()=>setDraft(previous=>({...previous,
               enemies:previous.enemies.filter((_,i)=>i!==index)}))}>Remove</button>
