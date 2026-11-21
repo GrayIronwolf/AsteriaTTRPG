@@ -50,25 +50,26 @@ export function useCampaignStream(api,method,args,enabled=true){
   },[api,method,enabled,...args]);
   return state;
 }
-function useAuthenticatedMapBlob(api,campaignId,map,mode,atlas=false){
+function useAuthenticatedMapBlob(api,campaignId,map,mode,atlas=false,restricted=false){
   const [result,setResult]=useState({url:'',error:'',loading:false});
   useEffect(()=>{
     let alive=true,url='';
     setResult({url:'',error:'',loading:Boolean(map)});
     if(!map)return undefined;
-    (atlas?api.fetchAtlasMedia(campaignId,map):api.fetchMapMedia(campaignId,map,mode))
+    (restricted?api.fetchRestrictedMapMedia(campaignId,map):
+      atlas?api.fetchAtlasMedia(campaignId,map):api.fetchMapMedia(campaignId,map,mode))
       .then(blob=>{
         if(!alive)return;
         url=URL.createObjectURL(blob);
         setResult({url,error:'',loading:false});
       }).catch(error=>{if(alive)setResult({url:'',error:error?.message||'Map cannot be loaded.',loading:false});});
     return ()=>{alive=false;if(url)URL.revokeObjectURL(url);};
-  },[api,campaignId,map?.id,map?.storagePath,mode,atlas]);
+  },[api,campaignId,map?.id,map?.storagePath,mode,atlas,restricted]);
   return result;
 }
 export function CampaignMapCanvas({api,campaignId,map,mode='player',atlas=false,
-  editing=false,onPoint,previewFog=false,showGrid=true}){
-  const media=useAuthenticatedMapBlob(api,campaignId,map,mode,atlas);
+  editing=false,onPoint,previewFog=false,showGrid=true,restricted=false}){
+  const media=useAuthenticatedMapBlob(api,campaignId,map,mode,atlas,restricted);
   const node=useRef(null),[playing,setPlaying]=useState(true);
   useEffect(()=>setPlaying(true),[map?.id]);
   const cols=map?.gridColumns||20,rows=map?.gridRows||15;
