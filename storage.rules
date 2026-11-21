@@ -163,13 +163,31 @@ service firebase.storage {
       allow update: if false;
       allow delete: if campaignGM(campaignId);
     }
+    // Phase 7.4: a remote viewer may fetch only the published source map
+    // currently selected on the restricted presentation. No map listing,
+    // arbitrary map browsing, or writable remote access is granted.
+    function activeRestrictedBattleMap(campaignId,mapId) {
+      let manifest = presentationManifest(campaignId);
+      let original = firestore.get(/databases/(default)/documents/campaigns/$(campaignId)/battleMaps/$(mapId)).data;
+      return request.auth != null &&
+        manifest.get('scene','') == 'battle-map' &&
+        manifest.get('mapId','') == mapId &&
+        manifest.get('expiresAt',request.time) > request.time &&
+        manifest.get('viewerExpiries',{}).get(request.auth.uid,request.time) > request.time &&
+        original.get('visibility','gm') == 'players' &&
+        original.get('id','') == mapId;
+    }
     match /campaigns/{campaignId}/battleMaps/{mapId}/{fileName} {
       // Do not expose GM-only map bytes or permit players to overwrite media.
       // Browser preview uses authenticated Storage getBlob, not public download URLs.
       allow get: if campaignGM(campaignId) ||
-        (campaignMember(campaignId) &&
+        (request.auth != null &&
           firestore.exists(/databases/(default)/documents/campaigns/$(campaignId)/battleMaps/$(mapId)) &&
-          firestore.get(/databases/(default)/documents/campaigns/$(campaignId)/battleMaps/$(mapId)).data.get('visibility','gm') == 'players');
+          (
+            (campaignMember(campaignId) &&
+              firestore.get(/databases/(default)/documents/campaigns/$(campaignId)/battleMaps/$(mapId)).data.get('visibility','gm') == 'players') ||
+            activeRestrictedBattleMap(campaignId,mapId)
+          ));
       allow list: if false;
       allow create: if campaignGM(campaignId) && resource == null &&
         fileName.matches('scene\\.(png|jpg|webp|gif|mp4|webm)') &&
