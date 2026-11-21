@@ -57,26 +57,27 @@ export function createHybridPresentationSessionCommands(context,{requireCampaign
           const grantRef=doc(db,'campaigns',campaignId,'hybridViewerGrants',action.uid);
           const grantSnap=await tx.get(grantRef);
           const old=exists(grantSnap)?grantSnap.data():null;
-          if(action.type==='grant'){
+          if(action.type==='grant'||action.type==='invite'){
             const isNew=!viewers[action.uid];
             if(isNew&&Object.keys(viewers).length>=HYBRID_SESSION_MAX_VIEWERS)
               throw Error('The viewer limit has been reached.');
             const until=Math.min(sessionTimestampMs(session.expiresAt),
               now+action.durationMinutes*60*1000);
             const grant={uid:action.uid,epoch:session.epoch,
-              status:'active',expiresAt:new Date(until),
+              status:action.type==='invite'?'pending':'active',expiresAt:new Date(until),
               grantedBy:currentUser.uid,grantedAt:serverTimestamp(),
               revision:Number(old?.revision||0)+1};
             tx.set(grantRef,grant);
-            viewers[action.uid]=new Date(until);
+            if(action.type==='grant')viewers[action.uid]=new Date(until);
+            else delete viewers[action.uid];
             tx.set(accessRef,{...access,viewerExpiries:viewers,
               epoch:session.epoch,expiresAt:session.expiresAt,
               updatedAt:serverTimestamp()});
             tx.update(sessionRef,{revision,grantCount:Object.keys(viewers).length,
               updatedBy:currentUser.uid,updatedAt:serverTimestamp()});
-            return {status:'granted',uid:action.uid,revision,expiresAt:until};
+            return {status:action.type==='invite'?'pending':'granted',uid:action.uid,revision,expiresAt:until};
           }
-          if(!old||old.epoch!==session.epoch||old.status!=='active')
+          if(!old||old.epoch!==session.epoch||!['active','pending'].includes(old.status))
             throw Error('This viewer has no active access to revoke.');
           delete viewers[action.uid];
           tx.set(accessRef,{...access,viewerExpiries:viewers,
