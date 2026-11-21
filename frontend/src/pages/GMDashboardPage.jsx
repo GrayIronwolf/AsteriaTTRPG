@@ -20,6 +20,7 @@ import {GMWorldSystemsWorkspace} from '../dashboard/GMWorldSystemsWorkspace.jsx'
 import {GMToolkitWorkspace,GMToolkitQuickAccess} from '../dashboard/GMToolkitWorkspace.jsx';
 import {CampaignMapWorkspace,CampaignAtlasWorkspace} from '../dashboard/CampaignMapWorkspace.jsx';
 import {CampaignPresentationController} from '../dashboard/CampaignPresentationWorkspace.jsx';
+import {GMMediaLibrary} from '../dashboard/GMMediaLibrary.jsx';
 import {GMCombatWorkspace} from '../combat/CombatWorkspace.jsx';
 import {GMChecksAndProgression} from '../progression/ProgressionWorkspace.jsx';
 import {GMEconomyWorkspace} from '../economy/EconomyWorkspace.jsx';
@@ -40,6 +41,7 @@ const GM_TABS=Object.freeze([
   {id:'soundboard',label:'Soundboard & Ambience',area:'audio'},
   {id:'session-recordings',label:'Session Recordings',area:'recordings'},
   {id:'presentation',label:'Player Display'},
+  {id:'media-library',label:'Media Library'},
   {id:'economy',label:'Economy'},
   {id:'crafting',label:'Crafting'},
   {id:'tools',label:'GM Tools',area:'tables'},
@@ -323,6 +325,9 @@ function CampaignGM({api,uid,campaignId}) {
       api={api.media} campaignId={campaignId} role="gm"/>:null}
     {mediaEnabled&&tab==='world-atlas'?<CampaignAtlasWorkspace key={uid+':'+campaignId}
       api={api.media} campaignId={campaignId}/>:null}
+    {mediaEnabled&&tab==='media-library'?<GMMediaLibrary
+      key={uid+':'+campaignId} api={api.media} campaignId={campaignId}
+      onNavigate={setTab}/>:null}
     {mediaEnabled&&tab==='presentation'?<CampaignPresentationController
       key={uid+':'+campaignId} api={api.media} campaignId={campaignId}
       party={snapshot.party}/>:null}
@@ -333,7 +338,7 @@ function CampaignGM({api,uid,campaignId}) {
     {((GM_TOOL_AREAS[tab]&&!digitalGMEnabled)||
       (['inventory','economy','crafting'].includes(tab)&&!economyEnabled)||
       (tab==='gameplay'&&!combatEnabled&&!progressionEnabled)||
-      (['battle-maps','world-atlas','presentation'].includes(tab)&&!mediaEnabled))?
+      (['battle-maps','world-atlas','presentation','media-library'].includes(tab)&&!mediaEnabled))?
       <SurfacePanel className={styles.panel}>
         <h2>{GM_TABS.find(item=>item.id===tab)?.label}</h2>
         <BodyText muted>This campaign feature is not enabled for the current account or campaign.</BodyText>
