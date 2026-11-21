@@ -17,6 +17,9 @@ import {combatMapMovePlan,synchronizeCombatMapTokens,activeMapEncounter} from '.
 import {preparedMapTokenCapacity} from '../src/state/preparedBattleMapModel.mjs';
 import {applyLiveTimerCommand,resetLiveTurnTimer}
   from '../src/state/liveCombatCommandModel.mjs';
+import {
+  stageEncounterSchedule,releaseEncounterWave,triggerEncounterEvent
+} from '../src/state/encounterWaveModel.mjs';
 import { currentCombatant, initiativeResult, initiativeOrder, combatOptions, combatRestriction, optionProblem, skillCheck, rollD20, checkResult, attackResult, counterspellResult, validateReactionEquipment, payCombatCosts, changeCombatHP, deathSave, feedback, mixedDamage, rows, SPELL_RANKS, SPELL_SKILL_ACCESS } from '../src/state/combatRules.mjs';
 
 const copy=value=>JSON.parse(JSON.stringify(value));
@@ -25,7 +28,7 @@ const bounded=(value,min=0,max=1e9)=>{const n=Number(value);if(!Number.isFinite(
 const roll=()=>randomInt(1,21);
 const numberDie=()=> (roll()-1)/20;
 const combatCharacterFields=new Set(['hp','sp','mp','bp','zp','resources','resourceDefinitions','resourceState','conditions','downed','activeEffects','effects','talentResourceEffects','talentResourceState','talentStateVersion','talentEffects','talentRestBonus','talentSavingThrows','talentUsage','acModifiers','specialDamage','soulDamage','coreStateVersion','inventory','equipment']);
-const management=new Set(['timer','map-link','map-move','save','load-prepared','map-prepare','start','next','end','clear','approve','reject','window','close-window','resolve','roll','resolve-reaction','correct','condition','ambush','trigger-prepared']);
+const management=new Set(['release-wave','trigger-event','timer','map-link','map-move','save','load-prepared','map-prepare','start','next','end','clear','approve','reject','window','close-window','resolve','roll','resolve-reaction','correct','condition','ambush','trigger-prepared']);
 const publicPending=p=>p?{id:p.id,actorId:p.actorId,actorName:p.actorName,optionId:p.actorKind==='player'?p.optionId:'',name:p.actorKind==='player'?p.name:'Creature action',status:p.status,targetIds:p.targetIds,ap:p.ap,bonus:p.bonus,apPaid:Boolean(p.prepaidAP),costs:p.actorKind==='player'?p.costs:{},reactionWindow:p.status==='reactions',reactorId:p.window?.[p.windowIndex||0]?.actorId||'',reactionChoices:p.window?.[p.windowIndex||0]?.choices||[],reaction:p.reaction?{actorId:p.reaction.actorId,name:p.reaction.name}:null,message:p.publicMessage||''}:null;
 
 // An extension of asteriaAction: one encounter document, existing resource/effect
@@ -252,6 +255,8 @@ export function createCombatCommands(context) {
           encounter.status='ready';encounter.turnIndex=0;encounter.round=1;
           encounter.preparedMapId=prepared.mapId||'';
           encounter.preparedEncounterId=prepared.id;
+          privateState.encounterSchedule=stageEncounterSchedule(prepared,now);
+          encounter.publicEvent=null;
           // A previous encounter's turn state must never leak into a newly loaded template.
           encounter.combat.participants={};
           privateState.preparations={};
@@ -285,6 +290,10 @@ export function createCombatCommands(context) {
         if(boundMap&&encounter.battleMapId===boundMapId&&boundMap.combatId===encounter.combatId&&activeMapEncounter(encounter)){
           const tokens=synchronizeCombatMapTokens(boundMap,encounter,()=>randomUUID());
           tx.update(mapRef,{tokens,updatedAt:serverTimestamp()});
+        }
+        if(!loading&&privateState.encounterSchedule){
+          // An edited manual roster must never silently edit the private wave template.
+          // The existing schedule remains a snapshot of the last prepared load.
         }
         log(loading?'GM loaded prepared encounter: '+prepared.name+'.':'GM updated encounter participants.');
       }else if(input.operation==='map-prepare'){
@@ -355,6 +364,54 @@ export function createCombatCommands(context) {
           encounter.battleMapId=requestedPreparedMapId;
           log('Prepared battle map linked with combatant tokens.');
         }
+      }else if(input.operation==='release-wave'){
+        requireActive();noPending();
+        if(input.confirmation!=='release-wave'||!input.waveId)
+          throw new Error('Review and confirm the exact prepared wave.');
+        const {updated,wave,enemies}=releaseEncounterWave(
+          privateState.encounterSchedule,input.waveId,context.requestId,now,encounter.round
+        );
+        const total=encounter.combatants.length+enemies.length;
+        if(total>160)throw new Error('Wave release would exceed 160 combat participants.');
+        if(enemies.some(row=>encounter.combatants.some(old=>old.id===row.id)))
+          throw new Error('Duplicate wave combatant identifiers.');
+        const acting=currentCombatant(encounter);
+        for(const enemy of enemies){
+          const next={...enemy,...encounterSourceResources(enemy)};
+          if(next.initiativeSet!==true){
+            const result=initiativeResult(next,roll(),roll(),{now,encounter});
+            next.initiative=result.total;next.initiativeRoll=result;
+          }
+          encounter.combatants.push(next);
+          encounter.combat.participants[next.id]={
+            ap:0,bonus:false,turns:0,turnComplete:false,apSpends:[]
+          };
+        }
+        encounter.combatants.sort(initiativeOrder);
+        // Never advance/restart the current turn when reinforcements enter.
+        encounter.turnIndex=encounter.combatants.findIndex(row=>row.id===acting.id);
+        encounter.enemies=encounter.combatants.filter(row=>!row.characterId).map(copy);
+        if(boundMap&&boundMap.combatId===encounter.combatId){
+          const tokens=synchronizeCombatMapTokens(boundMap,encounter,()=>randomUUID());
+          tx.update(mapRef,{tokens,updatedAt:serverTimestamp()});
+        }
+        privateState.encounterSchedule=updated;
+        log('GM released reinforcement wave: '+wave.name+
+          ' ('+enemies.length+' enemies).');
+      }else if(input.operation==='trigger-event'){
+        requireActive();noPending();
+        if(input.confirmation!=='trigger-event'||!input.eventId)
+          throw new Error('Review and confirm the prepared encounter event.');
+        const {updated,event}=triggerEncounterEvent(
+          privateState.encounterSchedule,input.eventId,now,encounter.round
+        );
+        privateState.encounterSchedule=updated;
+        if(event.announce){
+          encounter.publicEvent={name:event.name,type:event.type,
+            round:encounter.round,at:now};
+        }
+        // Event text does not directly mutate HP, AP, initiative or conditions.
+        log('GM triggered '+event.type+' event: '+event.name+'.');
       }else if(input.operation==='timer'){
         if(!gm)throw new Error('Only the GM may configure the combat turn timer.');
         encounter.turnTimer=applyLiveTimerCommand(encounter.turnTimer||{},input,
@@ -384,7 +441,12 @@ export function createCombatCommands(context) {
           tx.update(mapRef,{combatId:'',tokens:(boundMap.tokens||[]).filter(token=>!token.combatantId),updatedAt:serverTimestamp()});
         }
         encounter.battleMapId='';
-        if(input.operation==='clear'){encounter.combatants=[];encounter.enemies=[];encounter.turnIndex=0;encounter.round=1;}log('Combat ended; remaining resources and conditions retained.');
+        if(input.operation==='clear'){
+          encounter.combatants=[];encounter.enemies=[];encounter.turnIndex=0;encounter.round=1;
+          privateState.encounterSchedule=null;encounter.publicEvent=null;
+          encounter.preparedEncounterId='';
+        }
+        log('Combat ended; remaining resources and conditions retained.');
       }else if(input.operation==='correct'){
         const reason=text(input.reason);if(!reason)throw new Error('A GM correction needs a recorded reason.');
         const id=input.targetId||actorId,character=get(id);
