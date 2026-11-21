@@ -133,3 +133,13 @@ test('7.4: no browser may forge or modify public projections',async()=>{
     await assertFails(updateDoc(doc(f(uid),publicMap),{fogCells:'1111'}));
   }
 });
+
+test('Improvement 1: remote invitee cannot download fogged original map media',async()=>{
+  await assertSucceeds(getBytes(ref(s('invitee'),storagePath)));
+  // Visual-only fog masks pixels in the DOM, not the downloaded source asset.
+  // Remote guests must fail closed until a sanitized media derivative exists.
+  await change(rawMap,{fogEnabled:true});
+  await assertFails(getBytes(ref(s('invitee'),storagePath)));
+  await change(rawMap,{fogEnabled:false});
+  await assertSucceeds(getBytes(ref(s('invitee'),storagePath)));
+});
