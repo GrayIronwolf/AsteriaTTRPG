@@ -5,6 +5,18 @@ import {initializeTestEnvironment,assertFails,assertSucceeds} from '@firebase/ru
 import {getDoc,doc,setDoc,updateDoc,deleteDoc,Timestamp} from 'firebase/firestore';
 
 const campaignId='battle-session',mapId='arena';
+const publicPath='campaigns/'+campaignId+'/battleMapsPublic/'+mapId;
+const syncPublic=async()=>env.withSecurityRulesDisabled(async context=>{
+  const admin=context.firestore();
+  const source=(await getDoc(doc(admin,'campaigns/'+campaignId+'/battleMaps/'+mapId))).data();
+  await setDoc(doc(admin,publicPath),{
+    id:mapId,name:source.name,visibility:source.visibility,
+    kind:source.kind,contentType:source.contentType,
+    gridColumns:source.gridColumns,gridRows:source.gridRows,
+    fogEnabled:source.fogEnabled===true,fogCells:source.fogCells,
+    tokens:[],gridVisible:source.gridVisible
+  });
+});
 let env;
 const scene={
  id:mapId,campaignId,name:'Battle Arena',description:'',visibility:'players',
@@ -33,10 +45,12 @@ beforeEach(async()=>{
   });
   await setDoc(doc(f,'campaigns/'+campaignId+'/battleMaps/'+mapId),scene);
  });
+ await syncPublic();
 });
 test('player can view an explicitly published combat map but not edit positions',async()=>{
  const path='campaigns/'+campaignId+'/battleMaps/'+mapId;
- await assertSucceeds(getDoc(doc(db('alice'),path)));
+ await assertFails(getDoc(doc(db('alice'),path)));
+ await assertSucceeds(getDoc(doc(db('alice'),publicPath)));
  await assertFails(updateDoc(doc(db('alice'),path),{tokens:[participant]}));
  await assertFails(updateDoc(doc(db('alice'),path),{combatId:'combat-1'}));
  await assertFails(deleteDoc(doc(db('alice'),path)));
@@ -57,7 +71,7 @@ test('backend-linked map prevents browser token edits even from GM',async()=>{
    combatId:'combat-1',tokens:[participant]
   });
  });
- await assertSucceeds(getDoc(doc(db('alice'),path)));
+ await assertSucceeds(getDoc(doc(db('alice'),publicPath)));
  await assertFails(updateDoc(doc(db('gm'),path),{
   tokens:[{...participant,x:50,y:50}]
  }));
