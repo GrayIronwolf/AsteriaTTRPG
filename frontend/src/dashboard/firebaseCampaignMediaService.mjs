@@ -2,6 +2,7 @@ import {assertGMCampaignId,gmCampaignAccess,gmPartySummary} from './gmDashboardM
 import {playerCampaignAccess} from '../player/playerDashboardModel.mjs';
 import {battleMapPrivatePins} from '../../../src/state/battleMapFogModel.mjs';
 import {validatePresentationAction} from '../../../src/state/playerPresentationModel.mjs';
+import {validateHybridSessionAction,hybridViewerCanRead,sanitizeRestrictedPresentation} from '../../../src/state/hybridPresentationSessionModel.mjs';
 import {
   CAMPAIGN_MEDIA_LIBRARY_SOURCES,CAMPAIGN_MEDIA_LIBRARY_LIMIT_PER_SOURCE,
   buildCampaignMediaLibrary,campaignMediaLibraryReference,classifyCampaignMediaRecord
@@ -30,6 +31,10 @@ export function createFirebaseCampaignMediaService({
   const atlasCol=id=>firestoreSdk.collection(db,'campaigns',id,'worldAtlasShared');
   const atlasRef=(id,map)=>firestoreSdk.doc(db,'campaigns',id,'worldAtlasShared',map);
   const notesRef=(id,map)=>firestoreSdk.doc(db,'campaigns',id,'battleMaps',map,'gmNotes','private');
+  const hybridSessionRef=id=>firestoreSdk.doc(db,'campaigns',id,'hybridSessionControl','current');
+  const hybridGrantsCol=id=>firestoreSdk.collection(db,'campaigns',id,'hybridViewerGrants');
+  const hybridGrantRef=(id,uid)=>firestoreSdk.doc(db,'campaigns',id,'hybridViewerGrants',uid);
+  const restrictedRef=id=>firestoreSdk.doc(db,'campaigns',id,'presentationRestricted','current');
   const presentationRef=(id,mode)=>firestoreSdk.doc(db,'campaigns',id,
     mode==='gm'?'presentationControl':'presentationShared','current');
   async function verified(){
@@ -360,6 +365,130 @@ export function createFirebaseCampaignMediaService({
     });
     same(uid);return {ok:true};
   }
+  async function manageHybridSession(id,action){
+    const {uid}=await check(id,'gm');
+    validateHybridSessionAction(action);
+    const response=await functionsSdk.httpsCallable(functions,'asteriaAction')({
+      action:'manageHybridPresentationSession',args:[id,'gm-scope',action],
+      requestId:crypto.randomUUID()
+    });
+    same(uid);
+    if(response.data?.ok!==true)
+      throw Error(response.data?.error||'Hybrid viewer session command failed.');
+    return response.data;
+  }
+
+  function watchGMHybridSession(id,onUpdate,onError){
+    let active=true,stops=[],campaign=null,member=null;
+    const state={session:null,grants:[]};
+    const ready={campaign:false,member:false,session:false,grants:false};
+    const close=()=>{active=false;stops.splice(0).forEach(stop=>stop());};
+    const fail=error=>{if(!active)return;close();onError?.(error);};
+    (async()=>{
+      try{
+        const initial=await check(id,'gm');
+        if(!active)return;
+        const {uid,v2}=initial;
+        campaign=initial.campaign;member=initial.member;ready.member=!v2;
+        const publish=()=>{
+          if(!active||!Object.values(ready).every(Boolean))return;
+          try{
+            same(uid);
+            if(!access(campaign,member,uid,id,'gm'))
+              throw Error('GM hybrid session permissions were revoked.');
+            onUpdate({...state,grants:[...state.grants]});
+          }catch(error){fail(error);}
+        };
+        const listen=(ref,key,project)=>{
+          const stop=firestoreSdk.onSnapshot(ref,
+            {includeMetadataChanges:true},snapshot=>{
+              if(!active||snapshot.metadata?.fromCache||
+                snapshot.metadata?.hasPendingWrites)return;
+              try{
+                same(uid);
+                if(key==='campaign'&&!snapshot.exists())
+                  throw Error('Campaign access ended.');
+                const value=project(snapshot);
+                if(key==='campaign')campaign=value;
+                else if(key==='member')member=value;
+                else state[key]=value;
+                ready[key]=true;publish();
+              }catch(error){fail(error);}
+            },fail);
+          if(active)stops.push(stop);else stop();
+        };
+        listen(cRef(id),'campaign',snap=>({...snap.data(),id:snap.id}));
+        if(v2)listen(memberRef(id,uid),'member',snap=>
+          snap.exists()?snap.data():null);
+        listen(hybridSessionRef(id),'session',snap=>snap.exists()?snap.data():null);
+        listen(firestoreSdk.query(hybridGrantsCol(id),firestoreSdk.limit(24)),
+          'grants',snap=>snap.docs.map(row=>({...row.data(),uid:row.id})));
+      }catch(error){fail(error);}
+    })();
+    return close;
+  }
+
+  // An invited account may NOT be a campaign member. Only the recipient's
+  // exact per-UID grant, session status and text-only safe feed are watched.
+  function watchRestrictedViewer(id,onUpdate,onError){
+    assertGMCampaignId(id);
+    let active=true,stops=[],timer=null;
+    const state={grant:null,session:null,scene:null};
+    const ready={grant:false,session:false,scene:false};
+    const close=()=>{
+      active=false;
+      if(timer!==null)clearTimeout(timer);
+      stops.splice(0).forEach(stop=>stop());
+    };
+    const fail=error=>{if(!active)return;close();onError?.(error);};
+    (async()=>{
+      try{
+        const uid=await verified();
+        const first=await firestoreSdk.getDocFromServer(hybridGrantRef(id,uid));
+        same(uid);
+        if(!active)return;
+        if(!first.exists()||first.data().uid!==uid)
+          throw Error('A GM invitation is required to open this display.');
+        const publish=()=>{
+          if(!active||!Object.values(ready).every(Boolean))return;
+          try{
+            same(uid);
+            if(timer!==null){clearTimeout(timer);timer=null;}
+            if(!hybridViewerCanRead(state.session,state.grant,uid))
+              throw Error('Viewer access expired, was revoked, or the session closed.');
+            if(state.scene?.epoch!==state.session.epoch)
+              throw Error('This presentation belongs to an earlier session.');
+            const deadline=Math.min(state.grant.expiresAt?.toMillis?.()||0,
+              state.session.expiresAt?.toMillis?.()||0);
+            const delay=deadline-Date.now();
+            if(delay<=0)throw Error('Viewer session expired.');
+            timer=setTimeout(()=>fail(Error('Viewer session expired.')),
+              Math.min(delay,2147483647));
+            onUpdate(sanitizeRestrictedPresentation(state.scene));
+          }catch(error){fail(error);}
+        };
+        const listen=(ref,key,project)=>{
+          const stop=firestoreSdk.onSnapshot(ref,
+            {includeMetadataChanges:true},snapshot=>{
+              if(!active||snapshot.metadata?.fromCache||
+                snapshot.metadata?.hasPendingWrites)return;
+              try{
+                same(uid);
+                if(!snapshot.exists())throw Error('Viewer access is unavailable.');
+                state[key]=project(snapshot);
+                ready[key]=true;publish();
+              }catch(error){fail(error);}
+            },fail);
+          if(active)stops.push(stop);else stop();
+        };
+        listen(hybridGrantRef(id,uid),'grant',snap=>snap.data());
+        listen(hybridSessionRef(id),'session',snap=>snap.data());
+        listen(restrictedRef(id),'scene',snap=>snap.data());
+      }catch(error){fail(error);}
+    })();
+    return close;
+  }
+
   async function managePresentation(id,action){
     const {uid}=await check(id,'gm');
     validatePresentationAction(action);
@@ -376,6 +505,7 @@ export function createFirebaseCampaignMediaService({
     availability:()=>flags,watchMaps,watchAtlas,watchPresentation,watchPrivatePins,
     watchParty,watchEncounter,watchGMMediaLibrary,fetchGMMediaLibraryPreview,
     fetchMapMedia,fetchAtlasMedia,uploadMap,
-    saveMap,removeMap,savePrivatePins,managePresentation
+    saveMap,removeMap,savePrivatePins,managePresentation,
+    manageHybridSession,watchGMHybridSession,watchRestrictedViewer
   });
 }
