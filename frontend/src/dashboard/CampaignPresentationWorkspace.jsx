@@ -6,6 +6,7 @@ import {presentationDraft,partyForPresentation} from './campaignMediaModel.mjs';
 import {HybridSessionManager} from './HybridSessionManager.jsx';
 import {sessionTimestampMs} from '../../../src/state/hybridPresentationSessionModel.mjs';
 import {GMPresentationStudio} from './GMPresentationStudio.jsx';
+import {GMPresentationPlaylists} from './GMPresentationPlaylists.jsx';
 import {GMScreenCaptureControls} from './GMScreenCaptureControls.jsx';
 import {GMPresentationAssets} from './GMPresentationAssets.jsx';
 import {PresentationMediaFrame} from './PresentationMediaFrame.jsx';
@@ -163,6 +164,21 @@ export function CampaignPresentationController({api,campaignId,uid,party=[]}){
     }catch(error){setMessage(error.message||String(error));}
     finally{setBusy(false);}
   };
+  const publishPlaylistScene=async scene=>{
+    if(busy||control.loading||control.error)
+      throw Error('Presentation is not ready for a transition.');
+    const expectedRevision=control.data?.revision;
+    if(!Number.isSafeInteger(expectedRevision))
+      throw Error('Wait for verified GM presentation state.');
+    setBusy(true);setMessage('');
+    try{
+      const action={type:'set-scene',expectedRevision,
+        draft:presentationDraft(scene)};
+      const response=await api.managePresentation(campaignId,action);
+      if(response?.ok!==true)throw Error(response?.error||'Scene transition failed.');
+      return response;
+    }finally{setBusy(false);}
+  };
   const options=draft.scene==='battle-map'?maps.data||[]:atlas.data||[];
   const mediaOptions=(presentationAssets.data||[]).filter(item=>
     item.status==='ready'&&item.visibility==='players'&&item.kind===draft.scene);
@@ -256,5 +272,7 @@ export function CampaignPresentationController({api,campaignId,uid,party=[]}){
         <HybridSessionManager api={api} campaignId={campaignId}/>
       </div>
     }}/>
+    <GMPresentationPlaylists api={api} campaignId={campaignId} draft={draft}
+      onStage={setDraft} onPresent={publishPlaylistScene} publishing={busy}/>
   </section>;
 }
