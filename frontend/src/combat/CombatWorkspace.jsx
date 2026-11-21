@@ -79,18 +79,19 @@ function Actions({combat,actor,disabled,onCommand,mode}){
       onClick={()=>onCommand(actor.id,{operation:'spend-ap',ap:cost})}>Spend selected AP</button></label>:null}
   </div>;
 }
-export function GMCombatWorkspace({api,campaignId,uid='',onNavigate=null}){
+export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigate=null}){
   const stream=useCombatStream(api,'watchGM',[campaignId]);
   const [selected,setSelected]=useState(''),[busy,setBusy]=useState(false),
     [notice,setNotice]=useState(''),[error,setError]=useState('');
   const [enemy,setEnemy]=useState(emptyEnemy),[library,setLibrary]=useState('');
+  const [selectedBattleMap,setSelectedBattleMap]=useState('');
   const [revisionInitiative,setRevisionInitiative]=useState('');
   const [resource,setResource]=useState('hp'),[amount,setAmount]=useState(''),
     [maximum,setMaximum]=useState(''),[reason,setReason]=useState('');
   const combat=stream.data?.combat;
   const current=selected&&combat?.combatants.find(row=>row.id===selected)||
     combat?.current||combat?.combatants[0]||null;
-  useEffect(()=>{setSelected('');setError('');setNotice('');},[campaignId]);
+  useEffect(()=>{setSelected('');setError('');setNotice('');setSelectedBattleMap('');},[campaignId]);
   const submit=async(actorId,input)=>{
     if(busy||!combat)return;
     setBusy(true);setNotice('');setError('');
@@ -230,8 +231,18 @@ export function GMCombatWorkspace({api,campaignId,uid='',onNavigate=null}){
       <CombatCommandPanel id="map">
         <section className={styles.section}>
           <h3>Battle Map &amp; Player Display</h3>
-          <p>Open the existing campaign map or player display without changing the live encounter.</p>
+          <p>Prepare the encounter map using the existing GM Battle Map Manager. A selected prepared map links through the protected combat service when combat begins.</p>
+          <p>Prepared map: {stream.data.maps?.find(map=>map.id===combat.preparedMapId)?.name||'Not selected'} · Live map: {stream.data.maps?.find(map=>map.id===combat.battleMapId)?.name||'Not linked'}</p>
+          {canSetup?<label>Encounter battle map<select aria-label="Encounter battle map" value={selectedBattleMap||combat.preparedMapId||''}
+            onChange={event=>setSelectedBattleMap(event.target.value)}>
+            <option value="">No map</option>
+            {(stream.data.maps||[]).map(map=><option key={map.id} value={map.id}>{map.name}</option>)}
+          </select></label>:null}
           <div className={styles.controls}>
+            {canSetup?<button type="button" disabled={busy||!combat.sessionEditable}
+              onClick={()=>submit('encounter',{operation:'map-prepare',
+                mapId:selectedBattleMap||combat.preparedMapId||''})}>
+              Save Prepared Map</button>:null}
             {combat.isActive&&combat.preparedMapId&&!combat.battleMapId?
               <button type="button" disabled={busy||!combat.sessionEditable}
                 onClick={()=>submit('encounter',{operation:'map-link',mapId:combat.preparedMapId})}>
@@ -246,7 +257,8 @@ export function GMCombatWorkspace({api,campaignId,uid='',onNavigate=null}){
     </CombatCommandCentre>:null}
     {combat?<PreparedEncounterLibrary api={api} campaignId={campaignId}
       combat={combat} plans={stream.data.preparedEncounters||[]}
-      maps={stream.data.maps||[]} library={stream.data.library||[]}/>:null}
+      maps={stream.data.maps||[]} mediaApi={mediaApi}
+      library={stream.data.library||[]}/>:null}
     {notice?<p role="status">{notice}</p>:null}
     {error?<p role="alert">{error}</p>:null}
   </section>;
