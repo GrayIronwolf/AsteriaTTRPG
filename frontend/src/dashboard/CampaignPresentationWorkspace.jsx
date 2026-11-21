@@ -62,8 +62,10 @@ function ActivePlayerPresentation({api,campaignId}){
     return <p role={party.error?'alert':'status'}>{party.error||'Synchronising party…'}</p>;
   if(display.scene==='combat'&&(combat.loading||combat.error))
     return <p role={combat.error?'alert':'status'}>{combat.error||'Synchronising combat…'}</p>;
-  return <Scene api={api} campaignId={campaignId} display={display}
-    party={party.data||[]} combat={combat.data||{}}/>;
+  return <div data-theme={display.theme} className={styles.stage}>
+    <Scene api={api} campaignId={campaignId} display={display}
+      party={party.data||[]} combat={combat.data||{}}/>
+  </div>;
 }
 export function CampaignPresentationDisplay({api,campaignId,fullscreen=false}){
   const runtime=usePresentationDisplayRuntime();
