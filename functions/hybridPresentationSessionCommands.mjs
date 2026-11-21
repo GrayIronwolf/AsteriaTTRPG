@@ -30,7 +30,7 @@ export function createHybridPresentationSessionCommands(context,{requireCampaign
               throw Error('Close the current viewer session before opening another.');
             const epoch='hybrid-'+requestId+'-'+revision;
             const next={revision,status:'open',mode:action.mode,epoch,
-              grantCount:0,startedAt:new Date(now),
+              grantCount:0,invitationCount:0,startedAt:new Date(now),
               expiresAt:new Date(now+action.durationMinutes*60*1000),
               updatedBy:currentUser.uid,updatedAt:serverTimestamp()};
             tx.set(sessionRef,next);
@@ -58,8 +58,11 @@ export function createHybridPresentationSessionCommands(context,{requireCampaign
           const grantSnap=await tx.get(grantRef);
           const old=exists(grantSnap)?grantSnap.data():null;
           if(action.type==='grant'||action.type==='invite'){
-            const isNew=!viewers[action.uid];
-            if(isNew&&Object.keys(viewers).length>=HYBRID_SESSION_MAX_VIEWERS)
+            const sameInvitation=old?.epoch===session.epoch&&
+              ['active','pending'].includes(old.status);
+            const invitationCount=Number.isSafeInteger(session.invitationCount)
+              ?session.invitationCount:Object.keys(viewers).length;
+            if(!sameInvitation&&invitationCount>=HYBRID_SESSION_MAX_VIEWERS)
               throw Error('The viewer limit has been reached.');
             const until=Math.min(sessionTimestampMs(session.expiresAt),
               now+action.durationMinutes*60*1000);
@@ -74,11 +77,14 @@ export function createHybridPresentationSessionCommands(context,{requireCampaign
               epoch:session.epoch,expiresAt:session.expiresAt,
               updatedAt:serverTimestamp()});
             tx.update(sessionRef,{revision,grantCount:Object.keys(viewers).length,
+              invitationCount:invitationCount+(sameInvitation?0:1),
               updatedBy:currentUser.uid,updatedAt:serverTimestamp()});
             return {status:action.type==='invite'?'pending':'granted',uid:action.uid,revision,expiresAt:until};
           }
           if(!old||old.epoch!==session.epoch||!['active','pending'].includes(old.status))
             throw Error('This viewer has no active access to revoke.');
+          const invitationCount=Number.isSafeInteger(session.invitationCount)
+            ?session.invitationCount:Object.keys(viewers).length;
           delete viewers[action.uid];
           tx.set(accessRef,{...access,viewerExpiries:viewers,
             epoch:session.epoch,expiresAt:session.expiresAt,
@@ -87,6 +93,7 @@ export function createHybridPresentationSessionCommands(context,{requireCampaign
             revokedBy:currentUser.uid,revokedAt:serverTimestamp(),
             revision:Number(old.revision||0)+1});
           tx.update(sessionRef,{revision,grantCount:Object.keys(viewers).length,
+            invitationCount:Math.max(0,invitationCount-1),
             updatedBy:currentUser.uid,updatedAt:serverTimestamp()});
           return {status:'revoked',uid:action.uid,revision};
         });
