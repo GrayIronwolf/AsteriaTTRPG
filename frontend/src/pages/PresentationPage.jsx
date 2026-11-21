@@ -5,6 +5,7 @@ import {useAppServices} from '../app/AppServices.jsx';
 import {PageLayout} from '../components/ui/PageLayout.jsx';
 import {Heading} from '../components/ui/Typography.jsx';
 import {CampaignPresentationDisplay} from '../dashboard/CampaignPresentationWorkspace.jsx';
+import {RestrictedPresentationDisplay} from '../dashboard/HybridSessionManager.jsx';
 
 export function PresentationPage({route}){
   const {session}=useAuth(),services=useAppServices();
@@ -16,7 +17,10 @@ export function PresentationPage({route}){
     <Heading id="site-projector-title">Player Presentation</Heading>
     {!uid||!api?.availability().enabled?
       <p role="alert">Sign in to an approved campaign to view its presentation.</p>:
-      <CampaignPresentationDisplay key={uid+':'+campaignId} api={api}
-        campaignId={campaignId} fullscreen/>}
+      route.query?.get('viewer')==='restricted'
+        ?<RestrictedPresentationDisplay key={uid+':'+campaignId+':restricted'} api={api}
+          campaignId={campaignId}/>
+        :<CampaignPresentationDisplay key={uid+':'+campaignId} api={api}
+          campaignId={campaignId} fullscreen/>}
   </PageLayout>;
 }
