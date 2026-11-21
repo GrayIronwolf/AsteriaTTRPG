@@ -12,6 +12,7 @@ import styles from './HybridSessionManager.module.css';
 import {usePresentationDisplayRuntime} from './usePresentationDisplayRuntime.js';
 import {PresentationDisplayModeControls,usePresentationDisplayPreferences}
   from './PresentationDisplayModes.jsx';
+import {AudienceRevealCard} from './AudienceRevealCard.jsx';
 
 export function HybridSessionManager({api,campaignId}){
   const result=useCampaignStream(api,'watchGMHybridSession',[campaignId]);
@@ -109,7 +110,7 @@ export function HybridSessionManager({api,campaignId}){
       are never shared.</p>
   </section>;
 }
-function RestrictedInvitationGate({api,campaignId}){
+function RestrictedInvitationGate({api,campaignId,uid}){
   const invitation=useCampaignStream(api,'watchOwnHybridInvitation',[campaignId]);
   const [busy,setBusy]=useState(false),[error,setError]=useState('');
   const [notice,setNotice]=useState('');
@@ -129,7 +130,7 @@ function RestrictedInvitationGate({api,campaignId}){
   if(invitation.loading)return <p role="status">Checking your invitation…</p>;
   if(invitation.error)return <p role="alert">{invitation.error}</p>;
   if(status?.authorized)return <ActiveRestrictedPresentation key={campaignId}
-    api={api} campaignId={campaignId}/>;
+    api={api} campaignId={campaignId} uid={uid} epoch={status.epoch||''}/>;
   return <section className={styles.invitation} data-testid="site-restricted-invitation">
     <h2>Viewer Invitation</h2>
     <p>Status: {status?.status||'unavailable'}</p>
@@ -171,7 +172,7 @@ function RestrictedBattleMapScene({api,campaignId,mapId,active}){
     <p role="status">The selected battle map is unavailable.</p>;
 }
 
-function ActiveRestrictedPresentation({api,campaignId}){
+function ActiveRestrictedPresentation({api,campaignId,uid}){
   const viewer=useCampaignStream(api,'watchRestrictedViewer',[campaignId]);
   const scene=viewer.data||{scene:'blank',theme:'obsidian',title:'',subtitle:''};
   if(viewer.error)return <p role="alert">{viewer.error}</p>;
@@ -190,6 +191,8 @@ function ActiveRestrictedPresentation({api,campaignId}){
         scene={scene.scene} assetId={scene.assetId}
         title={scene.title} subtitle={scene.subtitle}/>:
       <p role="status">Display is blacked out.</p>}
+    <AudienceRevealCard api={api} campaignId={campaignId} uid={uid}
+      audience="restricted" scene={scene} epoch={viewer.data?.epoch||''}/>
   </div>;
 }
 export function RestrictedPresentationDisplay({api,campaignId,uid=''}) {
@@ -221,7 +224,7 @@ export function RestrictedPresentationDisplay({api,campaignId,uid=''}) {
     {!runtime.ready?<p role="alert">Connection or display interrupted.
       Private content is hidden until your invitation is verified again.</p>:
       <RestrictedInvitationGate key={campaignId+':'+runtime.generation}
-        api={api} campaignId={campaignId}/>}
+        api={api} campaignId={campaignId} uid={uid}/>}
     {runtime.error?<p role="alert">{runtime.error}</p>:null}
     {prefs.showOverlay&&runtime.ready?<p className={styles.displayOverlay}
       aria-hidden="true">Asteria · Private approved viewer display</p>:null}
