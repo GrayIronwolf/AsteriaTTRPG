@@ -1,0 +1,33 @@
+name: Phase 6.6 Live Combat Command Centre
+on:
+  pull_request:
+    paths:
+      - 'src/state/liveCombatCommandModel.mjs'
+      - 'frontend/src/combat/**'
+      - 'functions/combatCommands.mjs'
+      - 'scripts/site-live-combat-phase6-6.test.mjs'
+      - '.github/workflows/phase-6-6-live-combat.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  live-combat:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Phase 6.1C-6.6 and combat regressions
+        run: node --test scripts/site-live-combat-phase6-6.test.mjs scripts/site-prepared-battle-maps-phase6-5.test.mjs scripts/site-prepared-encounters-phase6-4.test.mjs scripts/site-freeform-phase6-1c.test.mjs scripts/site-combat-phase7-1.test.mjs
+      - name: Scoped lint
+        run: npx eslint frontend/src/combat src/state/liveCombatCommandModel.mjs functions/combatCommands.mjs
+      - name: React site verification
+        run: npm run site:check
+      - name: React production build
+        run: npm run site:build
+      - name: Distribution verification
+        run: npm run site:verify-dist
