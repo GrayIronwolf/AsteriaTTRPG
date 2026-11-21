@@ -103,7 +103,15 @@ export function createFirebaseCampaignMediaService({
         };
         const attach=(ref,key,decode)=>{
           const stop=firestoreSdk.onSnapshot(ref,{includeMetadataChanges:true},snap=>{
-            if(!active||snap.metadata.fromCache||snap.metadata.hasPendingWrites)return;
+            if(!active)return;
+            // Player presentation must not retain previously authorised media
+            // after Firestore has fallen back to potentially stale cache.
+            if(snap.metadata.fromCache){
+              if(project===presentationProject)
+                fail(Error('Presentation connection interrupted. Reconnect to verify access.'));
+              return;
+            }
+            if(snap.metadata.hasPendingWrites)return;
             try{
               same(uid);
               if(key!=='target'&&!snap.exists())throw Error('Campaign membership ended.');
@@ -486,8 +494,10 @@ export function createFirebaseCampaignMediaService({
         const listen=(ref,key,project)=>{
           const stop=firestoreSdk.onSnapshot(ref,
             {includeMetadataChanges:true},snapshot=>{
-              if(!active||snapshot.metadata?.fromCache||
-                snapshot.metadata?.hasPendingWrites)return;
+              if(!active)return;
+              if(snapshot.metadata?.fromCache)
+                return fail(Error('Viewer connection interrupted. Reconnect to verify access.'));
+              if(snapshot.metadata?.hasPendingWrites)return;
               try{
                 same(uid);
                 if(!snapshot.exists())throw Error('Viewer access is unavailable.');
@@ -588,8 +598,13 @@ export function createFirebaseCampaignMediaService({
         if(!active)return;
         const target=firestoreSdk.doc(db,'campaigns',id,collection,documentId);
         stop=firestoreSdk.onSnapshot(target,{includeMetadataChanges:true},snapshot=>{
-          if(!active||snapshot.metadata?.fromCache||
-            snapshot.metadata?.hasPendingWrites)return;
+          if(!active)return;
+          if(snapshot.metadata?.fromCache){
+            active=false;stop();
+            onError?.(Error('Restricted media connection interrupted. Reconnect to verify access.'));
+            return;
+          }
+          if(snapshot.metadata?.hasPendingWrites)return;
           try{
             same(uid);
             if(!snapshot.exists())throw Error('The presented content was withdrawn.');
