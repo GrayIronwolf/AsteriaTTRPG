@@ -95,7 +95,8 @@ test('combat projection exposes the original authoritative turn timer without ad
   assert.deepEqual(disabled.turnTimer,{enabled:false,endsAt});
   const empty=projectCombat(encounter,live,{role:'player',characterId:charId,party:[character]});
   assert.deepEqual(empty.turnTimer,{enabled:false,endsAt:0});
-  assert.equal(COMBAT_PLAYER_COMMANDS.length,3);
+  assert.deepEqual(COMBAT_PLAYER_COMMANDS,
+    ['declare','spend-ap','end-turn','death-save']);
 });
 test('player projection hides enemy resources, GM-only logs and unowned AP',()=>{
   const data=projectCombat(encounter,live,{role:'player',characterId:charId,party:[character]});
