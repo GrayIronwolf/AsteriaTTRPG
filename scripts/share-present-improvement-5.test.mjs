@@ -55,8 +55,7 @@ test('Phase 5: invites stay pending and cannot view the restricted presentation'
 test('Phase 5: recipient acceptance updates only own grant and access atomically',async()=>{
   const h=harness();await open(h);
   await h.gm({type:'invite',uid:'viewer5',expectedRevision:1,durationMinutes:30});
-  const no=await h.respond('other5','accept');
-  assert.match(await no.catch(e=>e.message),/unavailable/);
+  await assert.rejects(h.respond('other5','accept'),/unavailable/);
   const result=await h.respond('viewer5','accept');
   assert.equal(result.status,'accepted');
   const grant=get(h,'hybridViewerGrants/viewer5');
