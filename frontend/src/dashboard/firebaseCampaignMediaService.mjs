@@ -592,8 +592,10 @@ export function createFirebaseCampaignMediaService({
         const listen=(ref,key,project)=>{
           const stop=firestoreSdk.onSnapshot(ref,
             {includeMetadataChanges:true},snapshot=>{
-              if(!active||snapshot.metadata?.fromCache||
-                snapshot.metadata?.hasPendingWrites)return;
+              if(!active)return;
+              if(snapshot.metadata?.fromCache)
+                return fail(Error('GM viewer permissions disconnected. Stop sharing and reconnect.'));
+              if(snapshot.metadata?.hasPendingWrites)return;
               try{
                 same(uid);
                 if(key==='campaign'&&!snapshot.exists())
