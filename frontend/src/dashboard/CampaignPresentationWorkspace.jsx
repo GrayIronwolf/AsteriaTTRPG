@@ -221,7 +221,7 @@ export function CampaignPresentationController({api,campaignId,uid,party=[]}){
       </>:null}
     </div>
     <div className={styles.actions}>
-      <butt<button type="button" disabled={busy||control.loading||Boolean(control.error)}
+      <button type="button" disabled={busy||control.loading||Boolean(control.error)}
         data-testid="site-presentation-publish" onClick={()=>run('set-scene')}>Present Scene</button>
       <button type="button" disabled={busy||control.loading||Boolean(control.error)}
         onClick={()=>run('blackout')}>Blackout</button>
@@ -236,7 +236,7 @@ export function CampaignPresentationController({api,campaignId,uid,party=[]}){
         <p>Live scene: {names[control.data?.scene||'blank']} ·
           Revision {control.data?.revision||0}</p>
         <a href={link} target="_blank" rel="noopener noreferrer">Open Player Display</a>
-on type="button" disabled={busy||control.loading||Boolean(control.error)}
+<button type="button" disabled={busy||control.loading||Boolean(control.error)}
       onClick={async()=>{
         setBusy(true);setMessage('');
         try{
