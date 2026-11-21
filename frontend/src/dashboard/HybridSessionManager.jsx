@@ -4,6 +4,7 @@ import {
   sessionTimestampMs
 } from '../../../src/state/hybridPresentationSessionModel.mjs';
 import {useCampaignStream} from './CampaignMapWorkspace.jsx';
+import {hybridInvitationStatus} from '../../../src/state/hybridInvitationModel.mjs';
 import {PresentationMediaFrame} from './PresentationMediaFrame.jsx';
 import {CampaignMapCanvas} from './CampaignMapWorkspace.jsx';
 import {PRESENTATION_MEDIA_SCENES} from '../../../src/state/presentationAssetModel.mjs';
@@ -26,12 +27,13 @@ export function HybridSessionManager({api,campaignId}){
       const response=await api.manageHybridSession(campaignId,{
         type,expectedRevision:state.revision||0,...extra
       });
-      setNotice(type==='grant'?'Restricted access granted to the selected account.':
+      setNotice(type==='invite'?'Invitation created. Recipient must sign in and accept.':
+        type==='grant'?'Restricted access granted to the selected account.':
         type==='revoke'?'Viewer revoked.':
         type==='open'?'Hybrid viewer session opened.':
         'Hybrid viewer session closed.');
       if(response.ok!==true)throw Error(response.error||'Session update failed.');
-      if(type==='grant')setUid('');
+      if(type==='grant'||type==='invite')setUid('');
     }catch(e){setNotice('');setError(e?.message||'Session update failed.');}
     finally{setBusy(false);}
   };
@@ -78,17 +80,24 @@ export function HybridSessionManager({api,campaignId}){
         }}>Close &amp; Revoke Session</button>
       <label>Restricted viewer link<input value={link} readOnly
         onFocus={e=>e.target.select()}/></label>
-      <p>Sharing a link alone does not grant access. Each recipient must sign
-        in using the exact UID approved above.</p>
+      <button type="button" disabled={!open||busy} onClick={async()=>{
+        try{await navigator.clipboard.writeText(link);setNotice('Invitation link copied.');}
+        catch{setNotice('Copy the link from the field above.');}
+      }}>Copy Invitation Link</button>
+      <p>Send this link only to the intended recipient. They must sign in
+        with the exact UID and explicitly accept. A link alone grants no access.
+        No email is sent automatically.</p>
     </div>}
     {grants.length?<div className={styles.grants}>
       <h4>Viewer grants ({grants.length} / {HYBRID_SESSION_MAX_VIEWERS})</h4>
-      {grants.map(row=><div className={styles.grant} key={row.uid}>
-        <span>{row.uid} · {row.status} ·
+      {grants.map(row=>{const invitation=hybridInvitationStatus(state,row,row.uid);
+        return <div className={styles.grant} key={row.uid}>
+        <span>{row.uid} · {invitation.status} ·
           {' '}Until {new Date(sessionTimestampMs(row.expiresAt)).toLocaleString()}</span>
-        {open&&row.status==='active'?<button type="button" disabled={busy}
-          onClick={()=>run('revoke',{uid:row.uid})}>Revoke</button>:null}
-      </div>)}
+        {open&&['active','pending'].includes(row.status)?<button type="button"
+          disabled={busy} onClick={()=>run('revoke',{uid:row.uid})}>
+          Revoke</button>:null}
+      </div>;})}
     </div>:null}
     {notice?<p role="status">{notice}</p>:null}
     {error?<p role="alert">{error}</p>:null}
