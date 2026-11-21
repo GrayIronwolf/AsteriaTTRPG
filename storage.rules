@@ -175,6 +175,10 @@ service firebase.storage {
         manifest.get('expiresAt',request.time) > request.time &&
         manifest.get('viewerExpiries',{}).get(request.auth.uid,request.time) > request.time &&
         original.get('visibility','gm') == 'players' &&
+        // Never send a fogged original image/video to a nonmember.
+        // Visual overlays do not prevent a downloaded original from exposing
+        // secrets. Remote guest access requires a separately sanitised asset.
+        original.get('fogEnabled',false) != true &&
         original.get('id','') == mapId;
     }
     match /campaigns/{campaignId}/battleMaps/{mapId}/{fileName} {
