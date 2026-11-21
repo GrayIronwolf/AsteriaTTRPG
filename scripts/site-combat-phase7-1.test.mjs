@@ -6,6 +6,7 @@ import {
   validateCombatCommand,COMBAT_AP_ACTIONS,COMBAT_PLAYER_COMMANDS,gmEncounterCandidates
 } from '../frontend/src/combat/combatModel.mjs';
 import {createFirebaseCombatService} from '../frontend/src/combat/firebaseCombatService.mjs';
+import {publicCombatSnapshot} from '../src/state/livePresentationProjectionModel.mjs';
 
 const cid='campaign123',uid='owner123',player='player123',charId='hero123';
 const campaign={id:cid,ownerUid:uid,membershipSchemaVersion:2,name:'Campaign',
@@ -35,6 +36,7 @@ function harness(as=uid,options={}){
     ['campaigns/'+cid+'/characters/'+charId]:character,
     ['users/'+player+'/characters/'+source.id]:source,
     ['campaigns/'+cid+'/systems/encounter']:encounter,
+    ['campaigns/'+cid+'/combatPublic/current']:publicCombatSnapshot(encounter),
     ['campaigns/'+cid+'/liveSession/current']:live,
     ['campaigns/'+cid+'/systems/gmWorkspace']:{combatState:{pending:null}},
     ...options.docs
