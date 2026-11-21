@@ -279,8 +279,10 @@ export function createFirebaseCampaignMediaService({
         const listen=(reference,key,project)=>{
           const stop=firestoreSdk.onSnapshot(reference,
             {includeMetadataChanges:true},snapshot=>{
-              if(!active||snapshot.metadata?.fromCache||
-                snapshot.metadata?.hasPendingWrites)return;
+              if(!active)return;
+              if(snapshot.metadata?.fromCache)
+                return fail(Error('GM presentation control disconnected. Reconnect to verify authorization.'));
+              if(snapshot.metadata?.hasPendingWrites)return;
               try{
                 same(uid);
                 if((key==='campaign'||key==='member')&&!snapshot.exists())
