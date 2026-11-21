@@ -107,7 +107,7 @@ export function createFirebaseCampaignMediaService({
             // Player presentation must not retain previously authorised media
             // after Firestore has fallen back to potentially stale cache.
             if(snap.metadata.fromCache){
-              if(project===presentationProject)
+              if(project===presentationProject||project===playlistProject)
                 fail(Error('Presentation connection interrupted. Reconnect to verify access.'));
               return;
             }
@@ -139,6 +139,7 @@ export function createFirebaseCampaignMediaService({
   const atlasProject=(rows,id)=>rows.map(row=>publishedAtlas(row,id))
     .filter(Boolean).sort((a,b)=>a.name.localeCompare(b.name));
   const presentationProject=raw=>presentationForViewer(raw);
+  const playlistProject=raw=>raw||{version:1,revision:0,playlists:[]};
   const notesProject=rows=>battleMapPrivatePins(rows);
   const partyProject=rows=>gmPartySummary(rows);
   function watchMaps(id,mode,onUpdate,onError){
@@ -159,8 +160,7 @@ export function createFirebaseCampaignMediaService({
     // Watch is GM-only, requires verified account/campaign and a server snapshot.
     return watch(id,'gm',
       firestoreSdk.doc(db,'campaigns',id,'presentationPlaylists','current'),
-      value=>value||{version:1,revision:0,playlists:[]},
-      onUpdate,onError,'document');
+      playlistProject,onUpdate,onError,'document');
   }
   function watchPresentation(id,mode,onUpdate,onError){
     return watch(id,mode,presentationRef(id,mode),presentationProject,onUpdate,onError);
