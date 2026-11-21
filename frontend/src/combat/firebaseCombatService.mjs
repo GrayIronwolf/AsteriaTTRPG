@@ -27,6 +27,7 @@ export function createFirebaseCombatService({
   const campaignRef=id=>firestoreSdk.doc(db,'campaigns',id);
   const memberRef=(id,uid)=>firestoreSdk.doc(db,'campaigns',id,'members',uid);
   const encounterRef=id=>firestoreSdk.doc(db,'campaigns',id,'systems','encounter');
+  const publicCombatRef=id=>firestoreSdk.doc(db,'campaigns',id,'combatPublic','current');
   const sessionRef=id=>firestoreSdk.doc(db,'campaigns',id,'liveSession','current');
   const gmRef=id=>firestoreSdk.doc(db,'campaigns',id,'systems','gmWorkspace');
   const partyRef=id=>firestoreSdk.collection(db,'campaigns',id,'characters');
@@ -173,7 +174,8 @@ export function createFirebaseCombatService({
             kind:String(row.data()?.kind||'').slice(0,32)
           })).filter(row=>/^[A-Za-z0-9_-]{1,160}$/.test(row.id)),false);
         }
-        attach('encounter',encounterRef(id),snap=>snap.exists()?snap.data():null,false);
+        attach('encounter',mode==='gm'?encounterRef(id):publicCombatRef(id),
+          snap=>snap.exists()?snap.data():null,false);
         attach('session',sessionRef(id),snap=>snap.exists()?snap.data():null,false);
       }catch(error){fail(error);}
     })();
@@ -239,7 +241,7 @@ export function createFirebaseCombatService({
   async function command(id,mode,characterId,actorId,input){
     const command=validateCombatCommand(mode,actorId,input);
     const {uid}=await check(id,mode,characterId);
-    const encounter=await fromServer(encounterRef(id));
+    const encounter=await fromServer(mode==='gm'?encounterRef(id):publicCombatRef(id));
     same(uid);
     const raw=encounter.exists()?encounter.data():{};
     if(combatRevision(raw)!==command.revision)
