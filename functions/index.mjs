@@ -4,6 +4,8 @@ import { getAuth } from 'firebase-admin/auth';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { defineSecret } from 'firebase-functions/params';
 import { executeAction } from './handler.mjs';
+export {asteriaCombatProjection,asteriaBattleMapProjection}
+  from './livePresentationProjectionTriggers.mjs';
 
 if(!getApps().length) initializeApp();
 export const asteriaAdvancedDice=onCall({region:'us-central1',maxInstances:3,timeoutSeconds:30},async request=>{
