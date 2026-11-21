@@ -316,7 +316,7 @@ function CampaignGM({api,uid,campaignId}) {
       initialTab={tab==='inventory'?'Inventory':tab==='crafting'?'Crafting':'Party Loot'}/>:null}
     {combatEnabled&&tab==='gameplay'?<GMCombatWorkspace
       key={uid+':'+campaignId} api={api.combat} campaignId={campaignId}
-      uid={uid} onNavigate={setTab}/>:null}
+      uid={uid} mediaApi={mediaEnabled?api.media:null} onNavigate={setTab}/>:null}
     {progressionEnabled&&tab==='gameplay'?<GMChecksAndProgression
       key={uid+':'+campaignId} api={api.progression} campaignId={campaignId}/>:null}
     {mediaEnabled&&tab==='battle-maps'?<CampaignMapWorkspace key={uid+':'+campaignId}
