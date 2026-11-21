@@ -598,6 +598,10 @@ service cloud.firestore {
         allow get, list: if isCampaignGM(campaignId);
         allow create, update, delete: if false;
       }
+      match /presentationPlaylists/{documentId} {
+        allow get, list: if isCampaignGM(campaignId);
+        allow create, update, delete: if false;
+      }
       match /presentationControl/{documentId} {
         allow get, list: if isCampaignGM(campaignId);
         allow create, update, delete: if false;
