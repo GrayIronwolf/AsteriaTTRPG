@@ -7,6 +7,7 @@ import {
 import {
   queryPreparedEncounterLibrary,preparedEncounterFolders,duplicatePreparedEncounter
 } from '../../../src/state/preparedEncounterLibraryModel.mjs';
+import {previewPreparedEncounterLoad} from '../../../src/state/preparedEncounterLoadModel.mjs';
 import styles from './PreparedEncounterLibrary.module.css';
 
 const blank={name:'',notes:'',mapId:'',enemies:[],folder:'',tags:[],archived:false};
@@ -29,6 +30,13 @@ export function PreparedEncounterLibrary({
   const [search,setSearch]=useState(''),[status,setStatus]=useState('active');
   const [folderFilter,setFolderFilter]=useState(''),[sort,setSort]=useState('recent');
   const [previewId,setPreviewId]=useState(''),[tagInput,setTagInput]=useState('');
+  const [loadReview,setLoadReview]=useState(null);
+  const reviewPlan=plans.find(row=>row.id===loadReview?.id);
+  const currentReview=loadReview&&reviewPlan?
+    previewPreparedEncounterLoad(reviewPlan,combat,maps):null;
+  const reviewFresh=Boolean(currentReview?.eligible&&
+    currentReview.templateRevision===loadReview.templateRevision&&
+    currentReview.combatRevision===loadReview.combatRevision);
   const folders=preparedEncounterFolders(plans);
   const visiblePlans=queryPreparedEncounterLibrary(plans,{
     query:search,status,folder:folderFilter,sort
@@ -37,6 +45,7 @@ export function PreparedEncounterLibrary({
     setEditId('');setRevision(0);setDraft(draftFrom(null));
     setError('');setMessage('');setSearch('');setStatus('active');
     setFolderFilter('');setSort('recent');setPreviewId('');setTagInput('');
+    setLoadReview(null);
   },[campaignId]);
   const reset=()=>{
     setEditId('');setRevision(0);setDraft(draftFrom(null));setError('');setTagInput('');
@@ -73,6 +82,11 @@ export function PreparedEncounterLibrary({
       addEnemy(clean);setError('');
     }catch(failure){setError(failure.message);}
   };
+  const reviewLoad=plan=>{
+    setError('');setMessage('');
+    setLoadReview({id:plan.id,templateRevision:plan.revision,
+      combatRevision:combat?.revision});
+  };
   const run=async(action,plan)=>{
     if(busy)return;
     setBusy(true);setError('');setMessage('');
@@ -100,12 +114,12 @@ export function PreparedEncounterLibrary({
         if(editId===plan.id)reset();
         setMessage('Prepared encounter deleted.');
       }else if(action==='load'){
-        if(plan.archived)throw Error('Restore this archived encounter before loading.');
-        if(combat?.isActive||combat?.status==='active')
-          throw Error('End active combat before loading another encounter.');
-        if(!window.confirm('Load '+plan.name+'? This replaces staged enemies but keeps linked players.'))return;
-        await api.loadPrepared(campaignId,plan.id,combat.revision);
-        setMessage('Prepared encounter loaded into the Combat Command Centre.');
+        if(!reviewFresh||!loadReview||!plan||plan.id!==loadReview.id)
+          throw Error('The encounter or combat revision changed. Review the current encounter again.');
+        await api.loadPrepared(campaignId,plan.id,loadReview.combatRevision,
+          loadReview.templateRevision);
+        setLoadReview(null);
+        setMessage('Prepared encounter staged. Combat remains ready until the GM starts it.');
         onLoaded?.(plan);
       }
     }catch(failure){setError(failure?.message||'The encounter could not be updated.');}
@@ -169,12 +183,46 @@ export function PreparedEncounterLibrary({
           <button type="button" disabled={busy}
             onClick={()=>run('archive',plan)}>{plan.archived?'Restore':'Archive'}</button>
           <button type="button" disabled={busy||!canEdit||plan.archived}
-            onClick={()=>run('load',plan)}>Load into Combat</button>
+            onClick={()=>reviewLoad(plan)}>Review Load</button>
           <button type="button" disabled={busy}
             onClick={()=>run('delete',plan)}>Delete</button>
         </div>
       </article>):<p>No encounters match these filters.</p>}
     </div>
+    {loadReview?<section className={styles.loadReview} role="group"
+      aria-label="Confirm prepared encounter replacement" data-testid="site-prepared-load-review">
+      <h4>Review Encounter Load</h4>
+      {reviewPlan?<><strong>{reviewPlan.name} · Revision {reviewPlan.revision}</strong>
+        <p>This operation replaces the current staged enemies. Linked player
+          characters stay in the encounter. Combat will remain Ready; no
+          initiative rolls or turns start automatically.</p>
+        <dl>
+          <div><dt>New enemies</dt><dd>{currentReview?.incomingEnemies??0}</dd></div>
+          <div><dt>Staged enemies replaced</dt><dd>{currentReview?.stagedEnemies??0}</dd></div>
+          <div><dt>Linked player characters retained</dt>
+            <dd>{currentReview?.linkedPlayers??0}</dd></div>
+          <div><dt>Prepared map</dt><dd>{currentReview?.mapName||'Unavailable'}</dd></div>
+        </dl>
+        <ul className={styles.loadEnemyList}>
+          {reviewPlan.enemies.map((enemy,index)=><li key={index}>
+            {enemy.name} · HP {displayHP(enemy)}
+            {enemy.initiative!==undefined?' · Initiative '+enemy.initiative:''}
+          </li>)}
+        </ul>
+      </>:<p>The selected encounter no longer exists.</p>}
+      {currentReview?.issues.length?<ul className={styles.reviewIssues}>
+        {currentReview.issues.map(issue=><li key={issue}>{issue}</li>)}
+      </ul>:null}
+      {!reviewFresh?<p role="alert">The preview is unavailable or outdated.
+        Cancel and review the current saved encounter before loading.</p>:null}
+      <div className={styles.actions}>
+        <button type="button" disabled={busy||!reviewFresh}
+          data-testid="site-prepared-load-confirm"
+          onClick={()=>run('load',reviewPlan)}>Confirm Replace Staged Enemies</button>
+        <button type="button" disabled={busy}
+          onClick={()=>setLoadReview(null)}>Cancel</button>
+      </div>
+    </section>:null}
     <div className={styles.editor}>
       <h4>{editId?'Edit Prepared Encounter':'Create Prepared Encounter'}</h4>
       <label>Encounter Name<input value={draft.name} maxLength={100}
