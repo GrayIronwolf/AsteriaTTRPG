@@ -1,0 +1,42 @@
+name: Improvement 8 - Refresh Website Build Artifacts
+on:
+  push:
+    branches: [feature/share-present-improvement-8-sync-performance]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: improvement-8-bundle-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  publish-source-matched-bundle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Generate source-matched production website assets
+        run: npm run build
+      - name: Commit generated website assets on Phase 8 branch only
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch="feature/share-present-improvement-8-sync-performance"
+          git fetch origin "$branch"
+          if [ "$(git rev-parse "origin/$branch")" != "$GITHUB_SHA" ]; then
+            echo "Branch advanced while building. Refusing stale artifacts."
+            exit 0
+          fi
+          git add -A react-dist data/compendium.js data/compendium-handbook.js data/compendium-index.js data/compendium-parts
+          if git diff --cached --quiet; then
+            echo "Generated website assets already match React source."
+            exit 0
+          fi
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "Refresh verified website assets for Improvement Phase 8"
+          git push origin HEAD:"$branch"
