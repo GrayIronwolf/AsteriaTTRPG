@@ -9,6 +9,7 @@ import {PresentationMediaFrame} from './PresentationMediaFrame.jsx';
 import {PRESENTATION_MEDIA_SCENES} from '../../../src/state/presentationAssetModel.mjs';
 import {useCampaignStream,CampaignMapWorkspace,CampaignAtlasWorkspace} from './CampaignMapWorkspace.jsx';
 import styles from './CampaignPresentationWorkspace.module.css';
+import {usePresentationDisplayRuntime} from './usePresentationDisplayRuntime.js';
 
 const names={'blank':'Blackout','title':'Title','announcement':'Announcement',
   'battle-map':'Battle Map','world-map':'World Atlas',combat:'Combat',party:'Party',
@@ -48,29 +49,42 @@ function Scene({api,campaignId,display,party=[],combat={}}){
   }
   return null;
 }
-export function CampaignPresentationDisplay({api,campaignId,fullscreen=false}){
+function ActivePlayerPresentation({api,campaignId}){
   const presentation=useCampaignStream(api,'watchPresentation',[campaignId,'player']);
-  const party=useCampaignStream(api,'watchParty',[campaignId]);
-  const combat=useCampaignStream(api,'watchEncounter',[campaignId]);
   const display=presentation.data||PRESENTATION_DEFAULT;
-  const [message,setMessage]=useState('');
-  const makeFullscreen=async()=>{
-    try{await document.querySelector('[data-asteria-player-projector]')?.requestFullscreen?.();}
-    catch(error){setMessage(error?.message||'Fullscreen not available.');}
-  };
-  return <section className={styles.display} data-theme={display.theme}
+  // Only subscribe to the scene's data. A blackout drops all media, party and
+  // combat listeners rather than retaining their last rendered frames.
+  const party=useCampaignStream(api,'watchParty',[campaignId],display.scene==='party');
+  const combat=useCampaignStream(api,'watchEncounter',[campaignId],display.scene==='combat');
+  if(presentation.error)return <p role="alert">{presentation.error}</p>;
+  if(presentation.loading)return <p role="status">Verifying campaign display access…</p>;
+  if(display.scene==='party'&&(party.loading||party.error))
+    return <p role={party.error?'alert':'status'}>{party.error||'Synchronising party…'}</p>;
+  if(display.scene==='combat'&&(combat.loading||combat.error))
+    return <p role={combat.error?'alert':'status'}>{combat.error||'Synchronising combat…'}</p>;
+  return <Scene api={api} campaignId={campaignId} display={display}
+    party={party.data||[]} combat={combat.data||{}}/>;
+}
+export function CampaignPresentationDisplay({api,campaignId,fullscreen=false}){
+  const runtime=usePresentationDisplayRuntime();
+  return <section ref={runtime.root} className={styles.display}
     data-asteria-player-projector="" data-testid="site-player-presentation">
     <header className={styles.head}>
       <span>Asteria · Player Presentation</span>
-      {fullscreen?<button type="button" onClick={makeFullscreen}>Fullscreen</button>:null}
+      <div className={styles.actions}>
+        <span role="status">{!runtime.online?'Offline · display paused':
+          !runtime.visible?'Display paused': 'Live display'}</span>
+        <button type="button" disabled={!runtime.ready}
+          onClick={runtime.reconnect}>Reconnect</button>
+        {fullscreen?<button type="button" onClick={runtime.toggleFullscreen}>
+          {runtime.fullscreen?'Exit Fullscreen':'Fullscreen'}</button>:null}
+      </div>
     </header>
-    {presentation.error?<p role="alert">{presentation.error}</p>:
-      presentation.loading?<p role="status">Checking campaign presentation access…</p>:
-        <Scene api={api} campaignId={campaignId} display={display}
-          party={party.data||[]} combat={combat.data||{}}/>}
-    {party.error&&display.scene==='party'?<p role="alert">Party data unavailable.</p>:null}
-    {combat.error&&display.scene==='combat'?<p role="alert">Combat data unavailable.</p>:null}
-    {message?<p role="alert">{message}</p>:null}
+    {!runtime.ready?<p role="alert">Connection or display interrupted.
+      Approved content is hidden until the display reconnects.</p>:
+      <ActivePlayerPresentation key={campaignId+':'+runtime.generation}
+        api={api} campaignId={campaignId}/>}
+    {runtime.error?<p role="alert">{runtime.error}</p>:null}
   </section>;
 }
 export function CampaignPresentationController({api,campaignId,party=[]}){
