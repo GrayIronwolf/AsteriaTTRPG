@@ -1,4 +1,5 @@
 import {encounterResourcePair} from './encounterResourceModel.mjs';
+import {preparedEnemySpawn} from './preparedBattleMapModel.mjs';
 
 /** Phase 6.2: reusable GM-only encounter templates, never live combat state. */
 export const PREPARED_ENCOUNTER_MAX_PLANS=30;
@@ -34,6 +35,10 @@ export function normalizePreparedEnemy(row){
     result.initiative=val;
   }
   if(id(row.sourceId))result.sourceId=row.sourceId;
+  try{
+    const spawn=preparedEnemySpawn(row.spawn);
+    if(spawn)result.spawn=spawn;
+  }catch{return null;}
   return result;
 }
 
@@ -48,7 +53,9 @@ export function validatePreparedEncounterInput(input){
      input.enemies.length>PREPARED_ENCOUNTER_MAX_ENEMIES)
     throw Error('Prepare between 1 and 60 enemies before saving.');
   const enemies=input.enemies.map(normalizePreparedEnemy);
-  if(enemies.some(row=>!row))throw Error('Each enemy needs a name and valid HP/stat values.');
+  if(enemies.some(row=>!row))throw Error('Each enemy needs a name and valid HP/stat/starting position values.');
+  if(!mapId&&enemies.some(enemy=>enemy.spawn))
+    throw Error('Choose a battle map before setting enemy starting positions.');
   const folder=input.folder??'';
   if(typeof folder!=='string'||folder.trim().length>60)
     throw Error('Encounter folder must be at most 60 characters.');
