@@ -1,5 +1,6 @@
 import {encounterResourcePair} from './encounterResourceModel.mjs';
 import {preparedEnemySpawn} from './preparedBattleMapModel.mjs';
+import {validatePreparedWaves,validatePreparedEvents} from './encounterWaveModel.mjs';
 
 /** Phase 6.2: reusable GM-only encounter templates, never live combat state. */
 export const PREPARED_ENCOUNTER_MAX_PLANS=30;
@@ -66,8 +67,11 @@ export function validatePreparedEncounterInput(input){
   const normalizedTags=[...new Set(tags.map(tag=>tag.trim()))];
   const archived=input.archived??false;
   if(typeof archived!=='boolean')throw Error('Invalid encounter archive status.');
+  const waves=validatePreparedWaves(input.waves??[],normalizePreparedEnemy,
+    enemies.length,mapId);
+  const events=validatePreparedEvents(input.events??[]);
   return {name,notes,mapId,enemies,folder:folder.trim(),
-    tags:normalizedTags,archived};
+    tags:normalizedTags,archived,waves,events};
 }
 export function normalizePreparedEncounters(raw){
   if(!Array.isArray(raw))return [];
