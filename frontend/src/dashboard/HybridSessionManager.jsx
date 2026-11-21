@@ -8,6 +8,7 @@ import {PresentationMediaFrame} from './PresentationMediaFrame.jsx';
 import {CampaignMapCanvas} from './CampaignMapWorkspace.jsx';
 import {PRESENTATION_MEDIA_SCENES} from '../../../src/state/presentationAssetModel.mjs';
 import styles from './HybridSessionManager.module.css';
+import {usePresentationDisplayRuntime} from './usePresentationDisplayRuntime.js';
 
 export function HybridSessionManager({api,campaignId}){
   const result=useCampaignStream(api,'watchGMHybridSession',[campaignId]);
@@ -121,34 +122,45 @@ function RestrictedBattleMapScene({api,campaignId,mapId,active}){
     <p role="status">The selected battle map is unavailable.</p>;
 }
 
-export function RestrictedPresentationDisplay({api,campaignId}){
+function ActiveRestrictedPresentation({api,campaignId}){
   const viewer=useCampaignStream(api,'watchRestrictedViewer',[campaignId]);
-  const [message,setMessage]=useState('');
   const scene=viewer.data||{scene:'blank',theme:'obsidian',title:'',subtitle:''};
-  const fullscreen=async()=>{
-    try{await document.querySelector('[data-asteria-restricted-presentation]')
-      ?.requestFullscreen?.();}
-    catch(e){setMessage(e?.message||'Fullscreen unavailable.');}
-  };
-  return <section className={styles.display} data-theme={scene.theme}
+  if(viewer.error)return <p role="alert">{viewer.error}</p>;
+  if(viewer.loading)return <p role="status">Verifying your private viewer invitation…</p>;
+  return <div data-theme={scene.theme} className={styles.content}
+    data-testid="site-restricted-stage">
+    {scene.scene==='title'?<div className={styles.textScene}>
+      <h2>{scene.title}</h2><p>{scene.subtitle}</p>
+    </div>:scene.scene==='battle-map'?
+      <RestrictedBattleMapScene api={api} campaignId={campaignId}
+        mapId={scene.mapId} active/>:
+    scene.scene==='combat'?
+      <RestrictedCombatScene api={api} campaignId={campaignId} active/>:
+    PRESENTATION_MEDIA_SCENES.includes(scene.scene)?
+      <PresentationMediaFrame api={api} campaignId={campaignId} restricted
+        scene={scene.scene} assetId={scene.assetId}
+        title={scene.title} subtitle={scene.subtitle}/>:
+      <p role="status">Display is blacked out.</p>}
+  </div>;
+}
+export function RestrictedPresentationDisplay({api,campaignId}){
+  const runtime=usePresentationDisplayRuntime();
+  return <section ref={runtime.root} className={styles.display}
     data-asteria-restricted-presentation="" data-testid="site-restricted-presentation">
     <header><strong>Asteria · Restricted Presentation</strong>
-      <button type="button" onClick={fullscreen}>Fullscreen</button></header>
-    {viewer.loading?<p role="status">Checking your private viewer invitation…</p>:null}
-    {viewer.error?<p role="alert">{viewer.error}</p>:
-      scene.scene==='title'?<div className={styles.textScene}>
-        <h2>{scene.title}</h2><p>{scene.subtitle}</p>
-      </div>:scene.scene==='battle-map'?
-        <RestrictedBattleMapScene api={api} campaignId={campaignId}
-          mapId={scene.mapId} active={!viewer.error&&!viewer.loading}/>:
-      scene.scene==='combat'?
-        <RestrictedCombatScene api={api} campaignId={campaignId}
-          active={!viewer.error&&!viewer.loading}/>:
-      PRESENTATION_MEDIA_SCENES.includes(scene.scene)?
-        <PresentationMediaFrame api={api} campaignId={campaignId} restricted
-          scene={scene.scene} assetId={scene.assetId}
-          title={scene.title} subtitle={scene.subtitle}/>:
-        !viewer.loading?<p role="status">Display is blacked out.</p>:null}
-    {message?<p role="alert">{message}</p>:null}
+      <div className={styles.controls}>
+        <span role="status">{!runtime.online?'Offline · display paused':
+          !runtime.visible?'Display paused':'Private live display'}</span>
+        <button type="button" disabled={!runtime.ready}
+          onClick={runtime.reconnect}>Reconnect</button>
+        <button type="button" onClick={runtime.toggleFullscreen}>
+          {runtime.fullscreen?'Exit Fullscreen':'Fullscreen'}</button>
+      </div>
+    </header>
+    {!runtime.ready?<p role="alert">Connection or display interrupted.
+      Private content is hidden until your invitation is verified again.</p>:
+      <ActiveRestrictedPresentation key={campaignId+':'+runtime.generation}
+        api={api} campaignId={campaignId}/>}
+    {runtime.error?<p role="alert">{runtime.error}</p>:null}
   </section>;
 }
