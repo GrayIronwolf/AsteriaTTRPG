@@ -11,14 +11,16 @@ import {previewPreparedEncounterLoad} from '../../../src/state/preparedEncounter
 import {preparedBattleMapPreview,setPreparedEnemySpawn,clearPreparedEnemySpawns}
   from '../../../src/state/preparedBattleMapModel.mjs';
 import {CampaignMapCanvas} from '../dashboard/CampaignMapWorkspace.jsx';
+import {PreparedEncounterScheduleEditor} from './PreparedEncounterScheduleEditor.jsx';
 import styles from './PreparedEncounterLibrary.module.css';
 
-const blank={name:'',notes:'',mapId:'',enemies:[],folder:'',tags:[],archived:false};
+const blank={name:'',notes:'',mapId:'',enemies:[],waves:[],events:[],folder:'',tags:[],archived:false};
 const enemyBlank={name:'',type:'Creature',hp:'20',sp:'',mp:'',xpReward:'0',ac:'',initiative:''};
 const draftFrom=plan=>plan?{
   name:plan.name,notes:plan.notes||'',mapId:plan.mapId||'',
   folder:plan.folder||'',tags:[...(plan.tags||[])],archived:plan.archived===true,
-  enemies:plan.enemies.map(row=>({...row, hp:Array.isArray(row.hp)?[...row.hp]:row.hp}))
+  enemies:plan.enemies.map(row=>({...row, hp:Array.isArray(row.hp)?[...row.hp]:row.hp})),
+  waves:structuredClone(plan.waves||[]),events:structuredClone(plan.events||[])
 }:({...blank,enemies:[]});
 const displayHP=row=>Array.isArray(row.hp)?row.hp[1]:row.hp||0;
 
@@ -182,6 +184,7 @@ export function PreparedEncounterLibrary({
               {enemy.name} · {enemy.type} · HP {displayHP(enemy)}
               {enemy.initiative!==undefined?' · Initiative '+enemy.initiative:''}
             </li>)}</ul>
+            <p>Waves: {plan.waves?.length||0} · Events: {plan.events?.length||0}</p>
             <p>Map: {maps.find(map=>map.id===plan.mapId)?.name||
               (plan.mapId?'Map unavailable':'None selected')}</p>
           </div>:null}
@@ -216,6 +219,8 @@ export function PreparedEncounterLibrary({
             <dd>{currentReview?.linkedPlayers??0}</dd></div>
           <div><dt>Prepared map</dt><dd>{currentReview?.mapName||'Unavailable'}</dd></div>
         </dl>
+        <p>{reviewPlan.waves?.length||0} reinforcement waves and
+          { ' '}{reviewPlan.events?.length||0} planned events remain private for GM activation.</p>
         <ul className={styles.loadEnemyList}>
           {reviewPlan.enemies.map((enemy,index)=><li key={index}>
             {enemy.name} · HP {displayHP(enemy)}
@@ -326,6 +331,10 @@ export function PreparedEncounterLibrary({
           draft.enemies.length>=PREPARED_ENCOUNTER_MAX_ENEMIES}
           onClick={addCustom}>Add Custom Enemy</button>
       </fieldset>
+      <PreparedEncounterScheduleEditor
+        waves={draft.waves||[]} events={draft.events||[]}
+        baseEnemies={draft.enemies} sources={library} disabled={busy}
+        onChange={(key,value)=>setDraft(previous=>({...previous,[key]:value}))}/>
       <div className={styles.actions}>
         <button type="button" disabled={busy||!draft.name.trim()||!draft.enemies.length||
           (!editId&&plans.length>=PREPARED_ENCOUNTER_MAX_PLANS)}
