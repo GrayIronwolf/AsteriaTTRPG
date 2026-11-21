@@ -9,3 +9,14 @@
 .stage[data-theme="slate"]{background:var(--ast-color-panel-slate)}
 .stage[data-theme="parchment"]{background:var(--ast-color-panel-raised)}
 .display:fullscreen .stage{min-height:calc(100vh - 9rem)}
+
+/* Improvement 2 GM-only studio panel contents. */
+.studioSection{display:grid;gap:var(--ast-space-3);min-width:0;align-content:start}
+.studioSection>p{margin:0}
+.previewChoices{display:flex;flex-wrap:wrap;gap:var(--ast-space-2)}
+.previewChoices button[aria-pressed="true"]{border-color:var(--ast-color-outline-active)}
+.previewStage{min-height:220px;min-width:0;overflow:auto;border:1px solid var(--ast-color-outline-soft);border-radius:var(--ast-radius-sm);background:var(--ast-color-panel-raised);padding:var(--ast-space-3)}
+.previewStage[data-theme="slate"]{background:var(--ast-color-panel-slate)}
+.previewStage .sceneTitle{min-height:180px}
+.studioSection .fields{grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr))}
+.studioSection .controller{padding:0}
