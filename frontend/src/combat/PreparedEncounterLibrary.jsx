@@ -4,13 +4,17 @@ import {
   validatePreparedEncounterInput,normalizePreparedEnemy,
   PREPARED_ENCOUNTER_MAX_ENEMIES,PREPARED_ENCOUNTER_MAX_PLANS
 } from '../../../src/state/preparedEncounterModel.mjs';
+import {
+  queryPreparedEncounterLibrary,preparedEncounterFolders,duplicatePreparedEncounter
+} from '../../../src/state/preparedEncounterLibraryModel.mjs';
 import styles from './PreparedEncounterLibrary.module.css';
 
-const blank={name:'',notes:'',mapId:'',enemies:[]};
+const blank={name:'',notes:'',mapId:'',enemies:[],folder:'',tags:[],archived:false};
 const enemyBlank={name:'',type:'Creature',hp:'20',sp:'',mp:'',xpReward:'0',ac:'',initiative:''};
 const draftFrom=plan=>plan?{
   name:plan.name,notes:plan.notes||'',mapId:plan.mapId||'',
-  enemies:plan.enemies.map(row=>({...row}))
+  folder:plan.folder||'',tags:[...(plan.tags||[])],archived:plan.archived===true,
+  enemies:plan.enemies.map(row=>({...row, hp:Array.isArray(row.hp)?[...row.hp]:row.hp}))
 }:({...blank,enemies:[]});
 const displayHP=row=>Array.isArray(row.hp)?row.hp[1]:row.hp||0;
 
@@ -22,15 +26,24 @@ export function PreparedEncounterLibrary({
   const [draft,setDraft]=useState(draftFrom(null)),[enemy,setEnemy]=useState(enemyBlank);
   const [sourceId,setSourceId]=useState(''),[busy,setBusy]=useState(false);
   const [message,setMessage]=useState(''),[error,setError]=useState('');
+  const [search,setSearch]=useState(''),[status,setStatus]=useState('active');
+  const [folderFilter,setFolderFilter]=useState(''),[sort,setSort]=useState('recent');
+  const [previewId,setPreviewId]=useState(''),[tagInput,setTagInput]=useState('');
+  const folders=preparedEncounterFolders(plans);
+  const visiblePlans=queryPreparedEncounterLibrary(plans,{
+    query:search,status,folder:folderFilter,sort
+  });
   useEffect(()=>{
     setEditId('');setRevision(0);setDraft(draftFrom(null));
-    setError('');setMessage('');
+    setError('');setMessage('');setSearch('');setStatus('active');
+    setFolderFilter('');setSort('recent');setPreviewId('');setTagInput('');
   },[campaignId]);
   const reset=()=>{
-    setEditId('');setRevision(0);setDraft(draftFrom(null));setError('');
+    setEditId('');setRevision(0);setDraft(draftFrom(null));setError('');setTagInput('');
   };
   const loadEditor=plan=>{
     setEditId(plan.id);setRevision(plan.revision);setDraft(draftFrom(plan));
+    setTagInput((plan.tags||[]).join(', '));
     setError('');setMessage('');
   };
   const addEnemy=row=>{
@@ -65,16 +78,29 @@ export function PreparedEncounterLibrary({
     setBusy(true);setError('');setMessage('');
     try{
       if(action==='save'){
-        const payload=validatePreparedEncounterInput(draft);
+        const payload=validatePreparedEncounterInput({...draft,
+          tags:tagInput.split(',').map(tag=>tag.trim()).filter(Boolean)});
         const id=editId||'prepared-'+crypto.randomUUID();
         await api.savePrepared(campaignId,{id,...payload},revision);
         reset();setMessage('Prepared encounter saved to this campaign.');
+      }else if(action==='duplicate'){
+        const payload=duplicatePreparedEncounter(plan);
+        await api.savePrepared(campaignId,{
+          id:'prepared-'+crypto.randomUUID(),...payload
+        },0);
+        setMessage('A separate copy was saved in the encounter library.');
+      }else if(action==='archive'){
+        const payload=validatePreparedEncounterInput({...plan,archived:!plan.archived});
+        await api.savePrepared(campaignId,{id:plan.id,...payload},plan.revision);
+        if(editId===plan.id)reset();
+        setMessage(plan.archived?'Encounter restored.':'Encounter archived.');
       }else if(action==='delete'){
         if(!window.confirm('Delete this prepared encounter? This does not change live combat.'))return;
         await api.deletePrepared(campaignId,plan,plan.revision);
         if(editId===plan.id)reset();
         setMessage('Prepared encounter deleted.');
       }else if(action==='load'){
+        if(plan.archived)throw Error('Restore this archived encounter before loading.');
         if(combat?.isActive||combat?.status==='active')
           throw Error('End active combat before loading another encounter.');
         if(!window.confirm('Load '+plan.name+'? This replaces staged enemies but keeps linked players.'))return;
@@ -92,20 +118,62 @@ export function PreparedEncounterLibrary({
         <p>Build encounters before your session. Saved privately for the campaign GM.</p></div>
       <button type="button" disabled={busy} onClick={reset}>New Encounter</button>
     </header>
+    <div className={styles.filters} role="group" aria-label="Filter prepared encounters">
+      <label>Find encounter<input type="search" value={search} maxLength={120}
+        placeholder="Search name, notes, tags or enemies"
+        onChange={event=>setSearch(event.target.value)}/></label>
+      <label>Collection<select value={status}
+        onChange={event=>setStatus(event.target.value)}>
+        <option value="active">Active</option>
+        <option value="archived">Archived</option>
+        <option value="all">All encounters</option>
+      </select></label>
+      <label>Folder<select value={folderFilter}
+        onChange={event=>setFolderFilter(event.target.value)}>
+        <option value="">All folders</option>
+        {folders.map(name=><option key={name} value={name}>{name}</option>)}
+      </select></label>
+      <label>Sort<select value={sort}
+        onChange={event=>setSort(event.target.value)}>
+        <option value="recent">Recently edited</option>
+        <option value="oldest">Oldest first</option>
+        <option value="name">Name</option>
+        <option value="enemy-count">Enemy count</option>
+      </select></label>
+    </div>
     <div className={styles.saved} aria-label="Saved prepared encounters">
-      <strong>Encounter Library ({plans.length}/{PREPARED_ENCOUNTER_MAX_PLANS})</strong>
-      {plans.length?plans.map(plan=><article key={plan.id}>
-        <div><strong>{plan.name}</strong>
-          <small>{plan.enemies.length} enemies · {maps.find(m=>m.id===plan.mapId)?.name||'No map'}
-            {' · '}Revision {plan.revision}</small></div>
+      <strong>Encounter Library ({visiblePlans.length} shown of {plans.length}/{PREPARED_ENCOUNTER_MAX_PLANS})</strong>
+      {visiblePlans.length?visiblePlans.map(plan=><article key={plan.id}>
+        <div className={styles.entryInfo}><strong>{plan.name}{plan.archived?' · Archived':''}</strong>
+          <small>{plan.folder||'Unfiled'} · {plan.enemies.length} enemies ·
+            {' '}{maps.find(m=>m.id===plan.mapId)?.name||'No map'}
+            {' · '}Revision {plan.revision}</small>
+          {(plan.tags||[]).length?<small>Tags: {plan.tags.join(', ')}</small>:null}
+          {previewId===plan.id?<div className={styles.preview}>
+            <p>{plan.notes||'No GM notes.'}</p>
+            <ul>{plan.enemies.map((enemy,index)=><li key={index}>
+              {enemy.name} · {enemy.type} · HP {displayHP(enemy)}
+              {enemy.initiative!==undefined?' · Initiative '+enemy.initiative:''}
+            </li>)}</ul>
+            <p>Map: {maps.find(map=>map.id===plan.mapId)?.name||
+              (plan.mapId?'Map unavailable':'None selected')}</p>
+          </div>:null}
+        </div>
         <div className={styles.actions}>
+          <button type="button" aria-expanded={previewId===plan.id}
+            onClick={()=>setPreviewId(previewId===plan.id?'':plan.id)}>
+            {previewId===plan.id?'Close Preview':'Preview'}</button>
           <button type="button" disabled={busy} onClick={()=>loadEditor(plan)}>Edit</button>
-          <button type="button" disabled={busy||!canEdit}
+          <button type="button" disabled={busy||plans.length>=PREPARED_ENCOUNTER_MAX_PLANS}
+            onClick={()=>run('duplicate',plan)}>Duplicate</button>
+          <button type="button" disabled={busy}
+            onClick={()=>run('archive',plan)}>{plan.archived?'Restore':'Archive'}</button>
+          <button type="button" disabled={busy||!canEdit||plan.archived}
             onClick={()=>run('load',plan)}>Load into Combat</button>
           <button type="button" disabled={busy}
             onClick={()=>run('delete',plan)}>Delete</button>
         </div>
-      </article>):<p>No prepared encounters saved yet.</p>}
+      </article>):<p>No encounters match these filters.</p>}
     </div>
     <div className={styles.editor}>
       <h4>{editId?'Edit Prepared Encounter':'Create Prepared Encounter'}</h4>
@@ -115,6 +183,15 @@ export function PreparedEncounterLibrary({
       <label>GM Notes<textarea value={draft.notes} maxLength={1200} rows={3}
         onChange={event=>setDraft(row=>({...row,notes:event.target.value}))}
         placeholder="Location, tactics, objectives and reminders"/></label>
+      <label>Folder<input type="text" maxLength={60} value={draft.folder}
+        placeholder="e.g. Chapter 1 · Northern Pass"
+        onChange={event=>setDraft(row=>({...row,folder:event.target.value}))}/></label>
+      <label>Tags (comma-separated)<input type="text" maxLength={256}
+        value={tagInput} placeholder="Ambush, Winter, Boss"
+        onChange={event=>setTagInput(event.target.value)}/></label>
+      <label><input type="checkbox" checked={draft.archived}
+        onChange={event=>setDraft(row=>({...row,archived:event.target.checked}))}/>
+        Archived — unavailable for combat loading</label>
       <label>Battle Map<select value={draft.mapId}
         onChange={event=>setDraft(row=>({...row,mapId:event.target.value}))}>
         <option value="">No map selected</option>
