@@ -58,7 +58,8 @@ export function projectCombat(encounter={},session=null,{role='player',character
   const rawTimer=obj(raw.turnTimer)?raw.turnTimer:obj(raw.timer)?raw.timer:null;
   const timerDeadline=Number(rawTimer?.endsAt);
   const turnTimer=Object.freeze({
-    ...liveCombatTimerState(rawTimer||{}),
+    ...(Number.isSafeInteger(rawTimer?.durationSeconds)&&rawTimer.durationSeconds>=15
+      ?liveCombatTimerState(rawTimer):{}),
     enabled:active&&rawTimer?.enabled===true&&Number.isFinite(timerDeadline)&&timerDeadline>0,
     endsAt:Number.isFinite(timerDeadline)&&timerDeadline>0?Math.trunc(timerDeadline):0
   });
