@@ -20,6 +20,7 @@ export function GMScreenShareControls({api,campaignId,previewBusy=false,
   const [error,setError]=useState('');
   const [notice,setNotice]=useState('');
   const peer=useRef(null),stream=useRef(null),current=useRef(null);
+  const expiryTimer=useRef(null);
   const attempt=useRef(0),alive=useRef(true),video=useRef(null);
   const signal=useCampaignStream(api,'watchGMScreenShare',
     [campaignId,connection?.viewerUid||''],Boolean(connection));
@@ -27,6 +28,7 @@ export function GMScreenShareControls({api,campaignId,previewBusy=false,
     hybridViewerCanRead(session.data?.session||{},row,row.uid));
   const stopLocal=useCallback((notify=true)=>{
     attempt.current+=1;
+    if(expiryTimer.current!==null){clearTimeout(expiryTimer.current);expiryTimer.current=null;}
     const previous=current.current;
     current.current=null;
     stopScreenSharePeer(peer.current,stream.current);
@@ -149,6 +151,10 @@ export function GMScreenShareControls({api,campaignId,previewBusy=false,
       if(!alive.current||generation!==attempt.current)return;
       if(sent.ok!==true)throw Error(sent.error||'Offer was not accepted.');
       if(current.current?.connectionId===id)current.current.published=true;
+      if(!Number.isFinite(sent.expiresAt)||sent.expiresAt<=Date.now())
+        throw Error('Screen sharing authorization expired.');
+      expiryTimer.current=setTimeout(()=>stop(),
+        Math.min(2147483647,Math.max(1,sent.expiresAt-Date.now())));
       setConnection({viewerUid:selected,connectionId:id});
       setNotice('Offer sent. The viewer must choose Join Live Screen.');
     }catch(failure){
