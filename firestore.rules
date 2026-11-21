@@ -363,10 +363,9 @@ service cloud.firestore {
       }
 
       match /battleMaps/{mapId} {
-        // The only player-visible map records are explicitly published scenes.
-        // Players must query with visibility == 'players'; no GM-only details are published.
-        allow get, list: if isCampaignGM(campaignId) ||
-          (canUseCampaignSystems(campaignId) && resource.data.visibility == 'players');
+        // Raw map records contain GM-authored markers and must NEVER be
+        // readable by players or remote invitees. Read battleMapsPublic instead.
+        allow get, list: if isCampaignGM(campaignId);
         allow create: if isCampaignGM(campaignId) &&
           request.resource.data.keys().hasOnly([
             'id','campaignId','name','description','visibility','kind','contentType',
