@@ -125,6 +125,7 @@ export function CampaignPresentationController({api,campaignId,party=[]}){
   return <section className={styles.controller} data-testid="site-gm-presentation">
     <h2>Player-Facing Presentation</h2>
     <p>Choose a scene for the second-screen display. Only approved shared content can be published.</p>
+    <GMScreenCaptureControls api={api} campaignId={campaignId}/>
     {control.error?<p role="alert">{control.error}</p>:null}
     <div className={styles.fields}>
       <label>Scene<select value={draft.scene} disabled={busy||control.loading||Boolean(control.error)}
@@ -194,8 +195,6 @@ export function CampaignPresentationController({api,campaignId,party=[]}){
       Refresh Safe Combat &amp; Map Feeds
     </button>
     <HybridSessionManager api={api} campaignId={campaignId}/>
-    <GMScreenCaptureControls api={api} campaignId={campaignId}
-      controlRevision={control.data?.revision||0}/>
     {message?<p role="status">{message}</p>:null}
   </section>;
 }
