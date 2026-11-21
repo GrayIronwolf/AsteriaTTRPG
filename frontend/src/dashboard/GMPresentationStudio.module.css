@@ -25,7 +25,7 @@
 @media(max-width:760px){
   .scroller{max-height:none;overflow:visible}
   .canvas{min-width:0;aspect-ratio:auto;display:flex;flex-direction:column;gap:var(--ast-space-3);padding:var(--ast-space-2)}
-  .panel{position:relative!important;left:auto!important;top:auto!important;width:100%!important;height:auto!important;min-height:210px;max-height:75vh}
+  .panel{position:relative;left:auto;top:auto;width:100%;height:auto;min-height:210px;max-height:75vh}
   .panelBody{max-height:65vh}
   .resizeHandle{display:none}
 }
