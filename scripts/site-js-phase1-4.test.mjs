@@ -122,7 +122,7 @@ test('services are explicit, immutable, known-domain adapters; no live Firebase'
 
 test('every future React destination has a fail-closed migration owner', () => {
   const routes = [
-    'home', 'appearance', 'handbook', 'lore', 'compendium', 'compendium-entry',
+    'home', 'appearance', 'version-log', 'handbook', 'lore', 'compendium', 'compendium-entry',
     'character-forge', 'campaign-forge', 'account', 'login', 'account-create',
     'forgot-password', 'profile', 'settings', 'friends', 'notifications',
     'dashboard', 'gm-dashboard', 'character-dashboard', 'presentation',
@@ -133,11 +133,13 @@ test('every future React destination has a fail-closed migration owner', () => {
   assert.equal(canActivateRoute('home', previewServices), true);
   assert.equal(getFeatureForRoute('appearance').status, 'ready');
   assert.equal(canActivateRoute('appearance', previewServices), true);
+  assert.equal(getFeatureForRoute('version-log').access, 'public');
+  assert.equal(canActivateRoute('version-log', previewServices), true);
   const injected = createAppServices({
     auth: {}, campaigns: {}, characters: {dashboard:{availability:()=>({enabled:true})}}, compendium: {},
     friends: {}, notifications: {}, gameplay: {}
   });
-  for (const id of routes.filter(value => !['home', 'appearance', 'account', 'profile', 'settings', 'friends', 'notifications', 'character-forge', 'campaign-forge', 'invitation', 'dashboard', 'gm-dashboard', 'character-dashboard'].includes(value))) {
+  for (const id of routes.filter(value => !['home', 'appearance', 'version-log', 'account', 'profile', 'settings', 'friends', 'notifications', 'character-forge', 'campaign-forge', 'invitation', 'dashboard', 'gm-dashboard', 'character-dashboard'].includes(value))) {
     const feature = getFeatureForRoute(id);
     assert.equal(feature.status, 'preview', 'Unmigrated route must be preview-only: ' + id);
     assert.equal(canActivateRoute(id, previewServices), false, id);

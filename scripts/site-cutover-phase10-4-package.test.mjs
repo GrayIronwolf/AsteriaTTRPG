@@ -30,6 +30,19 @@ test('release stage preserves legacy index and cached assets',()=>{
   assert.equal(verifyCutoverPackage({output:f.output}).originalIndexSha256,r.rollbackIndexSha256);
  }finally{f.clean();}
 });
+test('the overlay includes the existing standalone reference at its original URL',()=>{
+ const f=fixture();
+ try{
+  const reference='tools/weapon-crafting.html';
+  const source=readFileSync(new URL('../'+reference,import.meta.url));
+  f.write(join(f.root,reference),source);
+  f.write(join(f.dist,reference),source);
+  const record=stageCutoverPackage({...f,mode:'production'});
+  assert.match(record.files[reference],/^[a-f0-9]{64}$/);
+  assert.deepEqual(readFileSync(join(f.output,'overlay',reference)),source);
+  assert.deepEqual(readFileSync(join(f.root,reference)),source);
+ }finally{f.clean();}
+});
 test('emulator-mode builds cannot be packaged',()=>{
  const f=fixture();
  try{

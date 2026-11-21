@@ -1,10 +1,10 @@
 /* Asteria's logo and star treatment have one component/style owner. */
 .brand {
   display: flex;
-  flex: 0 0 var(--ast-header-brand-width);
+  flex: 0 1 var(--ast-header-brand-width);
   width: var(--ast-header-brand-width);
   min-width: 0;
-  max-height: var(--ast-header-height);
+  max-height: calc(var(--ast-header-height) - 3px);
   align-items: center;
   line-height: 0;
   text-decoration: none;
@@ -13,9 +13,12 @@
   display: block;
   width: 100%;
   height: auto;
-  max-height: var(--ast-header-height);
+  max-height: inherit;
   overflow: visible;
 }
 .starFlood {
   flood-color: var(--ast-button-crystal-tone);
+}
+@media (min-width: 1680px) {
+  .brand { height: var(--ast-header-height); max-height: none; }
 }

@@ -29,7 +29,7 @@
   overscroll-behavior: contain;
   border: 1px solid var(--ast-color-outline);
   border-radius: var(--ast-radius-panel);
-  background: linear-gradient(155deg, var(--ast-color-panel-raised), var(--ast-color-panel) 70%);
+  background: var(--ast-color-panel);
   box-shadow: var(--ast-shadow-dropdown);
   color: var(--ast-color-text);
 }

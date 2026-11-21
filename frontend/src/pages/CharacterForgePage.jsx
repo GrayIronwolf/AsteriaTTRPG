@@ -15,6 +15,8 @@ import styles from './CharacterForgePage.module.css';
 const nice=s=>s.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
 const valueOf=(record,key)=>record?.[key]||'';
 const extract=e=>e.target.value;
+const CHARACTERS_HREF='#/character-forge?view=my-characters';
+const CREATE_HREF='#/character-forge?mode=create';
 const MISSING='Your character data could not be verified. No changes were saved.';
 function ChoiceGrid({choices,selected,onChoose,disabled=false}){
  return <div className={styles.choices}>
@@ -26,12 +28,16 @@ function ChoiceGrid({choices,selected,onChoose,disabled=false}){
   </button>)}
  </div>;
 }
-export function CharacterForgePage(){
+export function CharacterForgePage({route}){
  const {session}=useAuth(),services=useAppServices();
  const api=services.get('characters');
  const uid=isVerifiedOwnedSession(session)?session.user.uid:null;
  const [rules,setRules]=useState(null),[records,setRecords]=useState([]);
- const [mode,setMode]=useState('hub'),[draft,setDraft]=useState(newDraft);
+ const creating=route.params.intent==='create';
+ const editId=creating?null:route.query.get('edit');
+ const [draft,setDraft]=useState(newDraft);
+ const mode=creating?'create':editId?'edit':'hub';
+ const editorReady=creating||Boolean(editId&&draft.editCharacterId===editId);
  const [active,setActive]=useState('Race'),[query,setQuery]=useState('');
  const [busy,setBusy]=useState(false),[loading,setLoading]=useState(true);
  const [error,setError]=useState(''),[message,setMessage]=useState('');
@@ -39,19 +45,26 @@ export function CharacterForgePage(){
  const seq=useRef(0),owner=useRef(uid);owner.current=uid;
  const update=(patch)=>setDraft(old=>({...old,...patch}));
  const section=(key,value)=>setDraft(old=>({...old,[key]:{...old[key],[value.key]:value.data}}));
+ useEffect(()=>setMessage(''),[uid,api]);
  useEffect(()=>{
   const token=++seq.current;let alive=true;
-  setMode('hub');setRules(null);setRecords([]);setDraft(newDraft());
-  setActive('Race');setBusy(false);setLoading(true);setError('');setMessage('');setExcluded(0);
+  setRules(null);setRecords([]);setDraft(newDraft());
+  setActive('Race');setQuery('');setBusy(false);setLoading(true);setError('');setExcluded(0);
+  if(creating||editId)setMessage('');
   if(!uid||!api){setLoading(false);return undefined;}
-  Promise.all([loadPublicForgeRules(),api.list()]).then(([publicRules,owned])=>{
+  const owned=editId?api.load(editId):api.list();
+  Promise.all([loadPublicForgeRules(),owned]).then(([publicRules,result])=>{
    if(!alive||seq.current!==token||owner.current!==uid)return;
-   setRules(publicRules);setRecords(owned.items);setExcluded(owned.excluded);
+   if(editId)setDraft(draftFromCharacter(result));
+   else{setRecords(result.items);setExcluded(result.excluded);}
+   setRules(publicRules);
   }).catch(()=>{
-   if(alive&&seq.current===token)setError('Character Forge could not load. Check your connection.');
+   if(alive&&seq.current===token)setError(editId?
+    'Character could not be verified. Editing is disabled.':
+    'Character Forge could not load. Check your connection.');
   }).finally(()=>{if(alive&&seq.current===token)setLoading(false);});
   return ()=>{alive=false;++seq.current;};
- },[uid,api]);
+ },[uid,api,creating,editId]);
 
  const tabs=useMemo(()=>rules?visibleTabs(draft,rules):[],[draft,rules]);
  const options=(domain,search='')=>(rules?.[domain]||[]).filter(row=>
@@ -79,20 +92,8 @@ export function CharacterForgePage(){
   }catch{if(owner.current===uid)setError(MISSING);}
   finally{if(owner.current===uid&&seq.current===token)setLoading(false);}
  };
- const begin=()=>{setMode('create');setDraft(newDraft());setActive('Race');setQuery('');setError('');setMessage('');};
- const edit=async id=>{
-  if(busy)return;
-  const token=seq.current;
-  setBusy(true);setError('');setMessage('');
-  try{
-   const character=await api.load(id);
-   if(seq.current!==token||owner.current!==uid)return;
-   setDraft(draftFromCharacter(character));setMode('edit');setActive('Race');setQuery('');
-  }catch{if(seq.current===token)setError('Character could not be verified. Editing is disabled.');}
-  finally{if(seq.current===token)setBusy(false);}
- };
  const save=async()=>{
-  if(busy||!rules)return;
+  if(busy||!rules||!editorReady)return;
   const problems=validForge(draft,rules,mode==='edit'?{
    primaryClassSlug:draft.editCharacterId ? draft.classSlug : ''
   }:null);
@@ -107,7 +108,7 @@ export function CharacterForgePage(){
    const record=await api.save(draft,rules,mode==='edit'?draft.editCharacterId:null);
    if(token!==seq.current||owner.current!==account)return;
    setMessage(record.name+' saved to your private Character Forge.');
-   setMode('hub');setDraft(newDraft());setActive('Race');await refresh();
+   window.location.replace(CHARACTERS_HREF);
   }catch(err){if(token===seq.current)setError(err?.message||'Character could not be saved.');}
   finally{if(token===seq.current)setBusy(false);}
  };
@@ -124,7 +125,7 @@ export function CharacterForgePage(){
  const chosen=rules?.class?.find(row=>row.slug===draft.classSlug);
  const patron=rules?patronClasses(draft,rules):[];
  const currentIndex=tabs.indexOf(active);
- const finish=()=>{setMode('hub');setDraft(newDraft());setActive('Race');setError('');};
+ const finish=()=>{window.location.hash=CHARACTERS_HREF;};
  const pair=(key,label,value,change,multiline=false)=> <label key={key} className={styles.field}>
   {label}{multiline?<textarea rows={3} value={value||''} maxLength={1500} onChange={e=>change(extract(e))}/>:
    <input value={value||''} maxLength={350} onChange={e=>change(extract(e))}/>}
@@ -135,13 +136,14 @@ export function CharacterForgePage(){
   {error&&<p role="alert" className={styles.notice} data-testid="site-forge-error">{error}</p>}
   {message&&<p role="status" className={styles.notice} data-testid="site-forge-message">{message}</p>}
   {loading&&<BodyText>Loading your owned characters and public rules…</BodyText>}
-  {!loading&&!rules&&<CrystalButton onClick={refresh}>Retry</CrystalButton>}
+  {!loading&&!rules&&(editId?<CrystalButton href={CHARACTERS_HREF}>Back to Characters</CrystalButton>:
+    <CrystalButton onClick={refresh}>Retry</CrystalButton>)}
   {!loading&&rules&&mode==='hub'&&<SurfacePanel className={styles.panel}>
     <div className={styles.heading}>
       <h2>My Characters</h2>
       <div className={styles.actions}>
        <CrystalButton onClick={refresh} disabled={busy}>Refresh</CrystalButton>
-       <CrystalButton onClick={begin} variant="primary" data-testid="site-forge-create">Forge New Character</CrystalButton>
+       <CrystalButton href={CREATE_HREF} variant="primary" data-testid="site-forge-create">Forge New Character</CrystalButton>
         {services.get('campaigns')?.connections?.availability().forgeEnabled&&
          <CrystalButton href="#/campaign-invitation" data-testid="site-forge-link-campaign">Link to Campaign</CrystalButton>}
       </div>
@@ -153,14 +155,15 @@ export function CharacterForgePage(){
       {records.map(row=><article className={styles.saved} key={row.id}>
        <h3>{row.name}</h3><p>{row.race||'Race'} / {row.klass||'Class'}</p>
        <small>Level {row.level}{row.linked?' · Campaign linked':' · Unassigned'}</small>
-       <CrystalButton onClick={()=>edit(row.id)} disabled={busy}>Edit Character</CrystalButton>
+       <CrystalButton onClick={()=>{window.location.hash='#/character-forge?edit='+encodeURIComponent(row.id);}}
+        disabled={busy}>Edit Character</CrystalButton>
        {api?.dashboard?.availability().enabled&&<CrystalButton
          href={'#/react/owned-character/'+encodeURIComponent(row.id)}
          data-testid="site-forge-open-dashboard">Open Character Dashboard</CrystalButton>}
       </article>)}
     </div>}
   </SurfacePanel>}
-  {!loading&&rules&&mode!=='hub'&&<>
+  {!loading&&rules&&editorReady&&<>
    <div className={styles.heading}>
     <BodyText muted>{mode==='edit'?'Editing existing character (primary class locked)':
       'New character — guided creation'}</BodyText>

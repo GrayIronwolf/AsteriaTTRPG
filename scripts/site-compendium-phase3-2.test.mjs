@@ -40,10 +40,11 @@ test('public entry generator preserves canonical identity, separates public sect
       safeCount++;
       const original=expected.get(row.id);
       assert.ok(original,'Missing canonical definition '+row.id);
-      assert.equal(row.slug,original.slug);
+      assert.equal(row.slug,original.route.split('/').at(-1));
       assert.equal(row.title,original.title);
       assert.deepEqual(Object.keys(row).sort(),
-        ['id','title','slug','domain','summary','categoryPath','sections'].sort());
+        ['aliases','artwork','categoryPath','details','domain','gallery','id','imageReferences',
+          'indexCode','libraryCategory','related','sections','slug','sourceKeys','summary','talents','title'].sort());
       assert.deepEqual(row.sections,extractPublicSections(original.body));
       for(const section of row.sections) {
         assert.equal(isRestrictedSectionTitle(section.title),false,section.title);
@@ -53,7 +54,7 @@ test('public entry generator preserves canonical identity, separates public sect
       }
       assert.equal(row.metadata,undefined);
       assert.equal(row.sourcePath,undefined);
-      assert.equal(row.aliases,undefined);
+      assert.ok(row.aliases.every(alias=>!alias.endsWith('.md')));
       assert.equal(row.body,undefined);
     }
   }

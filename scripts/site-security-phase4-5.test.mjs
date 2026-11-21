@@ -43,9 +43,12 @@ test('single build-time rule excludes private, GM and metadata-only restricted d
 
 test('published output contracts reject any extra sensitive fields or GM-only headings',()=>{
  const catalogue={id:'lore:sample',title:'Example',slug:'sample',domain:'lore',
-  href:'#/compendium/lore/sample',categoryPath:[],category:'',summary:'',tags:[]};
+  href:'#/compendium/lore/sample',categoryPath:[],category:'',summary:'',tags:[],
+  aliases:[],sourceKeys:[],indexCode:'',libraryCategory:'lore',filters:{},artwork:null};
  const entry={id:'lore:sample',title:'Example',slug:'sample',domain:'lore',
-  summary:'',categoryPath:[],sections:[{title:'Overview',body:'Public'}]};
+  summary:'',categoryPath:[],sections:[{title:'Overview',body:'Public'}],
+  aliases:[],sourceKeys:[],indexCode:'',libraryCategory:'lore',artwork:null,gallery:[],
+  imageReferences:{},details:{},related:[],talents:[]};
  const search={id:'lore:sample',text:'public'};
  assert.equal(validatePublishedCatalogue(catalogue,'lore').id,entry.id);
  assert.equal(validatePublishedEntry(entry,'lore').id,entry.id);

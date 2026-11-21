@@ -11,33 +11,46 @@ import {newCampaignDraft,editCampaignDraft,ACCESS_FIELDS,PLAYER_SETTINGS} from '
 import styles from './CampaignForgePage.module.css';
 import {CampaignConnectionManager} from '../campaigns/CampaignConnectionManager.jsx';
 
+const CAMPAIGNS_HREF='#/campaign-forge?view=my-campaigns';
+const CREATE_HREF='#/campaign-forge?mode=create';
+const JOIN_HREF='#/campaign-forge?mode=join';
 const LABELS={dashboard:'Dashboard',inventory:'Inventory',spells:'Spells',
  journal:'Journal',quests:'Quests',notes:'Shared Notes',
  allowPlayerCreateCharacter:'Allow players to forge characters',
  allowPlayerLinkCharacter:'Allow players to request character links'};
-export function CampaignForgePage(){
+export function CampaignForgePage({route}){
  const {session}=useAuth(),services=useAppServices();
  const api=services.get('campaigns');
  const uid=isVerifiedOwnedSession(session)?session.user.uid:null;
  const [campaigns,setCampaigns]=useState([]),[editing,setEditing]=useState(null);
- const [draft,setDraft]=useState(newCampaignDraft),[mode,setMode]=useState('list');
+ const [draft,setDraft]=useState(newCampaignDraft);
+ const creating=route.params.intent==='create';
+ const editId=creating?null:route.query.get('edit');
+ const mode=creating?'new':editId?'edit':'list';
+ const editorReady=creating||Boolean(editId&&editing?.id===editId);
  const [busy,setBusy]=useState(false),[loading,setLoading]=useState(true);
  const [error,setError]=useState(''),[message,setMessage]=useState('');
  const [excluded,setExcluded]=useState(0),[artwork,setArtwork]=useState(null);
  const seq=useRef(0),owner=useRef(uid);owner.current=uid;
+ useEffect(()=>setMessage(''),[uid,api]);
  useEffect(()=>{
   const token=++seq.current;let active=true;
   setCampaigns([]);setEditing(null);setDraft(newCampaignDraft());
-  setMode('list');setLoading(true);setBusy(false);setError('');setMessage('');setExcluded(0);setArtwork(null);
+  setLoading(true);setBusy(false);setError('');setExcluded(0);setArtwork(null);
+  if(creating||editId)setMessage('');
   if(!uid||!api){setLoading(false);return undefined;}
-  api.list().then(data=>{
+  const owned=editId?api.load(editId):api.list();
+  owned.then(data=>{
    if(!active||seq.current!==token||owner.current!==uid)return;
-   setCampaigns(data.items);setExcluded(data.excluded);
+   if(editId){setEditing(data);setDraft(editCampaignDraft(data));}
+   else{setCampaigns(data.items);setExcluded(data.excluded);}
   }).catch(()=>{
-   if(active&&seq.current===token)setError('Could not verify your saved campaigns. Please retry.');
+   if(active&&seq.current===token)setError(editId?
+    'This campaign could not be verified for editing.':
+    'Could not verify your saved campaigns. Please retry.');
   }).finally(()=>{if(active&&seq.current===token)setLoading(false);});
   return ()=>{active=false;++seq.current;};
- },[uid,api]);
+ },[uid,api,creating,editId]);
  const refresh=async()=>{
   if(!uid||!api)return;
   const token=seq.current;setLoading(true);setError('');
@@ -48,21 +61,10 @@ export function CampaignForgePage(){
   }catch{if(seq.current===token)setError('Could not verify saved campaigns.');}
   finally{if(seq.current===token)setLoading(false);}
  };
- const back=()=>{setMode('list');setDraft(newCampaignDraft());setEditing(null);setArtwork(null);setError('');};
- const start=()=>{setMode('new');setDraft(newCampaignDraft());setEditing(null);setArtwork(null);setError('');setMessage('');};
- const edit=async id=>{
-  if(busy)return;
-  const token=seq.current;setBusy(true);setError('');setMessage('');
-  try{
-   const data=await api.load(id);
-   if(seq.current!==token||owner.current!==uid)return;
-   setDraft(editCampaignDraft(data));setEditing(data);setMode('edit');setArtwork(null);
-  }catch{if(seq.current===token)setError('This campaign could not be verified for editing.');}
-  finally{if(seq.current===token)setBusy(false);}
- };
+ const back=()=>{window.location.hash=CAMPAIGNS_HREF;};
  const save=async event=>{
   event.preventDefault();
-  if(busy)return;
+  if(busy||!editorReady)return;
   const token=seq.current,account=uid;
   setBusy(true);setError('');setMessage('');
   try{
@@ -80,7 +82,7 @@ export function CampaignForgePage(){
    }
    if(seq.current!==token||owner.current!==account)return;
    if(!artwork)setMessage(mode==='new'?'Campaign created in Firebase.':'Campaign settings saved.');
-   setMode('list');setArtwork(null);setEditing(null);await refresh();
+   window.location.replace(CAMPAIGNS_HREF);
   }catch(err){
    if(seq.current===token){
     const note=err?.message||'Campaign could not be saved.';
@@ -127,7 +129,7 @@ export function CampaignForgePage(){
     <h2>My Campaigns</h2>
     <div className={styles.actions}>
      <CrystalButton onClick={refresh} disabled={busy}>Refresh</CrystalButton>
-     <CrystalButton variant="primary" data-testid="site-campaign-create" onClick={start}>Forge Campaign</CrystalButton>
+     <CrystalButton variant="primary" data-testid="site-campaign-create" href={CREATE_HREF}>Forge Campaign</CrystalButton>
     </div>
    </div>
    {excluded>0&&<BodyText muted>{excluded} unverified campaign(s) were excluded.</BodyText>}
@@ -138,16 +140,18 @@ export function CampaignForgePage(){
      <p>{row.description||'No description yet.'}</p>
      <small>UCN: {row.ucn||'Unavailable'} · Party capacity: {row.partySize}</small>
      <small>Membership: {row.membershipSchemaVersion===2?'Canonical v2':'Legacy v1'}</small>
-     <CrystalButton onClick={()=>edit(row.id)} disabled={busy}>Manage Campaign</CrystalButton>
+     <CrystalButton onClick={()=>{window.location.hash='#/campaign-forge?edit='+encodeURIComponent(row.id);}}
+       disabled={busy}>Manage Campaign</CrystalButton>
      {services.has('gameplay')&&<CrystalButton href={'#/react/gm/'+encodeURIComponent(row.id)}
        data-testid="site-campaign-gm-dashboard">Open GM Dashboard</CrystalButton>}
     </article>)}</div>}
    <BodyText muted>New secure campaign invitation workflows are available only for
     server-upgraded v2 campaigns. Existing legacy memberships remain unchanged.</BodyText>
-   {api.connections?.availability().enabled&&<CrystalButton href="#/campaign-invitation">
+   {api.connections?.availability().enabled&&<CrystalButton href={JOIN_HREF}>
     Find or Join Campaign</CrystalButton>}
   </SurfacePanel>}
-  {!loading&&mode!=='list'&&<SurfacePanel as="section" className={styles.panel}>
+  {!loading&&editId&&!editorReady&&<CrystalButton href={CAMPAIGNS_HREF}>Back to Campaigns</CrystalButton>}
+  {!loading&&editorReady&&<SurfacePanel as="section" className={styles.panel}>
    <div className={styles.heading}>
     <h2>{mode==='new'?'Forge New Campaign':'Manage Campaign'}</h2>
     <CrystalButton onClick={back} disabled={busy}>Back to Campaigns</CrystalButton>

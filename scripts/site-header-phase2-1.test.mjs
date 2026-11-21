@@ -38,7 +38,7 @@ test('the header is owned by SiteShell and uses one responsive menu and one acco
   assert.match(shell, /aria-label="Mobile navigation"/);
   assert.match(shell, /onNavigate=\{navigate\}/);
   assert.match(shell, /function navigate\(\) \{[\s\S]*?closeMobileMenu\(\)/);
-  assert.match(styles, /@media \(max-width: 1279px\)/);
+  assert.match(styles, /@media \(max-width: 1679px\)/);
   assert.match(styles, /flex-wrap:\s*nowrap/);
   assert.match(styles, /display:\s*none/);
   for (const name of ['--ast-header-brand-width', '--ast-header-height', '--ast-header-avatar-size']) {
@@ -47,7 +47,8 @@ test('the header is owned by SiteShell and uses one responsive menu and one acco
   for (const name of ['--ast-logo-star-blue', '--ast-logo-star-cyan', '--ast-logo-star-violet', '--ast-logo-star-gold']) {
     assert.ok(tokens.includes(name + ':'), name);
   }
-  assert.match(tokens, /--ast-color-header:\s*#162839/);
+  assert.match(styles, /\.header\s*\{[^}]*background:\s*var\(--ast-color-panel\)/);
+  assert.match(tokens, /--ast-color-panel:\s*#060d15/i);
   assert.doesNotMatch(shell + styles, /window\.setView|document\.querySelector|!important/);
 });
 
@@ -89,6 +90,10 @@ test('profile UI requires a verified authenticated identity, and keeps unsafe UR
   assert.match(css, /height:\s*var\(--ast-header-height\)/);
   assert.match(css, /border:\s*0;/);
   assert.match(controls, /site-header-notifications/);
+  assert.match(controls, /isVerifiedOwnedSession\(session\)/);
+  assert.match(controls, /session\.accountId/);
+  assert.match(controls, /Account ID pending/);
+  assert.match(controls, /href="#\/account\/settings\?tab=security"/);
   assert.doesNotMatch(controls, /⋮/);
   assert.match(css, /object-fit:\s*cover/);
   assert.doesNotMatch(controls.replace(/\/\*[\s\S]*?\*\//g, ''), /localStorage|window\.AsteriaFirebase|sessionStorage/);

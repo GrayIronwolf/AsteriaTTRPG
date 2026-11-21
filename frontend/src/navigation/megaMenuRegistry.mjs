@@ -5,8 +5,8 @@ import { PRIMARY_LINKS } from '../router/siteRoutes.mjs';
  * All destinations are real preview bookmarks; no legacy setView/controllers.
  * Account/campaign/player features remain fail-closed until migrated.
  */
-const entry = (id, label, description, href, artwork = null) =>
-  Object.freeze({ id, label, description, href, artwork });
+const entry = (id, label, description, href, options = {}) =>
+  Object.freeze({ id, label, description, href, artwork: null, ...options });
 
 function group(id, title, entries) {
   const link = PRIMARY_LINKS.find(item => item.id === id);
@@ -47,10 +47,10 @@ export const MEGA_MENUS = Object.freeze({
   ]),
   'character-forge': group('character-forge', 'Character Forge', [
     entry('forge-character', 'Forge a Character', 'Create a new hero', '#/character-forge?mode=create'),
-    entry('my-characters', 'My Characters', 'Your saved characters', '#/character-forge?view=my-characters')
+    entry('my-characters', 'My Characters', 'Your saved characters', '#/character-forge?view=my-characters', {ownerOnly:true})
   ]),
   'campaign-forge': group('campaign-forge', 'Campaign Forge', [
-    entry('forge-campaign', 'Forge A Campaign', 'Create a new campaign', '#/campaign-forge?mode=create', 'campaign-book'),
+    entry('forge-campaign', 'Forge A Campaign', 'Create a new campaign', '#/campaign-forge?mode=create', {artwork:'campaign-book'}),
     entry('my-campaigns', 'My Campaigns', 'Your campaigns', '#/campaign-forge?view=my-campaigns'),
     entry('join-campaign', 'Join A Campaign', 'Enter your 12-digit UCN', '#/campaign-forge?mode=join')
   ]),
@@ -70,10 +70,9 @@ export function getMegaMenu(navId) {
   return Object.hasOwn(MEGA_MENUS, navId) ? MEGA_MENUS[navId] : null;
 }
 
-export function filterMegaMenuEntries(menu, query = '') {
+export function filterMegaMenuEntries(menu, query = '', {owned = false} = {}) {
   if (!menu) return [];
   const needle = String(query).trim().toLocaleLowerCase();
-  if (!needle) return menu.entries;
   return menu.entries.filter(item =>
-    (item.label + ' ' + item.description).toLocaleLowerCase().includes(needle));
+    (owned || !item.ownerOnly) && (item.label + ' ' + item.description).toLocaleLowerCase().includes(needle));
 }

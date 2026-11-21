@@ -40,7 +40,7 @@ async function ready() {
       executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH || undefined,
       args: ['--no-sandbox', '--disable-dev-shm-usage']
     });
-    const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    const page = await browser.newPage({ viewport: { width: 1920, height: 900 } });
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     page.on('console', message => {
@@ -58,7 +58,7 @@ async function ready() {
 
     const menuData = [
       ['Asteria Handbook', 6], ['Worlds & Lore', 8],
-      ['Asteria Compendium', 10], ['Character Forge', 2],
+      ['Asteria Compendium', 10], ['Character Forge', 1],
       ['Campaign Forge', 3], ['Friends', 2]
     ];
     assert.equal(await trigger('Account').count(), 0, 'Duplicated Account navigation must stay removed');
@@ -66,8 +66,13 @@ async function ready() {
     for (const [name, expected] of menuData) {
       await trigger(name).click();
       await panel.waitFor({ state: 'visible' });
+      assert.equal(await panel.evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(6, 13, 21)');
       assert.equal(await panel.getByRole('heading', { name, exact: true }).count(), 1);
       assert.equal(await page.getByTestId('site-mega-cards').getByRole('link').count(), expected, name);
+      if (name === 'Character Forge') {
+        await page.getByTestId('site-mega-search').fill('My Characters');
+        assert.equal(await panel.getByRole('link', {name:'My Characters',exact:true}).count(), 0);
+      }
       assert.equal(await trigger(name).getAttribute('aria-expanded'), 'true');
       assert.equal(await page.evaluate(() => document.body.style.overflow), 'hidden');
       report.menuCounts[name] = expected;
@@ -77,7 +82,7 @@ async function ready() {
       assert.equal(await page.evaluate(() => document.body.style.overflow), '');
       assert.equal(await trigger(name).evaluate(el => document.activeElement === el), true);
     }
-    console.log('PASS: six header groups and all 31 cards, Escape, focus restoration and scroll cleanup.');
+    console.log('PASS: six header groups and thirty guest cards, Escape, focus restoration and scroll cleanup.');
 
     await trigger('Asteria Compendium').click();
     await page.getByTestId('site-mega-search').fill('  construction  ');
@@ -107,12 +112,12 @@ async function ready() {
     assert.equal(await page.locator('main form, main input').count(), 0,
       'Unmigrated campaign creation must not collect user data');
 
-    const widths = [320, 360, 390, 430, 768, 1024, 1279, 1280, 1440, 1920];
+    const widths = [320, 360, 390, 430, 768, 1024, 1279, 1280, 1440, 1679, 1680, 1920];
     for (const width of widths) {
       await page.setViewportSize({ width, height: 900 });
       await page.goto(base, { waitUntil: 'networkidle' });
-      const isMobile = width <= 1279;
-      if (isMobile) {
+      const isCompact = width <= 1679;
+      if (isCompact) {
         await page.getByTestId('site-mobile-menu').locator('summary').click();
         await page.getByRole('navigation', { name: 'Mobile navigation' })
           .getByRole('link', { name: 'Worlds & Lore', exact: true }).click();
@@ -145,15 +150,15 @@ async function ready() {
         await page.screenshot({ path: path.join(evidence, filename), animations: 'disabled' });
         report.screenshots.push(filename);
       }
-      if (isMobile) {
+      if (isCompact) {
         assert.equal(await page.getByTestId('site-mobile-menu').evaluate(el => el.open), false);
       }
       await page.getByTestId('site-mega-browse').click();
       await page.getByRole('heading', { name: 'Worlds & Lore', level: 1 }).waitFor();
     }
-    console.log('PASS: 10 desktop and mobile widths, narrow tall cards, no overlap/overflow.');
+    console.log('PASS: 12 desktop and mobile widths, narrow tall cards, no overlap or overflow.');
 
-    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.setViewportSize({ width: 1920, height: 900 });
     await page.goto(base, { waitUntil: 'networkidle' });
     await trigger('Asteria Handbook').focus();
     await page.keyboard.press('Space');

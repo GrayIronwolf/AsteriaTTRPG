@@ -1,78 +1,61 @@
-/* React Home is self-contained; no legacy Home IDs or global overrides. */
 .home {
   width: 100%;
   min-width: 0;
-  padding: 0 0 clamp(56px, 7vw, 110px);
+  min-height: max(84vh, 670px);
+  padding-bottom: 96px;
   background: var(--ast-color-page);
 }
-.introduction {
+
+.home .introduction {
   position: relative;
   z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--ast-space-3);
-  margin: -8px auto 0;
-  text-align: center;
+  gap: 12px;
+  width: min(840px, calc(100% - 42px));
+  margin: 0 auto;
+  padding-inline: 0;
   color: var(--ast-color-text);
+  font-family: var(--home-reading-font, var(--ast-font-body));
+  text-align: center;
 }
-.eyebrow {
-  color: var(--ast-color-text-muted);
-  font-size: clamp(1rem, 1.4vw, 1.3rem);
-  letter-spacing: .18em;
+
+.defaultReading { --home-reading-font: "Source Serif 4", Georgia, serif; }
+.defaultDisplay { --home-display-font: Cinzel, Georgia, serif; }
+
+.introduction .eyebrow {
+  color: inherit;
+  font: 500 clamp(1rem, 1.5vw, 1.35rem)/1.2 var(--home-display-font, var(--ast-font-display));
+  letter-spacing: .19em;
 }
+
 .introduction h1 {
   margin: 0;
-  color: var(--ast-color-text-bright);
-  font-size: clamp(2.75rem, 5.3vw, 5.6rem);
+  color: inherit;
+  font-family: var(--home-display-font, var(--ast-font-display));
+  font-size: clamp(2.7rem, 5.3vw, 5.6rem);
+  font-weight: 700;
   letter-spacing: .055em;
 }
-.description {
-  width: min(100%, 840px);
-  max-width: 840px;
-  color: var(--ast-color-text-muted);
+
+.introduction .description {
+  max-width: 100%;
   font-size: clamp(1rem, 1.35vw, 1.2rem);
   line-height: 1.7;
 }
+
 .actions {
   display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: var(--ast-space-3);
-  width: 100%;
-  margin-top: var(--ast-space-4);
+  flex-direction: column;
+  gap: 12px;
+  width: min(100%, 320px);
+  margin-top: 16px;
 }
-.forgeSection {
-  margin: clamp(64px, 8vw, 112px) auto 0;
-}
-.sectionHeading {
-  margin: 0 auto clamp(20px, 3vw, 36px);
-  text-align: center;
-}
-.sectionHeading h2 {
-  margin: var(--ast-space-2) 0 var(--ast-space-3);
-  color: var(--ast-color-text-bright);
-  font-family: var(--ast-font-display);
-  font-size: clamp(2rem, 3vw, 3rem);
-  font-weight: 500;
-}
-.sectionHeading p {
-  margin: 0 auto;
-  max-width: 660px;
-  color: var(--ast-color-text-muted);
-  font-size: var(--ast-font-md);
-}
-.previewNotice {
-  max-width: 850px;
-  margin: clamp(48px, 6vw, 80px) auto 0;
-  padding-inline: var(--ast-page-gutter);
-  color: var(--ast-color-text-muted);
-  font-size: var(--ast-font-xs);
-  line-height: 1.6;
-  text-align: center;
-}
+
+.actions a { font-family: inherit; }
+
 @media (max-width: 760px) {
-  .introduction { margin-top: -3px; }
-  .actions { gap: var(--ast-space-3); }
-  .actions a { width: min(100%, 300px); }
+  .home .introduction { width: min(720px, calc(100% - 30px)); }
+  .actions { width: min(100%, 360px); }
 }

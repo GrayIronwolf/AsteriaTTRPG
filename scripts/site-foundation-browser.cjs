@@ -38,7 +38,7 @@ async function awaitPreview() {
       executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH || undefined,
       args: ['--no-sandbox', '--disable-dev-shm-usage']
     });
-    const page = await browser.newPage({viewport:{width:1440,height:900}});
+    const page = await browser.newPage({viewport:{width:1920,height:900}});
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     page.on('console', message => {
@@ -54,17 +54,18 @@ async function awaitPreview() {
     await page.getByRole('heading', {name:'Asteria',level:1}).waitFor();
     assert.equal(await page.getByRole('navigation',{name:'Primary navigation'}).count(),1);
     assert.equal(await page.getByRole('main').count(),1);
-    assert.equal(await page.getByText('React Home preview:',{exact:false}).count(),1);
-    assert.equal(await page.getByTestId('site-home-forge-cards').getByRole('link').count(),2);
+    assert.equal(await page.getByText('React Home preview:',{exact:false}).count(),0);
+    assert.equal(await page.getByRole('navigation',{name:'Explore Asteria'}).getByRole('link').count(),2);
     assert.equal(await page.getByTestId('site-hero-image').locator('img').evaluate(img => img.complete && img.naturalWidth > 0),true);
     assert.equal(await page.getByTestId('site-brand').locator('svg').evaluate(svg =>
       svg.getBoundingClientRect().width > 100 && svg.querySelectorAll('image').length === 2), true);
     assert.equal(await page.evaluate(() => typeof window.setView), 'undefined');
 
-    for(const width of [320, 360, 390, 430, 768, 1024, 1440, 1920]) {
+    for(const width of [320, 360, 390, 430, 768, 1024, 1440, 1679, 1680, 1920]) {
       await page.setViewportSize({width,height:900});
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth);
       assert.equal(overflow,false,`Unexpected horizontal overflow at ${width}px`);
+      assert.equal(await page.getByRole('navigation',{name:'Primary navigation'}).isVisible(),width >= 1680);
     }
     await page.getByTestId('site-brand').click();
     assert.equal(await page.evaluate(() => window.location.hash),'#home');

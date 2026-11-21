@@ -18,6 +18,7 @@ const STATIC_ROUTES = Object.freeze({
   '/character-forge': ['character-forge', 'Character Forge', 'character-forge'],
   '/campaign-forge': ['campaign-forge', 'Campaign Forge', 'campaign-forge'],
   '/campaign-invitation': ['invitation', 'Campaign Invitation', 'campaign-forge'],
+  '/version-log': ['version-log', 'Version Log', null],
   '/account': ['account', 'Account', 'account'],
   '/appearance': ['appearance', 'Appearance', 'account'],
   '/account/login': ['login', 'Login', 'account'],
@@ -36,6 +37,7 @@ const HASH_ALIASES = Object.freeze({
   '#loginPage': '/account/login',
   '#accountCreate': '/account/create',
   '#forgotPassword': '/account/forgot-password',
+  '#devLog': '/version-log',
   '#asteriaFriendsPage': '/account/friends',
   '#asteriaNotificationsPage': '/account/notifications',
   '#asteriaAccountPage': '/account',
@@ -47,6 +49,97 @@ const HASH_ALIASES = Object.freeze({
   '#/handbook': '/compendium?group=rules&category=handbook',
   '#/world': '/compendium?group=world'
 });
+
+// The original universal Compendium domain vocabulary. Scope aliases are
+// explicit so unknown paths never fall back to the Handbook.
+const COMPENDIUM_DOMAINS = Object.freeze({
+  race: 'race', races: 'race',
+  class: 'class', classes: 'class',
+  creature: 'creature', creatures: 'creature',
+  item: 'item', items: 'item', flora: 'item', minerals: 'item', materials: 'item',
+  spell: 'spell', spells: 'spell', magic: 'spell',
+  talent: 'talent', talents: 'talent',
+  profession: 'profession', professions: 'profession',
+  skill: 'skill', skills: 'skill',
+  origin: 'origin', origins: 'origin', backgrounds: 'origin',
+  location: 'location', locations: 'location', world: 'location', worlds: 'location',
+  realm: 'location', realms: 'location', plane: 'location', planes: 'location',
+  religion: 'religion', religions: 'religion', theology: 'religion', theologies: 'religion',
+  god: 'religion', gods: 'religion', deity: 'religion', deities: 'religion',
+  pantheon: 'religion', pantheons: 'religion', court: 'religion', courts: 'religion',
+  faction: 'faction', factions: 'faction', guild: 'faction', guilds: 'faction',
+  organization: 'faction', organizations: 'faction', organisation: 'faction', organisations: 'faction',
+  lore: 'lore', history: 'lore', histories: 'lore', timeline: 'lore', timelines: 'lore', legend: 'lore',
+  handbook: 'handbook', rules: 'handbook'
+});
+const COLLECTIONS = new Set(['flora', 'minerals', 'materials']);
+
+function domainKey(value) {
+  return decodePart(value).toLowerCase().replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '').replace(/-compendium$/, '');
+}
+
+function compendiumDomain(key) {
+  return Object.hasOwn(COMPENDIUM_DOMAINS, key) ? COMPENDIUM_DOMAINS[key] : null;
+}
+
+function compendiumEntry(domain, reference, hash, query) {
+  return createRoute('compendium-entry', 'Compendium Entry', 'compendium', hash,
+    { domain, slug: decodePart(reference) }, query);
+}
+
+function scopedCompendium(domain, key, hash, query) {
+  query.set('domain', domain);
+  if (COLLECTIONS.has(key)) {
+    if (!query.has('filter')) query.set('filter', 'collection');
+    if (!query.has('value')) query.set('value', key);
+  }
+  return createRoute('compendium', 'Asteria Compendium', 'compendium', hash,
+    { legacyDomain: true }, query);
+}
+
+function readCompendiumPath(path, hash, query) {
+  const namespaced = path.match(/^\/?compendium\/([^/]+)(?:\/(.+))?$/);
+  if (namespaced) {
+    const [, rawDomain, reference] = namespaced;
+    const key = domainKey(rawDomain);
+    const domain = compendiumDomain(key);
+    if (domain) return reference
+      ? compendiumEntry(domain, reference, hash, query)
+      : scopedCompendium(domain, key, hash, query);
+    // Keep the error page that already handled a malformed entry address.
+    return reference && !reference.includes('/')
+      ? compendiumEntry(decodePart(rawDomain), reference, hash, query) : null;
+  }
+
+  const reference = path.replace(/^\//, '');
+  const [first, second] = reference.split('/', 2);
+  const key = domainKey(first);
+  const domain = compendiumDomain(key);
+  if (domain && second) return compendiumEntry(domain, reference, hash, query);
+  if (domain && COLLECTIONS.has(key)) return scopedCompendium(domain, key, hash, query);
+
+  // Source references remain lookup keys, never URLs to fetch.
+  const decodedReference = decodePart(reference);
+  if (second && /\.md$/i.test(decodedReference)) {
+    const folder = domainKey(second);
+    const sourceDomain = key === 'content' ? compendiumDomain(folder) : null;
+    if (sourceDomain) return compendiumEntry(sourceDomain, reference, hash, query);
+    if (key === 'asteria-ttrpg' && folder === 'z-asteria-handbook') {
+      return compendiumEntry('handbook', reference, hash, query);
+    }
+  }
+
+  // Original indexes also exposed typed ID and wiki references as bookmarks.
+  const identity = decodedReference.match(/^(?:(wiki|creature-manifest):)?([a-z]+):.+$/i);
+  if (!identity) return null;
+  const namespace = identity[1]?.toLowerCase();
+  const type = identity[2].toLowerCase();
+  if (namespace === 'wiki' && !COLLECTIONS.has(type)) return null;
+  if (namespace === 'creature-manifest' && type !== 'creature') return null;
+  const typedDomain = compendiumDomain(type);
+  return typedDomain ? compendiumEntry(typedDomain, reference, hash, query) : null;
+}
 
 function decodePart(part) {
   try { return decodeURIComponent(part); }
@@ -77,7 +170,7 @@ export function parseSiteRoute({ hash = '', search = '' } = {}) {
   }
 
   if (currentHash === '#home' || currentHash === '#/home' ||
-      currentHash === '#/' || currentHash === '#site-main') {
+      currentHash === '#/' || currentHash === '#site-main' || currentHash === '#mainContent') {
     return createRoute('home', 'Asteria', 'home', currentHash);
   }
 
@@ -88,7 +181,7 @@ export function parseSiteRoute({ hash = '', search = '' } = {}) {
     .replace(/\/+$/, '') || '/';
   const query = new URLSearchParams(queryOffset === -1 ? '' : routePart.slice(queryOffset + 1));
 
-  if (path === '/compendium') {
+  if (path === '/compendium' || path === 'compendium') {
     const group = query.get('group');
     const category = query.get('category');
     if (group === 'rules' && category === 'handbook') {
@@ -100,11 +193,8 @@ export function parseSiteRoute({ hash = '', search = '' } = {}) {
     return createRoute('compendium', 'Asteria Compendium', 'compendium', currentHash, {}, query);
   }
 
-  const entry = path.match(/^\/compendium\/([^/]+)\/([^/]+)$/);
-  if (entry) {
-    return createRoute('compendium-entry', 'Compendium Entry', 'compendium', currentHash,
-      { domain: decodePart(entry[1]), slug: decodePart(entry[2]) }, query);
-  }
+  const compendium = readCompendiumPath(path, currentHash, query);
+  if (compendium) return compendium;
 
   const join = path.match(/^\/join\/(\d{12})$/);
   if (join) {
@@ -137,6 +227,14 @@ export function parseSiteRoute({ hash = '', search = '' } = {}) {
 
   if (Object.prototype.hasOwnProperty.call(STATIC_ROUTES, path)) {
     const [id, title, navId] = STATIC_ROUTES[path];
+    if (id === 'character-forge' || id === 'campaign-forge') {
+      const mode = query.get('mode');
+      if (id === 'campaign-forge' && mode === 'join') {
+        return createRoute('invitation', 'Campaign Invitation', navId, currentHash, { intent: 'join' }, query);
+      }
+      const intent = mode === 'create' ? 'create' : 'list';
+      return createRoute(id, title, navId, currentHash, { intent }, query);
+    }
     return createRoute(id, title, navId, currentHash, {}, query);
   }
 

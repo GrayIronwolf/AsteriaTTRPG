@@ -37,7 +37,7 @@ async function awaitPreview() {
       executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH || undefined,
       args: ['--no-sandbox', '--disable-dev-shm-usage']
     });
-    const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    const page = await browser.newPage({ viewport: { width: 1920, height: 900 } });
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
     page.on('console', e => { if (e.type() === 'error') errors.push(e.text()); });
@@ -121,12 +121,12 @@ async function awaitPreview() {
     assert.equal(await page.evaluate(() => document.activeElement?.id), 'site-main');
     assert.equal(await page.evaluate(() => window.location.hash), '');
 
-    for (const width of [320, 360, 390, 430, 768, 1024, 1440, 1920]) {
+    for (const width of [320, 360, 390, 430, 768, 1024, 1440, 1679, 1680, 1920]) {
       await page.setViewportSize({ width, height: 900 });
       await page.goto(base, { waitUntil: 'networkidle' });
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth);
       assert.equal(overflow, false, 'Horizontal overflow at ' + width);
-      if (width <= 1279) {
+      if (width <= 1679) {
         await page.getByTestId('site-mobile-menu').locator('summary').click();
         const mobileNav = page.getByRole('navigation', { name: 'Mobile navigation' });
         await mobileNav.getByRole('link', { name: 'Friends', exact: true }).click();
@@ -146,8 +146,20 @@ async function awaitPreview() {
         assert.equal(row.overflow, false, 'Desktop link clipped at ' + width);
       }
     }
+    await page.setViewportSize({width:390,height:844});
+    await page.goto(base, {waitUntil:'networkidle'});
+    await page.getByTestId('site-mobile-menu').locator('summary').click();
+    const drawer = page.getByRole('dialog', {name:'Navigation & Appearance'});
+    await drawer.getByRole('link', {name:'Open Version Log',exact:true}).click();
+    await heading('Version Log');
+    assert.equal(await page.evaluate(() => window.location.hash), '#/version-log');
+    await drawer.waitFor({state:'detached'});
+    await page.goBack();
+    await heading('Asteria');
+    await page.goForward();
+    await heading('Version Log');
     assert.deepEqual(errors, [], 'Browser errors: ' + errors.join('; '));
-    console.log('PASS: mobile menus, keyboard skip link, single-row desktop header and all widths.');
+    console.log('PASS: compact menus, Version Log history, keyboard skip link and single-row desktop navigation.');
   } finally {
     if (browser) await browser.close();
     server.kill('SIGTERM');

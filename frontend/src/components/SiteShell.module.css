@@ -1,6 +1,10 @@
 /* The global header's only layout owner; logo and account art are scoped to
  * their own component modules, not repeated here or in global CSS.
  */
+.shell {
+  --ast-header-height: clamp(115px, 8.75vw, 164px);
+  --ast-header-brand-width: clamp(330px, 20.5vw, 420px);
+}
 .skipLink {
   position: absolute;
   z-index: var(--ast-z-skip-link);
@@ -16,11 +20,12 @@
 }
 .skipLink:focus { top: var(--ast-space-3); }
 .header {
+  --ast-color-header-text: var(--ast-color-text-bright);
   position: relative;
   z-index: var(--ast-z-header);
   width: 100%;
-  background: var(--ast-color-header);
-  border-bottom: 1px solid var(--ast-color-outline-soft);
+  background: var(--ast-color-panel);
+  box-shadow: inset 0 -1px var(--ast-color-outline-soft);
 }
 .headerInner {
   width: min(100%, var(--ast-page-max));
@@ -31,11 +36,11 @@
   gap: clamp(6px, .65vw, 14px);
   align-items: center;
   justify-content: space-between;
-  padding: 0 0 0 clamp(8px, 1.2vw, 24px);
+  padding-inline: clamp(8px, 1.2vw, 24px);
 }
 .primaryNavigation {
   display: flex;
-  flex: 1 1 auto;
+  flex: 1 0 auto;
   align-items: center;
   justify-content: center;
   gap: clamp(4px, .45vw, 10px);
@@ -49,7 +54,67 @@
   font-size: clamp(.78rem, .87vw, .9rem);
 }
 .primaryNavigation a > span > span { padding-inline: clamp(8px, .8vw, 16px); }
-.mobileMenu { display: none; }
+.headerActions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: clamp(4px, .55vw, 9px);
+  margin-left: auto;
+}
+.mobileMenu { flex: 0 0 auto; }
+.drawerTrigger { list-style: none; }
+.drawerTrigger::-webkit-details-marker { display: none; }
+.mobileMenu[open] .drawerTrigger { --ast-button-crystal-brightness: 1.15; }
+.menuIcon {
+  display: grid;
+  width: 16px;
+  gap: 3px;
+}
+.menuIcon span { height: 2px; background: currentColor; border-radius: 1px; }
+.drawerLayer {
+  position: fixed;
+  z-index: var(--ast-z-menu);
+  inset: 0;
+}
+.drawerBackdrop {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(transparent var(--ast-header-height), rgb(3 8 16 / .66) var(--ast-header-height));
+}
+.drawer {
+  position: absolute;
+  inset: var(--ast-header-height) 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ast-space-4);
+  width: min(420px, calc(100% - 12px));
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: clamp(12px, 3vw, 20px);
+  border: 1px solid var(--ast-color-outline);
+  background: var(--ast-color-panel);
+  color: var(--ast-color-text-bright);
+  box-shadow: var(--ast-shadow-dropdown);
+}
+.drawerHeading { display: flex; justify-content: space-between; align-items: center; gap: var(--ast-space-2); }
+.drawerHeading h2 { margin: 0; font-family: var(--ast-font-display); font-size: clamp(1.05rem, 4.2vw, 1.3rem); }
+.drawerClose {
+  flex: 0 0 var(--ast-target-min);
+  min-height: var(--ast-target-min);
+  border: 1px solid var(--ast-color-outline);
+  border-radius: var(--ast-radius-sm);
+  background: transparent;
+  color: inherit;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+.drawerClose:focus-visible, .drawer a:focus-visible, .drawerTrigger:focus-visible {
+  outline: 3px solid var(--ast-logo-star-cyan);
+  outline-offset: 2px;
+}
+.mobileNavigation { display: none; }
+.mobileSettings { display: grid; gap: var(--ast-space-2); border-top: 1px solid var(--ast-color-outline-soft); padding-top: var(--ast-space-3); }
 .main {
   min-height: calc(100svh - 164px);
   min-width: 0;
@@ -63,62 +128,25 @@
 }
 .footer p { margin: 0; }
 
-/* Move the same React navigation into a disclosure without DOM reparenting.
- * This triggers before a cramped header could wrap its eight links.
+/* The six primary destinations move to the drawer in the compact layout.
+ * Account controls stay in the header at every width.
  */
-@media (max-width: 1279px) {
+@media (max-width: 1679px) {
+  .shell { --ast-header-height: 70px; --ast-header-brand-width: clamp(175px, 27vw, 360px); }
   .primaryNavigation { display: none; }
-  .mobileMenu {
-    display: block;
-    position: relative;
-    margin-left: 0;
-    flex: 0 0 auto;
-  }
-  .mobileMenu summary {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--ast-space-2);
-    min-height: var(--ast-target-min);
-    padding: var(--ast-space-2) var(--ast-space-4);
-    border: 1px solid var(--ast-color-outline);
-    border-radius: var(--ast-radius-sm);
-    background: var(--ast-color-panel);
-    color: var(--ast-color-header-text);
-    font-size: var(--ast-font-sm);
-    cursor: pointer;
-  }
-  .mobileMenu summary::after { content: "▾"; font-size: var(--ast-font-xs); }
-  .mobileMenu[open] summary::after { content: "▴"; }
-  .mobileNavigation {
-    position: absolute;
-    z-index: var(--ast-z-menu);
-    top: calc(100% + var(--ast-space-2));
-    right: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--ast-space-2);
-    width: min(320px, calc(100vw - 20px));
-    max-height: min(72svh, 620px);
-    overflow-y: auto;
-    padding: var(--ast-space-3);
-    border: 1px solid var(--ast-color-outline);
-    border-radius: var(--ast-radius-panel);
-    background: var(--ast-color-header);
-    box-shadow: var(--ast-shadow-dropdown);
-  }
-  .mobileNavigation a { width: 100%; justify-content: stretch; }
-  .mobileNavigation a span { justify-content: start; }
+  .mobileNavigation { display: grid; gap: 12px; }
 }
-@media (max-width: 760px) {
-  .headerInner { min-height: 62px; padding-block: 0; gap: 4px; }
-  .mobileMenu summary { min-width: 44px; width: 44px; min-height: 44px; padding: 0; font-size: 0; }
-  .mobileMenu summary::after { content: '☰'; font-size: 18px; }
-  .mobileMenu[open] summary::after { content: '×'; font-size: 22px; }
+@media (max-width: 720px) {
+  .shell { --ast-header-height: 58px; --ast-header-brand-width: 158px; }
+  .headerInner { padding-inline: 6px; gap: 6px; }
+  .headerActions { gap: 4px; }
+  .mobileMenu .drawerTrigger { min-width: 44px; width: 44px; min-height: 44px; }
+  .headerActions [data-testid='site-header-login'] { width: clamp(66px, 19vw, 92px); }
+}
+@media (max-width: 380px) {
+  .shell { --ast-header-height: 54px; --ast-header-brand-width: 120px; }
+  .headerInner { padding-inline: 4px; gap: 4px; }
+  .headerActions { gap: 3px; }
 }
 
-/* Mobile-only local appearance entry, inside the existing menu owner. */
-.mobileSettings { display: grid; gap: var(--ast-space-2); border-top: 1px solid var(--ast-color-outline-soft); padding-top: var(--ast-space-3); }
-.mobileSettingsLabel { color: var(--ast-color-header-text); font-size: var(--ast-font-xs); font-weight: 600; }
 .footer a { color: var(--ast-color-accent); text-underline-offset: 3px; }

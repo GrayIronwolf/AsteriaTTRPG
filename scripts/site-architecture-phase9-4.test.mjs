@@ -250,13 +250,21 @@ test('public-only glob assets and the central feature/SDK boundaries keep explic
   for (const file of codeFiles) {
     const src = read(file);
     for (const match of src.matchAll(/import\.meta\.glob\(\s*['"]([^'"]+)['"]/g)) {
-      globs.push({ file, spec: match[1] });
-      assert.ok(match[1].startsWith('./'), 'Public asset glob must be local: ' + file);
-      assert.ok(match[1].endsWith('/*.json'), 'Only prefiltered JSON can be globbed: ' + file);
-      const dir = resolve(root, dirname(file), dirname(match[1]));
+      const spec = match[1];
+      globs.push({ file, spec });
+      assert.ok(spec.startsWith('./'), 'Public asset glob must be local: ' + file);
+      const artworkRegistry = file === 'frontend/src/compendium/publicArtworkLoader.mjs' &&
+        spec === './public-entry-index/artwork/*.png';
+      assert.ok(artworkRegistry || spec.endsWith('/*.json'), 'Unexpected public asset glob: ' + file);
+      const dir = resolve(root, dirname(file), dirname(spec));
       assert.ok(existsSync(dir), 'Generated public asset folder missing (run site generators): ' + dir);
-      assert.ok(readdirSync(dir).some(name => name.endsWith('.json')),
-        'Public asset glob has no generated JSON files: ' + file);
+      const names = readdirSync(dir);
+      if (artworkRegistry) {
+        assert.ok(names.length > 0 && names.every(name => /^[a-f0-9]{64}\.png$/.test(name)),
+          'Public artwork glob must contain only generated digest filenames');
+      } else {
+        assert.ok(names.some(name => name.endsWith('.json')), 'Public asset glob has no generated JSON files: ' + file);
+      }
     }
   }
   assert.ok(globs.length >= 4, 'Public Compendium/Forge import boundary removed');

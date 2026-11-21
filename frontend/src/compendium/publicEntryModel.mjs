@@ -9,12 +9,48 @@ export function isValidPublicEntryRoute(domain, slug) {
     /^[a-z0-9][a-z0-9-]*$/.test(slug);
 }
 
-export function resolvePublicEntry(entries, slug) {
-  if (!Array.isArray(entries)) return { state: 'missing', entry: null };
-  const matches = entries.filter(row => row && row.slug === slug);
-  if (matches.length === 0) return { state: 'missing', entry: null };
-  if (matches.length !== 1) return { state: 'ambiguous', entry: null };
-  return { state: 'ready', entry: matches[0] };
+// These tokens are keys in a published index. They are never fetched as URLs.
+export function isSafePublicReference(value) {
+  return typeof value === 'string' && value.length > 0 && value.length <= 330 &&
+    /^[\p{L}\p{N} /:._'’&(),–—+-]+$/u.test(value) &&
+    !value.startsWith('//') && !value.includes('://') &&
+    !value.split('/').some(part => part === '.' || part === '..');
+}
+
+export function normalizePublicSourceReference(value) {
+  if(!isSafePublicReference(value)||!/\.md$/i.test(value)||value.includes(':'))return '';
+  return value.trim().replace(/^\//,'').normalize('NFC').toLowerCase();
+}
+
+const normalReference = value => value.trim().normalize('NFKC').replace(/\s+/g,' ').toLowerCase();
+
+function referenceKeys(value, domain) {
+  const key = normalReference(value);
+  const prefix = '/compendium/' + domain + '/';
+  if (key.startsWith(prefix)) return [key,key.slice(prefix.length)];
+  if (key.startsWith('/')) return [key,key.slice(1)];
+  return [key,'/' + key];
+}
+
+export function publicEntryTarget(row) {
+  return {domain:row.domain,slug:row.slug,title:row.title,categoryPath:row.categoryPath||[]};
+}
+
+export function resolvePublicEntry(entries, reference) {
+  if (!Array.isArray(entries) || !isSafePublicReference(reference)) return {state:'missing',entry:null};
+  const value=reference.trim();
+  const matchesKey=entries.filter(row=>row && (row.slug===value ||
+    value==='/compendium/'+row.domain+'/'+row.slug));
+  const exact=matchesKey.length?matchesKey:entries.filter(row=>row?.id===value);
+  const matches=exact.length?exact:entries.filter(row=>{
+    if(!row)return false;
+    const keys=referenceKeys(value,row.domain);
+    return [row.title,row.indexCode,...(row.aliases||[])].some(alias=>isSafePublicReference(alias)&&
+      referenceKeys(alias,row.domain).some(key=>keys.includes(key)));
+  });
+  if (matches.length===0) return {state:'missing',entry:null};
+  if (matches.length!==1) return {state:'ambiguous',entry:null,choices:matches.map(publicEntryTarget)};
+  return {state:'ready',entry:matches[0]};
 }
 
 export function createPublicSectionHref(domain, slug, sectionName) {

@@ -73,8 +73,8 @@ async function awaitServer() {
     assert.equal(response.status(), 200, 'The official logo asset did not load');
 
     const headerBackground = await header.evaluate(node => getComputedStyle(node).backgroundColor);
-    assert.equal(headerBackground, 'rgb(22, 40, 57)',
-      'The header must use the approved solid blue-gray colour');
+    assert.equal(headerBackground, 'rgb(6, 13, 21)',
+      'The header must use the original solid navy colour');
     const flood = brandSvg.locator('feFlood');
     assert.equal(await flood.count(), 1);
     const animation = await flood.evaluate(el => getComputedStyle(el).animationName);
@@ -84,7 +84,7 @@ async function awaitServer() {
     assert.equal(await page.getByTestId('site-header-login').count(), 1);
     console.log('PASS: original wordmark, four crystal-linked stars, solid header and guest account.');
 
-    const widths = [320, 360, 390, 430, 768, 1024, 1150, 1279, 1280, 1440, 1920];
+    const widths = [320, 360, 390, 430, 768, 1024, 1150, 1279, 1280, 1440, 1679, 1680, 1920];
     const report = [];
     for (const width of widths) {
       await page.setViewportSize({ width, height: 900 });
@@ -126,12 +126,14 @@ async function awaitServer() {
       assert.ok(metrics.loginHeight >= 44, 'Guest Login tap target is undersized at ' + width);
       assert.equal(metrics.accountInsideViewport, true, 'Account area clipped at ' + width);
       assert.equal(metrics.menuInsideViewport, true, 'Menu control clipped at ' + width);
-      if (width <= 1279) {
+      assert.equal(metrics.menuVisible, true, 'Navigation and Appearance trigger missing at ' + width);
+      if (width <= 1679) {
         assert.equal(metrics.navigationVisible, false, 'Desktop navigation still visible at ' + width);
-        assert.equal(metrics.menuVisible, true, 'Compact menu missing at ' + width);
+        assert.equal(metrics.headerHeight, width <= 380 ? 54 : width <= 720 ? 58 : 70);
       } else {
         assert.equal(metrics.navigationVisible, true, 'Desktop navigation hidden at ' + width);
-        assert.equal(metrics.menuVisible, false, 'Mobile menu shown on desktop at ' + width);
+        assert.equal(metrics.headerHeight, Math.round(Math.min(164,width*.0875)), 'Original wide header height at ' + width);
+        assert.equal(metrics.logoWidth, Math.round(Math.min(420,width*.205)), 'Original wide logo width at ' + width);
         assert.equal(metrics.activeCount, 0, 'Home navigation is owned by the logo alone');
         assert.equal(metrics.linksOnSingleRow, true, 'Header links wrapped at ' + width);
         assert.equal(metrics.logoClear, true, 'Logo overlaps navigation at ' + width);
@@ -139,6 +141,32 @@ async function awaitServer() {
         assert.equal(metrics.linksInsideViewport, true, 'Header menu clipped at ' + width);
       }
       report.push(metrics);
+      if (width === 320 || width === 390 || width === 1920) {
+        const trigger = page.getByTestId('site-mobile-menu').locator('summary');
+        const drawer = page.getByRole('dialog', {name:'Navigation & Appearance'});
+        await trigger.focus();
+        await page.keyboard.press('Enter');
+        await drawer.waitFor();
+        assert.equal(await trigger.getAttribute('aria-expanded'), 'true');
+        const rect = await drawer.boundingBox();
+        assert.ok(rect.x >= 0 && rect.x + rect.width <= width, 'Drawer clipped at ' + width);
+        assert.ok(rect.y >= 0 && rect.y + rect.height <= 900, 'Drawer clipped vertically at ' + width);
+        assert.equal(rect.width,Math.min(420,width-12),'Original drawer width at ' + width);
+        if (width <= 390) assert.equal(rect.x, 12, 'Mobile drawer must leave the original leading margin');
+        assert.equal(await drawer.getByRole('navigation').isVisible(), width <= 1679);
+        const close = drawer.getByRole('button', {name:'Close navigation and appearance'});
+        const last = drawer.getByRole('link', {name:'Open Version Log'});
+        assert.equal(await close.evaluate(el => el === document.activeElement), true);
+        await page.keyboard.press('Shift+Tab');
+        assert.equal(await last.evaluate(el => el === document.activeElement), true);
+        await page.keyboard.press('Tab');
+        assert.equal(await close.evaluate(el => el === document.activeElement), true);
+        await page.keyboard.press('Escape');
+        await drawer.waitFor({state:'detached'});
+        assert.equal(await trigger.getAttribute('aria-expanded'), 'false');
+        assert.equal(await trigger.evaluate(el => el === document.activeElement), true);
+        assert.equal(await page.evaluate(() => document.body.style.overflow), '');
+      }
       if (width === 390) {
         await page.screenshot({ path: path.join(evidence, 'phase2-1-mobile-header-390.png'), animations: 'disabled' });
         await page.getByTestId('site-mobile-menu').locator('summary').click();
@@ -155,7 +183,7 @@ async function awaitServer() {
         });
       }
     }
-    console.log('PASS: 11 viewport sizes preserve logo, account controls and non-overlapping navigation.');
+    console.log('PASS: 13 widths preserve the logo and account controls, and the modal drawer fits and restores focus.');
 
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto(base, { waitUntil: 'networkidle' });

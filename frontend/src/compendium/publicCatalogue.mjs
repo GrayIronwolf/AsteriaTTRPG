@@ -4,6 +4,7 @@
  * Never import raw data/compendium*.js or unrestricted GM-only JSON here.
  */
 import {validatePublishedCatalogue} from './publicationPolicy.mjs';
+import {publicArtworkUrl} from './publicArtworkLoader.mjs';
 const importers = import.meta.glob('./public-index/*.json', { import:'default' });
 const pending = new Map();
 const allowedPaths = new Set(Object.keys(importers));
@@ -19,7 +20,10 @@ export async function loadPublicDomain(domain) {
       if (data?.version !== 1 || data.domain !== domain || !Array.isArray(data.entries)) {
         throw new Error('Invalid public Compendium catalogue shard');
       }
-      return Object.freeze(data.entries.map(entry => validatePublishedCatalogue(entry,domain)));
+      return Object.freeze(data.entries.map(entry => {
+        const row=validatePublishedCatalogue(entry,domain);
+        return Object.freeze({...row,artwork:publicArtworkUrl(row.artwork)});
+      }));
     }).catch(error => { pending.delete(domain); throw error; });
     pending.set(domain, promise);
   }

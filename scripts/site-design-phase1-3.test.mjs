@@ -85,7 +85,7 @@ test('component boundaries and reusable Asteria UI controls are wired to the pag
   assert.match(home, /from '.\/HomePage\.module\.css'/);
   assert.match(home, /<PageLayout/);
   assert.match(home, /<HomeCarousel \/>/);
-  assert.match(home, /<ForgeCards \/>/);
+  assert.match(home, /<CrystalButton/);
   assert.doesNotMatch(home, /<SurfacePanel/);
   assert.match(home, /<Heading id="site-home-title" hero>/);
   assert.match(route, /<PageLayout/);
@@ -174,7 +174,7 @@ test('the Account-style template is a structural component, not a page spacing t
   assert.match(css, /\[data-page-rail\]/);
   assert.match(css, /\[data-page-content\]/);
   assert.match(css, /\[data-page-nav-item\]/);
-  assert.match(catalogue, /<PageHeader eyebrow="Public reference library"/);
+  assert.match(catalogue, /<PageHeader\s+[^>]*id="site-compendium-title"/);
   assert.match(catalogue, /data-page-shell="true"/);
   assert.match(catalogue, /data-page-rail="true"/);
   assert.match(catalogue, /data-page-content="true"/);

@@ -88,17 +88,19 @@ async function waitForPreview() {
     assert.equal(await page.getByTestId('site-text-size').inputValue(),'normal');
     assert.equal(await page.getByTestId('site-crystal-colour').inputValue(),'#1f7dff');
 
-    for (const width of [320,390,760,1024,1280,1440,1920]) {
+    const widths = [320,390,760,1024,1280,1440,1679,1680,1920];
+    for (const width of widths) {
       await page.setViewportSize({width,height:900});
       await page.goto(base+'#/appearance',{waitUntil:'networkidle'});
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth <= window.innerWidth),true,'Overflow at '+width);
       if(width===390 || width===1440) {
         await page.screenshot({path:path.join(evidence,'phase2-4-appearance-'+width+'.png'),fullPage:true,animations:'disabled'});
       }
-      if(width===390) {
+      if(width===390 || width===1920) {
         await page.getByTestId('site-mobile-menu').locator('summary').click();
         await page.getByTestId('site-mobile-appearance-link').click();
         assert.equal(await page.evaluate(()=>location.hash),'#/appearance');
+        assert.equal(await page.getByTestId('site-navigation-drawer').count(),0);
       }
     }
 
@@ -111,7 +113,7 @@ async function waitForPreview() {
     assert.equal(await page.evaluate(()=>location.hash),'#/appearance');
     assert.deepEqual(errors,[],'Browser errors: '+errors.join('; '));
     assert.deepEqual(remote,[],'Unexpected external calls');
-    fs.writeFileSync(path.join(evidence,'summary.json'),JSON.stringify({phase:'2.4',productionChanged:false,viewports:[320,390,760,1024,1280,1440,1920],errors,remote},null,2));
+    fs.writeFileSync(path.join(evidence,'summary.json'),JSON.stringify({phase:'2.4',productionChanged:false,viewports:widths,errors,remote},null,2));
     console.log('PASS: Phase 2.4 local appearance, persistence, reset, secure routes and mobile layouts');
   } catch (error) {
     console.error(error);

@@ -1,4 +1,4 @@
-/* Phase 2.3: four-image React Home, two Forge cards and cinematic behavior.
+/* Four-image React Home, original welcome actions and cinematic behavior.
  * Test only the isolated Vite preview, never authenticated live production. */
 'use strict';
 
@@ -35,7 +35,7 @@ async function waitForPreview() {
   const report = {
     phase: '2.3', environment: 'isolated React/Vite preview',
     deployed: false, authenticatedGameplayTested: false, slides: 4,
-    slideIntervalMs: 15000, forgeCardCount: 2, viewportMetrics: [], screenshots: []
+    slideIntervalMs: 15000, viewportMetrics: [], screenshots: []
   };
   try {
     fs.mkdirSync(evidence, { recursive: true });
@@ -73,8 +73,10 @@ async function waitForPreview() {
     assert.equal(await page.getByRole('main').count(), 1);
     assert.equal(await page.locator('main h1').count(), 1);
     assert.equal(await page.locator('main aside').count(), 0, 'Old decorative preview panels should be gone');
-    assert.equal(await page.getByTestId('site-home-forge-cards').getByRole('link').count(), 2);
-    console.log('PASS: four approved slides, single Home heading and two Forge cards.');
+    const actions = page.getByRole('navigation', { name: 'Explore Asteria' });
+    assert.deepEqual(await actions.getByRole('link').allTextContents(), ['Explore the World', 'Open Handbook']);
+    assert.equal(await page.getByText('React Home preview:', { exact: false }).count(), 0);
+    console.log('PASS: four approved slides, one Home heading and the original guest actions.');
 
     await page.getByTestId('site-carousel-next').click();
     assert.equal(await page.getByTestId('site-home-slide-logo').getAttribute('aria-hidden'), 'false');
@@ -93,7 +95,7 @@ async function waitForPreview() {
 
     await page.getByTestId('site-home-action-explore-world').click();
     await page.getByRole('heading', { name: 'Worlds & Lore', level: 1 }).waitFor();
-    assert.equal(await page.evaluate(() => location.hash), '#/compendium?group=world');
+    assert.equal(await page.evaluate(() => location.hash), '#/compendium?group=world&category=worlds');
     await page.goBack();
     await page.getByRole('heading', { name: 'Asteria', level: 1 }).waitFor();
     await page.getByTestId('site-home-action-open-handbook').click();
@@ -102,23 +104,7 @@ async function waitForPreview() {
     await page.goBack();
     await page.getByRole('heading', { name: 'Asteria', level: 1 }).waitFor();
 
-    for (const [id, heading, hash] of [
-      ['character', 'Character Forge', '#/character-forge?mode=create'],
-      ['campaign', 'Campaign Forge', '#/campaign-forge?mode=create']
-    ]) {
-      const card = page.getByTestId('site-home-forge-' + id);
-      await card.scrollIntoViewIfNeeded();
-      assert.equal(await card.locator('img').count(), 1);
-      assert.equal(await card.locator('img').evaluate(img => img.decode().then(() => img.naturalWidth > 0)), true);
-      await card.click();
-      await page.getByRole('heading', { name: heading, level: 1 }).waitFor();
-      assert.equal(await page.evaluate(() => location.hash), hash);
-      assert.equal(await page.locator('main input, main form').count(), 0,
-        'Forge preview must not collect credentials or campaign/character data');
-      await page.goBack();
-      await page.getByRole('heading', { name: 'Asteria', level: 1 }).waitFor();
-    }
-    console.log('PASS: Explore/Handbook CTAs and both Forge links preserve fail-closed routing.');
+    console.log('PASS: Explore and Handbook open their direct public scopes.');
 
     for (const width of [320, 360, 390, 430, 768, 1024, 1280, 1440, 1920]) {
       await page.setViewportSize({ width, height: 900 });
@@ -127,7 +113,8 @@ async function waitForPreview() {
       const metrics = await page.evaluate(() => {
         const root = document.getElementById('home');
         const hero = document.querySelector('[data-testid="site-home-carousel"]');
-        const cards = [...document.querySelectorAll('a[data-testid^="site-home-forge-"]')];
+        const actions = [...root.querySelectorAll('a[data-testid^="site-home-action-"]')];
+        const title = root.querySelector('h1');
         const dots = [...hero.querySelectorAll('[data-testid^="site-carousel-dot-"]')];
         const controls = [...hero.querySelectorAll('button')];
         const rect = item => item.getBoundingClientRect();
@@ -138,18 +125,24 @@ async function waitForPreview() {
           heroWidth: Math.round(rect(hero).width),
           carouselButtonsAtLeast44: controls.every(btn => rect(btn).height >= 44 && rect(btn).width >= 44),
           dotsCount: dots.length,
-          forgeCount: cards.length,
-          forgeSideBySide: Math.abs(rect(cards[0]).top - rect(cards[1]).top) <= 2,
-          cardEdgesInsideViewport: cards.every(card => rect(card).left >= -1 && rect(card).right <= innerWidth + 1)
+          actionCount: actions.length,
+          actionsStacked: rect(actions[1]).top >= rect(actions[0]).bottom,
+          actionEdgesInsideViewport: actions.every(action => rect(action).left >= -1 && rect(action).right <= innerWidth + 1),
+          actionsAtLeast44: actions.every(action => rect(action).height >= 44),
+          titleFont: getComputedStyle(title).fontFamily,
+          introFont: getComputedStyle(title.parentElement).fontFamily
         };
       });
       assert.equal(metrics.horizontalOverflow, false, 'Horizontal overflow at ' + width);
       assert.equal(metrics.heroWidth, width, 'Hero should fill its viewport at ' + width);
       assert.equal(metrics.carouselButtonsAtLeast44, true, 'Carousel controls too small at ' + width);
       assert.equal(metrics.dotsCount, 4);
-      assert.equal(metrics.forgeCount, 2);
-      assert.equal(metrics.cardEdgesInsideViewport, true, 'Forge cards clip past viewport at ' + width);
-      assert.equal(metrics.forgeSideBySide, width > 760, 'Forge cards have incorrect columns at ' + width);
+      assert.equal(metrics.actionCount, 2);
+      assert.equal(metrics.actionEdgesInsideViewport, true, 'Home actions clip past viewport at ' + width);
+      assert.equal(metrics.actionsStacked, true, 'Home actions should stack at ' + width);
+      assert.equal(metrics.actionsAtLeast44, true, 'Home actions are too small at ' + width);
+      assert.match(metrics.titleFont, /Cinzel/);
+      assert.match(metrics.introFont, /Source Serif 4/);
       report.viewportMetrics.push(metrics);
       if (width === 390 || width === 1440) {
         const file = 'phase2-3-home-' + width + '.png';
@@ -157,7 +150,7 @@ async function waitForPreview() {
         report.screenshots.push(file);
       }
     }
-    console.log('PASS: 320–1920px layouts, full-bleed hero, 44px controls and responsive Forge cards.');
+    console.log('PASS: 320–1920px layouts, full-bleed hero, 44px controls and centered welcome actions.');
 
     // Virtual time keeps CI fast while proving carousel auto-advance.
     const autoPage = await browser.newPage({ viewport: { width: 1440, height: 900 } });

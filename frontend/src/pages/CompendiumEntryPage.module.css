@@ -1,11 +1,84 @@
-/* Public entry page: one scoped style owner using shared Asteria tokens. */
 .page { min-width: 0; }
-.breadcrumbs { display:flex; flex-wrap:wrap; gap:var(--ast-space-3); margin-bottom:var(--ast-space-7); color:var(--ast-color-text-muted); }
-.breadcrumbs a, .returnLink, .page [role="status"] a, .page [role="alert"] a { color:var(--ast-color-accent); text-underline-offset:3px; }
-.category { margin-top:var(--ast-space-3); color:var(--ast-color-text-muted); }
-.identity { margin-block:var(--ast-space-4); color:var(--ast-color-text-muted); font-size:var(--ast-font-xs); overflow-wrap:anywhere; }
-.section { padding:var(--ast-space-6); margin-block:var(--ast-space-5); background:var(--ast-color-panel); border:1px solid var(--ast-color-outline-soft); border-radius:var(--ast-radius-panel); }
-.sectionHeading { font-family:var(--ast-font-display); color:var(--ast-color-text-bright); margin-top:0; font-size:var(--ast-font-xl); }
-.notice { font-size:var(--ast-font-sm); color:var(--ast-color-text-muted); }
+.page.withArtwork > [data-page-header] {
+  display: grid;
+  grid-template-columns: clamp(90px, 16vw, 180px) minmax(0, 1fr);
+  column-gap: var(--ast-space-6);
+  align-items: center;
+  align-content: center;
+  justify-content: stretch;
+}
+.withArtwork > [data-page-header] > :not(.artwork) { grid-column: 2; overflow-wrap: anywhere; }
+.artwork {
+  grid-area: 1 / 1 / 4 / 2;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: contain;
+  background: var(--ast-color-overlay);
+  border: 1px solid var(--ast-color-outline-soft);
+  border-radius: var(--ast-radius-panel);
+}
+.actions { margin-top: var(--ast-space-3); }
+.breadcrumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ast-space-3);
+  margin-bottom: var(--ast-space-5);
+  color: var(--ast-color-text-muted);
+}
+.breadcrumbs a, .returnLink, .entryLinks a, .page [role="status"] a, .page [role="alert"] a {
+  color: var(--ast-color-accent);
+  text-underline-offset: 3px;
+}
+.entryFooter { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--ast-space-3) var(--ast-space-6); margin-top: var(--ast-space-6); }
+.identity { color: var(--ast-color-text-muted); overflow-wrap: anywhere; }
+.section, .tier {
+  min-width: 0;
+  padding: var(--ast-space-6);
+  background: var(--ast-color-panel);
+  border: 1px solid var(--ast-color-outline-soft);
+  border-radius: var(--ast-radius-panel);
+  overflow-wrap: anywhere;
+}
+.sectionHeading, .subsection h3, .tier h3 {
+  font-family: var(--ast-font-display);
+  color: var(--ast-color-text-bright);
+  margin: 0 0 var(--ast-space-3);
+}
+.sectionHeading { font-size: var(--ast-font-xl); }
+.subsection + .subsection { margin-top: var(--ast-space-5); }
+.facts, .gallery, .talentTree {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
+  gap: var(--ast-space-3);
+  margin: 0 0 var(--ast-space-5);
+}
+.facts div { padding: var(--ast-space-3); background: var(--ast-color-panel-raised); }
+.facts dt, .gallery figcaption, .entryLinks small { color: var(--ast-color-text-muted); }
+.facts dd { margin: var(--ast-space-1) 0 0; color: var(--ast-color-text-bright); }
+.gallery figure { margin: 0; }
+.gallery img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: contain;
+  background: var(--ast-color-overlay);
+  border: 1px solid var(--ast-color-outline-soft);
+}
+.gallery figcaption { margin-top: var(--ast-space-2); }
+.entryLinks { padding-inline-start: var(--ast-space-5); overflow-wrap: anywhere; }
+.entryLinks li + li { margin-top: var(--ast-space-2); }
+.entryLinks small { display: block; }
+.trait { margin-block: var(--ast-space-2); padding: var(--ast-space-3); background: var(--ast-color-panel-raised); }
+.trait summary { font-weight: 600; cursor: pointer; }
+.trait[open] summary { margin-bottom: var(--ast-space-3); }
+.tier { padding: var(--ast-space-3); background: var(--ast-color-panel-raised); }
+.tier p { margin: 0; }
 
-@media(max-width:760px) {  .section { padding:var(--ast-space-4); } }
+@media(max-width:760px) {
+  .page.withArtwork > [data-page-header] { column-gap: var(--ast-space-4); }
+  .section { padding: var(--ast-space-4); }
+}
+
+@media(max-width:400px) {
+  .page.withArtwork > [data-page-header] { grid-template-columns: 60px minmax(0, 1fr); }
+  .page.withArtwork > [data-page-header] > h1 { font-size: clamp(1.25rem, 7vw, 2rem); }
+}

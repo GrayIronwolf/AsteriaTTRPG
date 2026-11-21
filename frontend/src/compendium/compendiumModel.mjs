@@ -2,6 +2,10 @@
  * Pure, public route/group/domain and search semantics.
  * Do not import the private generated Compendium source.
  */
+import {
+  LEGACY_LIBRARY_GROUPS, getLibraryCategory, legacyLibraryCategory
+} from './legacyLibrary.mjs';
+
 export const PUBLIC_DOMAINS = Object.freeze([
   { id:'race', label:'Races' },
   { id:'class', label:'Classes' },
@@ -23,36 +27,52 @@ const IDS = PUBLIC_DOMAINS.map(domain => domain.id);
 const known = new Set(IDS);
 const GROUP_DOMAINS = Object.freeze({
   world: ['location','religion','faction','lore','creature'],
-  rules: ['handbook','skill','profession'],
-  adventures: ['lore','handbook'],
-  characters: ['race','class','origin','spell','talent'],
+  rules: ['handbook','skill','talent'],
+  adventures: ['creature','lore','handbook'],
+  characters: ['race','class','origin','spell'],
   equipment: ['item'],
   crafting: ['item','profession']
 });
 const CATEGORY_DOMAINS = Object.freeze({
-  races: ['race'], classes: ['class'], magic: ['spell','talent'],
-  npcs: ['creature'], npc: ['creature'], creatures: ['creature'],
-  worlds: ['location'], realms: ['location'], planes: ['location'],
+  races: ['race'], classes: ['class'], magic: ['spell'], origins: ['origin'],
+  talents: ['talent'], skills: ['skill'], conditions: ['handbook','lore'],
+  npcs: ['creature','lore'], creatures: ['creature'], worlds: ['location'],
   theology: ['religion'], factions: ['faction'], lore: ['lore'],
-  resources: ['item'], blueprints: ['item'], recipes: ['item'],
-  schematics: ['item'], patterns: ['item'], formulas: ['item'],
-  designs: ['item'], core: ['handbook'], handbook: ['handbook'],
-  gm: ['handbook','lore'], quests: ['lore'], systems: ['handbook','skill']
+  languages: ['handbook','lore'], resources: ['item'], items: ['item'],
+  enchantments: ['item'], runestones: ['item'], blueprints: ['item'], recipes: ['item'],
+  schematics: ['item'], patterns: ['item'], formulas: ['item'], designs: ['item'],
+  structures: ['item','location'], core: ['handbook'], handbook: ['handbook'],
+  gm: ['handbook','lore'], quests: ['lore'], professions: ['profession']
 });
+const categoryAliases = {npc:'npcs',realms:'worlds',planes:'worlds',design:'designs'};
+const groups = new Set(LEGACY_LIBRARY_GROUPS.map(group => group.id));
 
-export function resolveCompendiumScope(query) {
+export function resolveCompendiumScope(query, {legacyDomain = false} = {}) {
   const params = query instanceof URLSearchParams ? query : new URLSearchParams(query ?? '');
   const explicit = params.get('domain');
-  const category = String(params.get('category') ?? '').toLowerCase();
-  const group = String(params.get('group') ?? '').toLowerCase();
-  const domains = known.has(explicit)
-    ? [explicit]
-    : CATEGORY_DOMAINS[category] || GROUP_DOMAINS[group] || IDS;
+  const selectedDomain = known.has(explicit) ? explicit : '';
+  const rawCategory = (params.get('category') || '').toLowerCase();
+  const category = legacyDomain ? undefined :
+    getLibraryCategory(Object.hasOwn(categoryAliases,rawCategory) ? categoryAliases[rawCategory] : rawCategory);
+  const rawGroup = (params.get('group') || '').toLowerCase();
+  const group = category?.group || (groups.has(rawGroup) ? rawGroup : '');
+  const domains = selectedDomain ? [selectedDomain] :
+    CATEGORY_DOMAINS[category?.id] || GROUP_DOMAINS[group] || IDS;
   return Object.freeze({
     domainIds: Object.freeze([...domains]),
     search: String(params.get('q') ?? '').slice(0, 160),
-    selectedDomain: known.has(explicit) ? explicit : '',
-    group, category
+    selectedDomain, group, category:category?.id || ''
+  });
+}
+
+export function filterLibraryScope(entries,{selectedDomain,group,category},{favourites = null} = {}) {
+  const saved = favourites === null ? null : new Set(favourites);
+  return entries.filter(entry => {
+    if (selectedDomain && selectedDomain !== entry.domain) return false;
+    if (saved && !saved.has(entry.id)) return false;
+    const classified = legacyLibraryCategory(entry);
+    return (!category || category === classified) &&
+      (!group || group === getLibraryCategory(classified)?.group);
   });
 }
 

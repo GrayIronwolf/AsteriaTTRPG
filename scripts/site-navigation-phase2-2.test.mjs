@@ -66,6 +66,14 @@ test('search matches both titles and descriptions, ignores case and resets by me
   assert.deepEqual(filterMegaMenuEntries(null), []);
 });
 
+test('guests cannot find My Characters through the Forge menu or its search', () => {
+  const menu = MEGA_MENUS['character-forge'];
+  assert.deepEqual(filterMegaMenuEntries(menu).map(item => item.id), ['forge-character']);
+  assert.deepEqual(filterMegaMenuEntries(menu, 'saved characters'), []);
+  assert.deepEqual(filterMegaMenuEntries(menu, 'saved characters', {owned:true}).map(item => item.id),
+    ['my-characters']);
+});
+
 test('React owns the menu, search and focus lifecycle without legacy handlers', () => {
   const shell = read('frontend/src/components/SiteShell.jsx');
   const modal = read('frontend/src/components/NavigationMegaMenu.jsx');
@@ -83,7 +91,7 @@ test('React owns the menu, search and focus lifecycle without legacy handlers', 
   assert.match(shell, /document\.body\.style\.overflow = previousOverflow/);
   assert.match(modal, /role="dialog"/);
   assert.match(modal, /aria-modal="true"/);
-  assert.match(modal, /event\.key !== 'Tab'/);
+  assert.match(shell, /trapDialogTab\(event, panel, document\.activeElement\)/);
   assert.match(modal, /onChange=\{event => onQueryChange\(event\.target\.value\)\}/);
   assert.match(modal, /forge-campaign-map-book\.avif/);
   assert.match(modal, /href=\{item\.href\}/);
