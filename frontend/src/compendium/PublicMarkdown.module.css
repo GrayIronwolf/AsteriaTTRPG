@@ -13,3 +13,26 @@
 .tableScroll table { width:100%; border-collapse:collapse; min-width:320px; }
 .tableScroll th, .tableScroll td { border:1px solid var(--ast-color-outline-soft); padding:var(--ast-space-2) var(--ast-space-3); text-align:left; vertical-align:top; }
 .tableScroll th { color:var(--ast-color-text-bright); background:var(--ast-color-panel-raised); }
+.markdown h6 { color: var(--ast-color-text-bright); margin: var(--ast-space-5) 0 var(--ast-space-3); }
+.inlineArtwork { display: inline-block; max-width: min(100%, 28rem); max-height: 28rem; height: auto; vertical-align: middle; }
+.reference { display: inline; }
+.referenceButton {
+  font: inherit;
+  color: var(--ast-color-accent);
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+.referenceChoices {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--ast-space-2);
+  margin-inline-start: var(--ast-space-2);
+  white-space: normal;
+}
+.referenceChoices[hidden] { display: none; }
+.referenceChoices a { padding: var(--ast-space-1) var(--ast-space-2); background: var(--ast-color-panel-raised); }
+.choiceScope { display: block; font-size: var(--ast-font-sm); color: var(--ast-color-text-muted); }

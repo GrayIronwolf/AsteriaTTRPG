@@ -19,9 +19,14 @@ test('missing interactive accessible names fails',()=>{
 test('undersized touch target fails',()=>{
  assert.throws(()=>validateMetrics({...sample,targetHeight:28}),/touch target/);
 });
-test('mobile menu is disallowed in desktop layout',()=>{
+test('the compact layout hides the desktop navigation row',()=>{
  assert.throws(()=>validateMetrics({...sample,viewport:1440,documentWidth:1440,
   visibleMenu:true,visibleDesktopNav:true}),/desktop/);
+});
+test('the desktop layout keeps Navigation and Appearance access',()=>{
+ const desktop={...sample,viewport:1680,documentWidth:1680,visibleDesktopNav:true};
+ assert.doesNotThrow(()=>validateMetrics(desktop));
+ assert.throws(()=>validateMetrics({...desktop,visibleMenu:false}),/Appearance/);
 });
 test('the report cannot approve production without legacy authenticated comparison',()=>{
  const r=createReport();

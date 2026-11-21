@@ -4,12 +4,12 @@ import buttonStyles from './ui/CrystalButton.module.css';
 import { getVerifiedHeaderIdentity } from './headerIdentity.mjs';
 import styles from './HeaderAccountControls.module.css';
 import { useAuth } from '../auth/AuthProvider.jsx';
+import { isVerifiedOwnedSession } from '../auth/accountSecurityPolicy.mjs';
 import { useNotifications } from '../notifications/NotificationsProvider.jsx';
 
 /**
- * Phase 2.1 presentational account area. The isolated preview passes null
- * (guest). Never infer sign-in from localStorage or a legacy global API.
- * The trusted authenticated adapter belongs to the later Account migration.
+ * The profile label and Account ID come from the verified owned session.
+ * An explicit preview identity can still render the existing account controls.
  */
 function verifiedNotificationCount(inbox,session){
   if(session.status!=='authenticated'||!session.profileAvailable||
@@ -20,7 +20,11 @@ export function HeaderAccountControls({ identity = null }) {
   const { session, busy, actions } = useAuth();
   const inbox=useNotifications();
   const unread=verifiedNotificationCount(inbox,session);
-  const verified = getVerifiedHeaderIdentity(identity);
+  const owned = isVerifiedOwnedSession(session) ? getVerifiedHeaderIdentity(session.identity) : null;
+  const verified = owned || getVerifiedHeaderIdentity(identity);
+  const accountId = owned && typeof session.accountId === 'string' &&
+    /^[A-Za-z0-9._-]{3,24}#\d{5}$/.test(session.accountId) &&
+    session.accountId.startsWith(owned.username + '#') ? session.accountId : 'Account ID pending';
   const [ownedAvatar,setOwnedAvatar] = useState(null);
   const avatarUrl = ownedAvatar ?? verified?.avatarUrl ?? null;
   useEffect(() => {
@@ -78,6 +82,7 @@ export function HeaderAccountControls({ identity = null }) {
           </a>
           <a href="#/appearance" onClick={closeAccountMenu}>Appearance</a>
           <a href="#/account/settings" onClick={closeAccountMenu}>Account Settings</a>
+          <a href="#/account/settings?tab=security" onClick={closeAccountMenu}>Password &amp; Security</a>
           {session.status === 'authenticated' && actions && (
             <button type="button" className={styles.logoutButton} disabled={busy}
               data-testid="site-header-logout" onClick={async () => {
@@ -92,6 +97,7 @@ export function HeaderAccountControls({ identity = null }) {
         className={styles.profile}
         href="#/account/profile"
         aria-label="Open My Profile"
+        aria-describedby={owned ? 'site-header-identity' : undefined}
         title={verified.username}
         data-testid="site-header-profile"
         onClick={closeAccountMenu}
@@ -101,6 +107,12 @@ export function HeaderAccountControls({ identity = null }) {
           <img key={avatarUrl} src={avatarUrl} alt="" className={styles.avatar}
             data-testid="site-header-avatar-image" loading="lazy" decoding="async"
             onError={() => setImageFailed(true)} />
+        )}
+        {owned && (
+          <span id="site-header-identity" className={styles.identity}>
+            <strong data-testid="site-header-display-name" title={owned.username}>{owned.username}</strong>
+            <small data-testid="site-header-account-id">{accountId}</small>
+          </span>
         )}
       </a>
     </div>

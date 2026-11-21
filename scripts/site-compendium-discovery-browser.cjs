@@ -18,11 +18,12 @@ await new Promise(r=>setTimeout(r,250));}throw Error('Preview startup timeout');
 try{
   fs.mkdirSync(evidence,{recursive:true}); await ready();
   browser=await chromium.launch({headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
-  const page=await browser.newPage({viewport:{width:1440,height:900}});
+  const context=await browser.newContext({viewport:{width:1440,height:900}});
+  const page=await context.newPage();
   const issues=[];
   page.on('pageerror',err=>issues.push(err.message));
   page.on('console',msg=>{if(msg.type()==='error')issues.push(msg.text());});
-  await page.route('**/*',route=>{
+  await context.route('**/*',route=>{
     const u=new URL(route.request().url());
     if(u.hostname==='127.0.0.1'&&u.port==='4174')return route.continue();
     issues.push('External call '+u.origin);return route.abort();
@@ -49,8 +50,12 @@ try{
   await page.goBack({waitUntil:'networkidle'});
   await page.getByTestId('site-discovery-trail').getByText('Beastkin Races').waitFor();
   await page.getByTestId('site-discovery-clear').click();
-  await page.getByTestId('site-compendium-results').waitFor();
+  await page.getByTestId('site-compendium-results').filter({hasText:/\b891\b/}).waitFor();
   assert.equal(await page.evaluate(()=>location.hash),'#/compendium');
+  assert.equal(await page.getByTestId('site-library-group').count(),6);
+  const rules=page.locator('[data-library-group="rules"]');
+  await rules.getByText('Browse categories',{exact:true}).click();
+  await rules.getByRole('link',{name:/Talents/}).waitFor();
 
   await page.goto(base+'#/compendium?group=rules&category=handbook',{waitUntil:'networkidle'});
   await page.getByTestId('site-compendium-search').fill('Rule of Cool');
@@ -74,6 +79,39 @@ try{
   await one.first().click();
   await page.getByTestId('site-compendium-entry-page').waitFor();
   await page.getByTestId('site-entry-tabs').waitFor();
+
+  await page.goto(base+'#compendium?group=rules&category=talents&sort=category',{waitUntil:'networkidle'});
+  await page.getByTestId('site-compendium-results').filter({hasText:/\b226\b/}).waitFor();
+  assert.equal(await page.getByTestId('site-compendium-sort').inputValue(),'category');
+  assert.equal(await page.getByTestId('site-compendium-card').count(),48);
+  await page.getByTestId('site-compendium-more').click();
+  assert.equal(await page.getByTestId('site-compendium-card').count(),96);
+  await page.goto(base+'#/materials',{waitUntil:'networkidle'});
+  await page.getByTestId('site-compendium-results').filter({hasText:/\b54\b/}).waitFor();
+
+  // Reopen a legacy browser preference and exercise the same-origin storage event.
+  await page.evaluate(()=>localStorage.setItem('asteria.library.favourites.guest',
+    JSON.stringify(['handbook:hoZRdlTZX7EAAAAAAAAkhw'])));
+  const saved=base+'#/compendium?domain=handbook&saved=1&sort=name';
+  await page.goto(saved,{waitUntil:'networkidle'});
+  await page.reload({waitUntil:'networkidle'});
+  await page.getByTestId('site-compendium-card').getByText('Rule of Cool',{exact:true}).waitFor();
+  assert.equal(await page.getByTestId('site-compendium-card').count(),1);
+  await page.getByTestId('site-compendium-card').click();
+  await page.getByTestId('site-entry-id').filter({hasText:'handbook:hoZRdlTZX7EAAAAAAAAkhw'}).waitFor();
+  await page.goBack({waitUntil:'networkidle'});
+  await page.getByTestId('site-compendium-card').getByText('Rule of Cool',{exact:true}).waitFor();
+  await page.reload({waitUntil:'networkidle'});
+  await page.getByTestId('site-compendium-card').getByText('Rule of Cool',{exact:true}).waitFor();
+  const secondTab=await context.newPage();
+  try{
+    await secondTab.goto(saved,{waitUntil:'networkidle'});
+    await secondTab.getByTestId('site-library-favourite').click();
+    await page.getByTestId('site-compendium-card').waitFor({state:'detached'});
+    assert.equal(await page.getByTestId('site-library-favourites-only').isChecked(),true);
+  }finally{await secondTab.close();}
+  await page.goto(base+'#/compendium',{waitUntil:'networkidle'});
+  await page.getByTestId('site-library-recent').getByText('Rule of Cool',{exact:true}).waitFor();
 
   for(const width of [320,390,760,1024,1280,1440,1920]){
     await page.setViewportSize({width,height:900});
@@ -119,5 +157,5 @@ try{
     phase:'3.3',liveFirebase:false,privateContent:false,
     viewports:[320,390,760,1024,1280,1440,1920],issues
   },null,2));
-  console.log('PASS: Phase 3.3 category hierarchy, bookmarks, search, sorting and privacy');
+  console.log('PASS: Compendium hierarchy, legacy scopes, search, sorting, bookmarks, cross-tab favourites, recent entries and privacy');
 }catch(error){console.error(error);process.exitCode=1;}finally{if(browser)await browser.close();server.kill('SIGTERM');}})();

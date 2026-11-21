@@ -36,7 +36,7 @@ async function awaitPreview() {
       executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH || undefined,
       args: ['--no-sandbox', '--disable-dev-shm-usage']
     });
-    const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    const page = await browser.newPage({ viewport: { width: 1920, height: 900 } });
     const errors = [], prohibited = [];
     page.on('pageerror', error => errors.push(error.message));
     page.on('console', message => {

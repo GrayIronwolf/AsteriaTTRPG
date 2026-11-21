@@ -25,10 +25,15 @@ for(const domain of domains) {
   const source=JSON.parse(readFileSync(join(entriesDir,domain+'.json'),'utf8'));
   assert.equal(catalogue.domain,domain);
   assert.equal(source.domain,domain);
-  const publicIds = new Set(catalogue.entries.map(e=>validatePublishedCatalogue(e,domain).id));
+  const byId=new Map(catalogue.entries.map(raw=>{
+    const row=validatePublishedCatalogue(raw,domain);
+    return [row.id,row];
+  }));
   const entries=source.entries.map(raw=>{
     const entry=validatePublishedEntry(raw,domain);
-    assert.ok(publicIds.has(entry.id),'Public entry absent from catalogue: '+entry.id);
+    const catalogueEntry=byId.get(entry.id);
+    assert.ok(catalogueEntry,'Public entry absent from catalogue: '+entry.id);
+    assert.equal(entry.slug,catalogueEntry.slug,'Public search route identity diverged: '+entry.id);
     const seen=new Set();
     const words = [];
     const sections = Array.isArray(entry.sections) ? entry.sections : [];
@@ -46,7 +51,7 @@ for(const domain of domains) {
     // No raw headings/bodies, source paths, raw metadata, or visibility flags.
     return validatePublishedSearch({id:entry.id,text:words.join(' ')},domain);
   });
-  assert.equal(entries.length,publicIds.size,'Mismatch in public search/catalogue parity');
+  assert.equal(entries.length,byId.size,'Mismatch in public search/catalogue parity');
   count+=entries.length;
   writeFileSync(join(target,domain+'.json'),JSON.stringify({
     version:1,domain,entries

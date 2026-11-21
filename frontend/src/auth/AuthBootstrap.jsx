@@ -6,6 +6,8 @@ import { resolveAuthRuntime } from './authPolicy.mjs';
 import { NotificationsProvider } from '../notifications/NotificationsProvider.jsx';
 import { ConnectionBoundary } from '../runtime/ConnectionBoundary.jsx';
 
+const AUTH_ENABLED = import.meta.env.VITE_ASTERIA_AUTH_ENABLED === 'true';
+
 /**
  * The normal isolated Vite preview is offline/guest-only. An explicit build
  * option opts into the EXISTING Firebase project or local emulator, never both.
@@ -17,7 +19,7 @@ export function AuthBootstrap({ children }) {
     let runtime;
     try {
       runtime = resolveAuthRuntime({
-        enabled: import.meta.env.VITE_ASTERIA_AUTH_ENABLED === 'true',
+        enabled: AUTH_ENABLED,
         mode: import.meta.env.VITE_FIREBASE_MODE || '',
         hostname: window.location.hostname
       });
@@ -36,7 +38,7 @@ export function AuthBootstrap({ children }) {
     ...(adapter.campaigns?.availability().enabled ? {campaigns:adapter.campaigns} : {}),
     ...(adapter.gameplay?.availability().enabled ? {gameplay:adapter.gameplay} : {})}) : previewServices;
   return <AppServicesProvider services={services}>
-    <AuthProvider adapter={adapter}>
+    <AuthProvider adapter={adapter} initializing={AUTH_ENABLED&&!adapter&&!error}>
       <NotificationsProvider>
       {error && <p role="alert" data-testid="site-auth-unavailable">
         Firebase Authentication could not start. Account features remain unavailable.

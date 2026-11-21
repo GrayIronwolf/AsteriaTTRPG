@@ -28,26 +28,14 @@ export const HOME_SLIDES = Object.freeze([
   })
 ]);
 
-/* Navigation, not data access: gated Forge features remain route previews. */
 export const HOME_ACTIONS = Object.freeze([
-  Object.freeze({ id: 'explore-world', label: 'Explore the World', href: '#/compendium?group=world' }),
-  Object.freeze({ id: 'open-handbook', label: 'Open Handbook', href: '#/compendium?group=rules&category=handbook' })
-]);
-
-export const HOME_FORGE_CARDS = Object.freeze([
+  Object.freeze({ id: 'explore-world', label: 'Explore the World', href: '#/compendium?group=world&category=worlds' }),
+  Object.freeze({ id: 'open-handbook', label: 'Open Handbook', href: '#/compendium?group=rules&category=handbook' }),
   Object.freeze({
-    id: 'character',
-    title: 'Forge a Character',
-    summary: 'Create a hero and begin an adventure of your own.',
-    href: '#/character-forge?mode=create',
-    artwork: 'varkhyn'
-  }),
-  Object.freeze({
-    id: 'campaign',
-    title: 'Forge a Campaign',
-    summary: 'Build a campaign and bring your stories to life.',
-    href: '#/campaign-forge?mode=create',
-    artwork: 'book'
+    id: 'my-characters',
+    label: 'My Characters',
+    href: '#/character-forge?view=my-characters',
+    requiresAccount: true
   })
 ]);
 

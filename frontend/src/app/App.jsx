@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { SiteShell } from '../components/SiteShell.jsx';
 import { HomePage } from '../pages/HomePage.jsx';
 import { AppearanceSettingsPage } from '../pages/AppearanceSettingsPage.jsx';
+import { VersionLogPage } from '../pages/VersionLogPage.jsx';
 import { CompendiumCataloguePage } from '../pages/CompendiumCataloguePage.jsx';
 import { CompendiumEntryPage } from '../pages/CompendiumEntryPage.jsx';
+import { publicBookmarkReference, resolveCompendiumBookmark } from '../compendium/publicEntryLoader.mjs';
 import { RoutePreviewPage } from '../pages/RoutePreviewPage.jsx';
 import { AuthPage } from '../pages/AuthPage.jsx';
 import { AccountPage } from '../pages/AccountPage.jsx';
@@ -25,12 +27,25 @@ import { useAppServices } from './AppServices.jsx';
 // The optional identity is presentational data from a future verified Auth adapter.
 // The deployed preview entry renders <App /> without a fabricated account.
 export function App({ identity = null } = {}) {
-  const route = useSiteRoute();
+  const requestedRoute = useSiteRoute();
+  const [bookmark,setBookmark] = useState(null);
+  const publicReference = publicBookmarkReference(requestedRoute);
+  useEffect(() => {
+    if (!publicReference) return;
+    let active = true;
+    resolveCompendiumBookmark(requestedRoute).catch(() => null).then(route => {
+      if (active) setBookmark({requestedRoute,route});
+    });
+    return () => { active = false; };
+  }, [publicReference,requestedRoute]);
+  const lookup = bookmark?.requestedRoute === requestedRoute ? bookmark : null;
+  const route = lookup?.route ?? requestedRoute;
   const services = useAppServices();
   useRouteEffects(route);
 
   const showMigratedHome = route.id === 'home' && canActivateRoute(route.id, services);
   const showAppearance = route.id === 'appearance' && canActivateRoute(route.id, services);
+  const showVersionLog = route.id === 'version-log' && canActivateRoute(route.id, services);
   // Only prefiltered public catalogue and public entry assets are migrated.
   const showPublicCatalogue = ['handbook','lore','compendium'].includes(route.id);
   const showPublicEntry = route.id === 'compendium-entry';
@@ -46,7 +61,7 @@ export function App({ identity = null } = {}) {
   const showPresentation=route.id==='presentation'&&canActivateRoute(route.id,services);
   return (
     <SiteShell route={route} identity={identity}>
-      {showMigratedHome ? <HomePage /> : showAppearance ? <AppearanceSettingsPage /> : showPublicCatalogue ? <CompendiumCataloguePage route={route} /> : showPublicEntry ? <CompendiumEntryPage route={route} /> : showAuth ? <AuthPage key={route.id} route={route} /> : showAccount ? <AccountPage route={route} /> : showFriends ? <FriendsPage /> : showNotifications ? <NotificationsPage /> : showForge ? <CharacterForgePage /> : showCampaignForge ? <CampaignForgePage /> : showInvites ? <CampaignInvitationPage route={route}/> : showGM ? <GMDashboardPage route={route} /> : showPlayer ? <PlayerDashboardPage route={route}/> : showPresentation ? <PresentationPage route={route}/> : <RoutePreviewPage route={route} />}
+      {publicReference && !lookup ? <p role="status">Looking up Compendium bookmark…</p> : showMigratedHome ? <HomePage /> : showAppearance ? <AppearanceSettingsPage /> : showVersionLog ? <VersionLogPage /> : showPublicCatalogue ? <CompendiumCataloguePage route={route} /> : showPublicEntry ? <CompendiumEntryPage route={route} /> : showAuth ? <AuthPage key={route.id} route={route} /> : showAccount ? <AccountPage route={route} /> : showFriends ? <FriendsPage /> : showNotifications ? <NotificationsPage /> : showForge ? <CharacterForgePage route={route} /> : showCampaignForge ? <CampaignForgePage route={route} /> : showInvites ? <CampaignInvitationPage route={route}/> : showGM ? <GMDashboardPage route={route} /> : showPlayer ? <PlayerDashboardPage route={route}/> : showPresentation ? <PresentationPage route={route}/> : <RoutePreviewPage route={route} />}
     </SiteShell>
   );
 }

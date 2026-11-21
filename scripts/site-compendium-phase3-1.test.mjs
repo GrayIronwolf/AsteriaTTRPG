@@ -32,8 +32,9 @@ test('Phase 3.1 public catalogue shards are generated from existing canonical en
   assert.equal(shard.entries.length,expected.get(domain.id).length);
   for(const row of shard.entries){
    const keys=Object.keys(row).sort();
-   assert.deepEqual(keys,['category','categoryPath','domain','href','id','slug','summary','tags','title'].sort());
-   assert.match(row.href,/^#\/compendium(?:\/[a-z]+\/|\?domain=)/);
+   assert.deepEqual(keys,['aliases','artwork','category','categoryPath','domain','filters','href','id',
+     'indexCode','libraryCategory','slug','sourceKeys','summary','tags','title'].sort());
+   assert.match(row.href,/^#\/compendium\/[a-z]+\/[a-z0-9-]+$/);
    assert.equal(typeof row.id,'string');
    assert.equal(row.domain,domain.id);
    assert.ok(!JSON.stringify(row).includes('sourceFileId'));

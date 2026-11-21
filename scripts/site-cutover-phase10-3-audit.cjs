@@ -26,13 +26,9 @@ function validateMetrics(m){
  assert.equal(m.duplicateIds,0,'Duplicate IDs break accessible references');
  assert.equal(m.brokenImages,0,'A visible image failed to load');
  assert.ok(m.targetHeight>=40,'Header touch target smaller than 40px');
- if(m.viewport<1280){
-  assert.equal(m.visibleMenu,true,'Compact navigation must be visible on mobile/tablet');
-  assert.equal(m.visibleDesktopNav,false,'Desktop navigation must not overlap compact navigation');
- }else{
-  assert.equal(m.visibleMenu,false,'Compact menu should not show on desktop');
-  assert.equal(m.visibleDesktopNav,true,'Desktop navigation must be visible');
- }
+ assert.equal(m.visibleMenu,true,'Navigation and Appearance must be available at every width');
+ assert.equal(m.visibleDesktopNav,m.viewport>=1680,
+  'The desktop navigation row is visible only at 1680px and wider');
  if(m.domReadyMs!=null)assert.ok(m.domReadyMs<=16000,
   'DOM readiness exceeded generous CI regression budget: '+m.domReadyMs+'ms');
  return true;
@@ -56,7 +52,7 @@ async function auditSnapshot(page,{role,surface,size}){
   const ids=[...document.querySelectorAll('[id]')].map(el=>el.id).filter(Boolean);
   const nav=document.querySelector('[data-testid="site-primary-navigation"]');
   const menu=document.querySelector('[data-testid="site-mobile-menu"]');
-  const target=innerWidth<1280?menu?.querySelector('summary'):
+  const target=innerWidth<1680?menu?.querySelector('summary'):
    document.querySelector('[data-testid="site-header-login"],[data-testid="site-header-profile"]');
   const timing=performance.getEntriesByType('navigation')[0];
   const resources=performance.getEntriesByType('resource');
@@ -115,6 +111,9 @@ async function auditKeyboard(page,report,evidenceDir){
  await summary.focus();
  await page.keyboard.press('Enter');
  assert.equal(await page.getByTestId('site-mobile-menu').evaluate(el=>el.open),true);
+ const drawer=page.getByTestId('site-navigation-drawer');
+ const bounds=await drawer.boundingBox();
+ assert.ok(bounds.x>=0&&bounds.x+bounds.width<=390,'Drawer must fit the entire mobile viewport');
  const link=page.getByRole('navigation',{name:'Mobile navigation'})
   .getByRole('link',{name:'Asteria Compendium',exact:true});
  await link.focus();
@@ -147,7 +146,7 @@ async function auditKeyboard(page,report,evidenceDir){
  await page.keyboard.press('Escape');
  await page.emulateMedia({reducedMotion:'no-preference'});
 
- await page.setViewportSize({width:1440,height:900});
+ await page.setViewportSize({width:1920,height:900});
  await page.goto(base,{waitUntil:'domcontentloaded'});
  await page.getByRole('heading',{name:'Asteria',level:1,exact:true}).waitFor();
  const desktop=page.getByRole('navigation',{name:'Primary navigation'})
@@ -155,7 +154,7 @@ async function auditKeyboard(page,report,evidenceDir){
  await desktop.focus();
  await page.keyboard.press('Enter');
  await page.getByTestId('site-mega-menu').waitFor();
- const desktopShot='phase10-3-desktop-menu-1440.png';
+ const desktopShot='phase10-3-desktop-menu-1920.png';
  await page.screenshot({path:path.join(evidenceDir,desktopShot),animations:'disabled'});
  report.screenshots.push(desktopShot);
  await page.keyboard.press('Escape');

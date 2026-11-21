@@ -53,6 +53,25 @@
   -webkit-mask-image: linear-gradient(to right, transparent 0%, black 40%, black 100%);
   mask-image: linear-gradient(to right, transparent 0%, black 40%, black 100%);
 }
+.identity {
+  position: absolute;
+  inset: auto 0 0;
+  display: grid;
+  gap: 1px;
+  padding: 8px 3px 3px;
+  background: linear-gradient(transparent, rgb(0 0 0 / .9) 52%);
+  color: var(--ast-color-hero-text);
+  text-align: center;
+  line-height: 1.1;
+}
+.identity strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: clamp(.58rem, .8vw, .83rem);
+}
+.identity small { overflow-wrap: anywhere; font-size: clamp(.51rem, .68vw, .7rem); }
+.profile:has(.identity) .fallback { padding-bottom: .85rem; }
 .notifications {
   position: relative;
   flex: 0 0 var(--ast-target-min);
@@ -127,6 +146,7 @@
 .logoutButton:hover, .logoutButton:focus-visible { background: var(--ast-color-accent-soft); }
 @media (max-width: 760px) {
   .signedIn { gap: 2px; }
+  .profile { --ast-header-avatar-size: clamp(64px, 14vw, 80px); }
   .accountMenu summary { min-width: 64px; }
   .accountMenu summary span span { padding-inline: 4px; font-size: .72rem; }
   .notifications { flex-basis: 32px; width: 32px; }

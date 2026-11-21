@@ -72,6 +72,16 @@ try{
  await page.getByTestId('site-header-profile').waitFor();
  assert.equal(await page.getByTestId('site-header-login').count(),0);
  assert.equal(await page.getByTestId('site-header-account-menu').count(),1);
+ await within(page,320);
+ assert.equal(await page.getByTestId('site-header-display-name').innerText(),username);
+ assert.equal(await page.getByTestId('site-header-account-id').innerText(),'Account ID pending');
+ assert.equal(await page.getByTestId('site-header-notifications').isVisible(),true);
+ await page.getByTestId('site-header-account-menu').locator('summary').click();
+ await page.getByRole('navigation',{name:'Account shortcuts'})
+  .getByRole('link',{name:'Password & Security',exact:true}).click();
+ await page.getByTestId('site-account-security').waitFor();
+ assert.equal(await page.evaluate(()=>location.hash),'#/account/settings?tab=security');
+ await within(page,1440);
  await page.goto(base+'#/account/profile',{waitUntil:'domcontentloaded'});
  await page.getByRole('heading',{name:'My Profile',level:2}).waitFor();
  await page.getByTestId('site-account-username').getByText(username).waitFor();

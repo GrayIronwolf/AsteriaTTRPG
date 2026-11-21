@@ -30,7 +30,7 @@ test('Phase 10.3 records real role, viewport, accessibility and keyboard evidenc
   assert.ok(m.domReadyMs==null||m.domReadyMs<=r.budgets.maxDomReadyMs);
  }
  for(const a of r.accessibility)assert.equal(a.serious,0);
- for(const name of ['phase10-3-mobile-menu-390.png','phase10-3-desktop-menu-1440.png']){
+ for(const name of ['phase10-3-mobile-menu-390.png','phase10-3-desktop-menu-1920.png']){
   assert.ok(r.screenshots.includes(name));
   assert.ok(existsSync(join(dir,name)),name+' evidence missing');
  }

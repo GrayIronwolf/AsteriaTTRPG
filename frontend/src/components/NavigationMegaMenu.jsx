@@ -8,26 +8,10 @@ import styles from './NavigationMegaMenu.module.css';
  * Cards navigate through the Phase 1 hash router; no legacy DOM mutation.
  */
 export function NavigationMegaMenu({
-  menu, query, onQueryChange, onClose, onNavigate, panelRef
+  menu, query, owned, onQueryChange, onClose, onNavigate, panelRef
 }) {
   if (!menu) return null;
-  const entries = filterMegaMenuEntries(menu, query);
-
-  function containTab(event) {
-    if (event.key !== 'Tab') return;
-    const focusables = [...event.currentTarget.querySelectorAll('input:not([disabled]), button:not([disabled]), a[href]')]
-      .filter(node => node.getClientRects().length > 0);
-    if (!focusables.length) return;
-    const first = focusables[0];
-    const last = focusables[focusables.length - 1];
-    if (event.shiftKey && document.activeElement === first) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && document.activeElement === last) {
-      event.preventDefault();
-      first.focus();
-    }
-  }
+  const entries = filterMegaMenuEntries(menu, query, {owned});
 
   return (
     <div className={styles.layer} data-testid="site-mega-layer">
@@ -46,7 +30,6 @@ export function NavigationMegaMenu({
         aria-labelledby="site-mega-heading"
         data-testid="site-mega-menu"
         data-menu={menu.id}
-        onKeyDown={containTab}
       >
         <div className={styles.heading}>
           <div className={styles.headingText}>
@@ -96,7 +79,7 @@ export function NavigationMegaMenu({
             >
               <span className={styles.cardArt} aria-hidden="true">
                 {item.artwork === 'campaign-book' && (
-                  <img src={forgeCampaignBook} alt="" loading="lazy" decoding="async" />
+                  <img src={forgeCampaignBook} width="256" height="128" alt="" loading="lazy" decoding="async" />
                 )}
               </span>
               <span className={styles.cardText}>

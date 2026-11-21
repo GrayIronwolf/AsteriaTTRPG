@@ -147,7 +147,8 @@ async function auditListeners(page) {
     assert.equal(report.listenerMetrics.initial.popstate,1,'Duplicated route popstate listeners');
     assert.equal(await page.getByTestId('site-hero-image').locator('img').evaluate(img=>img.decode().then(()=>img.naturalWidth>0)),true);
 
-    await page.getByTestId('site-primary-navigation').getByTestId('site-nav-handbook').click();
+    await page.getByTestId('site-mobile-menu').locator('summary').click();
+    await page.getByRole('navigation',{name:'Mobile navigation'}).getByTestId('site-nav-handbook').click();
     await page.getByTestId('site-mega-menu').waitFor();
     assert.equal(await page.getByTestId('site-mega-cards').getByRole('link').count(),6);
     const card = page.getByTestId('site-menu-card-players-guide');
@@ -187,19 +188,23 @@ async function auditListeners(page) {
     assert.equal(await page.evaluate(()=>location.hash),'#home');
 
     // Forge and Compendium navigation must function but never load private data.
-    await page.getByTestId('site-home-forge-character').click();
+    await page.getByTestId('site-mobile-menu').locator('summary').click();
+    await page.getByRole('navigation',{name:'Mobile navigation'}).getByTestId('site-nav-character-forge').click();
+    const forge = page.getByTestId('site-menu-card-forge-character');
+    assert.equal(await forge.getAttribute('href'),'#/character-forge?mode=create');
+    await forge.click();
     await page.getByRole('heading',{name:'Character Forge',level:1}).waitFor();
     assert.equal(await page.locator('main form, main input').count(),0);
     await page.goBack({waitUntil:'networkidle'});
     await page.getByRole('heading',{name:'Asteria',exact:true,level:1}).waitFor();
     await page.getByTestId('site-home-action-explore-world').click();
     await page.getByRole('heading',{name:'Worlds & Lore',level:1}).waitFor();
-    assert.equal(await page.evaluate(()=>location.hash),'#/compendium?group=world');
+    assert.equal(await page.evaluate(()=>location.hash),'#/compendium?group=world&category=worlds');
     await page.goBack({waitUntil:'networkidle'});
     await page.getByRole('heading',{name:'Asteria',exact:true,level:1}).waitFor();
 
     // Same-session, persisted theme and responsive integration: not isolated screenshots.
-    for(const width of [320,390,768,1024,1280,1440,1920]){
+    for(const width of [320,390,768,1024,1280,1440,1679,1680,1920]){
       await page.setViewportSize({width,height:900});
       const metric=await page.evaluate(()=>{
         const hero=document.querySelector('[data-testid="site-home-carousel"]');
@@ -218,7 +223,7 @@ async function auditListeners(page) {
       assert.equal(metric.headerInsideViewport,true,'Header clipped at '+width);
       assert.equal(metric.brandInsideViewport,true,'Wordmark clipped at '+width);
       assert.equal(metric.heroInsideViewport,true,'Home artwork clipped at '+width);
-      assert.equal(metric.primaryNavVisible,width>=1280,'Wrong menu breakpoint at '+width);
+      assert.equal(metric.primaryNavVisible,width>=1680,'Wrong menu breakpoint at '+width);
       assert.equal(metric.imagesBroken,false,'Broken image at '+width);
       report.viewportMetrics.push(metric);
       if(width===390||width===1440){

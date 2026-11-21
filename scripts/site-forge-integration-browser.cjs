@@ -31,6 +31,11 @@ async function account(page,email,username){
  await page.getByTestId('site-auth-submit').click();
  await page.getByTestId('site-header-profile').waitFor({timeout:30000});
 }
+async function openForgeList(page,menu,label){
+ await page.getByTestId('site-mobile-menu').locator('summary').click();
+ await page.getByRole('navigation',{name:'Mobile navigation'}).getByRole('link',{name:menu,exact:true}).click();
+ await page.getByTestId('site-mega-menu').getByRole('link',{name:label,exact:true}).click();
+}
 (async()=>{let browser;
 try{
  await ready();
@@ -45,15 +50,31 @@ try{
  }
  const suffix=Date.now().toString(36);
  await account(owner,'gm-'+suffix+'@example.test','GMFive'+suffix.slice(-5));
- await owner.goto(base+'#/campaign-forge',{waitUntil:'domcontentloaded'});
+ await owner.goto(base+'#/campaign-forge?view=my-campaigns',{waitUntil:'domcontentloaded'});
+ await owner.getByRole('heading',{name:'My Campaigns',level:2}).waitFor();
  await owner.getByTestId('site-campaign-create').waitFor({timeout:30000});
  await owner.getByTestId('site-campaign-create').click();
  const form=owner.getByTestId('site-campaign-form');
+ await form.waitFor();
+ assert.equal(new URL(owner.url()).hash,'#/campaign-forge?mode=create');
+ await owner.reload({waitUntil:'domcontentloaded'});
+ await form.waitFor();
+ await owner.goBack({waitUntil:'domcontentloaded'});
+ await owner.getByRole('heading',{name:'My Campaigns',level:2}).waitFor();
+ await owner.goForward({waitUntil:'domcontentloaded'});
+ await form.waitFor();
  await form.getByRole('textbox',{name:'Campaign Name'}).fill('Membership Test Campaign');
  await form.getByRole('spinbutton',{name:/Party Size/}).fill('4');
  await owner.getByTestId('site-campaign-save').click();
  await owner.getByRole('heading',{name:'Membership Test Campaign'}).waitFor({timeout:45000});
  await owner.getByRole('button',{name:'Manage Campaign'}).click();
+ await owner.getByRole('heading',{name:'Manage Campaign',level:2}).waitFor();
+ const campaignEdit=new URL(owner.url()).hash;
+ assert.match(campaignEdit,/^#\/campaign-forge\?edit=/);
+ await openForgeList(owner,'Campaign Forge','My Campaigns');
+ await owner.getByRole('heading',{name:'My Campaigns',level:2}).waitFor();
+ assert.equal(await form.count(),0);
+ await owner.goBack({waitUntil:'domcontentloaded'});
  await owner.getByTestId('site-campaign-connections').waitFor();
  const ucn=(await owner.locator('main dd').nth(1).innerText()).trim();
  assert.match(ucn,/^\d{12}$/);
@@ -65,6 +86,18 @@ try{
  // This secret must never be sent to Firestore by the browser. It exists once
  // in the owner's UI and once in the intended recipient's ephemeral memory.
  await account(player,'player-'+suffix+'@example.test','PlayerFive'+suffix.slice(-5));
+ await player.goto(base+'#/compendium/handbook/rule-of-cool',{waitUntil:'domcontentloaded'});
+ await player.getByTestId('site-entry-id').filter({hasText:'handbook:hoZRdlTZX7EAAAAAAAAkhw'}).waitFor();
+ await player.reload({waitUntil:'domcontentloaded'});
+ await player.getByTestId('site-header-profile').waitFor();
+ await player.getByTestId('site-entry-id').filter({hasText:'handbook:hoZRdlTZX7EAAAAAAAAkhw'}).waitFor();
+ await player.waitForFunction(()=>Object.keys(localStorage).some(key=>
+  key.startsWith('asteria.library.recent.')&&!key.endsWith('.guest')&&
+  JSON.parse(localStorage.getItem(key)).includes('handbook:hoZRdlTZX7EAAAAAAAAkhw')));
+ assert.equal(await player.evaluate(()=>localStorage.getItem('asteria.library.recent.guest')),null);
+ await player.goto(base+'#/campaign-forge?mode=join',{waitUntil:'domcontentloaded'});
+ await player.getByTestId('site-invitation-ucn').waitFor();
+ assert.equal(new URL(player.url()).hash,'#/campaign-forge?mode=join');
  // Open the invitation as a fresh document, matching a real shared link
  // from outside the app, rather than relying on an in-page hash navigation.
  await player.goto('about:blank');
@@ -96,9 +129,16 @@ try{
  await player.getByText(/Request status: approved/).waitFor({timeout:30000});
  assert.equal(await player.getByTestId('site-invitation-request').isDisabled(),true);
  // Create an owned source character through the migrated React Character Forge.
- await player.goto(base+'#/character-forge',{waitUntil:'domcontentloaded'});
+ await player.goto(base,{waitUntil:'domcontentloaded'});
+ await player.getByRole('main').getByRole('link',{name:'My Characters',exact:true}).click();
+ await player.getByRole('heading',{name:'My Characters',level:2}).waitFor();
+ assert.equal(new URL(player.url()).hash,'#/character-forge?view=my-characters');
  await player.getByTestId('site-forge-create').waitFor({timeout:30000});
  await player.getByTestId('site-forge-create').click();
+ await player.getByTestId('site-forge-editor').waitFor();
+ assert.equal(new URL(player.url()).hash,'#/character-forge?mode=create');
+ await player.reload({waitUntil:'domcontentloaded'});
+ await player.getByTestId('site-forge-editor').waitFor();
  await player.getByTestId('site-forge-tab-race').click();
  await player.locator('button[aria-pressed]').first().click();
  await player.getByTestId('site-forge-tab-class').click();
@@ -116,6 +156,12 @@ try{
  await player.getByRole('textbox',{name:'Character Name'}).fill('Joined Forge Hero');
  await player.getByTestId('site-forge-save').click();
  await player.getByRole('heading',{name:'Joined Forge Hero'}).waitFor({timeout:30000});
+ await player.getByRole('button',{name:'Edit Character'}).click();
+ await player.getByTestId('site-forge-editor').waitFor();
+ assert.match(new URL(player.url()).hash,/^#\/character-forge\?edit=/);
+ await openForgeList(player,'Character Forge','My Characters');
+ await player.getByRole('heading',{name:'My Characters',level:2}).waitFor();
+ assert.equal(await player.getByTestId('site-forge-editor').count(),0);
  await player.getByTestId('site-forge-link-campaign').click();
  await player.getByTestId('site-invitation-ucn').fill(ucn);
  await player.getByTestId('site-invitation-lookup').click();
@@ -147,6 +193,9 @@ try{
  await owner.getByText('No approved or inactive character links.').waitFor({timeout:30000});
  await player.reload({waitUntil:'domcontentloaded'});
  await player.getByRole('heading',{name:'Joined Forge Hero'}).waitFor({timeout:30000});
+ await player.goto(base+campaignEdit,{waitUntil:'domcontentloaded'});
+ await player.getByTestId('site-campaign-error').waitFor();
+ assert.equal(await player.getByTestId('site-campaign-form').count(),0);
  await player.goto(base+'#/campaign-forge',{waitUntil:'domcontentloaded'});
  await player.getByTestId('site-campaign-forge-page').waitFor();
  // Only owners see the campaign management workspace: membership does NOT

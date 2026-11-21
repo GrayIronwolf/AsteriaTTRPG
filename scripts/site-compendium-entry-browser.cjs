@@ -50,9 +50,61 @@ try{
  await page.getByRole('heading',{name:'Racial Traits',level:2}).waitFor();
  assert.equal(await page.evaluate(()=>location.hash),'#/compendium/race/aasimar?tab=Racial+Traits');
 
+ await page.goto(base+'#/compendium/item/iron-ingot',{waitUntil:'networkidle'});
+ await page.getByRole('heading',{name:'Iron Ingot',level:1,exact:true}).waitFor();
+ const cover=page.getByTestId('site-entry-artwork');
+ await cover.waitFor();
+ await cover.evaluate(element=>{
+  const image=element instanceof HTMLImageElement?element:element.querySelector('img');
+  return image.decode();
+ });
+ await page.getByTestId('site-entry-tabs').getByRole('link',{name:'Gallery',exact:true}).click();
+ await page.getByTestId('site-entry-gallery').locator('img').first().waitFor({state:'attached'});
+
+ await page.goto(base+'#/compendium/class/spellblade?tab=Talent+Tree',{waitUntil:'networkidle'});
+ const talentTree=page.getByTestId('site-entry-talent-tree');
+ await talentTree.getByRole('heading',{name:'Tier 4',exact:true}).waitFor();
+ const arcaneCut='#/compendium/talent/spellblade-arcane-cut';
+ await talentTree.locator('a[href="'+arcaneCut+'"]').click();
+ const arcaneCutID='talent:content-classes-spellblade-talents-tier-4-arcane-cut-index';
+ await page.getByTestId('site-entry-id').filter({hasText:arcaneCutID}).waitFor();
+ await page.goBack({waitUntil:'networkidle'});
+ await talentTree.waitFor();
+ await page.goto(base+'#/compendium/talents/spellblade-arcane-cut',{waitUntil:'networkidle'});
+ await page.getByTestId('site-entry-id').filter({hasText:arcaneCutID}).waitFor();
+
+ for(const [hash,id] of [
+  ['#creature-ash-imp','creature-manifest:creature:ash-imp'],
+  ['#wiki-materials-pure-silver-ingot','item:content-materials-4-rare-metals-pure-silver-ingot-index'],
+  ['#1.0%20Rule%20of%20cool?tab=Core+Rule','handbook:hoZRdlTZX7EAAAAAAAAkhw'],
+  ['#content/PHASE-4-ADVANCED-WORLD-SYSTEMS.md','location:content-phase-4-advanced-world-systems'],
+  ['#content/classes/cleric/talents/tier-1/channel-divinity/index.md','talent:content-classes-cleric-talents-tier-1-channel-divinity-index']
+ ]){
+  await page.goto(base+hash,{waitUntil:'networkidle'});
+  await page.getByTestId('site-entry-id').filter({hasText:id}).waitFor();
+ }
+ await page.goto(base+'#1.0%20Rule%20of%20cool?tab=Core+Rule',{waitUntil:'networkidle'});
+ await page.reload({waitUntil:'networkidle'});
+ await page.getByRole('heading',{name:'Core Rule',level:2}).waitFor();
+ await page.goto(base+'#Mana%20Well',{waitUntil:'networkidle'});
+ await page.getByTestId('site-entry-choices').waitFor();
+ assert.equal(await page.getByTestId('site-entry-choices').getByRole('link').count(),2);
+ await page.goto(base+'#/unrecognized-compendium-bookmark',{waitUntil:'networkidle'});
+ await page.getByRole('heading',{name:'Page Not Found',level:1}).waitFor();
+
  await page.goto(base+'#/compendium/talent/divine-aegis',{waitUntil:'networkidle'});
  await page.getByRole('heading',{name:'Multiple definitions share this address',level:1}).waitFor();
  assert.equal(await page.getByTestId('site-entry-tabs').count(),0);
+ const choices=page.getByTestId('site-entry-choices');
+ assert.equal(await choices.getByRole('link').count(),2);
+ for(const klass of ['cleric','paladin']){
+  await choices.locator('a[href="#/compendium/talent/'+klass+'-divine-aegis"]').click();
+  await page.getByTestId('site-entry-id').filter({
+   hasText:'talent:content-classes-'+klass+'-talents-tier-4-divine-aegis-index'
+  }).waitFor();
+  await page.goBack({waitUntil:'networkidle'});
+  await choices.waitFor();
+ }
  await page.goto(base+'#/compendium/race/invalid-private-definition',{waitUntil:'networkidle'});
  await page.getByRole('heading',{name:'Definition unavailable',level:1}).waitFor();
  assert.equal(await page.getByTestId('site-entry-section').count(),0);
@@ -71,5 +123,5 @@ try{
  }
  assert.deepEqual(issues,[],'Browser console/remote requests');
  fs.writeFileSync(path.join(evidence,'summary.json'),JSON.stringify({phase:'3.2',realPublicEntries:true,authenticatedRoutes:false,viewports:[320,390,760,1280,1440,1920],issues},null,2));
- console.log('PASS: public definition Markdown, section bookmarks, ambiguous and missing routes, privacy and responsive layout');
+ console.log('PASS: public definition Markdown, artwork and gallery, class-qualified Talents, section bookmarks, ambiguity choices, privacy and responsive layout');
 }catch(error){console.error(error);process.exitCode=1;}finally{if(browser)await browser.close();server.kill('SIGTERM');}})();

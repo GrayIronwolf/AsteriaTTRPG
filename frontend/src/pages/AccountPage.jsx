@@ -17,8 +17,8 @@ const SECTIONS = Object.freeze([
   {id:'appearance',label:'Appearance'},
   {id:'security',label:'Password & Security'}
 ]);
-const choose = route => route.id === 'profile' ? 'profile'
-  : route.id === 'settings' ? 'settings' : 'profile';
+const choose = route => route.id === 'settings'
+  ? (route.query?.get('tab') === 'security' ? 'security' : 'settings') : 'profile';
 const niceError = error => error instanceof Error
   ? error.message : 'This action could not be completed. Try again.';
 
@@ -26,7 +26,8 @@ export function AccountPage({route}) {
   const {session,available,actions,busy} = useAuth();
   const {appearance,updateAppearance} = useAppearance();
   const uid = session.user?.uid || null;
-  const [section,setSection] = useState(()=>choose(route));
+  const requestedSection = choose(route);
+  const [section,setSection] = useState(requestedSection);
   const [profile,setProfile] = useState(null);
   const [error,setError] = useState('');
   const [message,setMessage] = useState('');
@@ -51,7 +52,7 @@ export function AccountPage({route}) {
   // Never preserve one user's profile, image, or cloud settings across a UID change.
   useEffect(()=>{
     const current=++requestVersion.current;
-    setSection(choose(route));
+    setSection(requestedSection);
     setProfile(null);setAvatar(null);setCloud(null);
     setRenameEnabled(false);setRenaming(false);setEditing(false);
     setVerificationSentAt(0);setVerified(session.user?.emailVerified===true);
@@ -71,7 +72,7 @@ export function AccountPage({route}) {
       }).finally(()=>{if(active&&requestVersion.current===current)setLoading(false);});
     return ()=>{active=false;};
   // Re-fetch on account switch and explicit updated profile revision, not on every header refresh.
-  },[uid,actions,session.status,session.profileAvailable,route.id]);
+  },[uid,actions,session.status,session.profileAvailable,route.id,requestedSection]);
 
   async function refresh() {
     const owner=uid;

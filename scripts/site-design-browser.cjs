@@ -35,7 +35,7 @@ async function awaitPreview() {
       headless: true, executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH || undefined,
       args: ['--no-sandbox', '--disable-dev-shm-usage']
     });
-    const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    const page = await browser.newPage({ viewport: { width: 1920, height: 900 } });
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
     page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
@@ -63,7 +63,7 @@ async function awaitPreview() {
     assert.equal(palette.panelToken, '#060d15');
     assert.equal(palette.pageToken, '#000000');
     assert.equal(palette.bg, 'rgb(0, 0, 0)');
-    assert.equal(palette.header, 'rgb(22, 40, 57)');
+    assert.equal(palette.header, 'rgb(6, 13, 21)');
     assert.ok(!palette.stylesheetUrls.some(url => /css\/styles\.css|foundation\.css|asteria-page-template/i.test(url)));
     console.log('PASS: the preview uses one compiled token-based stylesheet, not legacy CSS.');
 
@@ -83,7 +83,7 @@ async function awaitPreview() {
     assert.equal(heroLoaded, true);
     console.log('PASS: modular crystal buttons and real Home artwork render.');
 
-    for (const width of [320, 360, 390, 430, 768, 1024, 1280, 1440, 1920]) {
+    for (const width of [320, 360, 390, 430, 768, 1024, 1280, 1440, 1679, 1680, 1920]) {
       await page.setViewportSize({ width, height: 900 });
       await page.goto(base, { waitUntil: 'networkidle' });
       const metrics = await page.evaluate(() => {
@@ -103,15 +103,15 @@ async function awaitPreview() {
         };
       });
       assert.equal(metrics.overflow, false, 'Horizontal overflow at ' + width);
-      if (width <= 1279) {
+      assert.equal(metrics.menuVisible, true, 'Navigation and Appearance trigger missing at ' + width);
+      if (width <= 1679) {
         assert.equal(metrics.desktopVisible, false, 'Desktop navigation exposed at ' + width);
-        assert.equal(metrics.menuVisible, true, 'Mobile navigation missing at ' + width);
         const menu = page.getByTestId('site-mobile-menu');
         await menu.locator('summary').click();
         const mobileLinks = await page.getByRole('navigation', { name: 'Mobile navigation' })
           .getByRole('link').all();
-        assert.equal(mobileLinks.length, 7, 'Six primary links plus Appearance settings');
-        assert.equal(await page.getByTestId('site-mobile-appearance-link').count(), 1);
+        assert.equal(mobileLinks.length, 6, 'The compact drawer holds the six primary destinations');
+        assert.equal(await page.getByTestId('site-mobile-appearance-link').isVisible(), true);
         for (const link of mobileLinks) {
           assert.ok((await link.boundingBox()).height >= 44, 'Undersized mobile menu target at ' + width);
         }
@@ -121,7 +121,6 @@ async function awaitPreview() {
         await page.getByRole('heading', { name: 'Character Forge', level: 1 }).waitFor();
       } else {
         assert.equal(metrics.desktopVisible, true, 'Desktop links missing at ' + width);
-        assert.equal(metrics.menuVisible, false, 'Mobile menu exposed on desktop at ' + width);
         assert.equal(metrics.linkTops, 1, 'Header links wrapped to another row at ' + width);
         assert.equal(metrics.linksBeyondWindow, false, 'Header link clipped at ' + width);
         assert.equal(metrics.brandOverlap, false, 'Logo overlaps nav links at ' + width);
@@ -130,10 +129,9 @@ async function awaitPreview() {
     }
     console.log('PASS: responsive header, logo, links and mobile targets verified at 320–1920px.');
 
-    await page.goto(base + '#/compendium', { waitUntil: 'networkidle' });
-    await page.getByRole('heading', { name: 'Asteria Compendium', level: 1 }).waitFor();
-    await page.getByTestId('site-compendium-results').waitFor();
-    const panel = page.getByTestId('site-compendium-card').first();
+    await page.goto(base + '#/version-log', { waitUntil: 'networkidle' });
+    await page.getByRole('heading', { name: 'Version Log', level: 1 }).waitFor();
+    const panel = page.getByRole('article', { name: 'Asteria UI Modernisation Steps 7-12' });
     assert.equal(await panel.count(), 1);
     const panelStyle = await panel.evaluate(el => getComputedStyle(el).backgroundColor);
     assert.equal(panelStyle, 'rgb(6, 13, 21)', 'Obsidian panel surface token not applied');
@@ -142,7 +140,7 @@ async function awaitPreview() {
       document.documentElement.dataset.asteriaBackground = 'light-gray';
       const light = {
         page: getComputedStyle(document.body).backgroundColor,
-        panel: getComputedStyle(document.querySelector('[data-testid="site-compendium-card"]')).backgroundColor,
+        panel: getComputedStyle(document.querySelector('[aria-labelledby="version-log-release"]')).backgroundColor,
         scheme: getComputedStyle(document.documentElement).colorScheme
       };
       document.documentElement.dataset.asteriaBackground = 'dark-blue';

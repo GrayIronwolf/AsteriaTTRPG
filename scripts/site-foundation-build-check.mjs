@@ -23,4 +23,7 @@ for (const css of entry.css) {
 assert.match(html, /id="asteria-site-root"/);
 assert.match(html, /<script type="module" crossorigin/);
 assert.doesNotMatch(html, /js\/app\.js|react-dist|css\/styles\.css/);
+const weaponReference = 'tools/weapon-crafting.html';
+assert.deepEqual(readFileSync(resolve(dist, weaponReference)), readFileSync(resolve(root, weaponReference)),
+  'The isolated build must preserve the standalone weapon reference');
 console.log('PASS: isolated React/Vite HTML, entry JS, CSS and manifest exist.');

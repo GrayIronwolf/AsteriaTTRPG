@@ -59,40 +59,33 @@ test('Home carousel owns autoplay, visible-slide semantics, pause/resume and cle
   assert.doesNotMatch(code + css, /window\.(?:setView|AsteriaFirebase|AsteriaLibrary)|!important/);
 });
 
-test('Home CTA and Forge links resolve to known fail-closed preview routes', () => {
+test('Home links target the original public scopes and protect My Characters', () => {
   const content = read('frontend/src/home/homeContent.mjs');
-  const urls = [
-    '#/compendium?group=world',
-    '#/compendium?group=rules&category=handbook',
-    '#/character-forge?mode=create',
-    '#/campaign-forge?mode=create'
+  const routes = [
+    ['#/compendium?group=world&category=worlds', 'lore', 'worlds'],
+    ['#/compendium?group=rules&category=handbook', 'handbook', 'handbook']
   ];
-  urls.forEach(hash => {
+  for (const [hash, id, category] of routes) {
     assert.ok(content.includes(hash), hash);
-    const parsed = parseSiteRoute({ hash });
-    assert.notEqual(parsed.id, 'not-found', hash);
-    assert.equal(canActivateRoute(parsed.id, previewServices), false, hash);
-  });
-  const forge = read('frontend/src/components/home/ForgeCards.jsx');
-  const style = read('frontend/src/components/home/ForgeCards.module.css');
-  assert.match(forge, /HOME_FORGE_CARDS\.map/);
-  assert.match(forge, /href=\{card\.href\}/);
-  assert.match(forge, /forge-campaign-map-book\.avif/);
-  assert.match(forge, /asteria-home-varkhyn\.webp/);
-  assert.match(style, /grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);
-  assert.match(style, /@media \(max-width: 760px\)/);
-  assert.match(style, /@media \(prefers-reduced-motion: reduce\)/);
-  assert.doesNotMatch(forge + style, /window\.Asteria|!important/);
+    const route = parseSiteRoute({ hash });
+    assert.equal(route.id, id, hash);
+    assert.equal(route.query.get('category'), category, hash);
+  }
+  const characters = '#/character-forge?view=my-characters';
+  assert.ok(content.includes(characters));
+  assert.equal(canActivateRoute(parseSiteRoute({hash:characters}).id, previewServices), false);
+  const home = read('frontend/src/pages/HomePage.jsx');
+  assert.match(home, /isVerifiedOwnedSession\(session\)/);
+  assert.match(home, /href=\{action\.href\}/);
 });
 
-test('Home replaces Phase 1 placeholder with the cinematic carousel and simple card section', () => {
+test('Home restores the single welcome section below the approved carousel', () => {
   const home = read('frontend/src/pages/HomePage.jsx');
   const css = read('frontend/src/pages/HomePage.module.css');
   assert.match(home, /<HomeCarousel \/>/);
-  assert.match(home, /<ForgeCards \/>/);
+  assert.doesNotMatch(home, /ForgeCards|React Home preview:|Make Asteria your own/);
   assert.match(home, /<Heading id="site-home-title" hero>Asteria<\/Heading>/);
   assert.match(home, /HOME_ACTIONS\.map/);
-  assert.match(home, /React Home preview:/);
   assert.doesNotMatch(home, /<SurfacePanel|<WorldMap|<WelcomePanel/);
   assert.match(css, /background:\s*var\(--ast-color-page\)/);
   assert.doesNotMatch(css, /:global\(|!important|#[0-9a-f]{3,8}\b/i);
