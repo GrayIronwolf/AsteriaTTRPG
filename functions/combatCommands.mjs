@@ -14,6 +14,7 @@ import { encounterSourceResources, setEncounterResource } from '../src/state/enc
 import {normalizePreparedEncounters,preparedEncounterRoster} from '../src/state/preparedEncounterModel.mjs';
 import {validatePreparedLoadRequest} from '../src/state/preparedEncounterLoadModel.mjs';
 import {combatMapMovePlan,synchronizeCombatMapTokens,activeMapEncounter} from '../src/state/battleMapCombatModel.mjs';
+import {preparedMapTokenCapacity} from '../src/state/preparedBattleMapModel.mjs';
 import { currentCombatant, initiativeResult, initiativeOrder, combatOptions, combatRestriction, optionProblem, skillCheck, rollD20, checkResult, attackResult, counterspellResult, validateReactionEquipment, payCombatCosts, changeCombatHP, deathSave, feedback, mixedDamage, rows, SPELL_RANKS, SPELL_SKILL_ACCESS } from '../src/state/combatRules.mjs';
 
 const copy=value=>JSON.parse(JSON.stringify(value));
@@ -22,7 +23,7 @@ const bounded=(value,min=0,max=1e9)=>{const n=Number(value);if(!Number.isFinite(
 const roll=()=>randomInt(1,21);
 const numberDie=()=> (roll()-1)/20;
 const combatCharacterFields=new Set(['hp','sp','mp','bp','zp','resources','resourceDefinitions','resourceState','conditions','downed','activeEffects','effects','talentResourceEffects','talentResourceState','talentStateVersion','talentEffects','talentRestBonus','talentSavingThrows','talentUsage','acModifiers','specialDamage','soulDamage','coreStateVersion','inventory','equipment']);
-const management=new Set(['map-link','map-move','save','load-prepared','start','next','end','clear','approve','reject','window','close-window','resolve','roll','resolve-reaction','correct','condition','ambush','trigger-prepared']);
+const management=new Set(['map-link','map-move','save','load-prepared','map-prepare','start','next','end','clear','approve','reject','window','close-window','resolve','roll','resolve-reaction','correct','condition','ambush','trigger-prepared']);
 const publicPending=p=>p?{id:p.id,actorId:p.actorId,actorName:p.actorName,optionId:p.actorKind==='player'?p.optionId:'',name:p.actorKind==='player'?p.name:'Creature action',status:p.status,targetIds:p.targetIds,ap:p.ap,bonus:p.bonus,apPaid:Boolean(p.prepaidAP),costs:p.actorKind==='player'?p.costs:{},reactionWindow:p.status==='reactions',reactorId:p.window?.[p.windowIndex||0]?.actorId||'',reactionChoices:p.window?.[p.windowIndex||0]?.choices||[],reaction:p.reaction?{actorId:p.reaction.actorId,name:p.reaction.name}:null,message:p.publicMessage||''}:null;
 
 // An extension of asteriaAction: one encounter document, existing resource/effect
@@ -81,6 +82,7 @@ export function createCombatCommands(context) {
       // Fetch the bound map before any transaction writes; map and encounter are
       // committed atomically. Never trust client-supplied turn order or distance.
       const mapOperation=['map-link','map-move'].includes(input.operation);
+      const preparingMap=input.operation==='map-prepare';
       if(mapOperation&&!gm)throw new Error('Only the campaign GM can control combat maps.');
       const boundMapId=mapOperation?String(input.mapId||''):String(encounter.battleMapId||'');
       if(mapOperation&&!/^[A-Za-z0-9_-]{1,120}$/.test(boundMapId))
@@ -91,13 +93,19 @@ export function createCombatCommands(context) {
       if(mapOperation&&!boundMap)throw new Error('This battle map no longer exists.');
       // A prepared map reference must still exist at execution time.
       // Read before transaction writes, and do not bind until combat starts.
-      const preparedMapRef=loading&&prepared.mapId?
-        doc(db,'campaigns',campaignId,'battleMaps',prepared.mapId):null;
+      const requestedPreparedMapId=loading?prepared.mapId||'':preparingMap?String(input.mapId||''):
+        input.operation==='start'?String(encounter.preparedMapId||''):'';
+      if(requestedPreparedMapId&&!/^[A-Za-z0-9_-]{1,120}$/.test(requestedPreparedMapId))
+        throw new Error('Prepared map identifier is invalid.');
+      const preparedMapRef=requestedPreparedMapId?
+        doc(db,'campaigns',campaignId,'battleMaps',requestedPreparedMapId):null;
       const preparedMapSnap=preparedMapRef?await tx.get(preparedMapRef):null;
       if(preparedMapRef&&!preparedMapSnap.exists())
         throw new Error('The prepared battle map no longer exists. Refresh the library.');
       if(preparedMapSnap?.data()?.campaignId&&preparedMapSnap.data().campaignId!==campaignId)
         throw new Error('The prepared battle map belongs to another campaign.');
+      if(preparedMapSnap?.data()?.combatId)
+        throw new Error('The battle map is linked to another active encounter.');
       const entry=id=>encounter.combatants.find(row=>row.id===id);
       const get=id=>{const row=entry(id);if(!row)throw new Error('Participant is not in this encounter.');return row.characterId?characters.get(row.characterId):{...row,...encounterSourceResources(row),kind:'enemy'};};
       const put=(id,value)=>{
@@ -276,6 +284,25 @@ export function createCombatCommands(context) {
           tx.update(mapRef,{tokens,updatedAt:serverTimestamp()});
         }
         log(loading?'GM loaded prepared encounter: '+prepared.name+'.':'GM updated encounter participants.');
+      }else if(input.operation==='map-prepare'){
+        if(encounter.status==='active'||privateState.pending)
+          throw new Error('End the active encounter and resolve pending actions before preparing a battle map.');
+        if(encounter.battleMapId)
+          throw new Error('Unlink the currently bound combat map before preparing a different map.');
+        const requested=String(input.mapId||'');
+        if(requested&&!preparedMapSnap)throw new Error('Choose an existing campaign battle map.');
+        if(requested&&preparedMapSnap.data().combatId)
+          throw new Error('This map is already in use by an active encounter.');
+        if(requested){
+          const capacity=preparedMapTokenCapacity(preparedMapSnap.data(),
+            encounter.combatants.filter(row=>!row.characterId).length,
+            encounter.combatants.filter(row=>row.characterId).length);
+          if(!capacity.available)
+            throw new Error('The selected map cannot hold all participants and existing markers.');
+        }
+        encounter.preparedMapId=requested;
+        log(requested?'GM prepared battle map for the next encounter.':
+          'GM cleared the prepared encounter battle map.');
       }else if(input.operation==='map-link'){
         requireActive();noPending();
         if(encounter.battleMapId&&encounter.battleMapId!==boundMapId)
@@ -312,6 +339,19 @@ export function createCombatCommands(context) {
         encounter.status='active';encounter.round=1;encounter.turnIndex=0;encounter.combatId=context.requestId;encounter.combat.participants={};encounter.combat.firstAid={};encounter.combat.version=1;
         for(const row of encounter.combatants){if(!row.initiativeSet){const result=initiativeResult(get(row.id),roll(),roll(),{now,encounter});row.initiative=result.total;row.initiativeRoll=result;}setState(row.id,{ap:0,bonus:false,turns:0,turnComplete:false});}
         encounter.combatants.sort(initiativeOrder);startTurn();
+        if(preparedMapRef){
+          const data=preparedMapSnap.data();
+          const capacity=preparedMapTokenCapacity(data,
+            encounter.combatants.filter(row=>!row.characterId).length,
+            encounter.combatants.filter(row=>row.characterId).length);
+          if(!capacity.available)throw new Error('The prepared map cannot hold all combat participants.');
+          const tokens=synchronizeCombatMapTokens(data,encounter,()=>randomUUID());
+          tx.update(preparedMapRef,{
+            combatId:encounter.combatId,tokens,updatedAt:serverTimestamp()
+          });
+          encounter.battleMapId=requestedPreparedMapId;
+          log('Prepared battle map linked with combatant tokens.');
+        }
       }else if(input.operation==='end-turn'){
         requireActive();controlled();noPending();
         if(currentCombatant(encounter)?.id!==actorId)throw new Error('Only the current participant can end their turn.');
