@@ -1,9 +1,9 @@
-import {before,after,beforeEach,test} from 'node:test';
+import {before,after,beforeEach,afterEach,test} from 'node:test';
 import {readFileSync} from 'node:fs';
 import {initializeTestEnvironment,assertFails,assertSucceeds}
   from '@firebase/rules-unit-testing';
 import {doc,collection,getDoc,getDocs,setDoc,updateDoc} from 'firebase/firestore';
-import {ref,getBytes,uploadBytes} from 'firebase/storage';
+import {ref,getBytes,uploadBytes,deleteObject} from 'firebase/storage';
 const root='campaigns/phase74-security';
 const rawCombat=root+'/systems/encounter';
 const publicCombat=root+'/combatPublic/current';
@@ -32,6 +32,7 @@ before(async()=>{
   });
 });
 after(async()=>env?.cleanup());
+afterEach(async()=>{await deleteObject(ref(s('gm'),storagePath)).catch(()=>{});});
 beforeEach(async()=>{
   await env.clearFirestore();await env.clearStorage();
   await env.withSecurityRulesDisabled(async context=>{
