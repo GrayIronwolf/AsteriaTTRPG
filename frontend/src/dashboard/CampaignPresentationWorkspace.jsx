@@ -3,6 +3,7 @@ import {PRESENTATION_DEFAULT,PRESENTATION_SCENES,PRESENTATION_THEMES,
   safeCombatPresentation
 } from '../../../src/state/playerPresentationModel.mjs';
 import {presentationDraft,partyForPresentation} from './campaignMediaModel.mjs';
+import {HybridSessionManager} from './HybridSessionManager.jsx';
 import {useCampaignStream,CampaignMapWorkspace,CampaignAtlasWorkspace} from './CampaignMapWorkspace.jsx';
 import styles from './CampaignPresentationWorkspace.module.css';
 
@@ -140,6 +141,7 @@ export function CampaignPresentationController({api,campaignId,party=[]}){
     </div>
     <label>Signed-in second-screen URL<input readOnly value={link} onFocus={e=>e.target.select()}/></label>
     <p>Current: {names[control.data?.scene||'blank']} · Revision {control.data?.revision||0}</p>
+    <HybridSessionManager api={api} campaignId={campaignId}/>
     {message?<p role="status">{message}</p>:null}
   </section>;
 }
