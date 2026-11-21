@@ -1,0 +1,4 @@
+.reveal{display:grid;gap:var(--ast-space-2);padding:var(--ast-space-3);border:1px solid var(--ast-color-outline-soft);border-radius:var(--ast-radius-panel);background:var(--ast-color-panel-raised);max-width:min(100%,640px);margin-inline:auto;overflow-wrap:anywhere}
+.reveal strong{font:600 var(--ast-font-subtitle)/1.3 var(--ast-font-display)}
+.reveal p,.reveal small{margin:0;white-space:pre-wrap}
+.reveal small{font-size:var(--ast-font-sm);color:var(--ast-color-text-muted)}
