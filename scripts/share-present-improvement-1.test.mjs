@@ -96,3 +96,11 @@ test('Improvement 1: stale Phase 7.1 Blackout browser selector scoped to GM cont
   const script=read('scripts/site-combat-phase7-1-browser.cjs');
   assert.match(script,/getByTestId\('site-gm-presentation'\)[\s\S]{0,100}getByRole\('button',\{name:'Blackout',exact:true\}\)/);
 });
+
+test('Improvement 1: stale Firestore snapshots clear previously shown presentation content',()=>{
+  const service=read('frontend/src/dashboard/firebaseCampaignMediaService.mjs');
+  assert.match(service,/if\(project===presentationProject\)[\s\S]{0,180}Presentation connection interrupted/);
+  assert.match(service,/Viewer connection interrupted\. Reconnect to verify access/);
+  assert.match(service,/Restricted media connection interrupted\. Reconnect to verify access/);
+  assert.match(service,/onError\?\.\(Error\('Restricted media connection interrupted/);
+});
