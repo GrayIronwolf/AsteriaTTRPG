@@ -25,12 +25,13 @@ const revision=value=>{
   return value;
 };
 export function validateHybridSessionAction(action={}){
-  if(!object(action)||!['open','close','grant','revoke'].includes(action.type))
+  if(!object(action)||!['open','close','grant','invite','revoke'].includes(action.type))
     throw Error('Unsupported hybrid session action.');
   const fields={
     open:['type','expectedRevision','mode','durationMinutes'],
     close:['type','expectedRevision'],
     grant:['type','expectedRevision','uid','durationMinutes'],
+    invite:['type','expectedRevision','uid','durationMinutes'],
     revoke:['type','expectedRevision','uid']
   };
   exact(action,fields[action.type]);
@@ -39,13 +40,13 @@ export function validateHybridSessionAction(action={}){
     if(!HYBRID_SESSION_MODES.includes(action.mode))
       throw Error('Choose an in-person, hybrid or remote session.');
   }
-  if(['open','grant'].includes(action.type)){
+  if(['open','grant','invite'].includes(action.type)){
     if(!Number.isSafeInteger(action.durationMinutes)||
       action.durationMinutes<HYBRID_SESSION_MIN_MINUTES||
       action.durationMinutes>HYBRID_SESSION_MAX_MINUTES)
       throw Error('Viewer access duration must be 15 to 600 minutes.');
   }
-  if(['grant','revoke'].includes(action.type)&&!hybridViewerId(action.uid))
+  if(['grant','invite','revoke'].includes(action.type)&&!hybridViewerId(action.uid))
     throw Error('Choose a valid authenticated viewer UID.');
   return action;
 }
