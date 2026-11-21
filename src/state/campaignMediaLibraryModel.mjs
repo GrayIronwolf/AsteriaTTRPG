@@ -5,6 +5,7 @@ import {atlasImagePath} from './worldAtlasModel.mjs';
 import {sessionPdfPath} from './sessionLibraryModel.mjs';
 import {audioTrackPath} from './campaignAudioModel.mjs';
 import {recordingPath} from './sessionRecordingModel.mjs';
+import {presentationAssetPath,PRESENTATION_MEDIA_FORMATS} from './presentationAssetModel.mjs';
 
 /**
  * Phase 7.1: virtual, read-only index of EXISTING campaign media.
@@ -13,7 +14,8 @@ import {recordingPath} from './sessionRecordingModel.mjs';
  */
 export const CAMPAIGN_MEDIA_LIBRARY_LIMIT_PER_SOURCE=120;
 export const CAMPAIGN_MEDIA_LIBRARY_SOURCES=Object.freeze([
-  'battleMaps','worldAtlas','sessionPdfs','audioTracks','recordingArchives'
+  'battleMaps','worldAtlas','sessionPdfs','audioTracks','recordingArchives',
+  'presentationAssets'
 ]);
 export const CAMPAIGN_MEDIA_LIBRARY_TYPES=Object.freeze([
   'battle-map','atlas-map','image','video-cinematic',
@@ -22,7 +24,8 @@ export const CAMPAIGN_MEDIA_LIBRARY_TYPES=Object.freeze([
 export const CAMPAIGN_MEDIA_LIBRARY_VISIBILITIES=Object.freeze(['all','gm','players']);
 export const CAMPAIGN_MEDIA_LIBRARY_TABS=Object.freeze({
   battleMaps:'battle-maps',worldAtlas:'world-atlas',sessionPdfs:'session-library',
-  audioTracks:'soundboard',recordingArchives:'session-recordings'
+  audioTracks:'soundboard',recordingArchives:'session-recordings',
+  presentationAssets:'presentation'
 });
 const validId=value=>typeof value==='string'&&/^[A-Za-z0-9_-]{1,120}$/.test(value);
 const text=(value,size)=>typeof value==='string'?value.trim().slice(0,size):'';
@@ -42,7 +45,7 @@ const MIME_KINDS=Object.freeze({
 });
 const sourceType=Object.freeze({
   battleMaps:'battle-map',worldAtlas:'atlas-map',
-  sessionPdfs:'pdf-handout',audioTracks:'audio',recordingArchives:'recording'
+  sessionPdfs:'pdf-handout',audioTracks:'audio',recordingArchives:'recording',presentationAssets:'image'
 });
 
 export function campaignMediaLibraryReference(value){
@@ -77,9 +80,15 @@ export function classifyCampaignMediaRecord(campaignId,source,record){
     }else if(source==='recordingArchives'){
       canonical=recordingPath(campaignId,record.id,mime);
       if(kind!=='audio')return null;
+    }else if(source==='presentationAssets'){
+      canonical=presentationAssetPath(campaignId,record.id);
+      const expected=PRESENTATION_MEDIA_FORMATS[mime]?.scene;
+      if(!expected||record.kind!==expected)return null;
     }
     if(record.storagePath!==canonical)return null;
-    const category=sourceType[source];
+    const category=source==='presentationAssets'?
+      (record.kind==='cinematic'?'video-cinematic':
+        record.kind==='handout'?'pdf-handout':'image'):sourceType[source];
     const status=source==='battleMaps'?'ready':
       ['ready','uploading','draft','published'].includes(record.status)?
         record.status:'unknown';
