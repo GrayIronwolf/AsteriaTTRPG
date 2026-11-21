@@ -94,7 +94,11 @@ def main():
 
     current_rows = all_pages("/branches")
     current = {row["name"]: row["commit"]["sha"] for row in current_rows}
-    if len(current) != len(expected) or set(current) != set(expected):
+    # The previously approved cleanup can already be complete. This is a
+    # valid, safe end state, provided the archive history is still verified.
+    already_clean = set(current) == KEEP and len(current) == len(KEEP)
+    if not already_clean and (len(current) != len(expected) or
+                              set(current) != set(expected)):
         added = sorted(set(current) - set(expected))
         missing = sorted(set(expected) - set(current))
         raise RuntimeError("Branch inventory changed. New: " + repr(added) +
@@ -140,6 +144,8 @@ def main():
               p["head"]["ref"] not in current]
     if unsafe:
         raise RuntimeError("Open PR has unsupported head or protected branch: " + repr(unsafe))
+    if already_clean and prs:
+        raise RuntimeError("Unexpected open pull requests after completed cleanup")
 
     pending = sorted(set(current) - KEEP)
     print("Verified recovery SHA:", RECOVERY_SHA)
@@ -147,6 +153,9 @@ def main():
     print("Branches to keep:", ", ".join(sorted(KEEP)))
     print("Branches to delete:", len(pending))
     print("Open PRs whose work is archived:", len(prs))
+    if already_clean:
+        print("SUCCESS: previously completed cleanup verified. Exactly five approved branches remain.")
+        return
     if ACTION == "audit":
         print("AUDIT ONLY: Nothing deleted or closed.")
         return
@@ -180,7 +189,12 @@ def main():
     unexpected = sorted(remaining - KEEP)
     missing_keep = sorted(KEEP - remaining)
     print("Remaining branches:", len(remaining), sorted(remaining))
-    if errors or unexpected or missing_keep:
+    # GitHub may auto-delete Dependabot heads when their PRs are closed.
+    # A branch that is now absent is not a cleanup failure; only remaining
+    # unapproved branches or missing approved branches are fatal.
+    if errors:
+        print("Nonfatal deletion responses (verified absent at end):", repr(errors[:50]))
+    if unexpected or missing_keep:
         raise RuntimeError("Cleanup incomplete; work remains archived. Errors: " +
                            repr(errors[:50]) + ", extras: " + repr(unexpected[:50]) +
                            ", missing protected: " + repr(missing_keep))
