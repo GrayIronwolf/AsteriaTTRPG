@@ -11,6 +11,7 @@ export const HYBRID_SESSION_DEFAULT=Object.freeze({
   revision:0,status:'closed',mode:'in-person',epoch:'',
   expiresAt:null,grantCount:0
 });
+import {PRESENTATION_MEDIA_SCENES,presentationAssetId} from './presentationAssetModel.mjs';
 const object=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 export const hybridViewerId=value=>typeof value==='string'&&
   /^[A-Za-z0-9_-]{1,128}$/.test(value);
@@ -50,15 +51,18 @@ export function validateHybridSessionAction(action={}){
 }
 export function restrictedPresentationProjection(scene={},revision=0){
   const safe=['title','announcement'].includes(scene?.scene);
-  const title=safe&&typeof scene?.title==='string'?
+  const media=PRESENTATION_MEDIA_SCENES.includes(scene?.scene)&&
+    presentationAssetId(scene?.assetId);
+  const title=(safe||media)&&typeof scene?.title==='string'?
     scene.title.slice(0,120):'';
-  const subtitle=safe&&typeof scene?.subtitle==='string'?
+  const subtitle=(safe||media)&&typeof scene?.subtitle==='string'?
     scene.subtitle.slice(0,380):'';
   const theme=['obsidian','slate','parchment'].includes(scene?.theme)?
     scene.theme:'obsidian';
   return Object.freeze({
     version:1,revision:Number.isSafeInteger(revision)&&revision>=0?revision:0,
-    scene:safe?'title':'blank',title,subtitle,theme
+    scene:media?scene.scene:(safe?'title':'blank'),title,subtitle,theme,
+    ...(media?{assetId:scene.assetId}:{})
   });
 }
 export function sessionTimestampMs(value){
