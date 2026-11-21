@@ -1,0 +1,33 @@
+name: Share & Present Improvement 4 — Prepared Encounter Integration
+on:
+  push:
+    branches: [feature/share-present-improvement-4-prepared-encounters]
+  pull_request:
+    paths:
+      - 'src/state/preparedPresentationBridgeModel.mjs'
+      - 'frontend/src/dashboard/GMPreparedPresentationPanel.jsx'
+      - 'frontend/src/dashboard/GMPreparedPresentationPanel.module.css'
+      - 'frontend/src/dashboard/CampaignPresentationWorkspace.jsx'
+      - 'frontend/src/pages/GMDashboardPage.jsx'
+      - 'scripts/share-present-improvement-4.test.mjs'
+      - '.github/workflows/share-present-improvement-4-encounters.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  prepared-encounters-and-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Prepared encounter bridge and inherited security
+        run: node --test scripts/share-present-improvement-4.test.mjs scripts/share-present-improvement-3.test.mjs scripts/share-present-improvement-2.test.mjs scripts/share-present-improvement-1.test.mjs scripts/site-share-present-phase7-7.test.mjs
+      - name: Source lint
+        run: npx eslint src/state/preparedPresentationBridgeModel.mjs frontend/src/dashboard/GMPreparedPresentationPanel.jsx frontend/src/dashboard/CampaignPresentationWorkspace.jsx frontend/src/pages/GMDashboardPage.jsx scripts/share-present-improvement-4.test.mjs
+      - name: React source and production artifact checks
+        run: npm run site:check && npm run site:build && npm run site:verify-dist
