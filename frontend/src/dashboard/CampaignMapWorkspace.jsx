@@ -64,6 +64,7 @@ export function useCampaignStream(api,method,args,enabled=true){
           setState({scope,data:value,error:'',loading:false});
         }catch(error){fail(error);}
       },fail);
+      if(!alive)try{stop?.();}catch{/* synchronous stream error cleanup */}
     }catch(error){fail(error);}
     return ()=>{
       alive=false;revisionGate?.reset();duplicateGate.reset();
