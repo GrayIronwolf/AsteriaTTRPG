@@ -51,6 +51,12 @@ export function ViewerScreenShareControls({api,campaignId,viewerUid,pointer}){
       document.removeEventListener('visibilitychange',hidden);
     };
   },[leave]);
+  useEffect(()=>{
+    if(stream.current&&video.current){
+      video.current.srcObject=stream.current;
+      void video.current.play().catch(()=>{});
+    }
+  },[status]);
   const join=async()=>{
     if(!active||joining.current||peer.current||!signal.data||
       signal.data.status!=='offered'||signal.data.connectionId!==pointer.connectionId)
