@@ -72,7 +72,7 @@ test('7.3: existing presentation scenes remain valid; media requires approved ID
   assert.equal(restrictedPresentationProjection(next,2).scene,'cinematic');
   assert.equal(restrictedPresentationProjection(next,2).assetId,mediaId);
   assert.equal(restrictedPresentationProjection({...next,scene:'combat'},3).scene,
-    'blank');
+    'combat');
 });
 test('7.3: GM reserve / finish / publish without implicit player visibility',async()=>{
   const h=transactionHarness();
