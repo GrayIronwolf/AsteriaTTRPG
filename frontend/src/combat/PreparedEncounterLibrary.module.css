@@ -30,3 +30,18 @@
 .custom legend{padding-inline:var(--ast-space-2)}
 .custom button{align-self:end}
 @media(max-width:600px){.saved article{align-items:stretch}.source{display:grid}.custom{grid-template-columns:1fr 1fr}}
+
+.filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));
+  gap:var(--ast-space-2);padding:var(--ast-space-3);
+  background:var(--ast-color-panel-raised);border:1px solid var(--ast-color-outline-soft);
+  border-radius:var(--ast-radius-sm)}
+.filters label{min-width:0;display:grid;gap:var(--ast-space-1)}
+.filters :where(input,select){width:100%;min-width:0;
+  border:1px solid var(--ast-color-outline-soft);background:var(--ast-color-panel);
+  color:var(--ast-color-text);padding:var(--ast-space-2)}
+.entryInfo{flex:1;min-width:min(100%,220px)}
+.entryInfo .preview{display:grid;gap:var(--ast-space-2);
+  border-top:1px solid var(--ast-color-outline-soft);margin-top:var(--ast-space-2);
+  padding:var(--ast-space-2)}
+.preview ul{margin:0;padding-left:var(--ast-space-4);max-height:260px;overflow:auto}
+.editor input[type='checkbox']{width:auto;margin:0}
