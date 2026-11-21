@@ -15,6 +15,8 @@ import {normalizePreparedEncounters,preparedEncounterRoster} from '../src/state/
 import {validatePreparedLoadRequest} from '../src/state/preparedEncounterLoadModel.mjs';
 import {combatMapMovePlan,synchronizeCombatMapTokens,activeMapEncounter} from '../src/state/battleMapCombatModel.mjs';
 import {preparedMapTokenCapacity} from '../src/state/preparedBattleMapModel.mjs';
+import {applyLiveTimerCommand,resetLiveTurnTimer}
+  from '../src/state/liveCombatCommandModel.mjs';
 import { currentCombatant, initiativeResult, initiativeOrder, combatOptions, combatRestriction, optionProblem, skillCheck, rollD20, checkResult, attackResult, counterspellResult, validateReactionEquipment, payCombatCosts, changeCombatHP, deathSave, feedback, mixedDamage, rows, SPELL_RANKS, SPELL_SKILL_ACCESS } from '../src/state/combatRules.mjs';
 
 const copy=value=>JSON.parse(JSON.stringify(value));
@@ -23,7 +25,7 @@ const bounded=(value,min=0,max=1e9)=>{const n=Number(value);if(!Number.isFinite(
 const roll=()=>randomInt(1,21);
 const numberDie=()=> (roll()-1)/20;
 const combatCharacterFields=new Set(['hp','sp','mp','bp','zp','resources','resourceDefinitions','resourceState','conditions','downed','activeEffects','effects','talentResourceEffects','talentResourceState','talentStateVersion','talentEffects','talentRestBonus','talentSavingThrows','talentUsage','acModifiers','specialDamage','soulDamage','coreStateVersion','inventory','equipment']);
-const management=new Set(['map-link','map-move','save','load-prepared','map-prepare','start','next','end','clear','approve','reject','window','close-window','resolve','roll','resolve-reaction','correct','condition','ambush','trigger-prepared']);
+const management=new Set(['timer','map-link','map-move','save','load-prepared','map-prepare','start','next','end','clear','approve','reject','window','close-window','resolve','roll','resolve-reaction','correct','condition','ambush','trigger-prepared']);
 const publicPending=p=>p?{id:p.id,actorId:p.actorId,actorName:p.actorName,optionId:p.actorKind==='player'?p.optionId:'',name:p.actorKind==='player'?p.name:'Creature action',status:p.status,targetIds:p.targetIds,ap:p.ap,bonus:p.bonus,apPaid:Boolean(p.prepaidAP),costs:p.actorKind==='player'?p.costs:{},reactionWindow:p.status==='reactions',reactorId:p.window?.[p.windowIndex||0]?.actorId||'',reactionChoices:p.window?.[p.windowIndex||0]?.choices||[],reaction:p.reaction?{actorId:p.reaction.actorId,name:p.reaction.name}:null,message:p.publicMessage||''}:null;
 
 // An extension of asteriaAction: one encounter document, existing resource/effect
@@ -136,6 +138,7 @@ export function createCombatCommands(context) {
       };
       const startTurn=()=>{
         const current=currentCombatant(encounter);if(!current)return;
+        encounter.turnTimer=resetLiveTurnTimer(encounter.turnTimer||{},now);
         const previous=state(current.id),turns=(previous.turns||0)+1;
         setState(current.id,{ap:3,bonus:true,turns,prepared:null,disengaged:false,movement:null,turnStartedAt:now,pendingDeathSave:false,turnComplete:false,apSpends:[]});
         delete privateState.preparations[current.id];
@@ -352,6 +355,13 @@ export function createCombatCommands(context) {
           encounter.battleMapId=requestedPreparedMapId;
           log('Prepared battle map linked with combatant tokens.');
         }
+      }else if(input.operation==='timer'){
+        if(!gm)throw new Error('Only the GM may configure the combat turn timer.');
+        encounter.turnTimer=applyLiveTimerCommand(encounter.turnTimer||{},input,
+          encounter.status,now);
+        log('GM '+(input.mode==='configure'?'configured':
+          input.mode==='disable'?'disabled':input.mode==='pause'?'paused':'resumed')+
+          ' the combat turn timer.');
       }else if(input.operation==='end-turn'){
         requireActive();controlled();noPending();
         if(currentCombatant(encounter)?.id!==actorId)throw new Error('Only the current participant can end their turn.');
