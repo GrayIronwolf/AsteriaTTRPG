@@ -81,6 +81,26 @@ service cloud.firestore {
       return isCampaignMember(sharedCampaign(campaignId), campaignId);
     }
 
+    // Phase 7.2: a restricted viewer is NOT a campaign member. Their
+    // authority is limited to one sanitized presentation document only.
+    function hasHybridViewerGrant(campaignId) {
+      let path = /databases/$(database)/documents/campaigns/$(campaignId)/hybridViewerGrants/$(request.auth.uid);
+      return signedIn() && exists(path) &&
+        get(path).data.get('uid','') == request.auth.uid;
+    }
+
+    function activeHybridViewer(campaignId) {
+      let grant = get(/databases/$(database)/documents/campaigns/$(campaignId)/hybridViewerGrants/$(request.auth.uid)).data;
+      let session = get(/databases/$(database)/documents/campaigns/$(campaignId)/hybridSessionControl/current).data;
+      return hasHybridViewerGrant(campaignId) &&
+        grant.get('status','') == 'active' &&
+        grant.get('expiresAt',request.time) > request.time &&
+        session.get('status','') == 'open' &&
+        session.get('expiresAt',request.time) > request.time &&
+        session.get('epoch','') != '' &&
+        grant.get('epoch','') == session.get('epoch','');
+    }
+
     function activeSession(campaignId) {
       let session = get(/databases/$(database)/documents/campaigns/$(campaignId)/liveSession/current).data;
       return session.status == 'active' && session.expiresAt is timestamp && request.time < session.expiresAt;
@@ -544,6 +564,27 @@ service cloud.firestore {
       // Phase 10.1: a restricted screen is controlled only by a GM callable.
       // Viewers can read the safe projection with active campaign membership;
       // they cannot read the private controller or write either document.
+      // GM sessions / per-user grants are written only by trusted callables.
+      // A grant does not confer general campaign or map access.
+      match /hybridSessionControl/{documentId} {
+        allow get: if documentId == 'current' &&
+          (isCampaignGM(campaignId) || hasHybridViewerGrant(campaignId));
+        allow list: if isCampaignGM(campaignId);
+        allow create, update, delete: if false;
+      }
+      match /hybridViewerGrants/{viewerUid} {
+        allow get: if isCampaignGM(campaignId) ||
+          (signedIn() && viewerUid == request.auth.uid &&
+           resource.data.get('uid','') == request.auth.uid);
+        allow list: if isCampaignGM(campaignId);
+        allow create, update, delete: if false;
+      }
+      match /presentationRestricted/{documentId} {
+        allow get: if documentId == 'current' &&
+          (isCampaignGM(campaignId) || activeHybridViewer(campaignId));
+        allow list: if isCampaignGM(campaignId);
+        allow create, update, delete: if false;
+      }
       match /presentationControl/{documentId} {
         allow get, list: if isCampaignGM(campaignId);
         allow create, update, delete: if false;
