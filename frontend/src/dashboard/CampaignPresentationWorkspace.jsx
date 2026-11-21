@@ -4,6 +4,7 @@ import {PRESENTATION_DEFAULT,PRESENTATION_SCENES,PRESENTATION_THEMES,
 } from '../../../src/state/playerPresentationModel.mjs';
 import {presentationDraft,partyForPresentation} from './campaignMediaModel.mjs';
 import {HybridSessionManager} from './HybridSessionManager.jsx';
+import {GMScreenCaptureControls} from './GMScreenCaptureControls.jsx';
 import {GMPresentationAssets} from './GMPresentationAssets.jsx';
 import {PresentationMediaFrame} from './PresentationMediaFrame.jsx';
 import {PRESENTATION_MEDIA_SCENES} from '../../../src/state/presentationAssetModel.mjs';
@@ -192,6 +193,8 @@ export function CampaignPresentationController({api,campaignId,party=[]}){
       Refresh Safe Combat &amp; Map Feeds
     </button>
     <HybridSessionManager api={api} campaignId={campaignId}/>
+    <GMScreenCaptureControls api={api} campaignId={campaignId}
+      controlRevision={control.data?.revision||0}/>
     {message?<p role="status">{message}</p>:null}
   </section>;
 }
