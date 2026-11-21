@@ -73,7 +73,10 @@ test('Phase 7.0: media and viewer route preserve existing architecture without a
   assert.match(routes,/\/react\\\/presentation/);
   assert.match(page,/CampaignPresentationDisplay/);
   assert.match(ui,/CampaignPresentationController/);
-  assert.match(ui,/requestFullscreen/);
+  // Phase 7.5 moves shared fullscreen behaviour into the projector hook.
+  const lifecycle=read('frontend/src/dashboard/usePresentationDisplayRuntime.js');
+  assert.match(ui,/usePresentationDisplayRuntime/);
+  assert.match(lifecycle,/requestFullscreen/);
   assert.match(ui,/Present Scene/);
   assert.match(ui,/Blackout/);
   assert.match(media,/createFirebaseCampaignMediaService/);
