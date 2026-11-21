@@ -1,0 +1,33 @@
+name: Phase 6.4 Safe Prepared Encounter Loading
+on:
+  pull_request:
+    paths:
+      - 'src/state/preparedEncounterLoadModel.mjs'
+      - 'frontend/src/combat/**'
+      - 'functions/combatCommands.mjs'
+      - 'scripts/site-prepared-encounters-phase6-4.test.mjs'
+      - '.github/workflows/phase-6-4-safe-encounter-loading.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  safe-encounter-load:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Encounter loading and combat regression tests
+        run: node --test scripts/site-prepared-encounters-phase6-2.test.mjs scripts/site-prepared-encounters-phase6-3.test.mjs scripts/site-prepared-encounters-phase6-4.test.mjs scripts/site-combat-phase7-1.test.mjs
+      - name: Scoped lint
+        run: npx eslint frontend/src/combat src/state/preparedEncounterLoadModel.mjs functions/combatCommands.mjs
+      - name: React site validation
+        run: npm run site:check
+      - name: React production build
+        run: npm run site:build
+      - name: Verify distribution
+        run: npm run site:verify-dist
