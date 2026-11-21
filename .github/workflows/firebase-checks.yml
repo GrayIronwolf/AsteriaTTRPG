@@ -2,7 +2,7 @@ name: Firebase and website checks
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main, Website-Build-Test]
 permissions:
   contents: read
 jobs:
