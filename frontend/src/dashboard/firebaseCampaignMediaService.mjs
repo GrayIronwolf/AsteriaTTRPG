@@ -41,7 +41,6 @@ export function createFirebaseCampaignMediaService({
   const hybridGrantRef=(id,uid)=>firestoreSdk.doc(db,'campaigns',id,'hybridViewerGrants',uid);
   const restrictedRef=id=>firestoreSdk.doc(db,'campaigns',id,'presentationRestricted','current');
   const assetCol=id=>firestoreSdk.collection(db,'campaigns',id,'presentationAssets');
-  const assetRef=(id,asset)=>firestoreSdk.doc(db,'campaigns',id,'presentationAssets',asset);
   const presentationRef=(id,mode)=>firestoreSdk.doc(db,'campaigns',id,
     mode==='gm'?'presentationControl':'presentationShared','current');
   async function verified(){
