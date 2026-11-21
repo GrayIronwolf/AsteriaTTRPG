@@ -221,7 +221,7 @@ export function CampaignPresentationController({api,campaignId,uid,party=[]}){
       </>:null}
     </div>
     <div className={styles.actions}>
-      <button type="button" disabled={busy||control.loading||Boolean(control.error)}
+      <butt<button type="button" disabled={busy||control.loading||Boolean(control.error)}
         data-testid="site-presentation-publish" onClick={()=>run('set-scene')}>Present Scene</button>
       <button type="button" disabled={busy||control.loading||Boolean(control.error)}
         onClick={()=>run('blackout')}>Blackout</button>
