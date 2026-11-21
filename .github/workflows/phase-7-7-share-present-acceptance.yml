@@ -1,0 +1,43 @@
+name: Phase 7.7 Share Present Security and Integration Acceptance
+on:
+  push:
+    branches: [feature/phase-7-7-share-present-acceptance]
+  pull_request:
+    paths:
+      - 'scripts/site-share-present-phase7-7*.test.mjs'
+      - 'scripts/site-media-phase6-4-browser.cjs'
+      - 'docs/PHASE-7-7-SHARE-PRESENT-ACCEPTANCE.md'
+      - 'frontend/src/dashboard/**'
+      - 'firestore.rules'
+      - 'storage.rules'
+      - '.github/workflows/phase-7-7-share-present-acceptance.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  privacy-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Phase 7.7 and Phase 6/7 integration privacy models
+        run: node --test scripts/site-share-present-phase7-7.test.mjs scripts/site-share-present-phase7-6.test.mjs scripts/site-share-present-phase7-5.test.mjs scripts/site-share-present-phase7-4.test.mjs scripts/site-share-present-phase7-3.test.mjs scripts/site-share-present-phase7-2.test.mjs scripts/site-share-present-phase7-1.test.mjs scripts/site-share-present-phase7-0.test.mjs scripts/site-combat-final-phase6-9.test.mjs
+      - name: Phase 7.7 multi-role, revocation and expired grants emulator
+        run: npx firebase emulators:exec --project demo-asteria-share-present-phase77 --only firestore,storage "node --test scripts/site-share-present-phase7-7-emulator.test.mjs"
+      - name: Phase 7.3 media and byte permissions emulator
+        run: npx firebase emulators:exec --project demo-asteria-presentation-phase73 --only firestore,storage "node --test scripts/site-share-present-phase7-3-emulator.test.mjs"
+      - name: Phase 7.4 combat and map permissions emulator
+        run: npx firebase emulators:exec --project demo-asteria-share-present-phase74 --only firestore,storage "node --test scripts/site-share-present-phase7-4-emulator.test.mjs"
+      - name: Lint acceptance tests and display controls
+        run: npx eslint scripts/site-share-present-phase7-7.test.mjs scripts/site-share-present-phase7-7-emulator.test.mjs frontend/src/dashboard/GMScreenCaptureControls.jsx frontend/src/dashboard/CampaignPresentationWorkspace.jsx frontend/src/dashboard/HybridSessionManager.jsx
+      - name: React architecture and source checks
+        run: npm run site:check
+      - name: Build React/Vite site
+        run: npm run site:build
+      - name: Verify built assets
+        run: npm run site:verify-dist
