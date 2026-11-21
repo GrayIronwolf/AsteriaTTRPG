@@ -1,0 +1,11 @@
+.panel{display:grid;min-width:0;gap:var(--ast-space-3);padding:var(--ast-space-4);border:1px solid var(--ast-color-outline-soft);border-radius:var(--ast-radius-panel);background:var(--ast-color-panel)}
+.panel h3,.panel p{margin:0}
+.panel label{display:grid;gap:var(--ast-space-2)}
+.panel select,.panel button{min-height:42px;padding:var(--ast-space-2);background:var(--ast-color-panel-raised);color:var(--ast-color-text);border:1px solid var(--ast-color-outline-soft);border-radius:var(--ast-radius-sm);font:inherit}
+.panel button:disabled{opacity:.55}
+.panel button:focus-visible,.panel select:focus-visible,.panel input:focus-visible{outline:3px solid var(--ast-color-focus);outline-offset:2px}
+.panel .checkbox{display:flex;align-items:center;gap:var(--ast-space-2)}
+.panel .checkbox input{width:20px;height:20px;flex:none}
+.actions{display:flex;flex-wrap:wrap;align-items:center;gap:var(--ast-space-2)}
+.video{background:var(--ast-color-panel-slate);width:100%;max-height:48vh;min-height:200px;aspect-ratio:16/9;object-fit:contain}
+@media(max-width:660px){.panel{padding:var(--ast-space-3)}.actions button{flex:1}}
