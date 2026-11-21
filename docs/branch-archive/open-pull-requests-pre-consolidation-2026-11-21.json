@@ -1,203 +1,377 @@
 {
   "repository": "GrayIronwolf/AsteriaTTRPG",
   "recordedAt": "2026-11-21",
-  "purpose": "PR metadata snapshot before branch cleanup. Draft feature implementations remain preserved in archived Git history.",
+  "purpose": "Complete open-PR metadata snapshot immediately prior to the branch cleanup. Open PRs may be closed when head branches are removed; all head commits are preserved in the archive merge history.",
   "openPullRequests": [
     {
       "number": 367,
       "title": "Share & Present Improvement 9: Optional Authenticated WebRTC Screen Sharing",
       "url": "https://github.com/GrayIronwolf/AsteriaTTRPG/pull/367",
-      "head": null,
-      "base": null
+      "state": "open",
+      "draft": true,
+      "head": "feature/share-present-improvement-9-webrtc-screen-share",
+      "head_sha": "2ec64de5e951ee9560366723eaef5ba01090e4b6",
+      "base": "feature/share-present-improvement-8-sync-performance"
     },
     {
       "number": 365,
       "title": "Share & Present Improvement 8: Safe Realtime Synchronization and Performance",
       "url": "https://github.com/GrayIronwolf/AsteriaTTRPG/pull/365",
-      "head": null,
-      "base": null
+      "state": "open",
+      "draft": true,
+      "head": "feature/share-present-improvement-8-sync-performance",
+      "head_sha": "966e803a23f5d8cfb93e6118a9ed7577e40abc48",
+      "base": "feature/share-present-improvement-7-audience-reveals"
     },
     {
       "number": 364,
       "title": "Share & Present Improvement 7: Secure Audience-Specific Reveals",
       "url": "https://github.com/GrayIronwolf/AsteriaTTRPG/pull/364",
-      "head": null,
-      "base": null
+      "state": "open",
+      "draft": true,
+      "head": "feature/share-present-improvement-7-audience-reveals",
+      "head_sha": "a5943c4f0366883dd62576deb06258dcbcfa5780",
+      "base": "feature/share-present-improvement-6-display-modes"
     },
     {
       "number": 363,
       "title": "Share & Present Improvement 6: Dedicated Player Display Modes",
       "url": "https://github.com/GrayIronwolf/AsteriaTTRPG/pull/363",
-      "head": null,
-      "base": null
+      "state": "open",
+      "draft": true,
+      "head": "feature/share-present-improvement-6-display-modes",
+      "head_sha": "3b0ed4f783a59b534718a3d8a5560e7e213e10fa",
+      "base": "feature/share-present-improvement-5-player-invitations"
     },
     {
       "number": 362,
       "title": "Share & Present Improvement 5: Secure Player Invitations and Acceptance",
       "url": "https://github.com/GrayIronwolf/AsteriaTTRPG/pull/362",
-      "head": null,
-      "base": null
+      "state": "open",
+      "draft": true,
+      "head": "feature/share-present-improvement-5-player-invitations",
+      "head_sha": "f713ba410f6a3a26aae2d61ea3f8391a86cfd680",
+      "base": "feature/share-present-improvement-4-prepared-encounters"
     },
     {
       "number": 361,
       "title": "Share & Present Improvement 4: Prepared Encounter Integration",
       "url": "https://github.com/GrayIronwolf/AsteriaTTRPG/pull/361",
-      "head": null,
-      "base": null
+      "state": "open",
+      "draft": true,
+      "head": "feature/share-present-improvement-4-prepared-encounters",
+      "head_sha": "633ffd414ef1729706f62b58f89127986c620605",
+      "base": "feature/share-present-improvement-3-scene-playlists"
     },
     {
       "number": 360,
       "title": "Share & Present Improvement 3: GM Scene Playlists and Quick Transitions",
       "url": "https://github.com/GrayIronwolf/AsteriaTTRPG/pull/360",
-      "head": null,
-      "base": null
+      "state": "open",
+      "draft": true,
+      "head": "feature/share-present-improvement-3-scene-playlists",
+      "head_sha": "4bfb540890c10872c229eef6d24b07e04320482c",
+      "base": "feature/share-present-improvement-2-gm-studio"
     },
     {
       "number": 359,
       "title": "Share & Present Improvement 2: Customizable GM Presentation Studio",
       "url": "https://github.com/GrayIronwolf/AsteriaTTRPG/pull/359",
-      "head": null,
-      "base": null
+      "state": "open",
+      "draft": true,
+      "head": "feature/share-present-improvement-2-gm-studio",
+      "head_sha": "009e7260a8b901732b527e21174082e9f1fc69f5",
+      "base": "feature/share-present-improvement-1-security-emergency"
     },
     {
       "number": 358,
       "title": "Share & Present Improvement 1: atomic GM emergency stop, privacy and browser hardening (draft)",
       "url": "https://github.com/GrayIronwolf/AsteriaTTRPG/pull/358",
-      "head": null,
-      "base": null
+      "state": "open",
+      "draft": true,
+      "head": "feature/share-present-improvement-1-security-emergency",
+      "head_sha": "70e46e584929cc76b13514ca4cb70259cc69345c",
+      "base": "feature/phase-7-7-share-present-acceptance"
     },
     {
       "number": 357,
       "title": "Phase 7.7: Share & Present multi-role security, visual/performance release gates (draft; follows #356)",
       "url": "https://github.com/GrayIronwolf/AsteriaTTRPG/pull/357",
-      "head": null,
-      "base": null
+      "state": "open",
+      "draft": true,
+      "head": "feature/phase-7-7-share-present-acceptance",
+      "head_sha": "ed4fdf52d27064f944bf09bb064df1340fecc841",
+      "base": "feature/phase-7-6-gm-screen-capture-controls"
     },
     {
       "number": 356,
       "title": "Phase 7.6: GM screen capture preview, consent, stop and viewer safety controls (draft; follows #355)",
       "url": "https://github.com/GrayIronwolf/AsteriaTTRPG/pull/356",
-      "head": null,
-      "base": null
+      "state": "open",
+      "draft": true,
+      "head": "feature/phase-7-6-gm-screen-capture-controls",
+      "head_sha": "428ec802b3de24bb1bcc526e35c8bc62b833b28b",
+      "base": "feature/phase-7-5-projector-secure-viewer-reconnect"
     },
     {
       "number": 355,
       "title": "Phase 7.5: secure projector, second-screen and restricted-viewer recovery (draft; follows #354)",
       "url": "https://github.com/GrayIronwolf/AsteriaTTRPG/pull/355",
-      "head": null,
-      "base": null
+      "state": "open",
+      "draft": true,
+      "head": "feature/phase-7-5-projector-secure-viewer-reconnect",
+      "head_sha": "8ae44c38044db635d492f98367bf140a2279edee",
+      "base": "feature/phase-7-4-secure-live-combat-battle-map-presentation"
     },
     {
       "number": 354,
       "title": "Phase 7.4: secure live combat and battle-map presentation (draft; follows #353)",
       "url": "https://github.com/GrayIronwolf/AsteriaTTRPG/pull/354",
-      "head": null,
-      "base": null
+      "state": "open",
+      "draft": true,
+      "head": "feature/phase-7-4-secure-live-combat-battle-map-presentation",
+      "head_sha": "75b352ab4f2f99f15aed7c711efed75adcbb38c5",
+      "base": "feature/phase-7-3-approved-presentation-media-scenes"
     },
     {
       "number": 353,
       "title": "Phase 7.3: approved presentation media uploads, scenes and viewer byte access (draft; follows #352)",
       "url": "https://github.com/GrayIronwolf/AsteriaTTRPG/pull/353",
-      "head": null,
-      "base": null
+      "state": "open",
+      "draft": true,
+      "head": "feature/phase-7-3-approved-presentation-media-scenes",
+      "head_sha": "5af6bcd693d3f53e2fb9530487bc54d62d8cee25",
+      "base": "feature/phase-7-2-hybrid-session-viewer-permissions"
     },
     {
       "number": 352,
       "title": "Phase 7.2: Hybrid Session Manager and restricted viewer permissions (draft; follows #351)",
       "url": "https://github.com/GrayIronwolf/AsteriaTTRPG/pull/352",
-      "head": null,
-      "base": null
+      "state": "open",
+      "draft": true,
+      "head": "feature/phase-7-2-hybrid-session-viewer-permissions",
+      "head_sha": "a870a4d50f45b5ba1453c2db96fd2f3b241b5bfc",
+      "base": "feature/phase-7-1-unified-media-library"
     },
     {
       "number": 351,
       "title": "Phase 7.1: unified GM campaign media library (draft; follows #350)",
       "url": "https://github.com/GrayIronwolf/AsteriaTTRPG/pull/351",
-      "head": null,
-      "base": null
+      "state": "open",
+      "draft": true,
+      "head": "feature/phase-7-1-unified-media-library",
+      "head_sha": "50f4e1f2bdcecfe31f6998442caed80da7d9f1ea",
+      "base": "feature/phase-7-0-share-present-architecture-audit"
     },
     {
       "number": 350,
       "title": "Phase 7.0: Share & Present architecture, privacy and integration audit (draft; follows #349)",
       "url": "https://github.com/GrayIronwolf/AsteriaTTRPG/pull/350",
-      "head": null,
-      "base": null
+      "state": "open",
+      "draft": true,
+      "head": "feature/phase-7-0-share-present-architecture-audit",
+      "head_sha": "0dd52471a18ae9f29166f819396054eecfb2103b",
+      "base": "feature/phase-6-9-final-combat-acceptance"
     },
     {
       "number": 349,
       "title": "Phase 6.9: final GM/Player combat regression and security acceptance (draft; follows #348)",
       "url": "https://github.com/GrayIronwolf/AsteriaTTRPG/pull/349",
-      "head": null,
-      "base": null
+      "state": "open",
+      "draft": true,
+      "head": "feature/phase-6-9-final-combat-acceptance",
+      "head_sha": "b485bd97aeb22776b9a4f6a131926756df64a8fe",
+      "base": "feature/phase-6-8-encounter-completion-history"
     },
     {
       "number": 348,
       "title": "Phase 6.8: encounter completion, GM review, reward delivery and history (draft; follows #346)",
       "url": "https://github.com/GrayIronwolf/AsteriaTTRPG/pull/348",
-      "head": null,
-      "base": null
+      "state": "open",
+      "draft": true,
+      "head": "feature/phase-6-8-encounter-completion-history",
+      "head_sha": "3ea124d875ae0059df983201de339e8ca7e74201",
+      "base": "feature/phase-6-7-encounter-waves-events"
     },
     {
       "number": 346,
       "title": "Phase 6.7: prepared encounter waves and GM-triggered events (draft; follows #345)",
       "url": "https://github.com/GrayIronwolf/AsteriaTTRPG/pull/346",
-      "head": null,
-      "base": null
+      "state": "open",
+      "draft": true,
+      "head": "feature/phase-6-7-encounter-waves-events",
+      "head_sha": "acdb9fe2a41f10ee97ec96f46da86bfda3138833",
+      "base": "feature/phase-6-6-live-combat-command-centre"
     },
     {
       "number": 345,
       "title": "Phase 6.6: GM live combat controls and authoritative adjudication (draft; follows #344)",
       "url": "https://github.com/GrayIronwolf/AsteriaTTRPG/pull/345",
-      "head": null,
-      "base": null
+      "state": "open",
+      "draft": true,
+      "head": "feature/phase-6-6-live-combat-command-centre",
+      "head_sha": "5cb771514b797c7c990462e6c7ffc6a9d5f691a0",
+      "base": "feature/phase-6-5-battle-map-preparation-integration"
     },
     {
       "number": 344,
       "title": "Phase 6.5: GM battle map preparation and combat integration (draft; follows #343)",
       "url": "https://github.com/GrayIronwolf/AsteriaTTRPG/pull/344",
-      "head": null,
-      "base": null
+      "state": "open",
+      "draft": true,
+      "head": "feature/phase-6-5-battle-map-preparation-integration",
+      "head_sha": "ab5cb072891eeae145e2d01abca2e022bd87f3e4",
+      "base": "feature/phase-6-4-safe-load-prepared-encounter"
     },
     {
       "number": 343,
       "title": "Phase 6.4: safe reviewed loading of prepared encounters (draft; follows #342)",
       "url": "https://github.com/GrayIronwolf/AsteriaTTRPG/pull/343",
-      "head": null,
-      "base": null
+      "state": "open",
+      "draft": true,
+      "head": "feature/phase-6-4-safe-load-prepared-encounter",
+      "head_sha": "8c8c6b8e22d19b7121029690e95904f35d15794e",
+      "base": "feature/phase-6-3-prepared-encounter-library-management"
     },
     {
       "number": 342,
       "title": "Phase 6.3: Prepared Encounter Library organisation, previews and archives (draft; follows #341)",
       "url": "https://github.com/GrayIronwolf/AsteriaTTRPG/pull/342",
-      "head": null,
-      "base": null
+      "state": "open",
+      "draft": true,
+      "head": "feature/phase-6-3-prepared-encounter-library-management",
+      "head_sha": "5d6ea95f5975a38877fb3dce698047f1ae9996b9",
+      "base": "feature/phase-6-2-prepared-encounter-library"
     },
     {
       "number": 341,
       "title": "Phase 6.2: GM Prepared Encounter Builder and Library (draft; follows #340)",
       "url": "https://github.com/GrayIronwolf/AsteriaTTRPG/pull/341",
-      "head": null,
-      "base": null
+      "state": "open",
+      "draft": true,
+      "head": "feature/phase-6-2-prepared-encounter-library",
+      "head_sha": "a82b2058348b9285bc6672b66b876955166d1a5f",
+      "base": "feature/phase-6-1c-gm-combat-command-centre"
     },
     {
       "number": 340,
       "title": "Phase 6.1C: GM Combat Command Centre freeform windows (draft, depends on #339)",
       "url": "https://github.com/GrayIronwolf/AsteriaTTRPG/pull/340",
-      "head": null,
-      "base": null
+      "state": "open",
+      "draft": true,
+      "head": "feature/phase-6-1c-gm-combat-command-centre",
+      "head_sha": "ce9619aff65ba388cdf845888393538b8703afec",
+      "base": "feature/phase-6-1b-player-gm-direct-workspace"
     },
     {
       "number": 339,
       "title": "Phase 6.1B: direct Player and GM workspace editing (draft, depends on #338)",
       "url": "https://github.com/GrayIronwolf/AsteriaTTRPG/pull/339",
-      "head": null,
-      "base": null
+      "state": "open",
+      "draft": true,
+      "head": "feature/phase-6-1b-player-gm-direct-workspace",
+      "head_sha": "877ca015db1a48fe0e5b5877129a8bbc9697bc72",
+      "base": "feature/phase-6-1a-freeform-workspace-engine"
     },
     {
       "number": 338,
       "title": "Phase 6.1A: opt-in freeform workspace engine (restoration-isolated)",
       "url": "https://github.com/GrayIronwolf/AsteriaTTRPG/pull/338",
-      "head": null,
-      "base": null
+      "state": "open",
+      "draft": true,
+      "head": "feature/phase-6-1a-freeform-workspace-engine",
+      "head_sha": "da5aeea078f957f1794d0177a0a663e3d0f63018",
+      "base": "main"
+    },
+    {
+      "number": 272,
+      "title": "Bump globals from 16.5.0 to 17.14.0",
+      "url": "https://github.com/GrayIronwolf/AsteriaTTRPG/pull/272",
+      "state": "open",
+      "draft": false,
+      "head": "dependabot/npm_and_yarn/globals-17.14.0",
+      "head_sha": "c325b894614ad544411b3bd97d1ef420409989e1",
+      "base": "main"
+    },
+    {
+      "number": 271,
+      "title": "Bump react-test-renderer from 18.3.1 to 19.3.1",
+      "url": "https://github.com/GrayIronwolf/AsteriaTTRPG/pull/271",
+      "state": "open",
+      "draft": false,
+      "head": "dependabot/npm_and_yarn/react-test-renderer-19.3.1",
+      "head_sha": "7d1e27e143d830b7f2e528750106adb223f9ab31",
+      "base": "main"
+    },
+    {
+      "number": 270,
+      "title": "Bump eslint from 9.39.5 to 10.14.0",
+      "url": "https://github.com/GrayIronwolf/AsteriaTTRPG/pull/270",
+      "state": "open",
+      "draft": false,
+      "head": "dependabot/npm_and_yarn/eslint-10.14.0",
+      "head_sha": "1acae86470390918d671fbcf653d86075d86bc80",
+      "base": "main"
+    },
+    {
+      "number": 269,
+      "title": "Bump firebase-tools from 15.35.0 to 15.36.0",
+      "url": "https://github.com/GrayIronwolf/AsteriaTTRPG/pull/269",
+      "state": "open",
+      "draft": false,
+      "head": "dependabot/npm_and_yarn/firebase-tools-15.36.0",
+      "head_sha": "55f3cb194b5770477340c9dbc0d8002fa5ef62fa",
+      "base": "main"
+    },
+    {
+      "number": 268,
+      "title": "Bump firebase-admin from 14.5.0 to 14.5.1",
+      "url": "https://github.com/GrayIronwolf/AsteriaTTRPG/pull/268",
+      "state": "open",
+      "draft": false,
+      "head": "dependabot/npm_and_yarn/firebase-admin-14.5.1",
+      "head_sha": "a3f8d86fa3feae44fa905f4184009205dc40468b",
+      "base": "main"
+    },
+    {
+      "number": 267,
+      "title": "Bump actions/setup-java from 4 to 6",
+      "url": "https://github.com/GrayIronwolf/AsteriaTTRPG/pull/267",
+      "state": "open",
+      "draft": false,
+      "head": "dependabot/github_actions/actions/setup-java-5",
+      "head_sha": "e1fe6bf3c6222bc3d2a6cf0d23c82bfed5486445",
+      "base": "main"
+    },
+    {
+      "number": 101,
+      "title": "Bump peter-evans/create-pull-request from 7 to 8",
+      "url": "https://github.com/GrayIronwolf/AsteriaTTRPG/pull/101",
+      "state": "open",
+      "draft": false,
+      "head": "dependabot/github_actions/peter-evans/create-pull-request-8",
+      "head_sha": "9b76a3f78d0bfd16cd25fd42cdcc98fd2bd766e9",
+      "base": "main"
+    },
+    {
+      "number": 33,
+      "title": "build(deps): bump actions/checkout from 4 to 7",
+      "url": "https://github.com/GrayIronwolf/AsteriaTTRPG/pull/33",
+      "state": "open",
+      "draft": false,
+      "head": "dependabot/github_actions/actions/checkout-7",
+      "head_sha": "86304b7c4e9664d1b3fdd62ea05ab3b735b8bc4e",
+      "base": "main"
+    },
+    {
+      "number": 32,
+      "title": "build(deps): bump actions/setup-node from 4 to 7",
+      "url": "https://github.com/GrayIronwolf/AsteriaTTRPG/pull/32",
+      "state": "open",
+      "draft": false,
+      "head": "dependabot/github_actions/actions/setup-node-7",
+      "head_sha": "d4722541d41ed2abf64a1ce597c3d03d5c14a9ec",
+      "base": "main"
     }
   ]
 }
