@@ -10,6 +10,8 @@ import {CampaignMapCanvas} from './CampaignMapWorkspace.jsx';
 import {PRESENTATION_MEDIA_SCENES} from '../../../src/state/presentationAssetModel.mjs';
 import styles from './HybridSessionManager.module.css';
 import {usePresentationDisplayRuntime} from './usePresentationDisplayRuntime.js';
+import {PresentationDisplayModeControls,usePresentationDisplayPreferences}
+  from './PresentationDisplayModes.jsx';
 
 export function HybridSessionManager({api,campaignId}){
   const result=useCampaignStream(api,'watchGMHybridSession',[campaignId]);
@@ -190,10 +192,15 @@ function ActiveRestrictedPresentation({api,campaignId}){
       <p role="status">Display is blacked out.</p>}
   </div>;
 }
-export function RestrictedPresentationDisplay({api,campaignId}){
+export function RestrictedPresentationDisplay({api,campaignId,uid=''}) {
   const runtime=usePresentationDisplayRuntime();
+  const displayModes=usePresentationDisplayPreferences(uid,campaignId,'restricted','remote-desktop');
+  const prefs=displayModes.prefs;
   return <section ref={runtime.root} className={styles.display}
-    data-asteria-restricted-presentation="" data-testid="site-restricted-presentation">
+    data-asteria-restricted-presentation="" data-testid="site-restricted-presentation"
+    data-display-mode={prefs.preset}
+    data-clean-fullscreen={prefs.cleanFullscreen?'true':'false'}
+    style={{'--display-zoom':prefs.scale/100}}>
     <header><strong>Asteria · Restricted Presentation</strong>
       <div className={styles.controls}>
         <span role="status">{!runtime.online?'Offline · display paused':
@@ -204,10 +211,19 @@ export function RestrictedPresentationDisplay({api,campaignId}){
           {runtime.fullscreen?'Exit Fullscreen':'Fullscreen'}</button>
       </div>
     </header>
+    <div className={styles.modeToolbar}>
+      <PresentationDisplayModeControls prefs={prefs} onChange={displayModes.update}/>
+      {displayModes.message?<p role="status">{displayModes.message}</p>:null}
+    </div>
+    {runtime.fullscreen&&prefs.cleanFullscreen?<button type="button"
+      className={styles.fullscreenExit} onClick={runtime.toggleFullscreen}>
+      Exit Fullscreen</button>:null}
     {!runtime.ready?<p role="alert">Connection or display interrupted.
       Private content is hidden until your invitation is verified again.</p>:
       <RestrictedInvitationGate key={campaignId+':'+runtime.generation}
         api={api} campaignId={campaignId}/>}
     {runtime.error?<p role="alert">{runtime.error}</p>:null}
+    {prefs.showOverlay&&runtime.ready?<p className={styles.displayOverlay}
+      aria-hidden="true">Asteria · Private approved viewer display</p>:null}
   </section>;
 }
