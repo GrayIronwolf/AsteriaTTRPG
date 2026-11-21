@@ -52,8 +52,10 @@ test('7.2: safe viewer projection never carries map or party/combat/private fiel
     characterIds:['player-1'],hp:[99,100],gmNotes:'SECRET',
     storagePath:'campaigns/hidden',combatants:[{name:'Wolf'}],theme:'slate'};
   const a=restrictedPresentationProjection(full,5);
-  assert.deepEqual(a,{version:1,revision:5,scene:'blank',
-    title:'',subtitle:'',theme:'slate'});
+  assert.deepEqual(a,{version:1,revision:5,scene:'battle-map',
+    title:'',subtitle:'',theme:'slate',mapId:'secret-map'});
+  assert.equal('gmNotes' in a,false);
+  assert.equal('combatants' in a,false);
   const b=restrictedPresentationProjection({
     scene:'announcement',title:'The gates open',subtitle:'Beware',
     ownerUid:'private',theme:'parchment'
