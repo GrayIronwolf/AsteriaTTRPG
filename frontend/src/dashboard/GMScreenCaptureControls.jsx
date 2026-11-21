@@ -42,6 +42,11 @@ export function GMScreenCaptureControls({api,campaignId,controlRevision=0}){
       window.removeEventListener('pagehide',leave);
     };
   },[stop]);
+  useEffect(()=>{
+    if(!capturing||!stream.current||!video.current)return;
+    video.current.srcObject=stream.current;
+    void video.current.play().catch(()=>{});
+  },[capturing]);
   const start=async()=>{
     if(busy||stream.current)return;
     setError('');setNotice('');
@@ -66,10 +71,6 @@ export function GMScreenCaptureControls({api,campaignId,controlRevision=0}){
       if(!track||track.readyState!=='live')throw Error('No active screen selected.');
       stream.current=captured;
       track.addEventListener('ended',stop,{once:true});
-      if(video.current){
-        video.current.srcObject=captured;
-        await video.current.play().catch(()=>{});
-      }
       if(attempt===generation.current){
         setCapturing(true);
         setNotice('Local preview active. Nothing is being sent to viewers.');
