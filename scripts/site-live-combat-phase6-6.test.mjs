@@ -156,6 +156,19 @@ test('Phase 6.6: server remains authoritative for timer, action and resource out
   assert.match(service,/combatLog:projectGMLiveLog/);
   assert.match(view,/<GMLiveCombatPanel/);
   assert.match(panel,/operation:'approve'/);
+  assert.match(panel,/operation:'window'/);
+  assert.match(panel,/operation:'react'/);
+  assert.match(panel,/operation:'pass'/);
+  assert.match(panel,/operation:'resolve-reaction'/);
+  for(const action of ['approve','reject','window','close-window','roll','resolve',
+    'react','pass','resolve-reaction']){
+    assert.equal(validateCombatCommand('gm','encounter',{
+      operation:action,revision:4
+    }).operation,action);
+  }
+  assert.throws(()=>validateCombatCommand('player','player-1',{
+    operation:'approve',revision:4
+  }),/unavailable/);
   assert.match(panel,/operation:'reject'/);
   assert.match(panel,/operation:'close-window'/);
   assert.match(panel,/operation:'roll'/);
