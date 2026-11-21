@@ -585,6 +585,20 @@ service cloud.firestore {
         allow list: if isCampaignGM(campaignId);
         allow create, update, delete: if false;
       }
+      // Phase 7.3 private media library. Publication and scene access are
+      // written only by the server; remote viewer access is enforced in Storage.
+      match /presentationAssets/{assetId} {
+        allow get, list: if isCampaignGM(campaignId);
+        allow create, update, delete: if false;
+      }
+      match /presentationAssetConfig/{documentId} {
+        allow get, list: if isCampaignGM(campaignId);
+        allow create, update, delete: if false;
+      }
+      match /presentationAssetAccess/{documentId} {
+        allow get, list: if isCampaignGM(campaignId);
+        allow create, update, delete: if false;
+      }
       match /presentationControl/{documentId} {
         allow get, list: if isCampaignGM(campaignId);
         allow create, update, delete: if false;
