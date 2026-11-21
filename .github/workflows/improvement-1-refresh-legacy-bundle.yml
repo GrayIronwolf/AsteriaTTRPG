@@ -1,0 +1,42 @@
+name: Improvement 1 - Refresh Legacy Build Artifacts
+on:
+  push:
+    branches: [feature/share-present-improvement-1-security-emergency]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: improvement-1-legacy-build-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  publish-source-matched-bundle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Generate historical production artifacts from current source
+        run: npm run build
+      - name: Commit only generated website assets to this draft branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch="feature/share-present-improvement-1-security-emergency"
+          git fetch origin "$branch"
+          if [ "$(git rev-parse "origin/$branch")" != "$GITHUB_SHA" ]; then
+            echo "Branch advanced while building; skip stale artifact publication."
+            exit 0
+          fi
+          git add -A react-dist data/compendium.js data/compendium-handbook.js data/compendium-index.js data/compendium-parts
+          if git diff --cached --quiet; then
+            echo "Generated artifacts already match source."
+            exit 0
+          fi
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "Refresh legacy website bundle after improvement 1 security hardening"
+          git push origin HEAD:"$branch"
