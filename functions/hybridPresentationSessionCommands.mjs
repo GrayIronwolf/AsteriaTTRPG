@@ -43,7 +43,7 @@ export function createHybridPresentationSessionCommands(context,{requireCampaign
           }
           if(action.type==='close'){
             if(session.status!=='open')throw Error('The viewer session is not open.');
-            tx.update(sessionRef,{status:'closed',revision,
+            tx.update(sessionRef,{status:'closed',screenShare:null,revision,
               updatedBy:currentUser.uid,updatedAt:serverTimestamp()});
             tx.set(accessRef,{assetId:'',scene:'blank',epoch:'',
               viewerExpiries:{},expiresAt:new Date(0),
@@ -93,6 +93,7 @@ export function createHybridPresentationSessionCommands(context,{requireCampaign
             revokedBy:currentUser.uid,revokedAt:serverTimestamp(),
             revision:Number(old.revision||0)+1});
           tx.update(sessionRef,{revision,grantCount:Object.keys(viewers).length,
+            ...(session.screenShare?.viewerUid===action.uid?{screenShare:null}:{}),
             invitationCount:Math.max(0,invitationCount-1),
             updatedBy:currentUser.uid,updatedAt:serverTimestamp()});
           return {status:'revoked',uid:action.uid,revision};
