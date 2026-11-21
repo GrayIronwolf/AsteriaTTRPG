@@ -4,3 +4,8 @@
 .display:fullscreen .sceneTitle{min-height:65vh}
 .display .head{flex-wrap:wrap}
 @media(min-width:1200px){.display:fullscreen .sceneTitle h2{font-size:clamp(2rem,4vw,5rem)}}
+
+.stage{display:grid;min-width:0;min-height:45vh;gap:var(--ast-space-4)}
+.stage[data-theme="slate"]{background:var(--ast-color-panel-slate)}
+.stage[data-theme="parchment"]{background:var(--ast-color-panel-raised)}
+.display:fullscreen .stage{min-height:calc(100vh - 9rem)}
