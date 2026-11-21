@@ -78,8 +78,8 @@ export function GMScreenShareControls({api,campaignId,previewBusy=false,
     if(session.error||!session.data||!grant||
       session.data.session?.epoch!==epoch||
       !hybridViewerCanRead(session.data.session,grant,viewerUid)||
-      (session.data.session?.screenShare&&
-       session.data.session.screenShare.connectionId!==current.current.connectionId))
+      (current.current.published&&
+       session.data.session?.screenShare?.connectionId!==current.current.connectionId))
       stop();
   },[session.data,session.error,stop]);
   useEffect(()=>{
@@ -135,7 +135,7 @@ export function GMScreenShareControls({api,campaignId,previewBusy=false,
       });
       peer.current=rtc;stream.current=captured;
       const selectedEpoch=session.data.session.epoch;
-      current.current={viewerUid:selected,connectionId:id,epoch:selectedEpoch};
+      current.current={viewerUid:selected,connectionId:id,epoch:selectedEpoch,published:false};
       track.addEventListener('ended',stop,{once:true});
       onActivity(true);
       const offer=await rtc.createOffer({offerToReceiveAudio:false});
@@ -148,6 +148,7 @@ export function GMScreenShareControls({api,campaignId,previewBusy=false,
       });
       if(!alive.current||generation!==attempt.current)return;
       if(sent.ok!==true)throw Error(sent.error||'Offer was not accepted.');
+      if(current.current?.connectionId===id)current.current.published=true;
       setConnection({viewerUid:selected,connectionId:id});
       setNotice('Offer sent. The viewer must choose Join Live Screen.');
     }catch(failure){
