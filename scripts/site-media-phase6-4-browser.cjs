@@ -237,7 +237,8 @@ try{
  await player.getByTestId('site-media-map-canvas').waitFor({timeout:30000});
  await owner.goto(base+'#/react/gm/'+encodeURIComponent(ownerCampaignId),{waitUntil:'domcontentloaded'});
  await owner.getByRole('button',{name:'Player Display',exact:true}).click();
- await owner.getByRole('button',{name:'Blackout'}).click();
+ await owner.getByTestId('site-gm-presentation')
+  .getByRole('button',{name:'Blackout',exact:true}).click();
  await owner.getByText('Presentation updated.').waitFor({timeout:30000});
  await player.getByText('Display is blacked out.').waitFor({timeout:30000});
  // Restore the linked-character route before testing account revocation on refresh.
