@@ -45,7 +45,9 @@ export function PreparedEncounterLibrary({
       error=>setMapError(error.message||'Map media is unavailable.'));
   },[mediaApi,campaignId]);
   const activeMap=fullMaps.find(map=>map.id===draft.mapId)||null;
-  const mapPreview=activeMap?preparedBattleMapPreview(activeMap,draft.enemies):null;
+  const waveEnemyList=(draft.waves||[]).flatMap(wave=>wave.enemies||[]);
+  const mapPreview=activeMap?preparedBattleMapPreview(
+    activeMap,[...draft.enemies,...waveEnemyList]):null;
   const reviewPlan=plans.find(row=>row.id===loadReview?.id);
   const currentReview=loadReview&&reviewPlan?
     previewPreparedEncounterLoad(reviewPlan,combat,maps):null;
@@ -262,7 +264,10 @@ export function PreparedEncounterLibrary({
         onChange={event=>{
           const id=event.target.value;
           setDraft(row=>({...row,mapId:id,
-            enemies:row.mapId===id?row.enemies:clearPreparedEnemySpawns(row.enemies)}));
+            enemies:row.mapId===id?row.enemies:clearPreparedEnemySpawns(row.enemies),
+            waves:row.mapId===id?row.waves:row.waves.map(wave=>({
+              ...wave,enemies:clearPreparedEnemySpawns(wave.enemies)
+            }))}));
           setPlacingEnemy('');
         }}>
         <option value="">No map selected</option>
@@ -277,23 +282,37 @@ export function PreparedEncounterLibrary({
         <label>Place enemy<select value={placingEnemy}
           onChange={event=>setPlacingEnemy(event.target.value)}>
           <option value="">Preview only</option>
-          {draft.enemies.map((row,index)=><option value={String(index)} key={index}>
-            {index+1}. {row.name}{row.spawn?' · Positioned':''}
+          {draft.enemies.map((row,index)=><option value={'base:'+index} key={'base-'+index}>
+            Opening {index+1}. {row.name}{row.spawn?' · Positioned':''}
           </option>)}
+          {(draft.waves||[]).flatMap(wave=>wave.enemies.map((row,index)=>
+            <option value={'wave:'+wave.id+':'+index} key={wave.id+'-'+index}>
+              {wave.name} · {row.name}{row.spawn?' · Positioned':''}
+            </option>))}
         </select></label>
         <CampaignMapCanvas api={mediaApi} campaignId={campaignId}
           map={mapPreview} mode="gm" editing={placingEnemy!==''}
           onPoint={point=>{
             try{
-              setDraft(row=>({...row,enemies:setPreparedEnemySpawn(row.enemies,
-                Number(placingEnemy),point,activeMap)}));
+              setDraft(row=>{
+                const parts=placingEnemy.split(':');
+                if(parts[0]==='base')return {...row,enemies:setPreparedEnemySpawn(
+                  row.enemies,Number(parts[1]),point,activeMap)};
+                if(parts[0]==='wave')return {...row,waves:row.waves.map(wave=>
+                  wave.id===parts[1]?{...wave,enemies:setPreparedEnemySpawn(
+                    wave.enemies,Number(parts[2]),point,activeMap)}:wave)};
+                return row;
+              });
               setError('');
             }catch(error){setError(error.message);}
           }}/>
         <p>Select an enemy, then click the map to set its grid-snapped square.
           Positions are saved privately in the encounter, not on the shared map.</p>
         <button type="button" onClick={()=>setDraft(row=>({...row,
-          enemies:clearPreparedEnemySpawns(row.enemies)}))}>Clear Enemy Positions</button>
+          enemies:clearPreparedEnemySpawns(row.enemies),
+          waves:row.waves.map(wave=>({...wave,
+            enemies:clearPreparedEnemySpawns(wave.enemies)}))
+        }))}>Clear Enemy Positions</button>
       </div>:null}
       <div className={styles.entries}>
         <h4>Enemy Roster ({draft.enemies.length}/{PREPARED_ENCOUNTER_MAX_ENEMIES})</h4>
