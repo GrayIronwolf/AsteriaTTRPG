@@ -85,7 +85,12 @@ export function publicCombatPresentation(raw={}){
   const party=Object.fromEntries(combat.combatants
     .filter(row=>row.kind==='player'&&id(row.characterId))
     .map(row=>[row.characterId,{name:row.name}]));
-  return safeCombatPresentation(combat,party);
+  const minimal=safeCombatPresentation(combat,party);
+  return Object.freeze({
+    ...minimal,
+    endsAt:combat.turnTimer.enabled?combat.turnTimer.endsAt:0,
+    ...(combat.publicEvent?{event:combat.publicEvent}:{})
+  });
 }
 function tokenIsRevealed(token,cells,columns,rows){
   const x=Math.min(columns-1,Math.floor(clamp(token.x,0,99.999,0)*columns/100));
@@ -123,11 +128,6 @@ export function publicPresentationBattleMap(raw={},campaignId='',mapId=''){
   });
 }
 export function mapForRestrictedViewer(raw={},campaignId=''){
-  if(!id(raw.id))return null;
-  const safe=publicPresentationBattleMap({
-    ...raw,visibility:'players',
-    storagePath:raw.storagePath
-  },campaignId,raw.id);
-  // Never send the original path, encounter token binding or private pins.
-  return safe;
+  if(!id(raw.id)||raw.visibility!=='players')return null;
+  return publicPresentationBattleMap(raw,campaignId,raw.id);
 }
