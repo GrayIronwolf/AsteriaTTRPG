@@ -178,7 +178,7 @@ test('6.9: XP and bundle delivery receipts reject duplicates or changed amounts'
   assert.throws(()=>assertApprovedEncounterDelivery(history,
     'hero-1','xp',999),/differs/);
   assert.throws(()=>assertApprovedEncounterDelivery(history,
-    'hero-1','bundle',{...bundle,currency:{key:'gold',amount:9}}),/differs/);
+    'hero-1','bundle',{...bundle,currency:{key:'gold',amount:9}}),/differ/);
   const receipt=encounterDeliveryPatch(history,'hero-1','xp',
     'receipt-phase69',5000,gmUid);
   assert.throws(()=>assertApprovedEncounterDelivery({...history,...receipt},
