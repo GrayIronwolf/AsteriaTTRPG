@@ -15,6 +15,8 @@ import {PRESENTATION_MEDIA_SCENES} from '../../../src/state/presentationAssetMod
 import {useCampaignStream,CampaignMapWorkspace,CampaignAtlasWorkspace} from './CampaignMapWorkspace.jsx';
 import styles from './CampaignPresentationWorkspace.module.css';
 import {usePresentationDisplayRuntime} from './usePresentationDisplayRuntime.js';
+import {PresentationDisplayModeControls,usePresentationDisplayPreferences}
+  from './PresentationDisplayModes.jsx';
 
 const names={'blank':'Blackout','title':'Title','announcement':'Announcement',
   'battle-map':'Battle Map','world-map':'World Atlas',combat:'Combat',party:'Party',
@@ -73,10 +75,15 @@ function ActivePlayerPresentation({api,campaignId}){
       party={party.data||[]} combat={combat.data||{}}/>
   </div>;
 }
-export function CampaignPresentationDisplay({api,campaignId,fullscreen=false}){
+export function CampaignPresentationDisplay({api,campaignId,fullscreen=false,uid=''}) {
   const runtime=usePresentationDisplayRuntime();
+  const displayModes=usePresentationDisplayPreferences(uid,campaignId,'member','tabletop-tv');
+  const prefs=displayModes.prefs;
   return <section ref={runtime.root} className={styles.display}
-    data-asteria-player-projector="" data-testid="site-player-presentation">
+    data-asteria-player-projector="" data-testid="site-player-presentation"
+    data-display-mode={prefs.preset}
+    data-clean-fullscreen={prefs.cleanFullscreen?'true':'false'}
+    style={{'--display-zoom':prefs.scale/100}}>
     <header className={styles.head}>
       <span>Asteria · Player Presentation</span>
       <div className={styles.actions}>
@@ -88,11 +95,20 @@ export function CampaignPresentationDisplay({api,campaignId,fullscreen=false}){
           {runtime.fullscreen?'Exit Fullscreen':'Fullscreen'}</button>:null}
       </div>
     </header>
+    <div className={styles.modeToolbar}>
+      <PresentationDisplayModeControls prefs={prefs} onChange={displayModes.update}/>
+      {displayModes.message?<p role="status">{displayModes.message}</p>:null}
+    </div>
+    {runtime.fullscreen&&prefs.cleanFullscreen?<button type="button"
+      className={styles.fullscreenExit} onClick={runtime.toggleFullscreen}>
+      Exit Fullscreen</button>:null}
     {!runtime.ready?<p role="alert">Connection or display interrupted.
       Approved content is hidden until the display reconnects.</p>:
       <ActivePlayerPresentation key={campaignId+':'+runtime.generation}
         api={api} campaignId={campaignId}/>}
     {runtime.error?<p role="alert">{runtime.error}</p>:null}
+    {prefs.showOverlay&&runtime.ready?<p className={styles.displayOverlay}
+      aria-hidden="true">Asteria · Approved player display</p>:null}
   </section>;
 }
 
