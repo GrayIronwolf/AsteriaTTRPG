@@ -1,0 +1,76 @@
+name: Phase 6.8 Encounter Completion and History
+on:
+  push:
+    branches: [feature/phase-6-8-encounter-completion-history]
+  pull_request:
+    paths:
+      - 'src/state/encounterCompletionModel.mjs'
+      - 'functions/combatCommands.mjs'
+      - 'functions/encounterCompletionCommands.mjs'
+      - 'functions/commands.mjs'
+      - 'functions/handler.mjs'
+      - 'firestore.rules'
+      - 'frontend/src/combat/**'
+      - 'scripts/site-encounter-completion-phase6-8.test.mjs'
+      - '.github/workflows/phase-6-8-encounter-completion.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  encounter-completion:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Completion and combat regressions
+        run: node --test scripts/site-encounter-completion-phase6-8.test.mjs scripts/site-encounter-waves-phase6-7.test.mjs scripts/site-live-combat-phase6-6.test.mjs scripts/site-prepared-battle-maps-phase6-5.test.mjs scripts/site-prepared-encounters-phase6-4.test.mjs scripts/site-prepared-encounters-phase6-3.test.mjs scripts/site-prepared-encounters-phase6-2.test.mjs scripts/site-combat-phase7-1.test.mjs
+      - name: Server and React lint
+        run: npx eslint frontend/src/combat src/state/encounterCompletionModel.mjs functions/combatCommands.mjs functions/encounterCompletionCommands.mjs functions/commands.mjs functions/handler.mjs
+      - name: React site checks
+        run: npm run site:check
+      - name: React production build
+        run: npm run site:build
+      - name: Verify compiled React assets
+        run: npm run site:verify-dist
+  bundle:
+    name: Sync Phase 6.8 compiled website assets (no deployment)
+    needs: encounter-completion
+    if: github.event_name == 'push' && github.ref == 'refs/heads/feature/phase-6-8-encounter-completion-history'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Build deterministic website assets
+        run: npm run build
+      - name: Commit artifacts to this feature branch only
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch=feature/phase-6-8-encounter-completion-history
+          git fetch origin "$branch"
+          if [ "$(git rev-parse "origin/$branch")" != "$GITHUB_SHA" ]; then
+            echo "A newer change exists. Refusing to overwrite it."
+            exit 0
+          fi
+          git add -A react-dist data/compendium.js data/compendium-handbook.js data/compendium-index.js data/compendium-parts
+          if git diff --cached --quiet; then
+            echo "All compiled assets match their sources."
+            exit 0
+          fi
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "build(phase6.8): synchronize React website bundle"
+          git fetch origin "$branch"
+          git push origin "HEAD:refs/heads/$branch"
