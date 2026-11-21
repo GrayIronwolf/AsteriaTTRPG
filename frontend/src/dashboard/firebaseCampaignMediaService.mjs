@@ -155,6 +155,13 @@ export function createFirebaseCampaignMediaService({
   function watchAtlas(id,onUpdate,onError){
     return watch(id,'player',atlasCol(id),atlasProject,onUpdate,onError);
   }
+  function watchPresentationPlaylists(id,onUpdate,onError){
+    // Watch is GM-only, requires verified account/campaign and a server snapshot.
+    return watch(id,'gm',
+      firestoreSdk.doc(db,'campaigns',id,'presentationPlaylists','current'),
+      value=>value||{version:1,revision:0,playlists:[]},
+      onUpdate,onError,'document');
+  }
   function watchPresentation(id,mode,onUpdate,onError){
     return watch(id,mode,presentationRef(id,mode),presentationProject,onUpdate,onError);
   }
@@ -670,6 +677,17 @@ export function createFirebaseCampaignMediaService({
       throw Error(response.data?.error||'Emergency stop was not confirmed.');
     return response.data;
   }
+  async function managePresentationPlaylist(id,action){
+    const {uid}=await check(id,'gm');
+    const response=await functionsSdk.httpsCallable(functions,'asteriaAction')({
+      action:'managePresentationPlaylist',args:[id,'gm-scope',action],
+      requestId:crypto.randomUUID()
+    });
+    same(uid);
+    if(response.data?.ok!==true)
+      throw Error(response.data?.error||'Playlist update was rejected.');
+    return response.data;
+  }
   async function managePresentation(id,action){
     const {uid}=await check(id,'gm');
     validatePresentationAction(action);
@@ -684,9 +702,9 @@ export function createFirebaseCampaignMediaService({
   }
   return Object.freeze({
     availability:()=>flags,watchMaps,watchAtlas,watchPresentation,watchPrivatePins,
-    watchParty,watchEncounter,watchGMMediaLibrary,fetchGMMediaLibraryPreview,
+    watchParty,watchEncounter,watchPresentationPlaylists,watchGMMediaLibrary,fetchGMMediaLibraryPreview,
     fetchMapMedia,fetchAtlasMedia,uploadMap,
-    saveMap,removeMap,savePrivatePins,managePresentation,emergencyStopPresentation,
+    saveMap,removeMap,savePrivatePins,managePresentation,managePresentationPlaylist,emergencyStopPresentation,
     manageHybridSession,watchGMHybridSession,watchRestrictedViewer,
     watchPresentationAssets,managePresentationAsset,uploadPresentationAsset,
     fetchPresentationAsset,
