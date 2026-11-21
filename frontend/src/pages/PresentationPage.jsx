@@ -19,8 +19,8 @@ export function PresentationPage({route}){
       <p role="alert">Sign in to an approved campaign to view its presentation.</p>:
       route.query?.get('viewer')==='restricted'
         ?<RestrictedPresentationDisplay key={uid+':'+campaignId+':restricted'} api={api}
-          campaignId={campaignId}/>
+          campaignId={campaignId} uid={uid}/>
         :<CampaignPresentationDisplay key={uid+':'+campaignId} api={api}
-          campaignId={campaignId} fullscreen/>}
+          campaignId={campaignId} uid={uid} fullscreen/>}
   </PageLayout>;
 }
