@@ -1,6 +1,6 @@
 .frame{display:grid;gap:var(--ast-space-3);min-width:0;max-width:100%;justify-items:center;align-content:center}
 .frame h2,.frame p{margin:0;text-align:center;overflow-wrap:anywhere}
 .frame img,.frame video{width:auto;max-width:100%;max-height:min(70vh,800px);object-fit:contain}
-.frame video{background:#000}.pdf{display:grid;gap:var(--ast-space-2);width:100%;min-width:0}
+.frame video{background:var(--ast-color-panel)}.pdf{display:grid;gap:var(--ast-space-2);width:100%;min-width:0}
 .pdf iframe{border:0;min-height:min(65vh,750px);width:100%;background:var(--ast-color-panel-raised)}
 .pdf a{color:var(--ast-color-accent);text-align:center}
