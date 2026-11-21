@@ -1,5 +1,5 @@
 import React,{useEffect,useState} from 'react';
-import {COMBAT_AP_ACTIONS,customEnemy,libraryEnemy} from './combatModel.mjs';
+import {COMBAT_AP_ACTIONS,COMBAT_BASIC_DECLARATIONS,customEnemy,libraryEnemy} from './combatModel.mjs';
 import {CombatCommandCentre,CombatCommandPanel} from './CombatCommandCentre.jsx';
 import {PreparedEncounterLibrary} from './PreparedEncounterLibrary.jsx';
 import {CombatBattleMapPanel} from './CombatBattleMapPanel.jsx';
@@ -67,6 +67,15 @@ function CombatStatusBadges({combat,actor}){
 function Actions({combat,actor,disabled,onCommand,mode}){
   const own=actor?.current&&combat.isActive&&!actor.turnComplete&&combat.sessionEditable;
   const [cost,setCost]=useState(1);
+  const [optionId,setOptionId]=useState('basic:command');
+  const [targetId,setTargetId]=useState('');
+  const [shoveChoice,setShoveChoice]=useState('push');
+  const selectedOption=COMBAT_BASIC_DECLARATIONS.find(option=>option.id===optionId);
+  const allowedTargets=combat.combatants.filter(row=>row.id!==actor?.id&&!row.defeated);
+  const declare=()=>onCommand(actor.id,{
+    operation:'declare',optionId,targetIds:selectedOption?.requiresTarget?[targetId]:[],
+    ...(optionId==='basic:shove'?{choice:shoveChoice}:{})
+  });
   return <div className={styles.controls}>
     {COMBAT_AP_ACTIONS.map(({ap,label})=><button key={ap} type="button"
       disabled={disabled||!own||actor.ap<ap||(ap===0&&!actor.bonus)}
@@ -75,6 +84,28 @@ function Actions({combat,actor,disabled,onCommand,mode}){
       onClick={()=>onCommand(actor.id,{operation:'end-turn'})}>End Turn</button>
     {actor.pendingDeathSave?<button disabled={disabled||!own} type="button"
       onClick={()=>onCommand(actor.id,{operation:'death-save'})}>Roll Death Save</button>:null}
+    <fieldset className={styles.actionDeclaration} data-testid="site-combat-declare-basic">
+      <legend>Declare a basic action</legend>
+      <label>Action<select value={optionId}
+        onChange={event=>{setOptionId(event.target.value);setTargetId('');}}>
+        {COMBAT_BASIC_DECLARATIONS.map(option=><option key={option.id} value={option.id}>
+          {option.name}</option>)}
+      </select></label>
+      {selectedOption?.requiresTarget?<label>Target<select value={targetId}
+        onChange={event=>setTargetId(event.target.value)}>
+        <option value="">Select combatant</option>
+        {allowedTargets.map(row=><option value={row.id} key={row.id}>{row.name}</option>)}
+      </select></label>:null}
+      {optionId==='basic:shove'?<label>Shove result<select value={shoveChoice}
+        onChange={event=>setShoveChoice(event.target.value)}>
+        <option value="push">Push</option><option value="prone">Knock prone</option>
+      </select></label>:null}
+      <button type="button" disabled={disabled||!own||
+        (selectedOption?.requiresTarget&&!targetId)}
+        onClick={declare}>Declare Action for GM Review</button>
+      <small>Declarations use the authoritative combat action and GM adjudication
+        system. Do not record another AP spend for the same action.</small>
+    </fieldset>
     {mode==='gm'?<label>AP quick selection<select value={cost} onChange={e=>setCost(Number(e.target.value))}>
       {[1,2,3].map(x=><option key={x} value={x}>{x} AP</option>)}
     </select><button type="button" disabled={disabled||!own||actor.ap<cost}
