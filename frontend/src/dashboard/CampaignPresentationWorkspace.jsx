@@ -4,20 +4,29 @@ import {PRESENTATION_DEFAULT,PRESENTATION_SCENES,PRESENTATION_THEMES,
 } from '../../../src/state/playerPresentationModel.mjs';
 import {presentationDraft,partyForPresentation} from './campaignMediaModel.mjs';
 import {HybridSessionManager} from './HybridSessionManager.jsx';
+import {GMPresentationAssets} from './GMPresentationAssets.jsx';
+import {PresentationMediaFrame} from './PresentationMediaFrame.jsx';
+import {PRESENTATION_MEDIA_SCENES} from '../../../src/state/presentationAssetModel.mjs';
 import {useCampaignStream,CampaignMapWorkspace,CampaignAtlasWorkspace} from './CampaignMapWorkspace.jsx';
 import styles from './CampaignPresentationWorkspace.module.css';
 
 const names={'blank':'Blackout','title':'Title','announcement':'Announcement',
-  'battle-map':'Battle Map','world-map':'World Atlas',combat:'Combat',party:'Party'};
+  'battle-map':'Battle Map','world-map':'World Atlas',combat:'Combat',party:'Party',
+  image:'Image',cinematic:'Cinematic Video',handout:'PDF Handout'};
 const fields=data=>({
   scene:data.scene,title:data.title,subtitle:data.subtitle,mapId:data.mapId,
   characterIds:[...(data.characterIds||[])],showRound:data.showRound,
-  showPartyHP:data.showPartyHP,theme:data.theme
+  showPartyHP:data.showPartyHP,theme:data.theme,
+  ...(data.assetId?{assetId:data.assetId}:{})
 });
 function Scene({api,campaignId,display,party=[],combat={}}){
   if(display.scene==='blank')return <p role="status">Display is blacked out.</p>;
   if(['title','announcement'].includes(display.scene))
     return <div className={styles.sceneTitle}><h2>{display.title}</h2><p>{display.subtitle}</p></div>;
+  if(PRESENTATION_MEDIA_SCENES.includes(display.scene))
+    return <PresentationMediaFrame api={api} campaignId={campaignId}
+      scene={display.scene} assetId={display.assetId}
+      title={display.title} subtitle={display.subtitle}/>;
   if(display.scene==='battle-map')
     return <CampaignMapWorkspace api={api} campaignId={campaignId}
       selectedMapId={display.mapId}/>;
@@ -68,13 +77,14 @@ export function CampaignPresentationController({api,campaignId,party=[]}){
   const control=useCampaignStream(api,'watchPresentation',[campaignId,'gm']);
   const maps=useCampaignStream(api,'watchMaps',[campaignId,'player']);
   const atlas=useCampaignStream(api,'watchAtlas',[campaignId]);
+  const presentationAssets=useCampaignStream(api,'watchPresentationAssets',[campaignId]);
   const [draft,setDraft]=useState(()=>fields(PRESENTATION_DEFAULT));
   const [busy,setBusy]=useState(false),[message,setMessage]=useState('');
   useEffect(()=>{
     if(control.data)setDraft(fields(control.data));
   },[control.data?.revision,campaignId]);
   const update=patch=>setDraft(current=>({...current,...patch}));
-  const pickScene=scene=>update({scene,mapId:'',characterIds:[],
+  const pickScene=scene=>update({scene,mapId:'',assetId:'',characterIds:[],
     showRound:scene==='combat',showPartyHP:false});
   const run=async(type)=>{
     setBusy(true);setMessage('');
@@ -90,6 +100,8 @@ export function CampaignPresentationController({api,campaignId,party=[]}){
     finally{setBusy(false);}
   };
   const options=draft.scene==='battle-map'?maps.data||[]:atlas.data||[];
+  const mediaOptions=(presentationAssets.data||[]).filter(item=>
+    item.status==='ready'&&item.visibility==='players'&&item.kind===draft.scene);
   const link=window.location.origin+window.location.pathname+window.location.search+
     '#/react/presentation/'+encodeURIComponent(campaignId);
   return <section className={styles.controller} data-testid="site-gm-presentation">
@@ -116,6 +128,15 @@ export function CampaignPresentationController({api,campaignId,party=[]}){
           <option value="">Select published map</option>
           {options.map(x=><option key={x.id} value={x.id}>{x.name}</option>)}
         </select></label>:null}
+      {PRESENTATION_MEDIA_SCENES.includes(draft.scene)?<label>
+        Published presentation media
+        <select value={draft.assetId||''} disabled={busy||presentationAssets.loading}
+          onChange={e=>update({assetId:e.target.value})}>
+          <option value="">Select published media</option>
+          {mediaOptions.map(item=><option key={item.id} value={item.id}>
+            {item.name}</option>)}
+        </select>
+      </label>:null}
       {draft.scene==='combat'?<label><input type="checkbox" checked={draft.showRound}
         onChange={e=>update({showRound:e.target.checked})}/>Show combat round</label>:null}
       {draft.scene==='party'?<>
@@ -141,6 +162,7 @@ export function CampaignPresentationController({api,campaignId,party=[]}){
     </div>
     <label>Signed-in second-screen URL<input readOnly value={link} onFocus={e=>e.target.select()}/></label>
     <p>Current: {names[control.data?.scene||'blank']} · Revision {control.data?.revision||0}</p>
+    <GMPresentationAssets api={api} campaignId={campaignId}/>
     <HybridSessionManager api={api} campaignId={campaignId}/>
     {message?<p role="status">{message}</p>:null}
   </section>;
