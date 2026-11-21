@@ -1,0 +1,45 @@
+name: Archive-verified branch cleanup (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: "Audit only, or delete archived unapproved branches"
+        required: true
+        type: choice
+        default: audit
+        options:
+          - audit
+          - delete
+      confirmation:
+        description: "For delete, type REMOVE-UNAPPROVED-BRANCHES"
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: asteria-branch-consolidation
+  cancel-in-progress: false
+
+jobs:
+  archive-verified-cleanup:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Check out approved default branch
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Run fail-closed branch audit or cleanup
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CLEANUP_ACTION: ${{ inputs.operation }}
+          CLEANUP_CONFIRM: ${{ inputs.confirmation }}
+        run: python3 scripts/asteria_branch_cleanup.py
