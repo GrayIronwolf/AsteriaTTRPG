@@ -1,0 +1,37 @@
+name: Phase 7.1 Unified GM Media Library
+on:
+  push:
+    branches: [feature/phase-7-1-unified-media-library]
+  pull_request:
+    paths:
+      - 'src/state/campaignMediaLibraryModel.mjs'
+      - 'frontend/src/dashboard/firebaseCampaignMediaService.mjs'
+      - 'frontend/src/dashboard/GMMediaLibrary.jsx'
+      - 'frontend/src/dashboard/GMMediaLibrary.module.css'
+      - 'frontend/src/pages/GMDashboardPage.jsx'
+      - 'scripts/site-share-present-phase7-1.test.mjs'
+      - '.github/workflows/phase-7-1-unified-media-library.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  media-library:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Unified media index, prior presentation, combat and permissions regressions
+        run: node --test scripts/site-share-present-phase7-1.test.mjs scripts/site-share-present-phase7-0.test.mjs scripts/site-combat-final-phase6-9.test.mjs scripts/site-combat-phase7-1.test.mjs scripts/site-media-phase6-4.test.mjs
+      - name: Lint modified React and library code
+        run: npx eslint src/state/campaignMediaLibraryModel.mjs frontend/src/dashboard/firebaseCampaignMediaService.mjs frontend/src/dashboard/GMMediaLibrary.jsx frontend/src/pages/GMDashboardPage.jsx scripts/site-share-present-phase7-1.test.mjs
+      - name: Full React site checks
+        run: npm run site:check
+      - name: Build production site
+        run: npm run site:build
+      - name: Verify built assets
+        run: npm run site:verify-dist
