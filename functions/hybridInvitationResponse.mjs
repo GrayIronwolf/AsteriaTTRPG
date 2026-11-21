@@ -45,6 +45,7 @@ export async function respondHybridPresentationInvitation(db,uid,data,serverTime
     tx.set(accessRef,{...access,viewerExpiries:viewers,
       updatedAt:serverTimestamp()});
     tx.update(sessionRef,{revision,
+      ...(response.type==='decline'&&session.screenShare?.viewerUid===uid?{screenShare:null}:{}),
       grantCount:Object.keys(viewers).length,
       invitationCount:Math.max(0,(Number.isSafeInteger(session.invitationCount)
         ?session.invitationCount:Object.keys(viewers).length)-
