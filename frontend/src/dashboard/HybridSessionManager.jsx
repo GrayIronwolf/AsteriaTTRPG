@@ -126,8 +126,8 @@ function RestrictedInvitationGate({api,campaignId}){
   };
   if(invitation.loading)return <p role="status">Checking your invitation…</p>;
   if(invitation.error)return <p role="alert">{invitation.error}</p>;
-  if(status?.authorized)return <ActiveRestrictedPresentation api={api}
-    campaignId={campaignId}/>;
+  if(status?.authorized)return <ActiveRestrictedPresentation key={campaignId}
+    api={api} campaignId={campaignId}/>;
   return <section className={styles.invitation} data-testid="site-restricted-invitation">
     <h2>Viewer Invitation</h2>
     <p>Status: {status?.status||'unavailable'}</p>
