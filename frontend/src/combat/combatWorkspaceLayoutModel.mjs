@@ -19,7 +19,7 @@ const DEFAULT_POSITIONS=Object.freeze({
   actor:{x:510,y:0,w:490,h:480},
   setup:{x:510,y:490,w:490,h:400},
   map:{x:0,y:580,w:490,h:260},
-  history:{x:0,y:850,w:490,h:400}
+  history:{x:510,y:900,w:490,h:400}
 });
 const isRecord=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 const allowed=id=>COMBAT_PANEL_IDS.includes(id);
