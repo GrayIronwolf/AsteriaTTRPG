@@ -4,6 +4,11 @@ import {battleMapPrivatePins} from '../../../src/state/battleMapFogModel.mjs';
 import {validatePresentationAction} from '../../../src/state/playerPresentationModel.mjs';
 import {validateHybridSessionAction,hybridViewerCanRead,sanitizeRestrictedPresentation} from '../../../src/state/hybridPresentationSessionModel.mjs';
 import {
+  presentationAssetFileError,presentationAssetDetails,
+  presentationAssetPath,presentationAssetId,safePresentationAssetCard,
+  PRESENTATION_ASSET_LIMIT
+} from '../../../src/state/presentationAssetModel.mjs';
+import {
   CAMPAIGN_MEDIA_LIBRARY_SOURCES,CAMPAIGN_MEDIA_LIBRARY_LIMIT_PER_SOURCE,
   buildCampaignMediaLibrary,campaignMediaLibraryReference,classifyCampaignMediaRecord
 } from '../../../src/state/campaignMediaLibraryModel.mjs';
@@ -35,6 +40,8 @@ export function createFirebaseCampaignMediaService({
   const hybridGrantsCol=id=>firestoreSdk.collection(db,'campaigns',id,'hybridViewerGrants');
   const hybridGrantRef=(id,uid)=>firestoreSdk.doc(db,'campaigns',id,'hybridViewerGrants',uid);
   const restrictedRef=id=>firestoreSdk.doc(db,'campaigns',id,'presentationRestricted','current');
+  const assetCol=id=>firestoreSdk.collection(db,'campaigns',id,'presentationAssets');
+  const assetRef=(id,asset)=>firestoreSdk.doc(db,'campaigns',id,'presentationAssets',asset);
   const presentationRef=(id,mode)=>firestoreSdk.doc(db,'campaigns',id,
     mode==='gm'?'presentationControl':'presentationShared','current');
   async function verified(){
@@ -489,6 +496,72 @@ export function createFirebaseCampaignMediaService({
     return close;
   }
 
+  function watchPresentationAssets(id,onUpdate,onError){
+    return watch(id,'gm',firestoreSdk.query(assetCol(id),
+      firestoreSdk.limit(PRESENTATION_ASSET_LIMIT)),
+      rows=>rows.map(row=>safePresentationAssetCard(row,id)).filter(Boolean)
+        .sort((a,b)=>a.name.localeCompare(b.name)),onUpdate,onError);
+  }
+
+  async function managePresentationAsset(id,action){
+    const {uid}=await check(id,'gm');
+    const response=await functionsSdk.httpsCallable(functions,'asteriaAction')({
+      action:'managePresentationAsset',args:[id,'gm-scope',action],
+      requestId:crypto.randomUUID()
+    });
+    same(uid);
+    if(response.data?.ok!==true)
+      throw Error(response.data?.error||'Presentation media operation failed.');
+    return response.data;
+  }
+  async function uploadPresentationAsset(id,file,name,description=''){
+    const issue=presentationAssetFileError(file);
+    if(issue)throw Error(issue);
+    const details=presentationAssetDetails({
+      name:String(name||file.name||'').slice(0,120),
+      description:String(description||'').slice(0,380),
+      contentType:file.type,size:file.size
+    });
+    const {uid}=await check(id,'gm');
+    const newRef=firestoreSdk.doc(assetCol(id));
+    const assetId=newRef.id;
+    await managePresentationAsset(id,{type:'reserve',id:assetId,details});
+    same(uid);
+    const path=presentationAssetPath(id,assetId);
+    let uploaded=false;
+    try{
+      await storageSdk.uploadBytes(storageSdk.ref(storage,path),file,{
+        contentType:details.contentType,cacheControl:'private,max-age=0,no-store'
+      });
+      uploaded=true;
+      await check(id,'gm');same(uid);
+      await managePresentationAsset(id,{
+        type:'finish',id:assetId,expectedRevision:1
+      });
+      same(uid);
+      return {ok:true,id:assetId};
+    }catch(error){
+      // If upload completed, keep the private record for explicit GM cleanup
+      // rather than deleting an object still in a separate network request.
+      if(!uploaded)await managePresentationAsset(id,{
+        type:'archive',id:assetId,expectedRevision:1
+      }).catch(()=>{});
+      throw error;
+    }
+  }
+
+  async function fetchPresentationAsset(id,assetId,{restricted=false}={}){
+    if(!presentationAssetId(assetId))
+      throw Error('Invalid presentation media reference.');
+    const {uid}=restricted?{uid:await verified()}:await check(id,'player');
+    // Storage enforces final publication, active scene and exact-recipient
+    // authorization on every byte fetch. No raw Storage path from Firestore.
+    const blob=await storageSdk.getBlob(storageSdk.ref(storage,
+      presentationAssetPath(id,assetId)));
+    same(uid);
+    return blob;
+  }
+
   async function managePresentation(id,action){
     const {uid}=await check(id,'gm');
     validatePresentationAction(action);
@@ -506,6 +579,8 @@ export function createFirebaseCampaignMediaService({
     watchParty,watchEncounter,watchGMMediaLibrary,fetchGMMediaLibraryPreview,
     fetchMapMedia,fetchAtlasMedia,uploadMap,
     saveMap,removeMap,savePrivatePins,managePresentation,
-    manageHybridSession,watchGMHybridSession,watchRestrictedViewer
+    manageHybridSession,watchGMHybridSession,watchRestrictedViewer,
+    watchPresentationAssets,managePresentationAsset,uploadPresentationAsset,
+    fetchPresentationAsset
   });
 }
