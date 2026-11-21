@@ -190,6 +190,19 @@ export function GMScreenShareControls({api,campaignId,previewBusy=false,
         Share Selected Screen</button>
       <button type="button" onClick={stop}
         disabled={!current.current&&!busy}>Stop Remote Share</button>
+      {session.data?.session?.screenShare&&!current.current?
+        <button type="button" onClick={async()=>{
+          const prior=session.data.session.screenShare;
+          setError('');
+          try{
+            await api.manageScreenShare(campaignId,{
+              type:'stop',viewerUid:prior.viewerUid,
+              connectionId:prior.connectionId
+            });
+            setNotice('Previous screen sharing slot cleared on the server.');
+          }catch(failure){setError(
+            'Server screen share could not be cleared: '+failure.message);}
+        }}>Clear Previous Screen Share</button>:null}
     </div>
     {current.current?<video className={styles.video} ref={video} muted playsInline
       autoPlay aria-label="Live GM screen sharing preview"/>:null}
