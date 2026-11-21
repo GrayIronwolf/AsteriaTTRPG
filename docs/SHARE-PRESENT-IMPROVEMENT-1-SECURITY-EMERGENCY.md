@@ -26,3 +26,7 @@
 - Firestore and Storage emulator suites for Phases 7.3, 7.4 and 7.7, each under their matching demo project ID.
 - React lint, site source check, build and generated-artifact verification, plus the existing Phase 7.1 browser test.
 - No merge/deployment until Codex dashboard restoration is reconciled, checks pass and the owner explicitly approves.
+
+## Build artifact reconciliation
+
+The source-matched legacy `react-dist` and generated Compendium artifacts are regenerated on this draft branch by `improvement-1-refresh-legacy-bundle.yml`. Final GitHub checks must run against the committed generated assets, not the pre-generation source commit. No deployment is part of this workflow.
