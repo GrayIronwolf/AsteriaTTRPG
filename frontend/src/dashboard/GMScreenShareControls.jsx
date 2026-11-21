@@ -51,9 +51,12 @@ export function GMScreenShareControls({api,campaignId,previewBusy=false,
   },[stopLocal,api,campaignId]);
   useEffect(()=>{
     alive.current=true;
-    return ()=>{alive.current=false;const prev=stopLocal(false);
-      if(prev)void api.manageScreenShare(campaignId,{
-        type:'stop',viewerUid:prev.viewerUid,connectionId:prev.connectionId
+    return ()=>{
+      // A React navigation must close the remote session, not only local tracks.
+      alive.current=false;
+      const previous=stopLocal(false);
+      if(previous)void api.manageScreenShare(campaignId,{
+        type:'stop',viewerUid:previous.viewerUid,connectionId:previous.connectionId
       }).catch(()=>{});
     };
   },[campaignId,stopLocal,api]);
