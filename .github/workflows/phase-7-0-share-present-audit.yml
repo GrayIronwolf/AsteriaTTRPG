@@ -1,0 +1,33 @@
+name: Phase 7.0 Share and Present Architecture Audit
+on:
+  push:
+    branches: [feature/phase-7-0-share-present-architecture-audit]
+  pull_request:
+    paths:
+      - 'docs/PHASE-7-0-SHARE-PRESENT-ARCHITECTURE-AUDIT.md'
+      - 'scripts/site-share-present-phase7-0.test.mjs'
+      - '.github/workflows/phase-7-0-share-present-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Existing presentation security and Phase 7.0 audit
+        run: node --test scripts/site-share-present-phase7-0.test.mjs scripts/site-combat-final-phase6-9.test.mjs scripts/site-encounter-completion-phase6-8.test.mjs scripts/site-combat-phase7-1.test.mjs
+      - name: Lint audit tests
+        run: npx eslint scripts/site-share-present-phase7-0.test.mjs
+      - name: React app checks
+        run: npm run site:check
+      - name: React build
+        run: npm run site:build
+      - name: Verify compiled assets
+        run: npm run site:verify-dist
