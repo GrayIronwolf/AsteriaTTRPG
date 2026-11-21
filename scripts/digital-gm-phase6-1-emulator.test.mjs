@@ -78,7 +78,7 @@ test('published image and video maps are readable only by active campaign member
   assert.ok((await assertSucceeds(getBytes(ref(storage('alice'),image)))).byteLength>0);
   assert.ok((await assertSucceeds(getBytes(ref(storage('alice'),video)))).byteLength>0);
   await assertFails(getBytes(ref(storage('visitor'),video)));
-  await assertFails(getDoc(doc(firestore('suspended'),publicMap('video-map')));
+  await assertFails(getDoc(doc(firestore('suspended'),publicMap('video-map'))));
 });
 test('unpublishing immediately revokes both Firestore and authenticated Storage reads',async()=>{
   await assertSucceeds(updateDoc(doc(firestore('co'),'campaigns/camp/battleMaps/video-map'),{visibility:'gm'}));
