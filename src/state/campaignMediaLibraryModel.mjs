@@ -21,7 +21,7 @@ export const CAMPAIGN_MEDIA_LIBRARY_TYPES=Object.freeze([
 ]);
 export const CAMPAIGN_MEDIA_LIBRARY_VISIBILITIES=Object.freeze(['all','gm','players']);
 export const CAMPAIGN_MEDIA_LIBRARY_TABS=Object.freeze({
-  battleMaps:'battle-maps',worldAtlas:'world',sessionPdfs:'session-library',
+  battleMaps:'battle-maps',worldAtlas:'world-atlas',sessionPdfs:'session-library',
   audioTracks:'soundboard',recordingArchives:'session-recordings'
 });
 const validId=value=>typeof value==='string'&&/^[A-Za-z0-9_-]{1,120}$/.test(value);
