@@ -4,6 +4,8 @@ import {PRESENTATION_DEFAULT,PRESENTATION_SCENES,PRESENTATION_THEMES,
 } from '../../../src/state/playerPresentationModel.mjs';
 import {presentationDraft,partyForPresentation} from './campaignMediaModel.mjs';
 import {HybridSessionManager} from './HybridSessionManager.jsx';
+import {sessionTimestampMs} from '../../../src/state/hybridPresentationSessionModel.mjs';
+import {GMPresentationStudio} from './GMPresentationStudio.jsx';
 import {GMScreenCaptureControls} from './GMScreenCaptureControls.jsx';
 import {GMPresentationAssets} from './GMPresentationAssets.jsx';
 import {PresentationMediaFrame} from './PresentationMediaFrame.jsx';
@@ -91,7 +93,51 @@ export function CampaignPresentationDisplay({api,campaignId,fullscreen=false}){
     {runtime.error?<p role="alert">{runtime.error}</p>:null}
   </section>;
 }
-export function CampaignPresentationController({api,campaignId,party=[]}){
+
+function GMPresentationDraftPreview({api,campaignId,draft,published,party}){
+  const [mode,setMode]=useState('draft');
+  const data=mode==='published'?published.data||PRESENTATION_DEFAULT:draft;
+  const combat=useCampaignStream(api,'watchEncounter',[campaignId],data.scene==='combat');
+  const blocked=(mode==='published'&&(published.loading||published.error))||
+    (data.scene==='combat'&&(combat.loading||combat.error));
+  return <div className={styles.studioSection} data-testid="site-gm-studio-preview">
+    <div className={styles.previewChoices}>
+      <button type="button" aria-pressed={mode==='draft'}
+        onClick={()=>setMode('draft')}>Staged Preview</button>
+      <button type="button" aria-pressed={mode==='published'}
+        onClick={()=>setMode('published')}>Current Published Scene</button>
+    </div>
+    {mode==='published'&&published.error?<p role="alert">{published.error}</p>:null}
+    {mode==='published'&&published.loading?<p role="status">Verifying published scene…</p>:null}
+    {data.scene==='combat'&&combat.error?<p role="alert">{combat.error}</p>:null}
+    {data.scene==='combat'&&combat.loading?<p role="status">Checking combat display…</p>:null}
+    {!blocked?<div className={styles.previewStage} data-theme={data.theme}>
+      <Scene api={api} campaignId={campaignId} display={data}
+        party={party} combat={combat.data||{}}/>
+    </div>:null}
+    <p>A local preview using the player scene renderer, not proof of a
+      separate viewer's permissions. Drafts are never published by previewing.</p>
+  </div>;
+}
+function GMViewerStatus({api,campaignId}){
+  const result=useCampaignStream(api,'watchGMHybridSession',[campaignId]);
+  const session=result.data?.session||{status:'closed'};
+  const now=Date.now();
+  const grants=(result.data?.grants||[]).filter(row=>
+    row.epoch===session.epoch&&row.status==='active'&&
+    sessionTimestampMs(row.expiresAt)>now).length;
+  const open=session.status==='open'&&sessionTimestampMs(session.expiresAt)>now;
+  return <div className={styles.studioSection} data-testid="site-gm-studio-viewer-status">
+    {result.error?<p role="alert">{result.error}</p>:
+      result.loading?<p role="status">Verifying viewer access…</p>:
+      <p role="status">Restricted session: {open?'Open':'Closed'} ·
+        {grants} authorised invitation{grants===1?'':'s'}</p>}
+    <p>Connected-device presence is not recorded. An invitation
+      does not prove a viewer is connected or watching.</p>
+  </div>;
+}
+
+export function CampaignPresentationController({api,campaignId,uid,party=[]}){
   const control=useCampaignStream(api,'watchPresentation',[campaignId,'gm']);
   const maps=useCampaignStream(api,'watchMaps',[campaignId,'player']);
   const atlas=useCampaignStream(api,'watchAtlas',[campaignId]);
@@ -124,9 +170,11 @@ export function CampaignPresentationController({api,campaignId,party=[]}){
     '#/react/presentation/'+encodeURIComponent(campaignId);
   return <section className={styles.controller} data-testid="site-gm-presentation">
     <h2>Player-Facing Presentation</h2>
-    <p>Choose a scene for the second-screen display. Only approved shared content can be published.</p>
+    <p>Choose approved shared content for the player display.</p>
     <GMScreenCaptureControls api={api} campaignId={campaignId}/>
-    {control.error?<p role="alert">{control.error}</p>:null}
+    <GMPresentationStudio uid={uid} campaignId={campaignId} panels={{
+      scene:<div className={styles.studioSection}>
+{control.error?<p role="alert">{control.error}</p>:null}
     <div className={styles.fields}>
       <label>Scene<select value={draft.scene} disabled={busy||control.loading||Boolean(control.error)}
         onChange={e=>pickScene(e.target.value)}>
@@ -181,8 +229,14 @@ export function CampaignPresentationController({api,campaignId,party=[]}){
     </div>
     <label>Signed-in second-screen URL<input readOnly value={link} onFocus={e=>e.target.select()}/></label>
     <p>Current: {names[control.data?.scene||'blank']} · Revision {control.data?.revision||0}</p>
-    <GMPresentationAssets api={api} campaignId={campaignId}/>
-    <button type="button" disabled={busy||control.loading||Boolean(control.error)}
+      </div>,
+      preview:<GMPresentationDraftPreview api={api} campaignId={campaignId}
+        draft={draft} published={control} party={party}/>,
+      output:<div className={styles.studioSection}>
+        <p>Live scene: {names[control.data?.scene||'blank']} ·
+          Revision {control.data?.revision||0}</p>
+        <a href={link} target="_blank" rel="noopener noreferrer">Open Player Display</a>
+on type="button" disabled={busy||control.loading||Boolean(control.error)}
       onClick={async()=>{
         setBusy(true);setMessage('');
         try{
@@ -194,7 +248,13 @@ export function CampaignPresentationController({api,campaignId,party=[]}){
       }}>
       Refresh Safe Combat &amp; Map Feeds
     </button>
-    <HybridSessionManager api={api} campaignId={campaignId}/>
-    {message?<p role="status">{message}</p>:null}
+{message?<p role="status">{message}</p>:null}
+      </div>,
+      media:<GMPresentationAssets api={api} campaignId={campaignId}/>,
+      viewers:<div className={styles.studioSection}>
+        <GMViewerStatus api={api} campaignId={campaignId}/>
+        <HybridSessionManager api={api} campaignId={campaignId}/>
+      </div>
+    }}/>
   </section>;
 }
