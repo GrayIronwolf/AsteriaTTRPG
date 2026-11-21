@@ -121,6 +121,12 @@ def main():
         sha = parents[0]
         traversed += 1
 
+    # The initial archive tip is an ancestor of the manifest commit. One
+    # stacked feature branch shares that exact commit and must count as saved.
+    original = api("/git/commits/" + MANIFEST_COMMIT)
+    if not original["parents"] or original["parents"][0]["sha"] != expected["Asteria-Development-Archive"]:
+        raise RuntimeError("Original archive ancestry differs from manifest")
+    archive_parents.add(expected["Asteria-Development-Archive"])
     missed = sorted({expected[name] for name in expected if name not in KEEP}
                     - archive_parents)
     if missed or not main_saved:
