@@ -31,8 +31,10 @@ export function createPresentationAudienceRevealCommands(context,{requireCampaig
             throw Error('Published scene changed or is blacked out. Refresh first.');
           let sessionEpoch='';
           if(action.audience==='member'){
-            const membership=await readCampaignMember(tx,db,campaignId,
-              {...campaign,id:campaignId},action.targetUid);
+            const membership=await readCampaignMember({get:async ref=>{
+              const row=await tx.get(ref);
+              return {exists:exists(row),data:()=>row.data()};
+            }},db,campaignId,{...campaign,id:campaignId},action.targetUid);
             if(!isCampaignMember({...campaign,id:campaignId},action.targetUid,membership))
               throw Error('Recipient is not an active campaign member.');
           }else{
