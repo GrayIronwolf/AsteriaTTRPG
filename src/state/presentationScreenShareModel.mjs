@@ -17,7 +17,7 @@ export function screenShareVideoSdp(sdp){
   if(typeof sdp!=='string'||sdp.length<160||sdp.length>SCREEN_SHARE_SDP_MAX_CHARS||
     !/^v=0\r?\n/.test(sdp)||!/(?:^|\n)m=video\s/.test(sdp)||
     (sdp.match(/(?:^|\n)m=/g)||[]).length!==1||
-    /(?:^|\n)m=audio\s/.test(sdp)||/[\u0000-\u0008]/.test(sdp))
+    /(?:^|\n)m=audio\s/.test(sdp)||Array.from(sdp).some(char=>char.charCodeAt(0)<9))
     throw Error('Only one bounded video-only WebRTC description is permitted.');
   return sdp;
 }
