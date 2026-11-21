@@ -4,6 +4,7 @@ const assert=require('node:assert/strict');
 const {spawn}=require('node:child_process');
 const path=require('node:path');
 const {chromium}=require('playwright');
+const {browserLaunchOptions,browserContextOptions}=require('./site-restoration-browser-settings.cjs');
 const root=path.resolve(__dirname,'..'),base='http://127.0.0.1:4174/';
 const server=spawn(process.execPath,[
  path.join(root,'node_modules/vite/bin/vite.js'),'preview',
@@ -34,9 +35,9 @@ async function account(page,email,username){
 (async()=>{let browser;
 try{
  await ready();
- browser=await chromium.launch({headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
- const owner=await browser.newPage({viewport:{width:1440,height:900}});
- const player=await browser.newPage({viewport:{width:390,height:850}});
+ browser=await chromium.launch(browserLaunchOptions());
+ const owner=await browser.newPage(browserContextOptions('desktop'));
+ const player=await browser.newPage(browserContextOptions('mobile'));
  for(const page of [owner,player]){
   await page.route('**/*',r=>{
    const hostname=new URL(r.request().url()).hostname;
@@ -257,25 +258,35 @@ try{
  await owner.goto(base+'#/react/gm/'+encodeURIComponent(ownerCampaignId),{waitUntil:'domcontentloaded'});
  await owner.getByTestId('site-gm-session-start').click();
  await owner.getByTestId('site-gm-session-status').getByText('ACTIVE').waitFor({timeout:30000});
- await owner.getByRole('button',{name:'Gameplay Systems'}).click();
+ const gmSections=owner.getByRole('navigation',{name:'GM dashboard sections'});
+ await gmSections.getByRole('button',{name:'Gameplay Systems',exact:true}).click();
  const gmCombat=owner.getByTestId('site-gm-combat');
  await gmCombat.waitFor({timeout:30000});
- await gmCombat.getByRole('button',{name:'Add Linked Players'}).click();
- await gmCombat.getByText('Joined Forge Hero',{exact:true}).first().waitFor({timeout:30000});
- await gmCombat.locator('button:enabled').filter({hasText:/^Start Combat$/}).click();
+ const combined=process.env.ASTERIA_EXPECT_COMBINED_COMBAT==='1';
+ if(combined)await owner.getByTestId('site-gm-progression').waitFor({timeout:30000});
+ await gmCombat.getByRole('button',{name:'Add Linked Players',exact:true}).click();
+ await gmCombat.getByTestId('site-combat-initiative').getByText('Joined Forge Hero',{exact:true}).waitFor({timeout:30000});
+ await gmCombat.getByRole('button',{name:'Start Combat',exact:true}).click();
  await gmCombat.getByText(/ACTIVE · Round 1/).waitFor({timeout:30000});
  await gmCombat.getByTestId('site-combat-initiative').getByText(/Current turn/).waitFor({timeout:30000});
+ assert.equal(await gmCombat.count(),1,'Only one GM Combat region may survive the start snapshot');
+ assert.equal(await gmCombat.getByTestId('site-combat-badges').count(),1,'Combat has one badge set for the selected participant');
  await gmCombat.getByTestId('site-combat-badges').waitFor({timeout:30000});
  for(const kind of ['order','initiative','ap','timer'])
    await gmCombat.getByTestId('site-forged-badge-'+kind).waitFor({timeout:30000});
- await gmCombat.locator('button:enabled').filter({hasText:/^Record 1 AP action$/}).click();
+ assert.equal(await gmCombat.getByTestId('site-forged-badge-ap').getAttribute('aria-label'),'Action Points: 3');
+ await gmCombat.getByRole('button',{name:'Record 1 AP action',exact:true}).click();
  await gmCombat.getByText('2 AP · Bonus available').waitFor({timeout:30000});
  await player.goto(base+'#/react/character/'+encodeURIComponent(ownerCampaignId)+'/'+encodeURIComponent(linkedId),
    {waitUntil:'domcontentloaded'});
  await player.getByRole('button',{name:'Combat',exact:true}).click();
  const playerCombat=player.getByTestId('site-player-combat');
  await playerCombat.waitFor({timeout:30000});
+ const playerChecks=player.getByTestId('site-player-checks');
+ if(combined)await playerChecks.waitFor({state:'attached',timeout:30000});
  await playerCombat.getByText('2 AP · Bonus available').waitFor({timeout:30000});
+ assert.equal(await playerCombat.count(),1,'Only one Player Combat region may be present with other workspaces');
+ assert.equal(await playerCombat.getByTestId('site-combat-badges').count(),1,'Player Combat has one badge set');
  for(const kind of ['order','initiative','ap','timer'])
    await playerCombat.getByTestId('site-forged-badge-'+kind).waitFor({timeout:30000});
  assert.equal(await playerCombat.getByTestId('site-forged-badge-order').getAttribute('aria-label'),'Turn Order: 1');
@@ -286,17 +297,32 @@ try{
  await playerCombat.getByText('Turn complete').waitFor({timeout:30000});
  // Ensure GM received the new revision before advancing the server-owned turn.
  await gmCombat.getByText('Turn complete').waitFor({timeout:30000});
- await gmCombat.locator('button:enabled').filter({hasText:/^Next Turn$/}).click();
+ await gmCombat.getByRole('button',{name:'Next Turn',exact:true}).click();
  try{await gmCombat.getByText(/ACTIVE · Round 2/).waitFor({timeout:30000});}
  catch(error){
    console.error('COMBAT NEXT TURN DIAGNOSTICS',await gmCombat.innerText());
    throw error;
  }
  owner.once('dialog',dialog=>dialog.accept());
- await gmCombat.locator('button:enabled').filter({hasText:/^End Combat$/}).click();
+ await gmCombat.getByRole('button',{name:'End Combat',exact:true}).click();
  await gmCombat.getByText(/ENDED/).waitFor({timeout:30000});
  // A non-GM may never manage the encounter.
  assert.equal(await playerCombat.getByRole('button',{name:'Start Combat'}).count(),0);
+ if(combined){
+  const playerSections=player.getByRole('navigation',{name:'Character dashboard sections'});
+  await playerSections.getByRole('button',{name:'Dashboard',exact:true}).click();
+  await playerCombat.waitFor({state:'detached'});
+  assert.equal(await playerChecks.count(),1,'One Player check workspace survives leaving Combat');
+  await playerSections.getByRole('button',{name:'Combat',exact:true}).click();
+  await playerCombat.getByText(/ENDED/).waitFor({timeout:30000});
+  assert.equal(await playerCombat.count(),1,'Returning to Combat mounts one fresh Player Combat region');
+  assert.equal(await playerChecks.count(),1,'One Player check workspace coexists with Combat');
+ }
+ await gmSections.getByRole('button',{name:'GM Main',exact:true}).click();
+ await gmCombat.waitFor({state:'detached'});
+ await gmSections.getByRole('button',{name:'Gameplay Systems',exact:true}).click();
+ await gmCombat.getByText(/ENDED/).waitFor({timeout:30000});
+ assert.equal(await gmCombat.count(),1,'Returning to Gameplay Systems mounts one fresh Combat region');
  await owner.goto(base+'#/campaign-forge',{waitUntil:'domcontentloaded'});
  await owner.getByRole('button',{name:'Manage Campaign'}).click();
  await owner.getByTestId('site-gm-character-refresh').click();
@@ -318,7 +344,7 @@ try{
  for(const page of [owner,player]){
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
  }
- console.log('PASS: Phase 6.4 published maps, authenticated shared media and projector plus Phase 6.3 dashboard layouts; verified character Forge, campaign join, owner approval, link request, server character import, deactivation, restore, unlink, persistence and mobile access isolation.');
+ console.log('PASS: Combat initiative, unique badges, GM and Player AP, turn advance, encounter end and role isolation'+(combined?' with Progression also mounted.':'.'));
 }catch(err){console.error(err);process.exitCode=1;}
 finally{if(browser)await browser.close();server.kill('SIGTERM');}
 })();

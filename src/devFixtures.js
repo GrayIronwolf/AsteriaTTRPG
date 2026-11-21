@@ -10,14 +10,25 @@ function clone(value) {
 }
 
 export function installDevFixtures() {
-  if(new URLSearchParams(window.location.search).get('reactFixture') !== '1') return false;
+  const query = new URLSearchParams(window.location.search);
+  if(!['127.0.0.1', 'localhost', '[::1]'].includes(window.location.hostname) ||
+    query.get('reactFixture') !== '1') return false;
   document.documentElement.dataset.asteriaReactFixture = 'active';
 
+  const role = query.get('reactFixtureRole');
+  const gmPreview = role === 'gm';
+  const scopedPreview = gmPreview || role === 'player';
+  const uid = gmPreview ? 'gm-demo' : 'player-demo';
+  const account = { uid, email:gmPreview ? 'preview-gm@asteria.local' : 'preview@asteria.local' };
+  const profile = { uid, displayName:gmPreview ? 'Preview GM' : 'Preview Player',
+    username:gmPreview ? 'PreviewGM' : 'PreviewPlayer' };
   const campaign = {
     id: DEMO_CAMPAIGN_ID,
     name: 'Shadows of Elarion',
     ucn: '204015717454',
-    gmId: 'gm-demo', ownerUid:'player-demo', gmUids:['player-demo'],
+    gmId: 'gm-demo', ownerUid:scopedPreview ? 'gm-demo' : uid,
+    gmUids:[scopedPreview ? 'gm-demo' : uid],
+    ...(scopedPreview ? {playerUids:['player-demo', 'player-lyra']} : {}),
     playerCharacterLinks:{kael:'player-demo',lyra:'player-lyra'},
     party: ['kael', 'lyra']
   };
@@ -82,6 +93,8 @@ export function installDevFixtures() {
       coins: { Copper: 12, Silver: 31, Gold: 4 }
     }
   };
+  const isGM = () => campaign.ownerUid === uid || campaign.gmUids?.includes(uid);
+  const owns = character => character?.ownerUid === uid;
   const ownedCharacters = clone(characters);
   const ownedListeners = new Map();
   // The browser fixture mirrors owner-scoped GM layout subscriptions without
@@ -90,8 +103,7 @@ export function installDevFixtures() {
   const dashboardLayoutListeners=new Map();
   const dashboardLayoutKey=(campaignId,role)=>String(campaignId)+':'+String(role);
   const notifyDashboardLayout=key=>{
-    const value=dashboardLayouts.get(key)||null;
-    for(const callback of dashboardLayoutListeners.get(key)||[])callback(value?clone(value):null);
+    for(const callback of dashboardLayoutListeners.get(key)||[])callback();
   };
   let session = { id: 'session-001', status: 'active', number: 7, startedAt: Date.now(), expiresAt:Date.now()+SESSION_LIMIT_MS, maxDurationHours:10 };
   let events = [];
@@ -105,32 +117,54 @@ export function installDevFixtures() {
   };
   let partyLoot={stashes:[],loot:[],drafts:[]};
   let customItems=[];
-  const listeners = { campaign: [], characters: [], session: [], presence: [], events: [], encounter: [], gmWorkspace:[], partyWorkspace:[], partyChat:[], itemEcosystem:[], partyLoot:[], customItems:[] };
+  const idleRecording = {status:'idle',revision:0};
+  const checks = scopedPreview ? Object.values(characters).map(character => ({
+    id:'fixture-check-'+character.id, characterId:character.id, ownerUid:character.ownerUid,
+    characterName:character.name, type:'skill', skill:'Perception', characteristic:'wis',
+    dc:12, status:'cancelled', attempt:1, modifierTotal:0, modifiers:[]
+  })) : [];
   const presence = {
     'gm-demo': { uid: 'gm-demo', state: 'online', mode: 'gm' },
     'player-demo': { uid: 'player-demo', state: 'online', mode: 'character', characterId: 'kael' }
   };
 
-  const notify = key => listeners[key].forEach(callback => {
-    if(key === 'campaign') callback(clone(campaign));
-    if(key === 'characters') callback(clone(characters));
-    if(key === 'session') callback(clone(session));
-    if(key === 'presence') callback(clone(presence));
-    if(key === 'events') callback(clone(events));
-    if(key === 'encounter') callback(clone(encounter));
-    if(key === 'gmWorkspace') callback(gmWorkspace ? clone(gmWorkspace) : null);
-    if(key === 'partyWorkspace') callback(clone(partyWorkspace));
-    if(key === 'partyChat') callback(clone(partyChat));
-    if(key === 'itemEcosystem') callback(clone(itemEcosystem));
-    if(key === 'partyLoot') callback(clone(partyLoot));
-    if(key === 'customItems') callback(clone(customItems));
-  });
-  const subscribe = (key, callback) => {
-    document.documentElement.dataset.asteriaFixtureSubscription = key;
-    listeners[key].push(callback);
-    queueMicrotask(() => notify(key));
-    return () => { listeners[key] = listeners[key].filter(value => value !== callback); };
+  const listeners = new Map();
+  const bucket = (store,key) => {
+    if(!store.has(key)) store.set(key,new Set());
+    return store.get(key);
   };
+  const subscribeTo = (callbacks,read,onChange) => {
+    if(typeof onChange !== 'function') return () => {};
+    let delivered = false;
+    const callback = () => { if(delivered) onChange(clone(read())); };
+    callbacks.add(callback);
+    queueMicrotask(() => {
+      if(!callbacks.has(callback)) return;
+      delivered = true;
+      callback();
+    });
+    return ()=>callbacks.delete(callback);
+  };
+  const notify = key => {
+    for(const callback of listeners.get(key)||[]) callback();
+  };
+  const subscribe = (key,read,callback) => {
+    document.documentElement.dataset.asteriaFixtureSubscription = key;
+    return subscribeTo(bucket(listeners,key),read,callback);
+  };
+  const isDemoCampaign = campaignId => campaignId === DEMO_CAMPAIGN_ID;
+  const watchCampaign = (key,campaignId,callback,empty,read) => {
+    if(!campaignId) return () => {};
+    if(!isDemoCampaign(campaignId)) return subscribe(key+':'+campaignId,() => empty,callback);
+    return subscribe(key,read,callback);
+  };
+  // Tab entry points with no sample rows still publish the adapter's initial
+  // snapshot on an independent stream, without opening any network connection.
+  const emptyCampaignRows = key => (campaignId,callback) =>
+    watchCampaign(key,campaignId,callback,[],() => []);
+  const readOwnedEvents = () => events.filter(event =>
+    (event.targetOwnerUid || characters[event.targetCharacterId]?.ownerUid) === uid);
+  const fixtureMigration = async campaignId => ({ok:Boolean(isDemoCampaign(campaignId) && isGM()),migrated:0,remaining:0});
   const eventId = prefix => `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
   const requireFixtureSession=()=>{
     if(session.status !== 'active' || Date.now() >= Number(session.expiresAt || 0)) throw new Error('The GM must start the session before this dashboard can be edited.');
@@ -179,20 +213,18 @@ export function installDevFixtures() {
     isReady: () => true,
     // The fixture already publishes clock/system snapshots through its subscriptions.
     refreshCharacterSystems: async () => ({ok:true}),
-    getUser: () => ({ uid: 'player-demo', email: 'preview@asteria.local' }),
-    getProfile: () => ({ uid: 'player-demo', displayName: 'Preview Player' }),
+    getUser: () => ({...account}),
+    getProfile: () => ({...profile}),
+    readAccountProfileForDisplay: async () => ({uid,authEmail:account.email,profile:{...profile}}),
     saveOwnedCharacterSnapshot: async (characterId,character) => {
-      if(!characterId || !character) return false;
-      ownedCharacters[characterId] = { ...(ownedCharacters[characterId] || {}), ...clone(character), id:characterId };
-      for(const callback of ownedListeners.get(characterId) || []) callback(clone(ownedCharacters[characterId]));
+      const existing = ownedCharacters[characterId];
+      if(!characterId || !character || (existing && !owns(existing)) || (character.ownerUid && !owns(character))) return false;
+      ownedCharacters[characterId] = { ...existing, ...clone(character), id:characterId, ownerUid:uid };
+      for(const callback of ownedListeners.get(characterId) || []) callback();
       return true;
     },
-    subscribeOwnedCharacter: (characterId,callback) => {
-      const callbacks=ownedListeners.get(characterId) || new Set();
-      ownedListeners.set(characterId,callbacks);callbacks.add(callback);
-      queueMicrotask(()=>{if(callbacks.has(callback))callback(ownedCharacters[characterId]?.ownerUid==='player-demo'?clone(ownedCharacters[characterId]):null);});
-      return ()=>callbacks.delete(callback);
-    },
+    subscribeOwnedCharacter: (characterId,callback) => subscribeTo(bucket(ownedListeners,characterId),
+      () => owns(ownedCharacters[characterId]) ? ownedCharacters[characterId] : null,callback),
     loadCharacters: async () => clone(characters),
     loadCampaigns: async () => [clone(campaign)],
     loadState: async () => ({}),
@@ -209,31 +241,90 @@ export function installDevFixtures() {
     saveState: async () => ({ ok: true }),
     subscribeUserDashboardLayout: (campaignId,role,callback) => {
       const key=dashboardLayoutKey(campaignId,role);
-      if(!dashboardLayoutListeners.has(key))dashboardLayoutListeners.set(key,new Set());
-      const callbacks=dashboardLayoutListeners.get(key);
-      callbacks.add(callback);
-      queueMicrotask(()=>{if(callbacks.has(callback))notifyDashboardLayout(key);});
-      return ()=>callbacks.delete(callback);
+      return subscribeTo(bucket(dashboardLayoutListeners,key),
+        () => isDemoCampaign(campaignId) && isGM() ? dashboardLayouts.get(key)||null : null,callback);
     },
     saveUserDashboardLayout: async (campaignId,role,layout) => {
+      if(!isDemoCampaign(campaignId) || !isGM()) return {ok:false,error:'Only the campaign GM may save its layout.'};
       const key=dashboardLayoutKey(campaignId,role);
       dashboardLayouts.set(key,clone(layout));
       notifyDashboardLayout(key);
       return {ok:true};
     },
-    subscribeCampaign: (_campaignId, callback) => subscribe('campaign', callback),
-    subscribeCampaignCharacters: (_campaignId, callback) => subscribe('characters', callback),
-    subscribeLiveSession: (_campaignId, callback) => subscribe('session', callback),
-    subscribeSessionPresence: (_campaignId, _sessionId, callback) => subscribe('presence', callback),
-    subscribeCampaignEvents: (_campaignId, callback) => subscribe('events', callback),
-    subscribeCampaignEncounter: (_campaignId, callback) => subscribe('encounter', callback),
-    subscribeGMWorkspace: (_campaignId, callback) => subscribe('gmWorkspace', callback),
-    subscribePartyWorkspace: (_campaignId, callback) => subscribe('partyWorkspace', callback),
-    subscribePartyChat: (_campaignId, callback) => subscribe('partyChat', callback),
-    subscribeCampaignItemEcosystem: (_campaignId, callback) => subscribe('itemEcosystem', callback),
-    subscribePartyLoot: (_campaignId,callback) => subscribe('partyLoot',callback),
+    subscribeCampaign: (campaignId,callback) => watchCampaign('campaign',campaignId,callback,null,() => campaign),
+    subscribeCampaignCharacters: (campaignId,callback) => watchCampaign('characters',campaignId,callback,{},() => characters),
+    subscribeLiveSession: (campaignId,callback) => watchCampaign('session',campaignId,callback,{id:'',status:'idle'},() => session),
+    subscribeSessionPresence: (campaignId,sessionId,callback) => {
+      if(!sessionId) return () => {};
+      const key = sessionId === session.id ? 'presence' : 'presence:'+sessionId;
+      return watchCampaign(key,campaignId,callback,{},() => sessionId === session.id ? presence : {});
+    },
+    subscribeCampaignEvents: (campaignId,callback,{mode='gm',characterId=''}={}) =>
+      watchCampaign('events',campaignId,callback,[],() => (mode === 'gm' && isGM() ? events : readOwnedEvents())
+        .filter(event => !characterId || !event.targetCharacterId || event.targetCharacterId === characterId)),
+    fetchCampaignEventHistory: async (campaignId,characterId,beforeId) => {
+      if(!isDemoCampaign(campaignId)) return {events:[],more:false};
+      const ownedEvents = readOwnedEvents();
+      const before = beforeId ? ownedEvents.findIndex(event => event.id === beforeId) : -1;
+      if(beforeId && before < 0) return {events:[],more:false};
+      const page = ownedEvents.slice(before+1,before+201);
+      return {events:clone(page.filter(event => event.targetCharacterId === characterId)),
+        cursor:page.at(-1)?.id || '',more:page.length === 200};
+    },
+    subscribeCampaignEncounter: (campaignId,callback) => watchCampaign('encounter',campaignId,callback,null,() => encounter),
+    subscribeGMWorkspace: (campaignId,callback) => watchCampaign('gmWorkspace',campaignId,callback,null,() => isGM() ? gmWorkspace : null),
+    subscribePartyWorkspace: (campaignId,callback) => watchCampaign('partyWorkspace',campaignId,callback,{sharedNotes:'',questLog:[]},() => partyWorkspace),
+    subscribePartyChat: (campaignId,callback) => watchCampaign('partyChat',campaignId,callback,[],() => partyChat),
+    subscribeCampaignItemEcosystem: (campaignId,callback) => watchCampaign('itemEcosystem',campaignId,callback,{},() => itemEcosystem),
+    subscribePartyLoot: (campaignId,callback) => watchCampaign('partyLoot',campaignId,callback,{stashes:[],loot:[],drafts:[]},() => partyLoot),
+    subscribeRecordingNotice: (campaignId,callback) => watchCampaign('recordingNotice',campaignId,callback,idleRecording,() => idleRecording),
+    subscribeRecordingControl: (campaignId,callback) => watchCampaign('recordingControl',campaignId,callback,idleRecording,() => idleRecording),
+    subscribeRecordingConsents: emptyCampaignRows('recordingConsents'),
+    subscribeOwnRecordingConsent: (campaignId,callback) => watchCampaign('ownRecordingConsent',campaignId,callback,null,() => null),
+    subscribeRecordingArchives: emptyCampaignRows('recordingArchives'),
+    subscribeUniversalChecks: (campaignId,callback,{gm=false}={}) =>
+      watchCampaign('universalChecks',campaignId,callback,[],() => gm && isGM() ? checks : checks.filter(check => check.ownerUid === uid)),
+    subscribeBattleMaps: emptyCampaignRows('battleMaps'),
+    subscribeBattleMapPrivatePins: (campaignId,mapId,callback) => {
+      if(!mapId) return () => {};
+      return emptyCampaignRows('battleMapPrivatePins:'+mapId)(campaignId,callback);
+    },
+    subscribeWorldAtlas: emptyCampaignRows('worldAtlas'),
+    subscribeAsteriaCalendar: (campaignId,callback) => watchCampaign('calendar',campaignId,callback,null,() => null),
+    subscribeAsteriaCalendarEntries: emptyCampaignRows('calendarEntries'),
+    subscribeWeatherZones: emptyCampaignRows('weatherZones'),
+    subscribeWeatherReports: emptyCampaignRows('weatherReports'),
+    subscribeSessionNotes: emptyCampaignRows('sessionNotes'),
+    subscribeSessionPdfs: emptyCampaignRows('sessionPdfs'),
+    subscribeCampaignAudio: emptyCampaignRows('campaignAudio'),
+    subscribeCampaignAudioLive: (campaignId,callback) => {
+      const idle = {version:1,revision:0,ambient:null,effect:null};
+      return watchCampaign('campaignAudioLive',campaignId,callback,idle,() => idle);
+    },
+    subscribePresentationControl: (campaignId,callback) => watchCampaign('presentationControl',campaignId,callback,null,() => null),
+    subscribePresentationDisplay: (campaignId,callback) => watchCampaign('presentationDisplay',campaignId,callback,null,() => null),
+    subscribeEncounterPlans: emptyCampaignRows('encounterPlans'),
+    subscribeRandomTables: emptyCampaignRows('randomTables'),
+    subscribeRandomTableHistory: emptyCampaignRows('randomTableHistory'),
+    subscribeLootTables: emptyCampaignRows('lootTables'),
+    subscribeCraftingStations: emptyCampaignRows('craftingStations'),
+    subscribeNPCServices: emptyCampaignRows('npcServices'),
+    subscribeNPCRepairRequests: emptyCampaignRows('npcRepairRequests'),
+    subscribeEnhancementPlans: emptyCampaignRows('enhancementPlans'),
+    subscribeEnhancementRequests: emptyCampaignRows('enhancementRequests'),
+    subscribeCraftingRecipes: emptyCampaignRows('craftingRecipes'),
+    subscribeCraftingRequests: emptyCampaignRows('craftingRequests'),
+    subscribeMerchantTemplates: callback => subscribe('merchantTemplates',() => [],callback),
+    subscribeMerchantRelationships: emptyCampaignRows('merchantRelationships'),
+    subscribeMerchantDeals: emptyCampaignRows('merchantDeals'),
+    subscribeItemLore: emptyCampaignRows('itemLore'),
+    subscribeItemDiscoveries: emptyCampaignRows('itemDiscoveries'),
+    subscribeGMRewardBundles: emptyCampaignRows('gmRewardBundles'),
+    subscribeDiceWorkspace: callback => subscribe('diceWorkspace',() => ({version:1,presets:[],history:[]}),callback),
     syncCampaignItemPrivacy: async () => ({ok:true,migrated:0,remaining:0}),
-    subscribeCustomItems: callback => subscribe('customItems', callback),
+    syncCampaignShopStores: fixtureMigration,
+    syncGMRewardBundles: fixtureMigration,
+    subscribeCustomItems: callback => subscribe('customItems',() => customItems,callback),
     saveCampaignEncounter: async (_campaignId, next) => { encounter = { ...encounter, ...clone(next) }; notify('encounter'); return { ok:true }; },
     saveGMWorkspace: async (_campaignId,patch) => { gmWorkspace={...(gmWorkspace||{}),...clone(patch),version:'asteria-react-gm-workspace-v1'};notify('gmWorkspace');return {ok:true}; },
     assignCampaignQuest: async (_campaignId,quest,ids) => {(ids||[]).forEach(id=>{const character=characters[id];if(!character)return;const quests=[...(character.quests||[])];const index=quests.findIndex(value=>value.id===quest.id);if(index>=0)quests[index]={...quests[index],...clone(quest)};else quests.push(clone(quest));character.quests=quests;});notify('characters');return {ok:true,assigned:(ids||[]).length};},
@@ -245,7 +336,10 @@ export function installDevFixtures() {
     pauseLiveSession: async () => { session = { ...session, status: 'paused' }; notify('session'); return { ok: true }; },
     endLiveSession: async (_campaignId,reason='gm-ended') => { session = { ...session, status: 'ended', endReason:reason, endedAt: Date.now() }; notify('session'); return { ok: true }; },
     expireLiveSession: async () => { if(Date.now()>=Number(session.expiresAt||0)) { session={...session,status:'ended',endReason:'time-limit',endedAt:Date.now()};notify('session'); } return {ok:true}; },
-    setSessionPresence: async (_campaignId, _sessionId, state) => { presence['player-demo'] = { uid: 'player-demo', ...state }; notify('presence'); return { ok: true }; },
+    setSessionPresence: async (campaignId,sessionId,state) => {
+      if(!isDemoCampaign(campaignId) || sessionId !== session.id) return {ok:false};
+      presence[uid] = {...state,uid}; notify('presence'); return {ok:true};
+    },
     acknowledgeCampaignEvent: async (_campaignId, id, patch) => { events = events.map(event => event.id === id ? { ...event, acknowledged: true, ...patch } : event); notify('events'); return { ok: true }; },
     grantCampaignXP: async (_campaignId, characterId, amount, metadata = {}) => {
       const character = characters[characterId];
@@ -622,6 +716,7 @@ export function installDevFixtures() {
     inferSlots: item => String(item?.type || '').toLowerCase().includes('weapon') ? ['Main Weapon', 'Secondary Weapon'] : [],
     resolveReward: async (_characterId, reward) => { events = events.map(event => event.id === reward.id ? { ...event, status: 'accepted', resolvedAt: new Date().toISOString() } : event); notify('events'); return true; }
   });
+  if(scopedPreview)window.AsteriaAuthBridge?.setSession?.({...profile},{...account});
   window.dispatchEvent(new CustomEvent('asteria:firebase-ready'));
   return true;
 }

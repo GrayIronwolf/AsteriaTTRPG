@@ -51,6 +51,8 @@ function auditReferences(manifestPath=null){
     if(seen.has(pair))blockers.push('Duplicate authenticated original: '+pair);
     seen.add(pair);
     if(!Number.isInteger(item.height)||item.height<600)blockers.push(pair+': invalid viewport height.');
+    if(item.fixedTime!==undefined&&(!Number.isSafeInteger(item.fixedTime)||!Number.isFinite(new Date(item.fixedTime).getTime())))
+      blockers.push(pair+': fixed browser time must be a valid millisecond timestamp.');
     if(!/^[a-z0-9_-]+$/i.test(item.name||''))blockers.push(pair+': safe case name required.');
     if(names.has(item.name))blockers.push(pair+': duplicate case name.');
     names.add(item.name);

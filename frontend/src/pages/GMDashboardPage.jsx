@@ -315,9 +315,9 @@ function CampaignGM({api,uid,campaignId}) {
       key={uid+':'+campaignId+':'+tab} api={api.economy} campaignId={campaignId}
       initialTab={tab==='inventory'?'Inventory':tab==='crafting'?'Crafting':'Party Loot'}/>:null}
     {combatEnabled&&tab==='gameplay'?<GMCombatWorkspace
-      key={uid+':'+campaignId} api={api.combat} campaignId={campaignId}/>:null}
+      key={'combat:'+uid+':'+campaignId} api={api.combat} campaignId={campaignId}/>:null}
     {progressionEnabled&&tab==='gameplay'?<GMChecksAndProgression
-      key={uid+':'+campaignId} api={api.progression} campaignId={campaignId}/>:null}
+      key={'progression:'+uid+':'+campaignId} api={api.progression} campaignId={campaignId}/>:null}
     {mediaEnabled&&tab==='battle-maps'?<CampaignMapWorkspace key={uid+':'+campaignId}
       api={api.media} campaignId={campaignId} role="gm"/>:null}
     {mediaEnabled&&tab==='world-atlas'?<CampaignAtlasWorkspace key={uid+':'+campaignId}
