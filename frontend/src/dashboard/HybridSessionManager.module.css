@@ -26,3 +26,20 @@
 .invitation button{min-height:40px;padding:var(--ast-space-2);border:1px solid var(--ast-color-outline-soft);border-radius:var(--ast-radius-sm);background:var(--ast-color-panel-raised);color:var(--ast-color-text);font:inherit}
 .invitation button:disabled{opacity:.55}
 .invitation button:focus-visible{outline:3px solid var(--ast-color-focus);outline-offset:2px}
+
+/* Improvement 6: local, player-safe visual display presets. */
+.display[data-display-mode] .stage,.display[data-display-mode] .content{zoom:var(--display-zoom,1)}
+.modeToolbar{display:grid;gap:var(--ast-space-2)}
+.modeToolbar p{margin:0;font-size:var(--ast-font-sm)}
+.fullscreenExit{position:fixed;z-index:10;top:var(--ast-space-3);right:var(--ast-space-3);min-height:44px;min-width:44px;box-shadow:0 2px 12px rgb(0 0 0 / .5)}
+.displayOverlay{justify-self:end;align-self:end;padding:var(--ast-space-2);border:1px solid var(--ast-color-outline-soft);border-radius:var(--ast-radius-sm);font-size:var(--ast-font-sm);color:var(--ast-color-text-muted)}
+.display[data-clean-fullscreen="true"]:fullscreen>header,
+.display[data-clean-fullscreen="true"]:fullscreen>.modeToolbar,
+.display[data-clean-fullscreen="true"]:fullscreen>.displayOverlay{display:none}
+.display[data-clean-fullscreen="true"]:fullscreen{grid-template-rows:1fr}
+.display[data-clean-fullscreen="true"]:fullscreen>.stage,
+.display[data-clean-fullscreen="true"]:fullscreen>.content{align-self:stretch;min-height:calc(100vh - 4rem)}
+@media(max-width:660px){
+  .display[data-display-mode] .stage,.display[data-display-mode] .content{max-width:100%;overflow:auto}
+  .fullscreenExit{top:var(--ast-space-2);right:var(--ast-space-2)}
+}
