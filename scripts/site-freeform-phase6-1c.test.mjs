@@ -107,7 +107,9 @@ test('Phase 6.1C: React combat command centre reuses secure Firebase commands',(
   assert.match(centre,/setPointerCapture/);
   assert.match(centre,/onPointerCancel=\{end\}/);
   assert.match(centre,/localStorage\.setItem\(storageKey,JSON\.stringify\(normalized\)\)/);
-  assert.match(gm,/uid=\{uid\} onNavigate=\{setTab\}/);
+  assert.match(gm,/uid=\{uid\}/);
+  assert.match(gm,/mediaApi=\{mediaEnabled\?api.media:null\}/);
+  assert.match(gm,/onNavigate=\{setTab\}/);
   assert.doesNotMatch(centre,/firebase\/firestore|httpsCallable|updateDoc|setDoc/);
   const css=read('frontend/src/combat/CombatCommandCentre.module.css');
   assert.doesNotMatch(css,/!\s*important|@import\b/i);
