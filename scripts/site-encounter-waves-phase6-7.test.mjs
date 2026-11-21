@@ -115,6 +115,9 @@ test('6.7: safe GM schedule projection and player-only announced event',()=>{
   assert.equal(player.publicEvent.notes,undefined);
   assert.equal(player.encounterSchedule,undefined);
   assert.equal(player.waves,undefined);
+  assert.equal(player.publicEvent.type,'environment');
+  const privateEvent=projectCombat({...raw,publicEvent:null},session,{role:'player'});
+  assert.equal(privateEvent.publicEvent,undefined);
 });
 test('6.7: new GM-only actions validate exact confirmation and no arbitrary wave data',()=>{
   for(const data of [
