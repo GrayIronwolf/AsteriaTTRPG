@@ -54,6 +54,7 @@ export function createCombatCommands(context) {
         if(encounter.status==='active')throw new Error('End active combat before loading a prepared encounter.');
         if(privateState.pending)throw new Error('Resolve the pending action before loading an encounter.');
         if(input.replace!==true||!prepared)throw new Error('Choose a saved prepared encounter to replace the enemy roster.');
+        if(prepared.archived===true)throw new Error('Restore this archived encounter before loading combat.');
       }
       const incoming=loading?preparedEncounterRoster(prepared,encounter.combatants,context.requestId):
         input.operation==='save'?input.encounter?.combatants||[]:[];
