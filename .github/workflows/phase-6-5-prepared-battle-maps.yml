@@ -1,0 +1,36 @@
+name: Phase 6.5 Prepared Battle Map Integration
+on:
+  pull_request:
+    paths:
+      - 'src/state/preparedBattleMapModel.mjs'
+      - 'src/state/preparedEncounterModel.mjs'
+      - 'src/state/battleMapCombatModel.mjs'
+      - 'frontend/src/combat/**'
+      - 'frontend/src/pages/GMDashboardPage.jsx'
+      - 'functions/combatCommands.mjs'
+      - 'scripts/site-prepared-battle-maps-phase6-5.test.mjs'
+      - '.github/workflows/phase-6-5-prepared-battle-maps.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  prepared-battle-maps:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Phase 6.2-6.5 combat, map and encounter regression
+        run: node --test scripts/site-prepared-encounters-phase6-2.test.mjs scripts/site-prepared-encounters-phase6-3.test.mjs scripts/site-prepared-encounters-phase6-4.test.mjs scripts/site-prepared-battle-maps-phase6-5.test.mjs scripts/site-combat-phase7-1.test.mjs
+      - name: Scoped React and server lint
+        run: npx eslint frontend/src/combat frontend/src/pages/GMDashboardPage.jsx src/state/preparedBattleMapModel.mjs src/state/battleMapCombatModel.mjs src/state/preparedEncounterModel.mjs functions/combatCommands.mjs
+      - name: React site checks
+        run: npm run site:check
+      - name: React production build
+        run: npm run site:build
+      - name: Distribution verification
+        run: npm run site:verify-dist
