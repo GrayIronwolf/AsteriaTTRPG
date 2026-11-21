@@ -5,6 +5,7 @@ import vm from 'node:vm';
 import { createCommands } from './commands.mjs';
 import { validateEquipmentChange } from '../src/systems/armour/armourSystem.mjs';
 import {respondHybridPresentationInvitation} from './hybridInvitationResponse.mjs';
+import {respondPresentationScreenShare} from './presentationScreenShareResponse.mjs';
 
 // Reuse the existing, trusted repository progression implementation. No request
 // text is evaluated and this context has no network, filesystem or credentials.
@@ -36,6 +37,8 @@ export async function executeAction(db,uid,data,serverTimestamp) {
   if(data.action==='repairCampaignCharacterLink') return repairCharacterLink(db,uid,data,serverTimestamp);
   if(data.action==='respondHybridPresentationInvitation')
     return respondHybridPresentationInvitation(db,uid,data,serverTimestamp);
+  if(data.action==='respondPresentationScreenShare')
+    return respondPresentationScreenShare(db,uid,data,serverTimestamp);
   const {action,requestId}=data;
   const args=data.args.map(value=>value===null?undefined:value);
   const campaignId=args[0];
@@ -53,7 +56,7 @@ export async function executeAction(db,uid,data,serverTimestamp) {
     const memberRecord=await readCampaignMember(transaction,db,campaignId,campaignSnapshot.data(),uid);
     if(!member(campaignSnapshot.data(),uid,memberRecord)) throw new Error('Campaign membership is required.');
     const [characterSnapshot,receipt]=await Promise.all([transaction.get(characterRef),transaction.get(receiptRef)]);
-    const campaignOnlyGMAction=new Set(['manageMerchantRelationship','manageEnhancementPlan','reviewEnhancement','manageCraftingStation','manageNPCService','reviewNPCRepair','manageCampaignCraftingRecipe','reviewCraftingRequest','manageCampaignShop','manageGMRewardBundle','syncCampaignShopStores','syncGMRewardBundles','managePartyStash','managePartyLootDrop','splitPartyLootCurrency','respondMerchantDeal','manageItemLore','manageLootTable','manageRandomTable','manageEncounterReward','manageEncounterCompletion','manageAsteriaCalendar','manageWeatherEnvironment','manageWorldAtlas','manageSessionLibrary','manageCampaignAudio','manageSessionRecording','managePlayerPresentation','managePresentationPlaylist','manageAudienceReveal','emergencyStopPresentation','manageHybridPresentationSession','managePresentationAsset','rebuildPresentationProjections']).has(action);
+    const campaignOnlyGMAction=new Set(['manageMerchantRelationship','manageEnhancementPlan','reviewEnhancement','manageCraftingStation','manageNPCService','reviewNPCRepair','manageCampaignCraftingRecipe','reviewCraftingRequest','manageCampaignShop','manageGMRewardBundle','syncCampaignShopStores','syncGMRewardBundles','managePartyStash','managePartyLootDrop','splitPartyLootCurrency','respondMerchantDeal','manageItemLore','manageLootTable','manageRandomTable','manageEncounterReward','manageEncounterCompletion','manageAsteriaCalendar','manageWeatherEnvironment','manageWorldAtlas','manageSessionLibrary','manageCampaignAudio','manageSessionRecording','managePlayerPresentation','managePresentationPlaylist','manageAudienceReveal','emergencyStopPresentation','manageHybridPresentationSession','managePresentationScreenShare','managePresentationAsset','rebuildPresentationProjections']).has(action);
     const campaignOnlyMemberAction=action==='respondRecordingConsent';
     const combatAction=action==='combatCommand';
     if(!combatAction&&!campaignOnlyGMAction&&!campaignOnlyMemberAction&&!characterSnapshot.exists) throw new Error('Character not found.');
