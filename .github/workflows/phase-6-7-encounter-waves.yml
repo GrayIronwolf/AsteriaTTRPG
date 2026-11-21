@@ -1,0 +1,34 @@
+name: Phase 6.7 Encounter Waves and Events
+on:
+  pull_request:
+    paths:
+      - 'src/state/encounterWaveModel.mjs'
+      - 'src/state/preparedEncounterModel.mjs'
+      - 'functions/combatCommands.mjs'
+      - 'frontend/src/combat/**'
+      - 'scripts/site-encounter-waves-phase6-7.test.mjs'
+      - '.github/workflows/phase-6-7-encounter-waves.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  encounter-waves:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Encounter waves, combat, and prepared library regressions
+        run: node --test scripts/site-encounter-waves-phase6-7.test.mjs scripts/site-live-combat-phase6-6.test.mjs scripts/site-prepared-battle-maps-phase6-5.test.mjs scripts/site-prepared-encounters-phase6-4.test.mjs scripts/site-prepared-encounters-phase6-3.test.mjs scripts/site-prepared-encounters-phase6-2.test.mjs scripts/site-combat-phase7-1.test.mjs
+      - name: React and server lint
+        run: npx eslint frontend/src/combat src/state/encounterWaveModel.mjs src/state/preparedEncounterModel.mjs functions/combatCommands.mjs
+      - name: React site check
+        run: npm run site:check
+      - name: React production build
+        run: npm run site:build
+      - name: Verify compiled artifacts
+        run: npm run site:verify-dist
