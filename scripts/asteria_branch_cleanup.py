@@ -66,7 +66,7 @@ def all_pages(path):
 
 
 def ref_sha(name):
-    encoded = urllib.parse.quote(name, safe="")
+    encoded = urllib.parse.quote(name, safe="/")
     row = api("/git/ref/heads/" + encoded)
     return row["object"]["sha"]
 
