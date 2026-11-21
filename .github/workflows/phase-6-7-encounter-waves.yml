@@ -1,5 +1,7 @@
 name: Phase 6.7 Encounter Waves and Events
 on:
+  push:
+    branches: [feature/phase-6-7-encounter-waves-events]
   pull_request:
     paths:
       - 'src/state/encounterWaveModel.mjs'
@@ -32,3 +34,40 @@ jobs:
         run: npm run site:build
       - name: Verify compiled artifacts
         run: npm run site:verify-dist
+  bundle:
+    name: Sync Phase 6.7 compiled website assets (no deployment)
+    needs: encounter-waves
+    if: github.event_name == 'push' && github.ref == 'refs/heads/feature/phase-6-7-encounter-waves-events'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Rebuild deterministic website assets
+        run: npm run build
+      - name: Commit and push generated assets back to this feature branch only
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch=feature/phase-6-7-encounter-waves-events
+          git fetch origin "$branch"
+          if [ "$(git rev-parse "origin/$branch")" != "$GITHUB_SHA" ]; then
+            echo "A newer change exists. Refusing to overwrite it."
+            exit 0
+          fi
+          git add -A react-dist data/compendium.js data/compendium-handbook.js data/compendium-index.js data/compendium-parts
+          if git diff --cached --quiet; then
+            echo "All compiled assets match their sources."
+            exit 0
+          fi
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "build(phase6.7): synchronize generated React website bundle"
+          git fetch origin "$branch"
+          git push origin "HEAD:refs/heads/$branch"
