@@ -774,10 +774,32 @@ service cloud.firestore {
         allow create, update, delete: if false;
       }
 
+      // Phase 7.4: never expose raw encounter state to campaign members.
+      // All public combat and map projections are server-maintained allowlists.
+      match /combatPublic/{documentId} {
+        allow get: if documentId == 'current' &&
+          canUseCampaignSystems(campaignId);
+        allow list, create, update, delete: if false;
+      }
+      match /presentationCombat/{documentId} {
+        allow get: if documentId == 'current' &&
+          (isCampaignGM(campaignId) || activeHybridViewer(campaignId));
+        allow list, create, update, delete: if false;
+      }
+      match /battleMapsPublic/{mapId} {
+        allow get: if canUseCampaignSystems(campaignId) ||
+          (activeHybridViewer(campaignId) &&
+            get(/databases/$(database)/documents/campaigns/$(campaignId)/presentationRestricted/current).data.get('scene','') == 'battle-map' &&
+            get(/databases/$(database)/documents/campaigns/$(campaignId)/presentationRestricted/current).data.get('mapId','') == mapId &&
+            resource.data.get('visibility','gm') == 'players');
+        allow list: if isCampaignGM(campaignId) ||
+          canUseCampaignSystems(campaignId);
+        allow create, update, delete: if false;
+      }
       match /systems/{systemId} {
         allow read: if canUseCampaignSystems(campaignId) && (
-          (systemId == 'itemEcosystem' || systemId == 'gmWorkspace')
-            ? isCampaignGM(campaignId) : true
+          (systemId == 'itemEcosystem' || systemId == 'gmWorkspace' ||
+           systemId == 'encounter') ? isCampaignGM(campaignId) : true
         );
         // The public shop view may also be maintained by the existing
         // authenticated GM shop editor, but cannot contain private trade rows.
