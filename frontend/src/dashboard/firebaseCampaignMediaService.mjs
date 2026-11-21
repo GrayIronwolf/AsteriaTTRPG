@@ -571,6 +571,65 @@ export function createFirebaseCampaignMediaService({
     return blob;
   }
 
+  // Restricted viewer subscriptions intentionally do not call campaign
+  // membership checks. Firestore authorizes only staged and sanitized data.
+  function watchRestrictedStageDocument(id,collection,documentId,onUpdate,onError){
+    assertGMCampaignId(id);
+    if(!mapId(documentId))throw Error('Invalid restricted presentation reference.');
+    let active=true,stop=()=>{};
+    (async()=>{
+      try{
+        const uid=await verified();
+        const grant=await firestoreSdk.getDocFromServer(hybridGrantRef(id,uid));
+        same(uid);
+        if(!grant.exists()||grant.data().uid!==uid||
+          grant.data().status!=='active')
+          throw Error('A valid restricted viewer invitation is required.');
+        if(!active)return;
+        const target=firestoreSdk.doc(db,'campaigns',id,collection,documentId);
+        stop=firestoreSdk.onSnapshot(target,{includeMetadataChanges:true},snapshot=>{
+          if(!active||snapshot.metadata?.fromCache||
+            snapshot.metadata?.hasPendingWrites)return;
+          try{
+            same(uid);
+            if(!snapshot.exists())throw Error('The presented content was withdrawn.');
+            onUpdate(snapshot.data());
+          }catch(error){if(active){active=false;stop();onError?.(error);}}
+        },error=>{if(active){active=false;stop();onError?.(error);}});
+      }catch(error){if(active){active=false;onError?.(error);}}
+    })();
+    return ()=>{active=false;stop();};
+  }
+  function watchRestrictedMap(id,selectedMapId,onUpdate,onError){
+    return watchRestrictedStageDocument(id,'battleMapsPublic',selectedMapId,
+      raw=>{
+        const safe=mapForViewer({
+          ...raw,id:selectedMapId,
+          storagePath:battleMapAssetPath(id,selectedMapId,raw.contentType)
+        },id,'player');
+        if(!safe)throw Error('The presented map is no longer available.');
+        onUpdate(safe);
+      },onError);
+  }
+  function watchRestrictedCombat(id,onUpdate,onError){
+    return watchRestrictedStageDocument(id,'presentationCombat','current',
+      onUpdate,onError);
+  }
+  async function fetchRestrictedMapMedia(id,map){
+    if(!map?.id||!mapId(map.id)||!mapForViewer(map,id,'player'))
+      throw Error('Choose an approved published presentation map.');
+    const uid=await verified();
+    const source=await firestoreSdk.getDocFromServer(publicMapRef(id,map.id));
+    same(uid);
+    if(!source.exists())throw Error('The published map is no longer available.');
+    const path=battleMapAssetPath(id,map.id,source.data().contentType);
+    if(map.storagePath!==path)
+      throw Error('The presentation map source changed.');
+    const blob=await storageSdk.getBlob(storageSdk.ref(storage,path));
+    same(uid);
+    return blob;
+  }
+
   async function managePresentation(id,action){
     const {uid}=await check(id,'gm');
     validatePresentationAction(action);
@@ -590,6 +649,7 @@ export function createFirebaseCampaignMediaService({
     saveMap,removeMap,savePrivatePins,managePresentation,
     manageHybridSession,watchGMHybridSession,watchRestrictedViewer,
     watchPresentationAssets,managePresentationAsset,uploadPresentationAsset,
-    fetchPresentationAsset
+    fetchPresentationAsset,
+    watchRestrictedMap,watchRestrictedCombat,fetchRestrictedMapMedia
   });
 }
