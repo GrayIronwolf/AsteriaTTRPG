@@ -23,12 +23,15 @@ export function GMScreenCaptureControls({api,campaignId,controlRevision=0}){
     stream.current=null;
     if(current)current.getTracks().forEach(track=>track.stop());
     if(video.current){video.current.pause();video.current.srcObject=null;}
-    if(mounted.current)setCapturing(false);
+    if(mounted.current){setCapturing(false);setNotice('');}
   },[]);
   useEffect(()=>{
     mounted.current=true;
     return ()=>{mounted.current=false;stop();};
   },[stop,campaignId]);
+  useEffect(()=>{
+    stop();setCapturing(false);setNotice('');setError('');
+  },[campaignId,stop]);
   useEffect(()=>{
     // Stop as soon as the GM leaves the page, changes account or goes offline.
     const leave=()=>stop();
