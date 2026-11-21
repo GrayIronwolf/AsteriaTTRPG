@@ -1,6 +1,7 @@
 /* Authenticated visual parity gate for the original approved dashboards.
  * Run with ASTERIA_PARITY_CASES=/absolute/path/cases.json
- * and optionally ASTERIA_PARITY_AUTH_STATE=/absolute/path/playwright-storage.json.
+ * ASTERIA_PARITY_AUTH_DIR can supply separate player.json, gm.json and readonly.json
+ * emulator sessions. ASTERIA_PARITY_AUTH_STATE supplies a single existing session.
  * Reference PNGs must be genuine, approved pre-migration screenshots.
  * Do NOT synthesize a reference from the Vite UI.
  */
@@ -11,6 +12,8 @@ const {createHash}=require('node:crypto');
 const path=require('node:path');
 const {chromium}=require('playwright');
 const {auditReferences}=require('./site-dashboard-reference-preflight.cjs');
+const {FIREBASE_EMULATOR_ORIGINS,FIXTURE_ART_ORIGIN,isFixtureArtwork,
+  browserLaunchOptions,browserContextOptions}=require('./site-restoration-browser-settings.cjs');
 
 async function main(){
   const file=process.env.ASTERIA_PARITY_CASES;
@@ -51,7 +54,7 @@ async function main(){
   }
   const evidence=path.resolve(process.env.ASTERIA_PARITY_OUTPUT||'dashboard-parity-evidence');
   fs.mkdirSync(evidence,{recursive:true});
-  const browser=await chromium.launch({headless:true});
+  const browser=await chromium.launch(browserLaunchOptions());
   try{
     const results=[];
     for(const entry of manifest.cases){
@@ -67,22 +70,36 @@ async function main(){
       assert.equal(createHash('sha256').update(expected).digest('hex'),
         entry.referenceSha256.toLowerCase(),
         'Approved original reference hash mismatch: '+entry.name);
+      const state=process.env.ASTERIA_PARITY_AUTH_DIR
+        ?path.resolve(process.env.ASTERIA_PARITY_AUTH_DIR,entry.role+'.json')
+        :process.env.ASTERIA_PARITY_AUTH_STATE;
       const context=await browser.newContext({
+        ...browserContextOptions(entry.width<=480?'mobile':'desktop'),
         viewport:{width:entry.width,height:entry.height},
-        deviceScaleFactor:1,
-        ...(process.env.ASTERIA_PARITY_AUTH_STATE?
-          {storageState:path.resolve(process.env.ASTERIA_PARITY_AUTH_STATE)}:{})
+        serviceWorkers:'block',...(state?{storageState:path.resolve(state)}:{})
       });
       try{
+        const origins=new Set([new URL(entry.url).origin,...FIREBASE_EMULATOR_ORIGINS]);
+        await context.route('**/*',route=>{
+          const req=route.request();
+          return origins.has(new URL(req.url()).origin)||isFixtureArtwork(req)
+            ?route.continue():route.abort();
+        });
         const page=await context.newPage();
+        if(entry.fixedTime!==undefined)await page.clock.setFixedTime(entry.fixedTime);
         const errors=[];
         page.on('pageerror',error=>errors.push(error.message));
-        await page.goto(entry.url,{waitUntil:'networkidle'});
+        await page.goto(entry.url,{waitUntil:'domcontentloaded'});
         // Refuse unauthenticated login screens and public/synthetic previews.
         const authenticatedNav=page.locator(entry.role==='gm'
           ?'nav[aria-label="GM dashboard sections"]'
           :'nav[aria-label="Character dashboard sections"]');
         await authenticatedNav.waitFor({state:'visible',timeout:15000});
+        const workspace=page.getByTestId('site-'+(entry.role==='gm'?'gm':'player')+'-layout-workspace');
+        await workspace.waitFor({timeout:15000});
+        if(entry.role==='player'){
+          await page.getByTestId('site-player-hero').getByText('Character Owner',{exact:true}).waitFor();
+        }
         if(entry.role==='readonly'){
           await page.getByText(/GM Read-only/).waitFor({timeout:15000});
           assert.equal(await authenticatedNav.getByRole('button',{name:'Journal',exact:true}).count(),0,
@@ -90,12 +107,16 @@ async function main(){
         }
         const target=page.locator(entry.selector);
         await target.waitFor({state:'visible'});
+        const portrait=target.locator('img[src^="'+FIXTURE_ART_ORIGIN+'/assets/races/"]').first();
+        if(await portrait.count())await portrait.evaluate(image=>image.decode());
         for(const action of entry.actions||[]){
           if(action.click)await page.getByRole('button',{name:action.click,exact:true}).click();
           if(action.expect)await page.getByText(action.expect,{exact:true}).waitFor();
           if(action.selector)await page.locator(action.selector).waitFor({state:'visible'});
         }
         await page.evaluate(()=>document.fonts.ready);
+        await page.evaluate(()=>scrollTo(0,0));
+        await page.mouse.move(0,0);
         // Compare full-page pixels, matching Phase 4.4 dashboard captures.
         const actual=await page.screenshot({fullPage:true,animations:'disabled'});
         const pixel=await page.evaluate(async ({a,b})=>{

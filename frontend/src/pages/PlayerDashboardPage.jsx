@@ -381,10 +381,10 @@ function Dashboard({api,media,combat,progression,economy,digitalGM,dice,uid,camp
       api={progression} campaignId={campaignId} characterId={characterId} section="skills"/>:null}
     {progressionEnabled&&tab==='Class/Talent Tree'?<PlayerProgressionWorkspace
       api={progression} campaignId={campaignId} characterId={characterId} section="talents"/>:null}
-    {progressionEnabled?<PlayerCheckRequests key={campaignId+':'+characterId}
+    {progressionEnabled?<PlayerCheckRequests key={'checks:'+campaignId+':'+characterId}
       api={progression} campaignId={campaignId} characterId={characterId}
       showHistory={tab==='Check History'}/>:null}
-    {tab==='Combat'&&combatEnabled?<PlayerCombatWorkspace key={campaignId+':'+characterId}
+    {tab==='Combat'&&combatEnabled?<PlayerCombatWorkspace key={'combat:'+campaignId+':'+characterId}
       api={combat} campaignId={campaignId} characterId={characterId}/>:null}
     {tab==='Battle Maps'&&mediaEnabled?
       <CampaignMapWorkspace api={media} campaignId={campaignId} role="player"/>:null}
