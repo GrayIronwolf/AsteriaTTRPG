@@ -14,9 +14,19 @@ export const COMBAT_AP_ACTIONS=Object.freeze([
   {ap:3,label:'Record 3 AP action'},
   {ap:0,label:'Use bonus action'}
 ]);
-export const COMBAT_PLAYER_COMMANDS=Object.freeze(['spend-ap','end-turn','death-save']);
+export const COMBAT_BASIC_DECLARATIONS=Object.freeze([
+  {id:'basic:command',name:'Quick command',requiresTarget:false},
+  {id:'basic:disengage',name:'Disengage',requiresTarget:false},
+  {id:'basic:attack',name:'Weapon attack',requiresTarget:true},
+  {id:'basic:walk',name:'Move',requiresTarget:false},
+  {id:'basic:dash',name:'Dash',requiresTarget:false},
+  {id:'basic:hide',name:'Hide',requiresTarget:false},
+  {id:'basic:grapple',name:'Grapple',requiresTarget:true},
+  {id:'basic:shove',name:'Shove',requiresTarget:true}
+]);
+export const COMBAT_PLAYER_COMMANDS=Object.freeze(['declare','spend-ap','end-turn','death-save']);
 export const COMBAT_GM_COMMANDS=Object.freeze([
-  'save','load-prepared','map-prepare','map-link','start','next','end','clear','timer','correct','spend-ap','end-turn','death-save'
+  'save','load-prepared','map-prepare','map-link','start','next','end','clear','timer','declare','correct','spend-ap','end-turn','death-save'
 ]);
 
 export function combatRevision(encounter){return revision(encounter?.combat?.revision);}
@@ -145,6 +155,13 @@ export function validateCombatCommand(mode,actorId,input){
     throw Error('Invalid combat command.');
   const allowed=mode==='gm'?COMBAT_GM_COMMANDS:COMBAT_PLAYER_COMMANDS;
   if(!allowed.includes(input.operation))throw Error('This combat operation is unavailable.');
+  if(input.operation==='declare'&&(
+    !COMBAT_BASIC_DECLARATIONS.some(row=>row.id===input.optionId)||
+    !Array.isArray(input.targetIds)||input.targetIds.length>1||
+    input.targetIds.some(id=>!validId(id))||
+    (COMBAT_BASIC_DECLARATIONS.find(row=>row.id===input.optionId)?.requiresTarget&&
+      input.targetIds.length!==1)
+  ))throw Error('Choose an approved basic action and its required target.');
   if(input.operation==='spend-ap'&&(!Number.isInteger(input.ap)||input.ap<0||input.ap>3))
     throw Error('Choose a whole AP cost from 0 to 3.');
   if(input.operation==='correct'&&(!title(input.reason).trim()||
