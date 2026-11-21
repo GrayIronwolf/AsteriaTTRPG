@@ -11,10 +11,11 @@ const exact=(value,keys)=>record(value)&&
 
 export function validateAudienceRevealAction(raw={}){
   if(!record(raw)||!['show','clear'].includes(raw.type)||
-    !audienceRevealUid(raw.targetUid))throw Error('Invalid recipient or reveal action.');
+    !audienceRevealUid(raw.targetUid)||
+    !AUDIENCE_REVEAL_TYPES.includes(raw.audience))throw Error('Invalid recipient or reveal action.');
   if(raw.type==='clear'){
-    if(!exact(raw,['type','targetUid']))throw Error('Unsupported revoke fields.');
-    return {type:'clear',targetUid:raw.targetUid};
+    if(!exact(raw,['type','targetUid','audience']))throw Error('Unsupported revoke fields.');
+    return {type:'clear',targetUid:raw.targetUid,audience:raw.audience};
   }
   if(!exact(raw,['type','targetUid','audience','sceneRevision','title','body'])||
     !AUDIENCE_REVEAL_TYPES.includes(raw.audience)||
