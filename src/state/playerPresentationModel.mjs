@@ -2,7 +2,8 @@
  * Never project arbitrary GM workspace documents or encounter internals.
  */
 export const PRESENTATION_SCENES=Object.freeze([
-  'blank','title','announcement','battle-map','world-map','combat','party'
+  'blank','title','announcement','battle-map','world-map','combat','party',
+  'image','cinematic','handout'
 ]);
 export const PRESENTATION_THEMES=Object.freeze(['obsidian','slate','parchment']);
 export const PRESENTATION_PARTY_LIMIT=8;
@@ -12,6 +13,8 @@ export const PRESENTATION_DEFAULT=Object.freeze({
 });
 const isObject=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 export const presentationId=value=>typeof value==='string'&&/^[A-Za-z0-9_-]{1,120}$/.test(value);
+import {PRESENTATION_MEDIA_SCENES,presentationAssetId}
+  from './presentationAssetModel.mjs';
 function exactKeys(value,allowed,description){
   if(!isObject(value)||Object.keys(value).some(key=>!allowed.includes(key)))
     throw Error('Invalid '+description+' fields.');
@@ -22,7 +25,7 @@ function shortText(value,max,label){
   return value.trim();
 }
 export function presentationDraft(input={}){
-  exactKeys(input,['scene','title','subtitle','mapId','characterIds','showRound','showPartyHP','theme'],'presentation');
+  exactKeys(input,['scene','title','subtitle','mapId','assetId','characterIds','showRound','showPartyHP','theme'],'presentation');
   if(!PRESENTATION_SCENES.includes(input.scene))throw Error('Choose a supported display scene.');
   if(!PRESENTATION_THEMES.includes(input.theme))throw Error('Choose a supported display theme.');
   if(typeof input.showRound!=='boolean'||typeof input.showPartyHP!=='boolean')
@@ -36,6 +39,9 @@ export function presentationDraft(input={}){
   if(mapId&&!presentationId(mapId))throw Error('Invalid published map ID.');
   if(['battle-map','world-map'].includes(scene)&&!mapId)
     throw Error('Select a published map before presenting it.');
+  const assetId=PRESENTATION_MEDIA_SCENES.includes(scene)?input.assetId:'';
+  if(PRESENTATION_MEDIA_SCENES.includes(scene)&&!presentationAssetId(assetId))
+    throw Error('Select a published presentation media asset.');
   const title=shortText(input.title,120,'Display title');
   const subtitle=shortText(input.subtitle,380,'Display caption');
   if(['title','announcement'].includes(scene)&&!title)
@@ -45,7 +51,7 @@ export function presentationDraft(input={}){
     characterIds:scene==='party'?[...input.characterIds]:[],
     showRound:scene==='combat'&&input.showRound,
     showPartyHP:scene==='party'&&input.showPartyHP,
-    theme:input.theme
+    ...(assetId?{assetId}:{}),theme:input.theme
   };
 }
 export function validatePresentationAction(action={}){
