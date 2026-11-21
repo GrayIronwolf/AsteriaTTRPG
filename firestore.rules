@@ -571,6 +571,23 @@ service cloud.firestore {
         allow list: if isCampaignGM(campaignId);
         allow create, update, delete: if false;
       }
+      // Phase 9: video-only SDP negotiation, private to the GM and one accepted UID.
+      // No Firestore client writes: trusted callables validate grant, epoch and expiry.
+      match /presentationScreenShares/{viewerUid} {
+        allow get: if isCampaignGM(campaignId) ||
+          (signedIn() && viewerUid == request.auth.uid &&
+            activeHybridViewer(campaignId) &&
+            resource.data.get('viewerUid','') == request.auth.uid &&
+            resource.data.get('status','stopped') in ['offered','answered'] &&
+            resource.data.get('expiresAt',request.time) > request.time &&
+            resource.data.get('epoch','') ==
+              get(/databases/$(database)/documents/campaigns/$(campaignId)/hybridSessionControl/current).data.get('epoch','') &&
+            get(/databases/$(database)/documents/campaigns/$(campaignId)/hybridSessionControl/current).data.get('screenShare',{}).get('viewerUid','') == request.auth.uid &&
+            get(/databases/$(database)/documents/campaigns/$(campaignId)/hybridSessionControl/current).data.get('screenShare',{}).get('connectionId','') ==
+              resource.data.get('connectionId',''));
+        allow list: if false;
+        allow create, update, delete: if false;
+      }
       match /hybridViewerGrants/{viewerUid} {
         allow get: if isCampaignGM(campaignId) ||
           (signedIn() && viewerUid == request.auth.uid &&
