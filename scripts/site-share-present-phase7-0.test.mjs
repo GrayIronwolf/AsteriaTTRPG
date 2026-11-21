@@ -12,7 +12,8 @@ const draft={scene:'title',title:'Asteria',subtitle:'Welcome',
   mapId:'',characterIds:[],showRound:false,showPartyHP:false,theme:'obsidian'};
 test('Phase 7.0: existing presentation supports the original seven safe scenes',()=>{
   assert.deepEqual(PRESENTATION_SCENES,[
-    'blank','title','announcement','battle-map','world-map','combat','party'
+    'blank','title','announcement','battle-map','world-map','combat','party',
+    'image','cinematic','handout'
   ]);
   assert.equal(PRESENTATION_DEFAULT.scene,'blank');
   assert.deepEqual(presentationDraft(draft),draft);
