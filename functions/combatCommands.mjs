@@ -12,6 +12,7 @@ import { calculateCharacterAC, validateEquipmentChange } from '../src/systems/ar
 import { normalizeInventoryItems, slug } from '../src/state/liveWorkspaceModel.mjs';
 import { encounterSourceResources, setEncounterResource } from '../src/state/encounterResourceModel.mjs';
 import {normalizePreparedEncounters,preparedEncounterRoster} from '../src/state/preparedEncounterModel.mjs';
+import {validatePreparedLoadRequest} from '../src/state/preparedEncounterLoadModel.mjs';
 import {combatMapMovePlan,synchronizeCombatMapTokens,activeMapEncounter} from '../src/state/battleMapCombatModel.mjs';
 import { currentCombatant, initiativeResult, initiativeOrder, combatOptions, combatRestriction, optionProblem, skillCheck, rollD20, checkResult, attackResult, counterspellResult, validateReactionEquipment, payCombatCosts, changeCombatHP, deathSave, feedback, mixedDamage, rows, SPELL_RANKS, SPELL_SKILL_ACCESS } from '../src/state/combatRules.mjs';
 
@@ -53,8 +54,7 @@ export function createCombatCommands(context) {
         if(!gm)throw new Error('Only the campaign GM may load a prepared encounter.');
         if(encounter.status==='active')throw new Error('End active combat before loading a prepared encounter.');
         if(privateState.pending)throw new Error('Resolve the pending action before loading an encounter.');
-        if(input.replace!==true||!prepared)throw new Error('Choose a saved prepared encounter to replace the enemy roster.');
-        if(prepared.archived===true)throw new Error('Restore this archived encounter before loading combat.');
+        validatePreparedLoadRequest(input,prepared,encounter);
       }
       const incoming=loading?preparedEncounterRoster(prepared,encounter.combatants,context.requestId):
         input.operation==='save'?input.encounter?.combatants||[]:[];
@@ -89,6 +89,15 @@ export function createCombatCommands(context) {
       const mapSnap=mapRef?await tx.get(mapRef):null;
       const boundMap=mapSnap?.exists()?mapSnap.data():null;
       if(mapOperation&&!boundMap)throw new Error('This battle map no longer exists.');
+      // A prepared map reference must still exist at execution time.
+      // Read before transaction writes, and do not bind until combat starts.
+      const preparedMapRef=loading&&prepared.mapId?
+        doc(db,'campaigns',campaignId,'battleMaps',prepared.mapId):null;
+      const preparedMapSnap=preparedMapRef?await tx.get(preparedMapRef):null;
+      if(preparedMapRef&&!preparedMapSnap.exists())
+        throw new Error('The prepared battle map no longer exists. Refresh the library.');
+      if(preparedMapSnap?.data()?.campaignId&&preparedMapSnap.data().campaignId!==campaignId)
+        throw new Error('The prepared battle map belongs to another campaign.');
       const entry=id=>encounter.combatants.find(row=>row.id===id);
       const get=id=>{const row=entry(id);if(!row)throw new Error('Participant is not in this encounter.');return row.characterId?characters.get(row.characterId):{...row,...encounterSourceResources(row),kind:'enemy'};};
       const put=(id,value)=>{
@@ -229,10 +238,13 @@ export function createCombatCommands(context) {
 
       if(input.operation==='save'||input.operation==='load-prepared'){
         if(loading){
-          if(input.mapId!==undefined)throw new Error('A prepared encounter map cannot be overridden.');
           encounter.status='ready';encounter.turnIndex=0;encounter.round=1;
           encounter.preparedMapId=prepared.mapId||'';
           encounter.preparedEncounterId=prepared.id;
+          // A previous encounter's turn state must never leak into a newly loaded template.
+          encounter.combat.participants={};
+          privateState.preparations={};
+          privateState.apSpends={};
         }
         noPending();const requested=loading?{combatants:incoming}:input.encounter||{};
         const previousRows=encounter.combatants,oldCurrent=currentCombatant(encounter),oldIds=new Set(previousRows.map(row=>row.id));
