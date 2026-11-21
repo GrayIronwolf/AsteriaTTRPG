@@ -23,7 +23,7 @@ export function createHybridPresentationSessionCommands(context,{requireCampaign
           if(action.type==='open'){
             if(session.status==='open'&&sessionTimestampMs(session.expiresAt)>now)
               throw Error('Close the current viewer session before opening another.');
-            const epoch='hybrid-'+requestId;
+            const epoch='hybrid-'+requestId+'-'+revision;
             const next={revision,status:'open',mode:action.mode,epoch,
               grantCount:0,startedAt:new Date(now),
               expiresAt:new Date(now+action.durationMinutes*60*1000),
