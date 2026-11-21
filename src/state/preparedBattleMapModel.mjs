@@ -26,7 +26,8 @@ export function setPreparedEnemySpawn(enemies,index,point,map){
 export function clearPreparedEnemySpawns(enemies){
   if(!Array.isArray(enemies))return [];
   return enemies.map(enemy=>{
-    const {spawn,...rest}=enemy;
+    const rest={...enemy};
+    delete rest.spawn;
     return rest;
   });
 }
