@@ -119,10 +119,10 @@ export function validateEncounterCompletionAction(raw={}){
       Array.isArray(currency))throw Error('Invalid reward items or currency.');
     // The same validator used by the canonical GM delivery path owns item and
     // currency limits. Empty bundles are allowed for XP-only/no-reward review.
-    const normalized=validateGMRewardPayload({items,currency:{
-      key:currency.key||'copper',
-      amount:currency.amount===undefined?0:currency.amount
-    },...(items.length||currency.amount?{}:{})});
+    const amount=currency.amount===undefined?0:currency.amount;
+    const normalized=items.length||amount?
+      validateGMRewardPayload({items,currency:{key:currency.key||'copper',amount}}):
+      {items:[],currency:{key:'copper',amount:0}};
     return {characterId:row.characterId,xp:row.xp,
       currency:normalized.currency,items:normalized.items};
   });
