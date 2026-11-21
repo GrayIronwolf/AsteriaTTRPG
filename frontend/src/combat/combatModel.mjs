@@ -27,6 +27,7 @@ export const COMBAT_BASIC_DECLARATIONS=Object.freeze([
 export const COMBAT_PLAYER_COMMANDS=Object.freeze(['declare','spend-ap','end-turn','death-save']);
 export const COMBAT_GM_COMMANDS=Object.freeze([
   'save','load-prepared','map-prepare','map-link','start','next','end','clear','timer',
+  'release-wave','trigger-event',
   'declare','approve','reject','window','close-window','roll','resolve',
   'pass','react','resolve-reaction','trigger-prepared',
   'correct','spend-ap','end-turn','death-save'
@@ -89,6 +90,14 @@ export function projectCombat(encounter={},session=null,{role='player',character
     turnIndex:index,combatants:Object.freeze(roster),current:index>=0?roster[index]||null:null,
     ownActor:owned,isActive:active,sessionEditable:gmSessionState(session).editable,
     turnTimer,pending:safePending,
+    ...(obj(raw.publicEvent)&&typeof raw.publicEvent.name==='string'?{
+      publicEvent:Object.freeze({
+        name:title(raw.publicEvent.name,100),
+        type:['narrative','environment','objective'].includes(raw.publicEvent.type)?
+          raw.publicEvent.type:'narrative',
+        round:Math.max(1,whole(raw.publicEvent.round,1))
+      })
+    }:{}),
     ...(gm?{
       battleMapId:validId(raw.battleMapId)?raw.battleMapId:'',
       preparedMapId:validId(raw.preparedMapId)?raw.preparedMapId:'',
@@ -158,6 +167,12 @@ export function validateCombatCommand(mode,actorId,input){
     throw Error('Invalid combat command.');
   const allowed=mode==='gm'?COMBAT_GM_COMMANDS:COMBAT_PLAYER_COMMANDS;
   if(!allowed.includes(input.operation))throw Error('This combat operation is unavailable.');
+  if(input.operation==='release-wave'&&(
+    !validId(input.waveId)||input.confirmation!=='release-wave'
+  ))throw Error('Choose and confirm a valid wave.');
+  if(input.operation==='trigger-event'&&(
+    !validId(input.eventId)||input.confirmation!=='trigger-event'
+  ))throw Error('Choose and confirm a valid encounter event.');
   if(input.operation==='declare'&&(
     !COMBAT_BASIC_DECLARATIONS.some(row=>row.id===input.optionId)||
     !Array.isArray(input.targetIds)||input.targetIds.length>1||
