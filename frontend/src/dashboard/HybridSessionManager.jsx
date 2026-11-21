@@ -4,6 +4,8 @@ import {
   sessionTimestampMs
 } from '../../../src/state/hybridPresentationSessionModel.mjs';
 import {useCampaignStream} from './CampaignMapWorkspace.jsx';
+import {PresentationMediaFrame} from './PresentationMediaFrame.jsx';
+import {PRESENTATION_MEDIA_SCENES} from '../../../src/state/presentationAssetModel.mjs';
 import styles from './HybridSessionManager.module.css';
 
 export function HybridSessionManager({api,campaignId}){
@@ -88,9 +90,9 @@ export function HybridSessionManager({api,campaignId}){
     </div>:null}
     {notice?<p role="status">{notice}</p>:null}
     {error?<p role="alert">{error}</p>:null}
-    <p className={styles.note}>Phase 7.2 restricted viewers receive only
-      approved title and announcement text; maps, media and combat scenes display
-      a blackout until later phases establish secure viewer-specific delivery.</p>
+    <p className={styles.note}>Restricted viewers receive only approved
+      text and explicitly published image, cinematic or PDF scenes. Maps,
+      party, and combat remain blacked out pending later security work.</p>
   </section>;
 }
 export function RestrictedPresentationDisplay({api,campaignId}){
@@ -110,7 +112,11 @@ export function RestrictedPresentationDisplay({api,campaignId}){
     {viewer.error?<p role="alert">{viewer.error}</p>:
       scene.scene==='title'?<div className={styles.textScene}>
         <h2>{scene.title}</h2><p>{scene.subtitle}</p>
-      </div>:!viewer.loading?<p role="status">Display is blacked out.</p>:null}
+      </div>:PRESENTATION_MEDIA_SCENES.includes(scene.scene)?
+        <PresentationMediaFrame api={api} campaignId={campaignId} restricted
+          scene={scene.scene} assetId={scene.assetId}
+          title={scene.title} subtitle={scene.subtitle}/>:
+        !viewer.loading?<p role="status">Display is blacked out.</p>:null}
     {message?<p role="alert">{message}</p>:null}
   </section>;
 }
