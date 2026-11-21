@@ -5,6 +5,7 @@ import {
 } from '../../../src/state/hybridPresentationSessionModel.mjs';
 import {useCampaignStream} from './CampaignMapWorkspace.jsx';
 import {PresentationMediaFrame} from './PresentationMediaFrame.jsx';
+import {CampaignMapCanvas} from './CampaignMapWorkspace.jsx';
 import {PRESENTATION_MEDIA_SCENES} from '../../../src/state/presentationAssetModel.mjs';
 import styles from './HybridSessionManager.module.css';
 
@@ -90,11 +91,36 @@ export function HybridSessionManager({api,campaignId}){
     </div>:null}
     {notice?<p role="status">{notice}</p>:null}
     {error?<p role="alert">{error}</p>:null}
-    <p className={styles.note}>Restricted viewers receive only approved
-      text and explicitly published image, cinematic or PDF scenes. Maps,
-      party, and combat remain blacked out pending later security work.</p>
+    <p className={styles.note}>Restricted viewers receive approved
+      presentation text, selected media, published battle maps and a
+      redacted combat status. Party details and GM-private combat data
+      are never shared.</p>
   </section>;
 }
+function RestrictedCombatScene({api,campaignId,active}){
+  const result=useCampaignStream(api,'watchRestrictedCombat',[campaignId],active);
+  if(!active)return null;
+  if(result.error)return <p role="alert">{result.error}</p>;
+  if(result.loading)return <p role="status">Synchronising safe combat status…</p>;
+  const status=result.data||{};
+  return <section className={styles.textScene} data-testid="site-restricted-combat">
+    <h2>Combat</h2>
+    <p>{status.active?'Round '+status.round:'No active encounter'}</p>
+    <p>{status.current||'GM turn'}</p>
+    {status.event?.name?<p>{status.event.name}</p>:null}
+  </section>;
+}
+function RestrictedBattleMapScene({api,campaignId,mapId,active}){
+  const result=useCampaignStream(api,'watchRestrictedMap',
+    [campaignId,mapId||''],active&&Boolean(mapId));
+  if(!active)return null;
+  if(result.error)return <p role="alert">{result.error}</p>;
+  if(result.loading)return <p role="status">Synchronising the published battle map…</p>;
+  return result.data?<CampaignMapCanvas api={api} campaignId={campaignId}
+    map={result.data} mode="player" restricted/>:
+    <p role="status">The selected battle map is unavailable.</p>;
+}
+
 export function RestrictedPresentationDisplay({api,campaignId}){
   const viewer=useCampaignStream(api,'watchRestrictedViewer',[campaignId]);
   const [message,setMessage]=useState('');
@@ -112,7 +138,13 @@ export function RestrictedPresentationDisplay({api,campaignId}){
     {viewer.error?<p role="alert">{viewer.error}</p>:
       scene.scene==='title'?<div className={styles.textScene}>
         <h2>{scene.title}</h2><p>{scene.subtitle}</p>
-      </div>:PRESENTATION_MEDIA_SCENES.includes(scene.scene)?
+      </div>:scene.scene==='battle-map'?
+        <RestrictedBattleMapScene api={api} campaignId={campaignId}
+          mapId={scene.mapId} active={!viewer.error&&!viewer.loading}/>:
+      scene.scene==='combat'?
+        <RestrictedCombatScene api={api} campaignId={campaignId}
+          active={!viewer.error&&!viewer.loading}/>:
+      PRESENTATION_MEDIA_SCENES.includes(scene.scene)?
         <PresentationMediaFrame api={api} campaignId={campaignId} restricted
           scene={scene.scene} assetId={scene.assetId}
           title={scene.title} subtitle={scene.subtitle}/>:
