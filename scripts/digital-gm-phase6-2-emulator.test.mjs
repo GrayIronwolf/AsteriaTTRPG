@@ -8,6 +8,20 @@ const projectId='demo-asteria-fog';
 const campaignId='camp-fog',mapId='cave';
 const mapPath='campaigns/'+campaignId+'/battleMaps/'+mapId;
 const privatePath=mapPath+'/gmNotes/private';
+const publicPath='campaigns/'+campaignId+'/battleMapsPublic/'+mapId;
+// Emulate the trusted projection writer rather than re-opening private GM records.
+const syncPublic=async()=>env.withSecurityRulesDisabled(async ctx=>{
+  const admin=ctx.firestore();
+  const source=(await getDoc(doc(admin,mapPath))).data();
+  await setDoc(doc(admin,publicPath),{
+    id:mapId,visibility:source.visibility,
+    name:source.name,kind:source.kind,contentType:source.contentType,
+    gridColumns:source.gridColumns,gridRows:source.gridRows,
+    fogEnabled:source.fogEnabled===true,
+    fogCells:source.fogCells||'1'.repeat(source.gridColumns*source.gridRows),
+    tokens:[],gridVisible:source.gridVisible
+  });
+});
 let env;
 const fixture={
   id:mapId,campaignId,name:'Ruins',description:'Map',visibility:'players',
@@ -46,18 +60,20 @@ beforeEach(async()=>{
     }
     await setDoc(doc(f,mapPath),fixture);
   });
+  await syncPublic();
 });
 test('players read published fog with no secret notes; outsiders do not',async()=>{
-  const view=await assertSucceeds(getDoc(doc(db('alice'),mapPath)));
+  const view=await assertSucceeds(getDoc(doc(db('alice'),publicPath)));
   assert.equal(view.data().fogCells,'0'.repeat(16));
   assert.equal(view.data().fogEnabled,true);
   assert.equal('pins' in view.data(),false);
   assert.equal('privateNotes' in view.data(),false);
-  await assertSucceeds(getDocs(query(collection(db('alice'),'campaigns/'+campaignId+'/battleMaps'),
+  await assertSucceeds(getDocs(query(collection(db('alice'),'campaigns/'+campaignId+'/battleMapsPublic'),
     where('visibility','==','players'))));
-  await assertFails(getDoc(doc(db('gone'),mapPath)));
-  await assertFails(getDoc(doc(db('visitor'),mapPath)));
-  await assertFails(getDoc(doc(db(),mapPath)));
+  await assertFails(getDoc(doc(db('alice'),mapPath)));
+  await assertFails(getDoc(doc(db('gone'),publicPath)));
+  await assertFails(getDoc(doc(db('visitor'),publicPath)));
+  await assertFails(getDoc(doc(db(),publicPath)));
 });
 test('GM and active co-GM can store private encounter/hazard pins; players never read them',async()=>{
   await assertSucceeds(setDoc(doc(db('gm'),privatePath),notes([samplePin])));
@@ -75,10 +91,12 @@ test('GM and active co-GM can store private encounter/hazard pins; players never
 test('GM fog reveal and hide updates are player-visible after Firestore save',async()=>{
   const ref=doc(db('gm'),mapPath);
   await assertSucceeds(updateDoc(ref,{fogCells:'1111000000000000'}));
-  const afterReveal=await assertSucceeds(getDoc(doc(db('alice'),mapPath)));
+  await syncPublic();
+  const afterReveal=await assertSucceeds(getDoc(doc(db('alice'),publicPath)));
   assert.equal(afterReveal.data().fogCells,'1111000000000000');
   await assertSucceeds(updateDoc(ref,{fogCells:'0'.repeat(16)}));
-  const afterHide=await assertSucceeds(getDoc(doc(db('alice'),mapPath)));
+  await syncPublic();
+  const afterHide=await assertSucceeds(getDoc(doc(db('alice'),publicPath)));
   assert.equal(afterHide.data().fogCells,'0'.repeat(16));
   await assertSucceeds(updateDoc(ref,{fogEnabled:false}));
   assert.equal((await assertSucceeds(getDoc(ref))).data().fogEnabled,false);
@@ -122,9 +140,11 @@ test('older Phase 6.1 maps remain readable and can adopt fog without a data migr
     delete legacy.fogEnabled;delete legacy.fogCells;delete legacy.metresPerCell;
     await setDoc(doc(context.firestore(),mapPath),legacy);
   });
-  await assertSucceeds(getDoc(doc(db('alice'),mapPath)));
+  await syncPublic();
+  await assertSucceeds(getDoc(doc(db('alice'),publicPath)));
   await assertSucceeds(updateDoc(doc(db('gm'),mapPath),{
     fogEnabled:true,fogCells:'0'.repeat(16),metresPerCell:1
   }));
-  assert.equal((await assertSucceeds(getDoc(doc(db('alice'),mapPath)))).data().fogEnabled,true);
+  await syncPublic();
+  assert.equal((await assertSucceeds(getDoc(doc(db('alice'),publicPath)))).data().fogEnabled,true);
 });
