@@ -1,0 +1,41 @@
+name: Share & Present Improvement 7 — Audience-Specific Reveals
+on:
+  push:
+    branches: [feature/share-present-improvement-7-audience-reveals]
+  pull_request:
+    paths:
+      - 'src/state/presentationAudienceRevealModel.mjs'
+      - 'functions/presentationAudienceRevealCommands.mjs'
+      - 'functions/commands.mjs'
+      - 'functions/handler.mjs'
+      - 'firestore.rules'
+      - 'frontend/src/dashboard/firebaseCampaignMediaService.mjs'
+      - 'frontend/src/dashboard/AudienceRevealCard.jsx'
+      - 'frontend/src/dashboard/GMAudienceRevealManager.jsx'
+      - 'frontend/src/dashboard/CampaignPresentationWorkspace.jsx'
+      - 'frontend/src/dashboard/HybridSessionManager.jsx'
+      - 'scripts/share-present-improvement-7.test.mjs'
+      - 'scripts/share-present-improvement-7-emulator.test.mjs'
+      - '.github/workflows/share-present-improvement-7-reveals.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  reveals-and-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Recipient reveal and inherited presentation security
+        run: node --test scripts/share-present-improvement-7.test.mjs scripts/share-present-improvement-6.test.mjs scripts/share-present-improvement-5.test.mjs scripts/share-present-improvement-4.test.mjs scripts/share-present-improvement-3.test.mjs scripts/share-present-improvement-2.test.mjs scripts/share-present-improvement-1.test.mjs scripts/site-share-present-phase7-5.test.mjs scripts/site-share-present-phase7-7.test.mjs
+      - name: Recipient-specific Firestore rules and session expiry
+        run: npx firebase emulators:exec --project demo-asteria-audience7 --only firestore "node --test scripts/share-present-improvement-7-emulator.test.mjs"
+      - name: Static source lint
+        run: npx eslint src/state/presentationAudienceRevealModel.mjs functions/presentationAudienceRevealCommands.mjs functions/commands.mjs functions/handler.mjs frontend/src/dashboard/AudienceRevealCard.jsx frontend/src/dashboard/GMAudienceRevealManager.jsx frontend/src/dashboard/firebaseCampaignMediaService.mjs frontend/src/dashboard/CampaignPresentationWorkspace.jsx frontend/src/dashboard/HybridSessionManager.jsx scripts/share-present-improvement-7.test.mjs scripts/share-present-improvement-7-emulator.test.mjs
+      - name: React/Vite source and built artifact verification
+        run: npm run site:check && npm run site:build && npm run site:verify-dist
