@@ -45,3 +45,14 @@
   padding:var(--ast-space-2)}
 .preview ul{margin:0;padding-left:var(--ast-space-4);max-height:260px;overflow:auto}
 .editor input[type='checkbox']{width:auto;margin:0}
+
+.loadReview{min-width:0;display:grid;gap:var(--ast-space-3);padding:var(--ast-space-3);
+  border:1px solid var(--ast-color-outline-active);border-radius:var(--ast-radius-sm);
+  background:var(--ast-color-panel-raised)}
+.loadReview h4,.loadReview p{margin:0}
+.loadReview dl{display:grid;gap:var(--ast-space-2);margin:0}
+.loadReview dl>div{display:flex;justify-content:space-between;gap:var(--ast-space-2);
+  border-bottom:1px solid var(--ast-color-outline-soft);padding-bottom:var(--ast-space-1)}
+.loadReview dd{margin:0;text-align:right;font-weight:700}
+.loadEnemyList{margin:0;padding-left:var(--ast-space-5);max-height:240px;overflow-y:auto}
+.reviewIssues{margin:0;padding-left:var(--ast-space-5)}
