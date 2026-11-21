@@ -4,7 +4,7 @@ import {battleMapPrivatePins} from '../../../src/state/battleMapFogModel.mjs';
 import {validatePresentationAction} from '../../../src/state/playerPresentationModel.mjs';
 import {audienceRevealUid,validateAudienceRevealAction}
   from '../../../src/state/presentationAudienceRevealModel.mjs';
-import {validateHybridSessionAction,hybridViewerCanRead,sanitizeRestrictedPresentation} from '../../../src/state/hybridPresentationSessionModel.mjs';
+import {validateHybridSessionAction,hybridViewerCanRead,sessionTimestampMs,sanitizeRestrictedPresentation} from '../../../src/state/hybridPresentationSessionModel.mjs';
 import {validateHybridInvitationResponse,hybridInvitationSummary}
   from '../../../src/state/hybridInvitationModel.mjs';
 import {
@@ -125,6 +125,8 @@ export function createFirebaseCampaignMediaService({
                 fail(Error('Private playlist connection interrupted. Reconnect to verify GM access.'));
               if(project===audienceProject)
                 fail(Error('Audience reveal connection interrupted. Reconnect to verify access.'));
+              if(project===gmScreenShareProject)
+                fail(Error('Screen sharing signaling disconnected. Reconnect.'));
               return;
             }
             if(snap.metadata.hasPendingWrites)return;
@@ -157,6 +159,7 @@ export function createFirebaseCampaignMediaService({
   const presentationProject=raw=>presentationForViewer(raw);
   const playlistProject=raw=>raw||{version:1,revision:0,playlists:[]};
   const audienceProject=raw=>raw||null;
+  const gmScreenShareProject=raw=>raw||null;
   const notesProject=rows=>battleMapPrivatePins(rows);
   const partyProject=rows=>gmPartySummary(rows);
   function watchMaps(id,mode,onUpdate,onError){
@@ -498,7 +501,7 @@ export function createFirebaseCampaignMediaService({
       !/^[A-Za-z0-9_-]{1,128}$/.test(targetUid))
       throw Error('Invalid screen sharing recipient.');
     return watch(id,'gm',screenShareRef(id,targetUid),
-      row=>row||null,onUpdate,onError,'document');
+      gmScreenShareProject,onUpdate,onError,'document');
   }
   async function respondScreenShare(id,action){
     assertGMCampaignId(id);
