@@ -1,6 +1,6 @@
 import {
   PRESENTATION_ASSET_LIMIT,presentationAssetPath,presentationAssetDetails,
-  presentationAssetId,validatePresentationAssetAction
+  validatePresentationAssetAction
 } from '../src/state/presentationAssetModel.mjs';
 const exists=record=>typeof record?.exists==='function'?record.exists():Boolean(record?.exists);
 
