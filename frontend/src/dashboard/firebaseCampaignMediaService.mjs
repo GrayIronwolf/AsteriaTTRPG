@@ -107,8 +107,10 @@ export function createFirebaseCampaignMediaService({
             // Player presentation must not retain previously authorised media
             // after Firestore has fallen back to potentially stale cache.
             if(snap.metadata.fromCache){
-              if(project===presentationProject||project===playlistProject)
+              if(project===presentationProject)
                 fail(Error('Presentation connection interrupted. Reconnect to verify access.'));
+              if(project===playlistProject)
+                fail(Error('Private playlist connection interrupted. Reconnect to verify GM access.'));
               return;
             }
             if(snap.metadata.hasPendingWrites)return;
