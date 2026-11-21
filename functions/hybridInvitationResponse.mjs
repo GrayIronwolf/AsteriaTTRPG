@@ -45,7 +45,11 @@ export async function respondHybridPresentationInvitation(db,uid,data,serverTime
     tx.set(accessRef,{...access,viewerExpiries:viewers,
       updatedAt:serverTimestamp()});
     tx.update(sessionRef,{revision,
-      grantCount:Object.keys(viewers).length,updatedAt:serverTimestamp()});
+      grantCount:Object.keys(viewers).length,
+      invitationCount:Math.max(0,(Number.isSafeInteger(session.invitationCount)
+        ?session.invitationCount:Object.keys(viewers).length)-
+        (response.type==='decline'?1:0)),
+      updatedAt:serverTimestamp()});
     return {status:response.type==='accept'?'accepted':'declined'};
   });
   return {ok:true,...result};
