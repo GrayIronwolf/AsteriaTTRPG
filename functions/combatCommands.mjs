@@ -348,7 +348,8 @@ export function createCombatCommands(context) {
         noPending();if(encounter.status==='active'&&encounter.combat?.version===1)throw new Error('The encounter is already active.');
         if(!encounter.combatants.length)throw new Error('Add participants first.');
         if(!['ready','ended','active'].includes(encounter.status))throw new Error('Prepare the encounter before starting combat.');
-        encounter.status='active';encounter.round=1;encounter.turnIndex=0;encounter.combatId=context.requestId;encounter.combat.participants={};encounter.combat.firstAid={};encounter.combat.version=1;
+        encounter.status='active';encounter.round=1;encounter.turnIndex=0;
+        encounter.publicEvent=null;encounter.combatId=context.requestId;encounter.combat.participants={};encounter.combat.firstAid={};encounter.combat.version=1;
         for(const row of encounter.combatants){if(!row.initiativeSet){const result=initiativeResult(get(row.id),roll(),roll(),{now,encounter});row.initiative=result.total;row.initiativeRoll=result;}setState(row.id,{ap:0,bonus:false,turns:0,turnComplete:false});}
         encounter.combatants.sort(initiativeOrder);startTurn();
         if(preparedMapRef){
@@ -406,6 +407,7 @@ export function createCombatCommands(context) {
           privateState.encounterSchedule,input.eventId,now,encounter.round
         );
         privateState.encounterSchedule=updated;
+        encounter.publicEvent=null;
         if(event.announce){
           encounter.publicEvent={name:event.name,type:event.type,
             round:encounter.round,at:now};
@@ -435,7 +437,8 @@ export function createCombatCommands(context) {
         encounter.combatants=encounter.combatants.filter(row=>!unavailable.has(row.characterId));
         encounter.enemies=encounter.combatants.filter(row=>!row.characterId).map(copy);
         for(const row of encounter.combatants){const character=get(row.id);character.conditions=rows(character.conditions).map(condition=>condition.encounterId||condition.throughOwnTurn!==undefined?{...condition,encounterId:'',untilRound:0,pendingGMExpiry:true}:condition);put(row.id,character);}
-        encounter.status=input.operation==='end'?'ended':'ready';encounter.turnIndex=null;encounter.combat.participants={};encounter.combat.firstAid={};
+        encounter.status=input.operation==='end'?'ended':'ready';
+        encounter.publicEvent=null;encounter.turnIndex=null;encounter.combat.participants={};encounter.combat.firstAid={};
         for(const key of ['turnTimer','timer'])if(encounter[key])encounter[key]={...encounter[key],enabled:false,endsAt:null};
         if(boundMap&&boundMap.combatId===encounter.combatId){
           tx.update(mapRef,{combatId:'',tokens:(boundMap.tokens||[]).filter(token=>!token.combatantId),updatedAt:serverTimestamp()});
