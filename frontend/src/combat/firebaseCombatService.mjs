@@ -8,6 +8,8 @@ import {
 import {
   normalizePreparedEncounters,validatePreparedEncounterInput,PREPARED_ENCOUNTER_MAX_PLANS
 } from '../../../src/state/preparedEncounterModel.mjs';
+import {projectGMLivePending,projectGMLiveLog}
+  from '../../../src/state/liveCombatCommandModel.mjs';
 
 /** React/Vite Phase 7.1. Existing authenticated Firebase app, paths and
  * asteriaAction combatCommand transaction are the only sources of authority. */
@@ -132,10 +134,8 @@ export function createFirebaseCombatService({
               ...(mode==='gm'?{
                 candidates:eligiblePlayerCombatants(data.campaign,data.roster,combat.combatants),
                 library:gmEncounterCandidates(data.workspace?.world),
-                pending:data.workspace?.combatState?.pending?.status?
-                  {id:data.workspace.combatState.pending.id||'',
-                    status:String(data.workspace.combatState.pending.status).slice(0,80),
-                    actorId:data.workspace.combatState.pending.actorId||''}:null,
+                pending:projectGMLivePending(data.workspace?.combatState),
+                combatLog:projectGMLiveLog(data.encounter?.combat?.log),
                 party:gmPartySummary(data.roster),
                 preparedEncounters:normalizePreparedEncounters(data.workspace?.preparedEncounters),
                 maps:data.maps
