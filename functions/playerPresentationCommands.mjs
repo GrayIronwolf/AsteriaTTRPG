@@ -71,7 +71,9 @@ export function createPlayerPresentationCommands(context,{requireCampaignGM}){
             transaction.set(accessRef,{
               epoch:hybrid.epoch,
               assetId:PRESENTATION_MEDIA_SCENES.includes(safe.scene)?safe.assetId:'',
-              scene:PRESENTATION_MEDIA_SCENES.includes(safe.scene)?safe.scene:'blank',
+              mapId:safe.scene==='battle-map'?safe.mapId:'',
+              scene:PRESENTATION_MEDIA_SCENES.includes(safe.scene)||safe.scene==='battle-map'?
+                safe.scene:'blank',
               expiresAt:hybrid.expiresAt,
               viewerExpiries:existingAccess.epoch===hybrid.epoch?
                 {...existingAccess.viewerExpiries}:{},
