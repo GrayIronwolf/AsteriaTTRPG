@@ -2,6 +2,7 @@ import {
   PRESENTATION_DEFAULT,publicPresentation,presentationDraft,
   validatePresentationAction
 } from '../src/state/playerPresentationModel.mjs';
+import {restrictedPresentationProjection,sessionTimestampMs} from '../src/state/hybridPresentationSessionModel.mjs';
 const exists=s=>typeof s?.exists==='function'?s.exists():Boolean(s?.exists);
 
 /** All edits are GM-only, server-authorized, revision checked and published as
@@ -43,10 +44,21 @@ export function createPlayerPresentationCommands(context,{requireCampaignGM}){
               (record.data().id&&record.data().id!==draft.characterIds[i])))
               throw Error('A selected campaign character is no longer available.');
           }
+          const hybridRef=doc(db,'campaigns',campaignId,'hybridSessionControl','current');
+          const hybridSnap=await transaction.get(hybridRef);
+          const hybrid=exists(hybridSnap)?hybridSnap.data():null;
           const revision=action.expectedRevision+1;
           const safe=publicPresentation(draft,revision);
           transaction.set(controlRef,{...safe,updatedBy:currentUser.uid,updatedAt:serverTimestamp()});
           transaction.set(sharedRef,{...safe,updatedAt:serverTimestamp()});
+          // Restricted screens receive only allowlisted presentation text. Never
+          // copy map IDs, combat/party snapshots, notes or Storage references.
+          if(hybrid?.status==='open'&&sessionTimestampMs(hybrid.expiresAt)>Date.now()){
+            transaction.set(doc(db,'campaigns',campaignId,'presentationRestricted','current'),{
+              ...restrictedPresentationProjection(safe,revision),
+              epoch:hybrid.epoch,updatedAt:serverTimestamp()
+            });
+          }
           return {revision,scene:safe.scene};
         });
         return {ok:true,...result};
