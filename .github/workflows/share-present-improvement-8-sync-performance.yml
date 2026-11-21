@@ -1,0 +1,35 @@
+name: Share & Present Improvement 8 — Sync and Performance
+on:
+  push:
+    branches: [feature/share-present-improvement-8-sync-performance]
+  pull_request:
+    paths:
+      - 'src/state/presentationRealtimeSyncModel.mjs'
+      - 'frontend/src/dashboard/CampaignMapWorkspace.jsx'
+      - 'frontend/src/dashboard/firebaseCampaignMediaService.mjs'
+      - 'scripts/share-present-improvement-8.test.mjs'
+      - '.github/workflows/share-present-improvement-8-sync-performance.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  realtime-and-security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Synchronization and inherited security regressions
+        run: node --test scripts/share-present-improvement-8.test.mjs scripts/share-present-improvement-7.test.mjs scripts/share-present-improvement-6.test.mjs scripts/share-present-improvement-5.test.mjs scripts/share-present-improvement-4.test.mjs scripts/share-present-improvement-3.test.mjs scripts/share-present-improvement-2.test.mjs scripts/share-present-improvement-1.test.mjs scripts/site-share-present-phase7-5.test.mjs scripts/site-share-present-phase7-7.test.mjs
+      - name: Recipient isolation with real Firestore rules
+        run: npx firebase emulators:exec --project demo-asteria-audience7 --only firestore "node --test scripts/share-present-improvement-7-emulator.test.mjs"
+      - name: Authenticated invite and revoke regression
+        run: npx firebase emulators:exec --project demo-asteria-invite5 --only firestore "node --test scripts/share-present-improvement-5-emulator.test.mjs"
+      - name: Lint real-time guard and React workspace
+        run: npx eslint src/state/presentationRealtimeSyncModel.mjs frontend/src/dashboard/CampaignMapWorkspace.jsx frontend/src/dashboard/firebaseCampaignMediaService.mjs scripts/share-present-improvement-8.test.mjs
+      - name: React/Vite source and website assets
+        run: npm run site:check && npm run site:build && npm run site:verify-dist
