@@ -17,6 +17,8 @@ import styles from './CampaignPresentationWorkspace.module.css';
 import {usePresentationDisplayRuntime} from './usePresentationDisplayRuntime.js';
 import {PresentationDisplayModeControls,usePresentationDisplayPreferences}
   from './PresentationDisplayModes.jsx';
+import {AudienceRevealCard} from './AudienceRevealCard.jsx';
+import {GMAudienceRevealManager} from './GMAudienceRevealManager.jsx';
 
 const names={'blank':'Blackout','title':'Title','announcement':'Announcement',
   'battle-map':'Battle Map','world-map':'World Atlas',combat:'Combat',party:'Party',
@@ -56,7 +58,7 @@ function Scene({api,campaignId,display,party=[],combat={}}){
   }
   return null;
 }
-function ActivePlayerPresentation({api,campaignId}){
+function ActivePlayerPresentation({api,campaignId,uid}){
   const presentation=useCampaignStream(api,'watchPresentation',[campaignId,'player']);
   const display=presentation.data||PRESENTATION_DEFAULT;
   // Only subscribe to the scene's data. A blackout drops all media, party and
@@ -73,6 +75,8 @@ function ActivePlayerPresentation({api,campaignId}){
   return <div data-theme={display.theme} className={styles.stage}>
     <Scene api={api} campaignId={campaignId} display={display}
       party={party.data||[]} combat={combat.data||{}}/>
+    <AudienceRevealCard api={api} campaignId={campaignId} uid={uid}
+      audience="member" scene={display}/>
   </div>;
 }
 export function CampaignPresentationDisplay({api,campaignId,fullscreen=false,uid=''}) {
@@ -105,7 +109,7 @@ export function CampaignPresentationDisplay({api,campaignId,fullscreen=false,uid
     {!runtime.ready?<p role="alert">Connection or display interrupted.
       Approved content is hidden until the display reconnects.</p>:
       <ActivePlayerPresentation key={campaignId+':'+runtime.generation}
-        api={api} campaignId={campaignId}/>}
+        api={api} campaignId={campaignId} uid={uid}/>}
     {runtime.error?<p role="alert">{runtime.error}</p>:null}
     {prefs.showOverlay&&runtime.ready?<p className={styles.displayOverlay}
       aria-hidden="true">Asteria · Approved player display</p>:null}
@@ -295,5 +299,6 @@ export function CampaignPresentationController({api,campaignId,uid,party=[],comb
       publishedMaps={maps.data||[]} publishedLoading={maps.loading}
       publishedError={maps.error} theme={draft.theme} onStageScene={setDraft}
       onPresentScene={publishPlaylistScene} onNavigate={onNavigate}/>
+    <GMAudienceRevealManager api={api} campaignId={campaignId} control={control}/>
   </section>;
 }
