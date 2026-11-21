@@ -1,0 +1,48 @@
+name: Share & Present Improvement 9 - Optional WebRTC Screen Sharing
+on:
+  push:
+    branches: [feature/share-present-improvement-9-webrtc-screen-share]
+  pull_request:
+    paths:
+      - 'src/state/presentationScreenShareModel.mjs'
+      - 'functions/presentationScreenShareCommands.mjs'
+      - 'functions/presentationScreenShareResponse.mjs'
+      - 'functions/handler.mjs'
+      - 'functions/commands.mjs'
+      - 'functions/hybridPresentationSessionCommands.mjs'
+      - 'functions/playerPresentationCommands.mjs'
+      - 'functions/hybridInvitationResponse.mjs'
+      - 'firestore.rules'
+      - 'frontend/src/dashboard/GMScreenShareControls.jsx'
+      - 'frontend/src/dashboard/ViewerScreenShareControls.jsx'
+      - 'frontend/src/dashboard/screenShareWebRTC.mjs'
+      - 'frontend/src/dashboard/GMScreenCaptureControls.jsx'
+      - 'frontend/src/dashboard/HybridSessionManager.jsx'
+      - 'frontend/src/dashboard/firebaseCampaignMediaService.mjs'
+      - 'scripts/share-present-improvement-9.test.mjs'
+      - 'scripts/share-present-improvement-9-emulator.test.mjs'
+      - '.github/workflows/share-present-improvement-9-webrtc.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  webrtc-and-inherited-security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Phase 9 signaling and inherited security model tests
+        run: node --test scripts/share-present-improvement-9.test.mjs scripts/share-present-improvement-8.test.mjs scripts/share-present-improvement-7.test.mjs scripts/share-present-improvement-6.test.mjs scripts/share-present-improvement-5.test.mjs scripts/share-present-improvement-4.test.mjs scripts/share-present-improvement-3.test.mjs scripts/share-present-improvement-2.test.mjs scripts/share-present-improvement-1.test.mjs scripts/site-share-present-phase7-5.test.mjs scripts/site-share-present-phase7-7.test.mjs
+      - name: Screen share per-recipient Firestore rules
+        run: npx firebase emulators:exec --project demo-asteria-webrtc9 --only firestore "node --test scripts/share-present-improvement-9-emulator.test.mjs"
+      - name: Audience-specific reveal and invitation Firestore privacy
+        run: npx firebase emulators:exec --project demo-asteria-audience7 --only firestore "node --test scripts/share-present-improvement-7-emulator.test.mjs"
+      - name: Phase 9 source lint
+        run: npx eslint src/state/presentationScreenShareModel.mjs functions/presentationScreenShareCommands.mjs functions/presentationScreenShareResponse.mjs functions/handler.mjs functions/commands.mjs frontend/src/dashboard/screenShareWebRTC.mjs frontend/src/dashboard/GMScreenShareControls.jsx frontend/src/dashboard/ViewerScreenShareControls.jsx frontend/src/dashboard/GMScreenCaptureControls.jsx frontend/src/dashboard/HybridSessionManager.jsx frontend/src/dashboard/firebaseCampaignMediaService.mjs scripts/share-present-improvement-9.test.mjs scripts/share-present-improvement-9-emulator.test.mjs
+      - name: React/Vite source and checked frontend artifacts
+        run: npm run site:check && npm run site:build && npm run site:verify-dist
