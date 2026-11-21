@@ -15,6 +15,7 @@ import {normalizePreparedEncounters,preparedEncounterRoster} from '../src/state/
 import {validatePreparedLoadRequest} from '../src/state/preparedEncounterLoadModel.mjs';
 import {combatMapMovePlan,synchronizeCombatMapTokens,activeMapEncounter} from '../src/state/battleMapCombatModel.mjs';
 import {preparedMapTokenCapacity} from '../src/state/preparedBattleMapModel.mjs';
+import {captureEncounterCompletion} from '../src/state/encounterCompletionModel.mjs';
 import {applyLiveTimerCommand,resetLiveTurnTimer}
   from '../src/state/liveCombatCommandModel.mjs';
 import {
@@ -431,7 +432,22 @@ export function createCombatCommands(context) {
         requireActive();noPending();const current=currentCombatant(encounter);if(state(current.id).pendingDeathSave)throw new Error('Resolve the pending death save before ending this turn.');conditionBoundary(current.id,'end');
         encounter.turnIndex=(encounter.turnIndex+1)%encounter.combatants.length;if(encounter.turnIndex===0)encounter.round++;startTurn();
       }else if(input.operation==='end'||input.operation==='clear'){
-        if(input.operation==='end')requireActive();
+        if(input.operation==='end'){
+          requireActive();
+          // The final roster, HP/SP/MP and private wave/event outcomes are
+          // snapshotted before post-combat conditions or turn state are cleared.
+          // Store outside the reusable prepared library and public encounter doc.
+          log('GM completed combat; final state recorded for reward review.');
+          const history=captureEncounterCompletion(encounter,privateState,characters,{
+            endedAt:now,endedBy:currentUser.uid,sessionId:String(session.id||'')
+          });
+          const historyRef=doc(db,'campaigns',campaignId,'encounterHistory',history.id);
+          const existingHistory=await tx.get(historyRef);
+          if(existingHistory.exists())
+            throw new Error('This encounter was already completed and archived.');
+          tx.set(historyRef,{...history,createdAt:serverTimestamp(),
+            updatedAt:serverTimestamp()});
+        }
         if(privateState.pending)log(`GM closes the pending ${privateState.pending.status} action at combat end; committed costs remain spent.`);
         privateState.pending=null;privateState.preparations={};privateState.apSpends={};
         encounter.combatants=encounter.combatants.filter(row=>!unavailable.has(row.characterId));
