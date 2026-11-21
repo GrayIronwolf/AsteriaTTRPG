@@ -8,3 +8,9 @@
 .placeholder{color:var(--ast-color-text);opacity:.8}
 .note{opacity:.85;max-width:85ch}
 @media(max-width:660px){.panel{padding:var(--ast-space-3)}.actions button{width:100%}}
+
+.emergencyBar{position:sticky;top:0;z-index:10;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--ast-space-3);padding:var(--ast-space-3);background:var(--ast-color-panel-slate);border:2px solid var(--ast-color-outline-soft);border-radius:var(--ast-radius-sm)}
+.emergencyBar>div{flex:1 1 230px;min-width:0}
+.emergencyBar button{min-height:48px;padding:var(--ast-space-3);font:inherit;font-weight:700;color:var(--ast-color-text);background:var(--ast-color-panel-raised);border:2px solid var(--ast-color-outline-soft);border-radius:var(--ast-radius-sm);cursor:pointer}
+.emergencyBar button:focus-visible{outline:3px solid var(--ast-color-focus);outline-offset:2px}
+@media(max-width:660px){.emergencyBar button{width:100%}}
