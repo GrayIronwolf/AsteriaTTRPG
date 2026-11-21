@@ -58,8 +58,8 @@ export function createHybridPresentationSessionCommands(context,{requireCampaign
           const grantSnap=await tx.get(grantRef);
           const old=exists(grantSnap)?grantSnap.data():null;
           if(action.type==='grant'){
-            const isNew=old?.epoch!==session.epoch;
-            if(isNew&&Number(session.grantCount||0)>=HYBRID_SESSION_MAX_VIEWERS)
+            const isNew=!viewers[action.uid];
+            if(isNew&&Object.keys(viewers).length>=HYBRID_SESSION_MAX_VIEWERS)
               throw Error('The viewer limit has been reached.');
             const until=Math.min(sessionTimestampMs(session.expiresAt),
               now+action.durationMinutes*60*1000);
@@ -72,7 +72,7 @@ export function createHybridPresentationSessionCommands(context,{requireCampaign
             tx.set(accessRef,{...access,viewerExpiries:viewers,
               epoch:session.epoch,expiresAt:session.expiresAt,
               updatedAt:serverTimestamp()});
-            tx.update(sessionRef,{revision,grantCount:Number(session.grantCount||0)+(isNew?1:0),
+            tx.update(sessionRef,{revision,grantCount:Object.keys(viewers).length,
               updatedBy:currentUser.uid,updatedAt:serverTimestamp()});
             return {status:'granted',uid:action.uid,revision,expiresAt:until};
           }
@@ -85,7 +85,7 @@ export function createHybridPresentationSessionCommands(context,{requireCampaign
           tx.update(grantRef,{status:'revoked',
             revokedBy:currentUser.uid,revokedAt:serverTimestamp(),
             revision:Number(old.revision||0)+1});
-          tx.update(sessionRef,{revision,
+          tx.update(sessionRef,{revision,grantCount:Object.keys(viewers).length,
             updatedBy:currentUser.uid,updatedAt:serverTimestamp()});
           return {status:'revoked',uid:action.uid,revision};
         });
