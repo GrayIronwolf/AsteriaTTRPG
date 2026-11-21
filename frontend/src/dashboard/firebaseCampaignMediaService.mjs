@@ -642,6 +642,19 @@ export function createFirebaseCampaignMediaService({
     return response.data;
   }
 
+  async function emergencyStopPresentation(id){
+    // This command intentionally uses no revision/stream preflight: a broken
+    // display subscription must never prevent a GM attempting to stop sharing.
+    const uid=await verified();
+    const response=await functionsSdk.httpsCallable(functions,'asteriaAction')({
+      action:'emergencyStopPresentation',args:[id,'gm-scope',{}],
+      requestId:crypto.randomUUID()
+    });
+    same(uid);
+    if(response.data?.ok!==true)
+      throw Error(response.data?.error||'Emergency stop was not confirmed.');
+    return response.data;
+  }
   async function managePresentation(id,action){
     const {uid}=await check(id,'gm');
     validatePresentationAction(action);
@@ -658,7 +671,7 @@ export function createFirebaseCampaignMediaService({
     availability:()=>flags,watchMaps,watchAtlas,watchPresentation,watchPrivatePins,
     watchParty,watchEncounter,watchGMMediaLibrary,fetchGMMediaLibraryPreview,
     fetchMapMedia,fetchAtlasMedia,uploadMap,
-    saveMap,removeMap,savePrivatePins,managePresentation,
+    saveMap,removeMap,savePrivatePins,managePresentation,emergencyStopPresentation,
     manageHybridSession,watchGMHybridSession,watchRestrictedViewer,
     watchPresentationAssets,managePresentationAsset,uploadPresentationAsset,
     fetchPresentationAsset,
