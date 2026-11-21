@@ -654,6 +654,12 @@ service cloud.firestore {
         allow get, list: if canUseCampaignSystems(campaignId);
         allow create, update, delete: if false;
       }
+      // Phase 6.8: completed combat history, outcome notes and proposed
+      // rewards are private. Only authenticated server transactions write.
+      match /encounterHistory/{encounterId} {
+        allow get, list: if isCampaignGM(campaignId);
+        allow create, update, delete: if false;
+      }
       match /encounterPlans/{planId} {
         allow get, list: if isCampaignGM(campaignId);
         allow create, update, delete: if false;
