@@ -5,6 +5,8 @@ import {
 import {restrictedPresentationProjection,sessionTimestampMs} from '../src/state/hybridPresentationSessionModel.mjs';
 import {PRESENTATION_MEDIA_SCENES,publishedPresentationAsset} from '../src/state/presentationAssetModel.mjs';
 import {publicCombatPresentation} from '../src/state/livePresentationProjectionModel.mjs';
+import {validatePresentationPlaylistAction,applyPresentationPlaylistAction}
+  from '../src/state/presentationPlaylistModel.mjs';
 const exists=s=>typeof s?.exists==='function'?s.exists():Boolean(s?.exists);
 
 /** All edits are GM-only, server-authorized, revision checked and published as
@@ -103,6 +105,23 @@ export function createPlayerPresentationCommands(context,{requireCampaignGM}){
      * revoking every staged media byte grant, and blanking both projections
      * are one Firestore transaction (never separate partial requests).
      */
+    /** Saved playlists are GM-only and cannot publish player content. */
+    managePresentationPlaylist:async(campaignId,_scope,action={})=>{
+      try{
+        const validated=validatePresentationPlaylistAction(action);
+        const result=await runTransaction(db,async transaction=>{
+          await requireCampaignGM(transaction,campaignId);
+          const ref=doc(db,'campaigns',campaignId,'presentationPlaylists','current');
+          const snapshot=await transaction.get(ref);
+          const current=exists(snapshot)?snapshot.data():null;
+          const next=applyPresentationPlaylistAction(current,validated);
+          transaction.set(ref,{...next,updatedBy:currentUser.uid,
+            updatedAt:serverTimestamp()});
+          return {revision:next.revision,playlistCount:next.playlists.length};
+        });
+        return {ok:true,...result};
+      }catch(error){return {ok:false,error:error?.message||String(error)};}
+    },
     emergencyStopPresentation:async(campaignId,_scope)=>{
       try{
         const result=await runTransaction(db,async transaction=>{
