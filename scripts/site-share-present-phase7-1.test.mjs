@@ -51,7 +51,7 @@ const data={
 
 test('7.1: virtual index classifies every canonical campaign media source, no copies',()=>{
   const items=buildCampaignMediaLibrary(id,data),count=campaignMediaLibraryCounts(items);
-  assert.equal(CAMPAIGN_MEDIA_LIBRARY_SOURCES.length,5);
+  assert.equal(CAMPAIGN_MEDIA_LIBRARY_SOURCES.length,6);
   assert.ok(CAMPAIGN_MEDIA_LIBRARY_TYPES.includes('video-cinematic'));
   assert.equal(items.length,7);
   assert.deepEqual(count,{total:7,private:4,shared:3,pending:1});
