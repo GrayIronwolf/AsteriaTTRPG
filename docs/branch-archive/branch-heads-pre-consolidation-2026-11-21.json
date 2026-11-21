@@ -1,0 +1,1914 @@
+{
+  "purpose": "Read-only inventory of exact branch heads before cleanup; preservation requires separate merge-history validation before any branch deletion.",
+  "repository": "GrayIronwolf/AsteriaTTRPG",
+  "baseline": "2026-11-21-UTC",
+  "retain": [
+    "main",
+    "Website-Build-Test",
+    "react-vite-live",
+    "Asteria-W-Recovery",
+    "Asteria-Development-Archive"
+  ],
+  "branches": [
+    {
+      "name": "Asteria-Development-Archive",
+      "sha": "2ec64de5e951ee9560366723eaef5ba01090e4b6",
+      "protected": false
+    },
+    {
+      "name": "Asteria-W-Recovery",
+      "sha": "e3eff761f3113263c2e4da3dee30ba9acb656dbb",
+      "protected": false
+    },
+    {
+      "name": "Website-Build-Test",
+      "sha": "e3eff761f3113263c2e4da3dee30ba9acb656dbb",
+      "protected": false
+    },
+    {
+      "name": "audit/account-id-production-activation-readonly",
+      "sha": "b6e4fd8751a3025a0bc00666e1689e190d673141",
+      "protected": false
+    },
+    {
+      "name": "audit/campaign-connections-phase-1-1-20261108",
+      "sha": "a007aae80ece6077c2fdb29f9f196327d298a768",
+      "protected": false
+    },
+    {
+      "name": "audit/campaign-inapp-production-readiness-post73",
+      "sha": "36e5146e95dfb83bbaf74da1f029672fa75cf985",
+      "protected": false
+    },
+    {
+      "name": "audit/firebase-backup-metadata-readonly-20261109",
+      "sha": "7a3075cee485b8fb4f45758fb9fc52dbc4673791",
+      "protected": false
+    },
+    {
+      "name": "audit/frontend-modernisation-phase0-20261118",
+      "sha": "6be220a577785aefb2d7b0f27be345ae3401706d",
+      "protected": false
+    },
+    {
+      "name": "chore/campaign-backend-targeted-release-20261109",
+      "sha": "54b3bb4ef04991b597de0fc2a7d5ab7317a394f8",
+      "protected": false
+    },
+    {
+      "name": "content/approved-handbook",
+      "sha": "2ad6ca396b5c9b26900952c40ea0b0b7173ee364",
+      "protected": false
+    },
+    {
+      "name": "content/six-crafted-items",
+      "sha": "83856e3e4feea648fe8880eec690742673b89374",
+      "protected": false
+    },
+    {
+      "name": "dependabot/github_actions/actions/checkout-7",
+      "sha": "86304b7c4e9664d1b3fdd62ea05ab3b735b8bc4e",
+      "protected": false
+    },
+    {
+      "name": "dependabot/github_actions/actions/setup-java-5",
+      "sha": "e1fe6bf3c6222bc3d2a6cf0d23c82bfed5486445",
+      "protected": false
+    },
+    {
+      "name": "dependabot/github_actions/actions/setup-node-7",
+      "sha": "d4722541d41ed2abf64a1ce597c3d03d5c14a9ec",
+      "protected": false
+    },
+    {
+      "name": "dependabot/github_actions/peter-evans/create-pull-request-8",
+      "sha": "9b76a3f78d0bfd16cd25fd42cdcc98fd2bd766e9",
+      "protected": false
+    },
+    {
+      "name": "dependabot/npm_and_yarn/eslint/js-10.0.1",
+      "sha": "fe8f59af124337c9b55781a298a0839bc49defd6",
+      "protected": false
+    },
+    {
+      "name": "dependabot/npm_and_yarn/eslint-10.14.0",
+      "sha": "1acae86470390918d671fbcf653d86075d86bc80",
+      "protected": false
+    },
+    {
+      "name": "dependabot/npm_and_yarn/firebase/rules-unit-testing-6.0.0",
+      "sha": "fb38c579816ec0dab8a9f69a9778dc31514d664d",
+      "protected": false
+    },
+    {
+      "name": "dependabot/npm_and_yarn/firebase-admin-14.5.1",
+      "sha": "a3f8d86fa3feae44fa905f4184009205dc40468b",
+      "protected": false
+    },
+    {
+      "name": "dependabot/npm_and_yarn/firebase-tools-15.36.0",
+      "sha": "55f3cb194b5770477340c9dbc0d8002fa5ef62fa",
+      "protected": false
+    },
+    {
+      "name": "dependabot/npm_and_yarn/globals-17.14.0",
+      "sha": "c325b894614ad544411b3bd97d1ef420409989e1",
+      "protected": false
+    },
+    {
+      "name": "dependabot/npm_and_yarn/react-dom-19.3.1",
+      "sha": "7c2debc2e758a5cdef26afbd114696fd87034750",
+      "protected": false
+    },
+    {
+      "name": "dependabot/npm_and_yarn/react-test-renderer-19.3.1",
+      "sha": "7d1e27e143d830b7f2e528750106adb223f9ab31",
+      "protected": false
+    },
+    {
+      "name": "dependabot/npm_and_yarn/vite-8.3.4",
+      "sha": "31c7576fbda9edbb0d128664f3bd4e36f2fc0adc",
+      "protected": false
+    },
+    {
+      "name": "design/campaign-connections-phase-1-2-20261108",
+      "sha": "d23ec98ec1e70b968ad61bc3152d991c0b2820ad",
+      "protected": false
+    },
+    {
+      "name": "design/royal-crystal-dashboard-panels-20261105",
+      "sha": "35aaa3b7b061f6ae14f2c2de6995fa7c1ef7a5c8",
+      "protected": false
+    },
+    {
+      "name": "docs/friends-system-roadmap-20261111",
+      "sha": "ad88f28e40c0273a846b62955f02db81d153ba90",
+      "protected": false
+    },
+    {
+      "name": "feat/account-friends-notifications-pages-20261112",
+      "sha": "fe24a75f1c9fbb8b37389f991a9665bd0e42530e",
+      "protected": false
+    },
+    {
+      "name": "feat/account-id-auto-canary-operator",
+      "sha": "2014750f63f49e9bb3ae3ede486b0a91a7e2230c",
+      "protected": false
+    },
+    {
+      "name": "feat/account-id-auto-registration-unverified",
+      "sha": "5881776eb32f4adc91200b7df554cdee255724a2",
+      "protected": false
+    },
+    {
+      "name": "feat/account-id-canary-runtime-operator",
+      "sha": "dbee67962f3c3277ad13c7e0b7112d4da72cecd8",
+      "protected": false
+    },
+    {
+      "name": "feat/account-id-canary-session-entry",
+      "sha": "bc8c5fcf651a6763725e82933c5d70f15f23df1d",
+      "protected": false
+    },
+    {
+      "name": "feat/account-id-complete-general-release",
+      "sha": "4be931a78d2e2952f7bb98883aa4d336eb267faf",
+      "protected": false
+    },
+    {
+      "name": "feat/account-id-email-verification-canary-ui",
+      "sha": "a9af58c52d4f6d747d9386524f37958d264285c7",
+      "protected": false
+    },
+    {
+      "name": "feat/account-id-phase-1-2-secure-allocation",
+      "sha": "d471e7c9a1f4821f22cb2e60c9cdaf3780f7639d",
+      "protected": false
+    },
+    {
+      "name": "feat/account-id-phase-1-3-profile-protection",
+      "sha": "e5437f6e6f2764cecb8e23a1b4f59fc66d66f997",
+      "protected": false
+    },
+    {
+      "name": "feat/account-id-phase-2-1-registration",
+      "sha": "7ce0d0ef1530afcc61ffaa2e46936e185c30cebb",
+      "protected": false
+    },
+    {
+      "name": "feat/account-id-phase-2-2-legacy-backfill",
+      "sha": "e75fd5dcf247771c061908ee3badadaa200259ed",
+      "protected": false
+    },
+    {
+      "name": "feat/account-id-phase-2-3-registration-validation-recovery",
+      "sha": "555898ba498b5f48408fcd23e0ae76f0fa7394f1",
+      "protected": false
+    },
+    {
+      "name": "feat/account-id-phase-3-1-account-navigation",
+      "sha": "d2138f71c102b6db5e2a0192f95179d0d4f22423",
+      "protected": false
+    },
+    {
+      "name": "feat/account-id-phase-3-2-my-profile",
+      "sha": "f2c71acbe16ab318dafae11b2b06c6f99e9ef2b7",
+      "protected": false
+    },
+    {
+      "name": "feat/account-id-phase-3-3-menu-notifications-security",
+      "sha": "f39c933a86670c8eb9eac54544072b26866a913e",
+      "protected": false
+    },
+    {
+      "name": "feat/account-id-phase-4-1-release-readiness",
+      "sha": "7b333dc42122291b5d5f601201688f067cd49a21",
+      "protected": false
+    },
+    {
+      "name": "feat/account-id-production-finalisation",
+      "sha": "bbb01c8409b11410fe4d301f31d3f4b63071855d",
+      "protected": false
+    },
+    {
+      "name": "feat/account-id-verified-canary-gate",
+      "sha": "e0569452edde0acbb933e2287265cdeec35c75a4",
+      "protected": false
+    },
+    {
+      "name": "feat/campaign-artwork-forge-manager",
+      "sha": "e147d4d2ccd5963c5ba87f630f4e7667d618786c",
+      "protected": false
+    },
+    {
+      "name": "feat/campaign-inapp-canary-website",
+      "sha": "992d3c5f317a5ce7725fde735e922051f486f619",
+      "protected": false
+    },
+    {
+      "name": "feat/campaign-inapp-live-canary-activation",
+      "sha": "7f6016caf2d468e91a38282f858cde3911d3bfae",
+      "protected": false
+    },
+    {
+      "name": "feat/combat-action-panel",
+      "sha": "42b34ed5ba25a6b76e7ab0258ed51e2d11707517",
+      "protected": false
+    },
+    {
+      "name": "feat/core-systems",
+      "sha": "34baa4bd4ac2c5bcb44038194e8b8eb5bef2f2ec",
+      "protected": false
+    },
+    {
+      "name": "feat/crystal-menu-buttons-v2",
+      "sha": "671e934d58e270617c7b7277c30b5a44fa3a85c8",
+      "protected": false
+    },
+    {
+      "name": "feat/dashboard-gameplay-ui",
+      "sha": "ea66f1c4d10805f5894d98003ac334c73a0bf465",
+      "protected": false
+    },
+    {
+      "name": "feat/digital-gm-phase5-1-merchant-templates",
+      "sha": "eb273539d158cbbeafe4c5cdcebe11c22025c418",
+      "protected": false
+    },
+    {
+      "name": "feat/digital-gm-phase5-2-shop-generator",
+      "sha": "6fe35d74bb81efb1c2001710c9b633fe1d0f244a",
+      "protected": false
+    },
+    {
+      "name": "feat/digital-gm-phase5-3-shop-integration",
+      "sha": "9fb0aec9fe660e3a0af7f97b99d193d11f41a5f0",
+      "protected": false
+    },
+    {
+      "name": "feat/digital-gm-phase6-1-battle-maps",
+      "sha": "38e65b5839761ff67807e8635e28e0328af56ffc",
+      "protected": false
+    },
+    {
+      "name": "feat/digital-gm-phase6-2-fog-tools",
+      "sha": "9aa51a1d60ed3f3a8c0e8da491cb122323f51a4c",
+      "protected": false
+    },
+    {
+      "name": "feat/digital-gm-phase6-3-live-combat-maps",
+      "sha": "4522f5ef0c32a2e231c3f8e8aef3a43fcfdc3106",
+      "protected": false
+    },
+    {
+      "name": "feat/digital-gm-phase7-1-advanced-dice",
+      "sha": "c5e249e71524b3f05c6aa81e16de8a242061c408",
+      "protected": false
+    },
+    {
+      "name": "feat/digital-gm-phase7-2-random-tables",
+      "sha": "52daf3c376afbe686d576967fbef2a1df4a811f6",
+      "protected": false
+    },
+    {
+      "name": "feat/digital-gm-phase7-3-encounters-rewards",
+      "sha": "2af5182a54c1fe6c87ae41e04d08a67ba87cf18f",
+      "protected": false
+    },
+    {
+      "name": "feat/digital-gm-phase8-1-asteria-calendar",
+      "sha": "c5b16089f18028bbe0669e113fcc920f98cc9f97",
+      "protected": false
+    },
+    {
+      "name": "feat/digital-gm-phase8-2-weather-environment",
+      "sha": "f03d8faa1859c739c0cd063063182bdfa2a98337",
+      "protected": false
+    },
+    {
+      "name": "feat/digital-gm-phase8-3-interactive-world-atlas",
+      "sha": "6ba2a4aded28138e2ebd222708aeb3acf5eaeefd",
+      "protected": false
+    },
+    {
+      "name": "feat/digital-gm-phase9-1-native-notes-pdf-library",
+      "sha": "cf18f1416a0166d8c7a49db3647c620d796d1b77",
+      "protected": false
+    },
+    {
+      "name": "feat/digital-gm-phase9-1-session-library",
+      "sha": "1ea70cc3668d42527e1727055fa716b7b30d0e81",
+      "protected": false
+    },
+    {
+      "name": "feat/digital-gm-phase9-2-soundboard-ambient-audio",
+      "sha": "92f8d45ef85c4a7e140fda3a937f4e25501a25fe",
+      "protected": false
+    },
+    {
+      "name": "feat/digital-gm-phase9-3-session-recording-archives",
+      "sha": "b3d131cbe5cbc5ef1824b6f0a3d1c358daf2e9ee",
+      "protected": false
+    },
+    {
+      "name": "feat/digital-gm-phase10-1-player-presentation",
+      "sha": "71c451980469559ba291317f6ed5d08287f60a3c",
+      "protected": false
+    },
+    {
+      "name": "feat/digital-gm-phase10-2-unified-search",
+      "sha": "851b7bfb1ed81a7672fe62dbcd7de2357b2cd9df",
+      "protected": false
+    },
+    {
+      "name": "feat/digital-gm-phase10-3-integration-readiness",
+      "sha": "ecaa3a20d389ce3902ee54344dfe523c42ce95e7",
+      "protected": false
+    },
+    {
+      "name": "feat/faceted-theme-crystal-buttons",
+      "sha": "00f4d2bcd7310db116997c4514858d220210f435",
+      "protected": false
+    },
+    {
+      "name": "feat/friends-complete-live-activation",
+      "sha": "e7b90bba895f232f7e2ba0980d82226a366d4edb",
+      "protected": false
+    },
+    {
+      "name": "feat/friends-general-website-availability",
+      "sha": "a24bfcf32693b9941967f96fe64bb63b6dfc9a16",
+      "protected": false
+    },
+    {
+      "name": "feat/friends-notifications-website-activation-ready",
+      "sha": "2226bb95ecb2b81920f390cd25846059b33c7979",
+      "protected": false
+    },
+    {
+      "name": "feat/friends-phase1-2-exact-account-lookup",
+      "sha": "f1abc330c907cb4d6a299bf6e5a3d41581723a5c",
+      "protected": false
+    },
+    {
+      "name": "feat/friends-phase1-3-find-player-ui",
+      "sha": "70dc1c3ac1df0095a7d07d30b403e508e69196d9",
+      "protected": false
+    },
+    {
+      "name": "feat/friends-phase1-activation-canary",
+      "sha": "96606c0f5d8e97254b03ebc9c729980987942662",
+      "protected": false
+    },
+    {
+      "name": "feat/friends-phase2-1-relationship-foundation",
+      "sha": "4e21669cea7c4ce989d51dd111939f4aa261dfe1",
+      "protected": false
+    },
+    {
+      "name": "feat/friends-phase2-2-secure-request-actions",
+      "sha": "afea5dab1b4daea08359e5f886c04db30437cdb6",
+      "protected": false
+    },
+    {
+      "name": "feat/friends-phase2-3-request-manager",
+      "sha": "5adfce4d2014497562e8a3a6da35ebd74a262ad3",
+      "protected": false
+    },
+    {
+      "name": "feat/friends-phase3-1-accepted-list",
+      "sha": "75c67ec3c45c24bdc4a1880338ea5e116ac01b73",
+      "protected": false
+    },
+    {
+      "name": "feat/friends-phase3-2-management-blocking",
+      "sha": "ed6b0f8e797d442fec2482d8fbb785e9a8610305",
+      "protected": false
+    },
+    {
+      "name": "feat/friends-phase3-3-workspace-preview-warnings",
+      "sha": "4bbc33e4e0b75ea15cca9bd9a7e2b35008ccb99e",
+      "protected": false
+    },
+    {
+      "name": "feat/friends-phase4-1-private-notification-events",
+      "sha": "374c1b291fbf78f48296ead82d5e9accafb9e966",
+      "protected": false
+    },
+    {
+      "name": "feat/friends-phase4-2-account-notifications",
+      "sha": "d2c890a166efc8c10c3215e4ba1500db1be36527",
+      "protected": false
+    },
+    {
+      "name": "feat/friends-phase4-3-reliability-acceptance",
+      "sha": "a6128589a90327a67f71308cea06b7376ef67963",
+      "protected": false
+    },
+    {
+      "name": "feat/friends-phase5-1-campaign-recipient-selection",
+      "sha": "ecfe29bb079e9dc2cae04fa18c3313787421d6a6",
+      "protected": false
+    },
+    {
+      "name": "feat/friends-phase5-2-account-bound-secure-invitations",
+      "sha": "4099a9783129d88fef88d2892701c01cffddc40c",
+      "protected": false
+    },
+    {
+      "name": "feat/frontend-phase-1-1-react-vite-foundation-20261118",
+      "sha": "428932e9574723075bb7d95a56ecb1588a311e66",
+      "protected": false
+    },
+    {
+      "name": "feat/frontend-phase-1-2-unified-react-routing-20261118",
+      "sha": "5010ed5e435a650b0720e92b0a76dd1e1e52aa53",
+      "protected": false
+    },
+    {
+      "name": "feat/frontend-phase-1-3-css-design-system-20261118",
+      "sha": "753267f1cde1c7b149eac971a8747cfb1db781c5",
+      "protected": false
+    },
+    {
+      "name": "feat/frontend-phase-1-4-js-consolidation-20261118",
+      "sha": "ef37d18d09dbe266bf3a9eb1d233a26d0f8ba1e5",
+      "protected": false
+    },
+    {
+      "name": "feat/frontend-phase-2-1-global-header-logo-20261118",
+      "sha": "630f84aa4fdd77afae47c853c5b04e9aa3b5358d",
+      "protected": false
+    },
+    {
+      "name": "feat/frontend-phase-2-2-react-mega-navigation-20261118",
+      "sha": "4a865c4843e576fa61662e4ea021e63d9c671e41",
+      "protected": false
+    },
+    {
+      "name": "feat/frontend-phase-2-3-home-carousel-and-forge-cards-20261118",
+      "sha": "8cd3e5e39ef66de3db400b63acfee14145540df3",
+      "protected": false
+    },
+    {
+      "name": "feat/frontend-phase-2-3-home-carousel-forge-20261118",
+      "sha": "7d2ff5531288534621f107e938c7091a3952e3c2",
+      "protected": false
+    },
+    {
+      "name": "feat/frontend-phase-2-4-appearance-settings-20261118",
+      "sha": "aaee1fba724497553d5154e73e4b6835fd3d3379",
+      "protected": false
+    },
+    {
+      "name": "feat/frontend-phase-2-4-settings-appearance-20261118",
+      "sha": "aaee1fba724497553d5154e73e4b6835fd3d3379",
+      "protected": false
+    },
+    {
+      "name": "feat/frontend-phase-2-5-integration-regression-cleanup-20261118",
+      "sha": "98f21af6bc0397cc35718f6bddca4784d6cd942f",
+      "protected": false
+    },
+    {
+      "name": "feat/header-account-experience",
+      "sha": "93863b2e23c63ce9b589a1827450736b2f733c87",
+      "protected": false
+    },
+    {
+      "name": "feat/header-height-home-snowstorm-hero",
+      "sha": "690efba25a10710f21a3f7b265e9bb58a49ff408",
+      "protected": false
+    },
+    {
+      "name": "feat/header-mega-home-fix-20261117",
+      "sha": "4cac7a7d8699894be73b924343d8b873d51631ac",
+      "protected": false
+    },
+    {
+      "name": "feat/header-wordmark-theme-stars",
+      "sha": "1591a1ce60f59c2735632744352065877b26381a",
+      "protected": false
+    },
+    {
+      "name": "feat/hero-clarity-header-username",
+      "sha": "6f637b0753730de2b969afd7d58cdb99abf7ca74",
+      "protected": false
+    },
+    {
+      "name": "feat/hero-clarity-username-final-review",
+      "sha": "e40e92ad863ab1bf10935af7ba3affdee1456dad",
+      "protected": false
+    },
+    {
+      "name": "feat/hero-clarity-username-release-checked",
+      "sha": "e40e92ad863ab1bf10935af7ba3affdee1456dad",
+      "protected": false
+    },
+    {
+      "name": "feat/inventory-phase-5-2-interactive-npc-merchants",
+      "sha": "6ab483a2a015f4793e9b05897f7f92df51a6f596",
+      "protected": false
+    },
+    {
+      "name": "feat/inventory-phase-5-3-item-lore-discovery",
+      "sha": "48c7c0a20ea7f9f9a147f399b09aa34dd76fb880",
+      "protected": false
+    },
+    {
+      "name": "feat/inventory-phase-6-1-gm-loot-table-foundation",
+      "sha": "b328f664c7944bb65c968444aa2302a87598cf48",
+      "protected": false
+    },
+    {
+      "name": "feat/inventory-phase-6-2-loot-table-treasure-drops",
+      "sha": "83fa0fbee0a45bf1868d086d7c08745e308cc1ec",
+      "protected": false
+    },
+    {
+      "name": "feat/inventory-phase-6-3-batch-treasure-review",
+      "sha": "537f32b03336ea3ad6a5034e286c0b6aec45d035",
+      "protected": false
+    },
+    {
+      "name": "feat/inventory-phase-7-1-unified-activity-journal",
+      "sha": "65864d5fa8a05b5e4704bd87b2a1daf4a5a1fd5e",
+      "protected": false
+    },
+    {
+      "name": "feat/inventory-phase-7-2-journal-receipts-export",
+      "sha": "b221d8a191e05c6c0128637459359fa770fbcb72",
+      "protected": false
+    },
+    {
+      "name": "feat/inventory-phase-7-3-gm-campaign-audit",
+      "sha": "244f117911226ba5e6d09b8248f4eb17fd5288f5",
+      "protected": false
+    },
+    {
+      "name": "feat/inventory-phase-8-1-player-trade-loot-hub",
+      "sha": "2c68fd5f7fb4cd33d9bb6a3a42aec9194a1d49f3",
+      "protected": false
+    },
+    {
+      "name": "feat/inventory-phase-8-2-gm-shortcuts",
+      "sha": "7f311520cc1afbb9b5ae912a57deb4276172f92c",
+      "protected": false
+    },
+    {
+      "name": "feat/inventory-phase-8-3-party-loot-usability",
+      "sha": "9fc472219f5bb53d1b6345035468520a5e564428",
+      "protected": false
+    },
+    {
+      "name": "feat/inventory-phase-9-1-interactive-loot-collection",
+      "sha": "9e3e7f968ca92acc7d71dd69cf721fdd6ccec8da",
+      "protected": false
+    },
+    {
+      "name": "feat/inventory-phase-9-2-need-greed-pass",
+      "sha": "f6461638a5416c9de88ac7542e46029149b60fe2",
+      "protected": false
+    },
+    {
+      "name": "feat/inventory-phase-9-3-trading-roleplay-experience",
+      "sha": "6695f618bf1d31cfe10eb837452cc098b15c9795",
+      "protected": false
+    },
+    {
+      "name": "feat/inventory-phase-10-1-merchant-stock-restocking",
+      "sha": "82e9a859f3d98668b8e5fa810a9afe4826f54e0e",
+      "protected": false
+    },
+    {
+      "name": "feat/inventory-phase-10-2-regional-markets-travel-routes",
+      "sha": "ece6294b0b91a1de7d471af0409c79c7cf19382f",
+      "protected": false
+    },
+    {
+      "name": "feat/inventory-phase-10-3-merchant-reputation-opportunities",
+      "sha": "930d63dbc6f8681d4dbecc4ecacd5e654cdafc70",
+      "protected": false
+    },
+    {
+      "name": "feat/inventory-phase-11-1-crafting-recipes-materials",
+      "sha": "8b5437550a702b9069cf1355b33b4f29f69d3c50",
+      "protected": false
+    },
+    {
+      "name": "feat/inventory-phase-11-2-enchanting-upgrades-resources",
+      "sha": "7df6256f6a574344d555352060a8ce5e95913688",
+      "protected": false
+    },
+    {
+      "name": "feat/inventory-phase-11-3-stations-npc-services-repair",
+      "sha": "52f7e0cf35029d4b6e92e652512cbb771fcad73d",
+      "protected": false
+    },
+    {
+      "name": "feat/inventory-phase-12-2-mobile-performance",
+      "sha": "52e530896b5515262ba32fbee34ce7be34b14c45",
+      "protected": false
+    },
+    {
+      "name": "feat/layered-3d-menu-press",
+      "sha": "8b561d25ca838dad17e7ee7986f8af6d01aad301",
+      "protected": false
+    },
+    {
+      "name": "feat/lean-pages-package",
+      "sha": "af1075fad67aa2c66315bf8f0a411bb09b548238",
+      "protected": false
+    },
+    {
+      "name": "feat/obsidian-public-landing-20261106",
+      "sha": "20fa6f68f574bf95d4aa89d92a6413f6dfebbd19",
+      "protected": false
+    },
+    {
+      "name": "feat/player-hud-portrait-overlays-level-shield",
+      "sha": "30b7521e29fb975e60a9a278217d4b72d1e92b83",
+      "protected": false
+    },
+    {
+      "name": "feat/player-resource-hud-portraits",
+      "sha": "b582e15f8f480ab65dd69ad66b9c30a141bc707f",
+      "protected": false
+    },
+    {
+      "name": "feat/polished-gemstone-header",
+      "sha": "1f41b05650c6bcf4a713393f3f28fea0eef5829a",
+      "protected": false
+    },
+    {
+      "name": "feat/quest-workflow",
+      "sha": "4fca0c97bb6f19690ab52ba0898a5bbd5e90a605",
+      "protected": false
+    },
+    {
+      "name": "feat/rotating-talent-disks",
+      "sha": "4d401332d7d0e6d8fba4e1eb5eede40a8e260f0b",
+      "protected": false
+    },
+    {
+      "name": "feat/site-navigation-aaa-overhaul-20261116",
+      "sha": "8cae153e8cec885f507def53ce5e642f4cb0719e",
+      "protected": false
+    },
+    {
+      "name": "feat/smoke-art-lighting",
+      "sha": "c3eec3edef568a12238342cd25a1433ea4e05eed",
+      "protected": false
+    },
+    {
+      "name": "feat/solid-background-settings",
+      "sha": "ece1648fe2df5d4052b7312812c34ef16ba2f0c1",
+      "protected": false
+    },
+    {
+      "name": "feat/split-public-media-firebase-hosting",
+      "sha": "484892124e33c6ba3da2c037948f97e554835b98",
+      "protected": false
+    },
+    {
+      "name": "feat/talent-bubble-graph",
+      "sha": "92610b684ca51f22f34da8ef96ba48d6ab947c8b",
+      "protected": false
+    },
+    {
+      "name": "feat/talent-disk-visuals",
+      "sha": "fb346b3e6b69aab816c1a84afa1e6c53d892055c",
+      "protected": false
+    },
+    {
+      "name": "feat/top-navigation-compendium",
+      "sha": "36ca18617df72837c9140089cce1da67035fa2ad",
+      "protected": false
+    },
+    {
+      "name": "feat/unified-compendium",
+      "sha": "f54354e07a3ed583e502c15f8bebd5cfa52c78ab",
+      "protected": false
+    },
+    {
+      "name": "feat/universal-check-requests-phase-1",
+      "sha": "b931b3428381ad95498f7f5677126789f6bc4649",
+      "protected": false
+    },
+    {
+      "name": "feat/universal-check-requests-phase-2",
+      "sha": "d6e43b787143d22a8fdbbe3097e513fe38c725bb",
+      "protected": false
+    },
+    {
+      "name": "feat/universal-page-template-phase1-20261118",
+      "sha": "52ad457009035a544214aeebd162c8647eaf5a1a",
+      "protected": false
+    },
+    {
+      "name": "feat/universal-page-template-phase2-20261118",
+      "sha": "6cd7efa6c46968b030d9effd37b3a29d1d66583d",
+      "protected": false
+    },
+    {
+      "name": "feat/website-phases-1-5",
+      "sha": "fc16791630a19d6f10bd85483588aa1493c86744",
+      "protected": false
+    },
+    {
+      "name": "feature/approved-button-size-families-20261106",
+      "sha": "c6f84847310cc01dd9e0431d09f6bd716120cf75",
+      "protected": false
+    },
+    {
+      "name": "feature/approved-layered-button-artwork-20261106",
+      "sha": "d83980e467da2755075b5c2bed1d19c1054f9469",
+      "protected": false
+    },
+    {
+      "name": "feature/campaign-connection-phase-5-1-character-linking-20261108",
+      "sha": "ccb90387fac42db3bd564625a01d1b0f17cec4e3",
+      "protected": false
+    },
+    {
+      "name": "feature/campaign-connection-phase-5-2-character-approval-20261108",
+      "sha": "00ae7129ee9b3951d0c1db8758c0e54c94850359",
+      "protected": false
+    },
+    {
+      "name": "feature/campaign-connection-phase-5-3-safe-character-detach-20261108",
+      "sha": "38d62b232560f3559ded0bf87bcb4085e4c4d2b2",
+      "protected": false
+    },
+    {
+      "name": "feature/campaign-connection-phase-6-1-secure-invitations-20261109",
+      "sha": "94e260beb90bd70dcc2c907e75f0449530c30bb7",
+      "protected": false
+    },
+    {
+      "name": "feature/campaign-connection-phase-6-2-invitation-manager-20261109",
+      "sha": "66b64bf4704785e4b6f15e7fa4459a9d0192ec24",
+      "protected": false
+    },
+    {
+      "name": "feature/campaign-connection-phase-6-3-secure-invitation-acceptance-20261109",
+      "sha": "20e07fd9bb4d7ae56d199e529fa2f6959df49dd3",
+      "protected": false
+    },
+    {
+      "name": "feature/campaign-connection-phase-7-1-email-infrastructure-20261109",
+      "sha": "a2067bfb21f75088b791b256423963e61e366f2b",
+      "protected": false
+    },
+    {
+      "name": "feature/campaign-connection-phase-7-2-email-invitations-20261109",
+      "sha": "ffafa632e75b0faa9cb48237a647998c393fe963",
+      "protected": false
+    },
+    {
+      "name": "feature/campaign-connection-phase-7-3-in-app-notifications-20261109",
+      "sha": "28b2b70857bcf63ed3eb5b8a4314f80a1bd589ce",
+      "protected": false
+    },
+    {
+      "name": "feature/campaign-connection-phase-8-1-final-interface-20261109",
+      "sha": "a5de057ce20df0845419aee2f62c3f0fe88e527e",
+      "protected": false
+    },
+    {
+      "name": "feature/campaign-connection-phase-8-2-data-migration-20261109",
+      "sha": "35083329b17bf2e27de0b6972bcf15f85a7f3439",
+      "protected": false
+    },
+    {
+      "name": "feature/campaign-connection-phase-8-3-final-rollout-20261109",
+      "sha": "602b4b6a98f323b0711ee55e2a9ae28b725ffcbf",
+      "protected": false
+    },
+    {
+      "name": "feature/campaign-connections-phase-2-1-20261108",
+      "sha": "8b3c64fecbe3cf7d6ceff5931495d8dae3c8f81d",
+      "protected": false
+    },
+    {
+      "name": "feature/campaign-connections-phase-2-2-20261108",
+      "sha": "24830ba9d70e6f6edc09804400eeb92f8f558ca3",
+      "protected": false
+    },
+    {
+      "name": "feature/campaign-connections-phase-2-3-20261108",
+      "sha": "eeafda8c85a0cdc98b9058a49469943c207d3ed4",
+      "protected": false
+    },
+    {
+      "name": "feature/campaign-connections-phase-3-1-20261108",
+      "sha": "89c674f4d8569317d75617967b0b27e23d3470ab",
+      "protected": false
+    },
+    {
+      "name": "feature/campaign-connections-phase-3-2-20261108",
+      "sha": "e8a502adfe23b7f757f2f8f0a476c48aebfc24da",
+      "protected": false
+    },
+    {
+      "name": "feature/campaign-connections-phase-3-3-20261108",
+      "sha": "137336f5dbadf0e1a5219ca03a243266a110a906",
+      "protected": false
+    },
+    {
+      "name": "feature/campaign-connections-phase-4-1-20261108",
+      "sha": "aeb8e02c2fcb7035b5bcfa6a662a48e1d142f649",
+      "protected": false
+    },
+    {
+      "name": "feature/campaign-connections-phase-4-2-20261108",
+      "sha": "812b03c5c61626c81961d3461163b8824238db96",
+      "protected": false
+    },
+    {
+      "name": "feature/campaign-connections-phase-4-3-20261108",
+      "sha": "2803d3a29152cfced89894c70417e8a094d73550",
+      "protected": false
+    },
+    {
+      "name": "feature/campaign-inapp-scoped-test-activation",
+      "sha": "a79d186a0a11c5edd4aeaea4d2d2866e7544f5ab",
+      "protected": false
+    },
+    {
+      "name": "feature/dashboard-editor-persistence-rework",
+      "sha": "63d8460d82aee60f0f7201a6e3ab8517715bb65d",
+      "protected": false
+    },
+    {
+      "name": "feature/dashboard-panel-customisation-20261105",
+      "sha": "8124638f906d49be88e20611eff152999b89ab79",
+      "protected": false
+    },
+    {
+      "name": "feature/dashboard-panel-sizes-backgrounds-20261105",
+      "sha": "53703e0c3a7b2041fcb36ba7e56b45b97a2da030",
+      "protected": false
+    },
+    {
+      "name": "feature/dashboard-stacked-numeric-sizes-20261107",
+      "sha": "df2f314eefeb40ee8ba6d5a6c5cbd7a02e9e0192",
+      "protected": false
+    },
+    {
+      "name": "feature/dashboard-three-column-artwork-20261105",
+      "sha": "8202bd6cc710bf3fbcba55e1c91186312070f138",
+      "protected": false
+    },
+    {
+      "name": "feature/dashboard-update3-layout-density-20261106",
+      "sha": "c026d54e08c1a900ce7c1fd02854f6976e56614d",
+      "protected": false
+    },
+    {
+      "name": "feature/digital-gm-phase-1-1-account-layout",
+      "sha": "d51445b166fc81e1d3c81089db839e7620c7010c",
+      "protected": false
+    },
+    {
+      "name": "feature/digital-gm-phase-1-2-account-integration",
+      "sha": "8b6f42f2f4654aa45d3920edd65b45061f3a211e",
+      "protected": false
+    },
+    {
+      "name": "feature/digital-gm-phase-1-3-header-navigation",
+      "sha": "be9836becc7c31874efa952c82f0feb151672d8a",
+      "protected": false
+    },
+    {
+      "name": "feature/digital-gm-phase-2-1-toolkit-hub",
+      "sha": "49138f87caa015a6b5ebed4a97896d90a93744fa",
+      "protected": false
+    },
+    {
+      "name": "feature/digital-gm-phase-2-2-saved-focus-modes",
+      "sha": "ec10f300c360c9f6236d904392c826783873b1ad",
+      "protected": false
+    },
+    {
+      "name": "feature/digital-gm-phase-2-3-party-layout-backup",
+      "sha": "bffb80380293dfd7c2af2cb67b619c8f79043a88",
+      "protected": false
+    },
+    {
+      "name": "feature/digital-gm-phase-3-1-npc-creature-library",
+      "sha": "24694850469f38ebb1443e05e175bbaec1a2fd73",
+      "protected": false
+    },
+    {
+      "name": "feature/digital-gm-phase-3-2-npc-generator",
+      "sha": "09b9df49ff94a3e1524bee639064cc1a875d5433",
+      "protected": false
+    },
+    {
+      "name": "feature/digital-gm-phase-3-3-character-cards",
+      "sha": "44ca02e774f2a24cd078e51dcfc315a5116cb375",
+      "protected": false
+    },
+    {
+      "name": "feature/firebase-prod-auth-check-safe-dispatch-20261109",
+      "sha": "426a3ad23f84adf4d042cd3941d14c1e8372c546",
+      "protected": false
+    },
+    {
+      "name": "feature/forged-dashboard-badges-20261120",
+      "sha": "9a1bf9a1cf0a109a69f472eac25430f4340bc87b",
+      "protected": false
+    },
+    {
+      "name": "feature/frontend-phase-3-1-public-compendium-catalogue-20261118",
+      "sha": "844d8372bc36f13c037dbbf53899bdecd23e7f2c",
+      "protected": false
+    },
+    {
+      "name": "feature/frontend-phase-3-2-public-compendium-entries-20261118",
+      "sha": "fe38004ff0d7e1c0d6cc002914827381e224e484",
+      "protected": false
+    },
+    {
+      "name": "feature/frontend-phase-3-3-compendium-discovery-20261118",
+      "sha": "f62482f0e93ffd3f83849e0fa05b77348715218d",
+      "protected": false
+    },
+    {
+      "name": "feature/frontend-phase-4-1-react-firebase-auth-20261118",
+      "sha": "2cbffefcaf932dd07980d75aa8fe0aa480ddd91c",
+      "protected": false
+    },
+    {
+      "name": "feature/frontend-phase-4-2-react-account-profile-20261118",
+      "sha": "a262c99c0150ace3988bf267e1b5c95334b14918",
+      "protected": false
+    },
+    {
+      "name": "feature/frontend-phase-4-3-react-friends-20261118",
+      "sha": "cd019c69dc5dc1e824a7651a685a395201bd9d38",
+      "protected": false
+    },
+    {
+      "name": "feature/frontend-phase-4-4-react-notifications-20261118",
+      "sha": "4666909772434563620699418fe6bae12e4eb0a2",
+      "protected": false
+    },
+    {
+      "name": "feature/frontend-phase-4-5-security-compendium-20261118",
+      "sha": "e34424a8736eeab71f3a626ef5208b9db67f80d1",
+      "protected": false
+    },
+    {
+      "name": "feature/frontend-phase-5-1-react-character-forge-20261118",
+      "sha": "9ab920b2367b4f1ac9fff500e4142545aaf5085c",
+      "protected": false
+    },
+    {
+      "name": "feature/frontend-phase-5-2-react-campaign-forge-20261118",
+      "sha": "75fc8ce5e0f474f5783fa1560d7768866fe51ca9",
+      "protected": false
+    },
+    {
+      "name": "feature/frontend-phase-5-3-campaign-invitations-membership-20261118",
+      "sha": "925887b912e9e6658465aee6f4de76eeb8ecd667",
+      "protected": false
+    },
+    {
+      "name": "feature/frontend-phase-5-4-integrated-forges-20261118",
+      "sha": "23c3ad170e79998dc0da96743cceaa2173530aca",
+      "protected": false
+    },
+    {
+      "name": "feature/frontend-phase-6-1-gm-dashboard-20261118",
+      "sha": "62b468e380db8c5172371fd9ab439e913d3123c2",
+      "protected": false
+    },
+    {
+      "name": "feature/frontend-phase-6-2-player-character-dashboards",
+      "sha": "41070d11186466dbce66ed752ad650ed7d696b44",
+      "protected": false
+    },
+    {
+      "name": "feature/frontend-phase-6-3-dashboard-layout-editor",
+      "sha": "107ecb9e701aa638b63f288e10843a099361ea0e",
+      "protected": false
+    },
+    {
+      "name": "feature/frontend-phase-6-4-campaign-maps-presentation",
+      "sha": "4b4280166256c9d0698ab633af73d3d434f8045a",
+      "protected": false
+    },
+    {
+      "name": "feature/frontend-phase-7-1-combat-initiative-resources",
+      "sha": "c5ea60e49b28647b8b0f33ccf6cf5532cff9a89e",
+      "protected": false
+    },
+    {
+      "name": "feature/frontend-phase-7-2-skills-talents-progression-checks",
+      "sha": "a0db094159f0464a67dda5e698e810af752d34e5",
+      "protected": false
+    },
+    {
+      "name": "feature/frontend-phase-7-3-inventory-trading-loot-shops-crafting",
+      "sha": "c47008c34aaf827f978dd9ea3de3ac4d34ed8667",
+      "protected": false
+    },
+    {
+      "name": "feature/frontend-phase-7-4-npc-reputation-digital-gm",
+      "sha": "66e3db25893d38dcf40d5b758d13496b984d32bc",
+      "protected": false
+    },
+    {
+      "name": "feature/frontend-phase-8-1-central-firebase-adapters",
+      "sha": "77d4798366e2cced63ee99d4f30832d5d31ff8b7",
+      "protected": false
+    },
+    {
+      "name": "feature/frontend-phase-8-2-realtime-state",
+      "sha": "1c3bd417d0799c17787e826b9b392a080e3dfc18",
+      "protected": false
+    },
+    {
+      "name": "feature/frontend-phase-8-3-connection-resilience",
+      "sha": "2db86355bcb6952ef73637c7f9a995d42cdefd30",
+      "protected": false
+    },
+    {
+      "name": "feature/frontend-phase-8-4-cross-feature-integrity",
+      "sha": "780217d7ab22bce4a1344a70fc3db78422cc74d0",
+      "protected": false
+    },
+    {
+      "name": "feature/frontend-phase-9-1-legacy-css-retirement",
+      "sha": "f06890326b25209091e1bbcee98e49b50c2396d0",
+      "protected": false
+    },
+    {
+      "name": "feature/frontend-phase-9-2-js-controller-retirement",
+      "sha": "93f3afee086e2d42214bd47ad5c644f2de68c421",
+      "protected": false
+    },
+    {
+      "name": "feature/frontend-phase-9-3-html-bridge-assets-retirement",
+      "sha": "f881398e184ae729bfed4200fa6a8108a31d43d9",
+      "protected": false
+    },
+    {
+      "name": "feature/frontend-phase-9-4-final-architecture-audit",
+      "sha": "98830af830fe56bcc763170b170df9281452edce",
+      "protected": false
+    },
+    {
+      "name": "feature/frontend-phase-10-1-baseline-capture",
+      "sha": "e3085ce456069214c487c6300a90476897479c25",
+      "protected": false
+    },
+    {
+      "name": "feature/frontend-phase-10-2-e2e-security",
+      "sha": "7858a6eb5e706376700cfa749fcd7d932252cab0",
+      "protected": false
+    },
+    {
+      "name": "feature/frontend-phase-10-3-accessibility-performance",
+      "sha": "95f668484c5b06878a5bc4844d928b8c73fc428f",
+      "protected": false
+    },
+    {
+      "name": "feature/frontend-phase-10-4-cutover-readiness",
+      "sha": "f94ddeb32a8a7f1532d593cf8d0ad496dde432f0",
+      "protected": false
+    },
+    {
+      "name": "feature/frontend-phase-10-5-live-cutover",
+      "sha": "70dc247f5ff6527ff4dcb29947dc6b32fe47f56d",
+      "protected": false
+    },
+    {
+      "name": "feature/inventory-phase-1-1-integrity",
+      "sha": "38d3b81dd5671fb96ccc7bb2c0c6b0287de7a6d9",
+      "protected": false
+    },
+    {
+      "name": "feature/inventory-phase-1-2-atomic-transactions",
+      "sha": "18588d5cdc5c62e8b5778b52b0e8eb0573ace09a",
+      "protected": false
+    },
+    {
+      "name": "feature/inventory-phase-1-3-private-trades",
+      "sha": "1748543bd76e3b36808500f9c087e9607fdf1e5c",
+      "protected": false
+    },
+    {
+      "name": "feature/inventory-phase-2-1-storage-controls",
+      "sha": "e354c17268b6d911a293443cb071b6f9c499ee66",
+      "protected": false
+    },
+    {
+      "name": "feature/inventory-phase-2-2-trade-escrow",
+      "sha": "444dc0f7754818eeabb0fced38db8be0ef9f0c78",
+      "protected": false
+    },
+    {
+      "name": "feature/inventory-phase-2-3-shop-transactions",
+      "sha": "62ae6ba8a7f119258e61ca1dec7d37ca58b62164",
+      "protected": false
+    },
+    {
+      "name": "feature/inventory-phase-3-1-reward-delivery",
+      "sha": "e82bb73145a4ec58e29b8177795aef1cb44ff5d1",
+      "protected": false
+    },
+    {
+      "name": "feature/inventory-phase-3-2-gm-reward-tools",
+      "sha": "de690f0eb13bc689cfc1ca56a0b31cba201994d9",
+      "protected": false
+    },
+    {
+      "name": "feature/inventory-phase-3-3-consolidation",
+      "sha": "12b2e3a054609725eec6a516b27f3625b6b749fe",
+      "protected": false
+    },
+    {
+      "name": "feature/inventory-phase-4-1-player-ux",
+      "sha": "501accdc83fdb4aa420999486f566a1e991f9628",
+      "protected": false
+    },
+    {
+      "name": "feature/inventory-phase-4-2-gm-batch-rewards",
+      "sha": "090475e7c7f1f40d7eede774aa3d04da4b0265ce",
+      "protected": false
+    },
+    {
+      "name": "feature/inventory-phase-4-3-mobile-notifications",
+      "sha": "d3cf6ad3539ddce845d61c66faecdb4d314fff2b",
+      "protected": false
+    },
+    {
+      "name": "feature/inventory-phase-5-1-party-stashes-loot",
+      "sha": "34193ab0ea59bf61c70a2b42c7e916c3d6004418",
+      "protected": false
+    },
+    {
+      "name": "feature/phase4-buttons-three-slice-20261106",
+      "sha": "3ed63e8737bc73c6d41f112e3eadf25d2fd3856d",
+      "protected": false
+    },
+    {
+      "name": "feature/phase4-website-polish-20261106",
+      "sha": "00269e1f75c5a1334bef98e4ecbac7e8bfd854ad",
+      "protected": false
+    },
+    {
+      "name": "feature/phase5-update2-font-refinements-20261106",
+      "sha": "97946fc467aa3c53cd0c56300ddcff780e814b25",
+      "protected": false
+    },
+    {
+      "name": "feature/phase5-update3-compendium-20261106",
+      "sha": "e8c8c562174d9584396a65146ac189d380700f19",
+      "protected": false
+    },
+    {
+      "name": "feature/phase6-update2-appearance-sync-20261106",
+      "sha": "b5813b08555520e2cb6e3f60cc9f600796cdfbeb",
+      "protected": false
+    },
+    {
+      "name": "feature/phase6-update3-optional-focus-panels-20261106",
+      "sha": "e0452d068c6a725f4aac993c1ad494c3eb6a43f7",
+      "protected": false
+    },
+    {
+      "name": "feature/phase6-update4-gameplay-integration-20261106",
+      "sha": "b058dc2e3956d590942eb4797b50afa559975337",
+      "protected": false
+    },
+    {
+      "name": "feature/phase-2-4-react-appearance-account-header",
+      "sha": "9269f69d51863c0324be76973ae9a150cb125623",
+      "protected": false
+    },
+    {
+      "name": "feature/phase-6-1a-freeform-workspace-engine",
+      "sha": "da5aeea078f957f1794d0177a0a663e3d0f63018",
+      "protected": false
+    },
+    {
+      "name": "feature/phase-6-1b-player-gm-direct-workspace",
+      "sha": "877ca015db1a48fe0e5b5877129a8bbc9697bc72",
+      "protected": false
+    },
+    {
+      "name": "feature/phase-6-1c-gm-combat-command-centre",
+      "sha": "ce9619aff65ba388cdf845888393538b8703afec",
+      "protected": false
+    },
+    {
+      "name": "feature/phase-6-2-prepared-encounter-library",
+      "sha": "a82b2058348b9285bc6672b66b876955166d1a5f",
+      "protected": false
+    },
+    {
+      "name": "feature/phase-6-3-prepared-encounter-library-management",
+      "sha": "5d6ea95f5975a38877fb3dce698047f1ae9996b9",
+      "protected": false
+    },
+    {
+      "name": "feature/phase-6-4-safe-load-prepared-encounter",
+      "sha": "8c8c6b8e22d19b7121029690e95904f35d15794e",
+      "protected": false
+    },
+    {
+      "name": "feature/phase-6-5-battle-map-preparation-integration",
+      "sha": "ab5cb072891eeae145e2d01abca2e022bd87f3e4",
+      "protected": false
+    },
+    {
+      "name": "feature/phase-6-6-live-combat-command-centre",
+      "sha": "5cb771514b797c7c990462e6c7ffc6a9d5f691a0",
+      "protected": false
+    },
+    {
+      "name": "feature/phase-6-7-encounter-waves-events",
+      "sha": "acdb9fe2a41f10ee97ec96f46da86bfda3138833",
+      "protected": false
+    },
+    {
+      "name": "feature/phase-6-8-encounter-completion-history",
+      "sha": "3ea124d875ae0059df983201de339e8ca7e74201",
+      "protected": false
+    },
+    {
+      "name": "feature/phase-6-9-final-combat-acceptance",
+      "sha": "b485bd97aeb22776b9a4f6a131926756df64a8fe",
+      "protected": false
+    },
+    {
+      "name": "feature/phase-7-0-share-present-architecture-audit",
+      "sha": "0dd52471a18ae9f29166f819396054eecfb2103b",
+      "protected": false
+    },
+    {
+      "name": "feature/phase-7-1-unified-media-library",
+      "sha": "50f4e1f2bdcecfe31f6998442caed80da7d9f1ea",
+      "protected": false
+    },
+    {
+      "name": "feature/phase-7-2-hybrid-session-viewer-permissions",
+      "sha": "a870a4d50f45b5ba1453c2db96fd2f3b241b5bfc",
+      "protected": false
+    },
+    {
+      "name": "feature/phase-7-3-approved-presentation-media-scenes",
+      "sha": "5af6bcd693d3f53e2fb9530487bc54d62d8cee25",
+      "protected": false
+    },
+    {
+      "name": "feature/phase-7-4-secure-live-combat-battle-map-presentation",
+      "sha": "75b352ab4f2f99f15aed7c711efed75adcbb38c5",
+      "protected": false
+    },
+    {
+      "name": "feature/phase-7-5-projector-secure-viewer-reconnect",
+      "sha": "8ae44c38044db635d492f98367bf140a2279edee",
+      "protected": false
+    },
+    {
+      "name": "feature/phase-7-6-gm-screen-capture-controls",
+      "sha": "428ec802b3de24bb1bcc526e35c8bc62b833b28b",
+      "protected": false
+    },
+    {
+      "name": "feature/phase-7-7-share-present-acceptance",
+      "sha": "ed4fdf52d27064f944bf09bb064df1340fecc841",
+      "protected": false
+    },
+    {
+      "name": "feature/private-vault-compendium-bridge-20261106",
+      "sha": "25a7535812859cc89c8ce3f92e3dfd0a6da76d7b",
+      "protected": false
+    },
+    {
+      "name": "feature/react-default-crystal-button-theme",
+      "sha": "d49fb3d940cc81a3f2b2db86c17a126342048a1c",
+      "protected": false
+    },
+    {
+      "name": "feature/react-header-crystal-colour-layout-fixes",
+      "sha": "e4bd6a283a25f02095bdc1309e7ccf88e6f148a9",
+      "protected": false
+    },
+    {
+      "name": "feature/react-header-visual-parity-20261119",
+      "sha": "47310d2fb7363fcbed85b7d8fe8b095ec49aa06b",
+      "protected": false
+    },
+    {
+      "name": "feature/react-unified-pages-remove-return-home",
+      "sha": "a664f0274014e25ce8729810e2d9c8dc280c7add",
+      "protected": false
+    },
+    {
+      "name": "feature/share-present-improvement-1-security-emergency",
+      "sha": "70e46e584929cc76b13514ca4cb70259cc69345c",
+      "protected": false
+    },
+    {
+      "name": "feature/share-present-improvement-2-gm-studio",
+      "sha": "009e7260a8b901732b527e21174082e9f1fc69f5",
+      "protected": false
+    },
+    {
+      "name": "feature/share-present-improvement-3-scene-playlists",
+      "sha": "4bfb540890c10872c229eef6d24b07e04320482c",
+      "protected": false
+    },
+    {
+      "name": "feature/share-present-improvement-4-prepared-encounters",
+      "sha": "633ffd414ef1729706f62b58f89127986c620605",
+      "protected": false
+    },
+    {
+      "name": "feature/share-present-improvement-5-player-invitations",
+      "sha": "f713ba410f6a3a26aae2d61ea3f8391a86cfd680",
+      "protected": false
+    },
+    {
+      "name": "feature/share-present-improvement-6-display-modes",
+      "sha": "3b0ed4f783a59b534718a3d8a5560e7e213e10fa",
+      "protected": false
+    },
+    {
+      "name": "feature/share-present-improvement-7-audience-reveals",
+      "sha": "a5943c4f0366883dd62576deb06258dcbcfa5780",
+      "protected": false
+    },
+    {
+      "name": "feature/share-present-improvement-8-sync-performance",
+      "sha": "966e803a23f5d8cfb93e6118a9ed7577e40abc48",
+      "protected": false
+    },
+    {
+      "name": "feature/share-present-improvement-9-webrtc-screen-share",
+      "sha": "2ec64de5e951ee9560366723eaef5ba01090e4b6",
+      "protected": false
+    },
+    {
+      "name": "feature/12-column-freeform-dashboard-20261105",
+      "sha": "bb192d6dc47f8289f5695773e47b755b676c7ce2",
+      "protected": false
+    },
+    {
+      "name": "fix/account-id-canary-empty-runtime-env",
+      "sha": "dd97820ae0e3f3eb8a08d9b68c8c3e224ba1de5f",
+      "protected": false
+    },
+    {
+      "name": "fix/account-id-canary-v2-no-etag",
+      "sha": "07d2ef7ad50fe46fcfa0f60d0b2ce5ae176dc7d8",
+      "protected": false
+    },
+    {
+      "name": "fix/account-id-deploy-preflight-yaml-guard",
+      "sha": "fc977274714126c19466e91fe9295ceba97f2875",
+      "protected": false
+    },
+    {
+      "name": "fix/account-id-deployment-runtime-isolation",
+      "sha": "84e636197dd6a4be102eab6e6813cb84f75d6771",
+      "protected": false
+    },
+    {
+      "name": "fix/account-id-inventory-oidc-existing-workflow",
+      "sha": "c9649da38967696cbb20641de81ba29001498951",
+      "protected": false
+    },
+    {
+      "name": "fix/account-id-legacy-self-allocation-guard",
+      "sha": "27e1d8ed48f77dda09282d8b14884b85e3c86a32",
+      "protected": false
+    },
+    {
+      "name": "fix/account-id-scoped-deploy-avoid-email-secrets",
+      "sha": "63a59a4f9912f0288b14990c88477cfd4f0ff0bd",
+      "protected": false
+    },
+    {
+      "name": "fix/account-menu-capture-logout",
+      "sha": "36b997978db5928bf1192a830d4694203a9a5517",
+      "protected": false
+    },
+    {
+      "name": "fix/campaign-backend-cli-minimatch-isolation",
+      "sha": "f2a93c61841006ef74d3450cffe0a2cd6c16c234",
+      "protected": false
+    },
+    {
+      "name": "fix/campaign-backend-isolated-five-function-deploy",
+      "sha": "630d61fadc4ca4de42cf89db11d0695a456ac0fe",
+      "protected": false
+    },
+    {
+      "name": "fix/campaign-connections-phase-3-2-guardrails-20261108",
+      "sha": "cd65db2d47c294ccf04199bae7c38ef24a979934",
+      "protected": false
+    },
+    {
+      "name": "fix/campaign-delivery-permissions",
+      "sha": "8d1afea4bebb2eba714909bcae9f003ce469f775",
+      "protected": false
+    },
+    {
+      "name": "fix/campaign-inapp-app-only-environment-contract",
+      "sha": "bed3f4be42c694e41b2982031e83dc755a8c9d2a",
+      "protected": false
+    },
+    {
+      "name": "fix/campaign-inapp-gen2-runtime-metadata-comprehensive",
+      "sha": "8cfb2e09e9bdf9c0616cd71eb72e5d4a4f5cc7b9",
+      "protected": false
+    },
+    {
+      "name": "fix/campaign-inapp-runtime-metadata-staging",
+      "sha": "fc9ad7df0bd6bfb3b3a48126e816f174203d5139",
+      "protected": false
+    },
+    {
+      "name": "fix/campaign-production-audit-false-positive",
+      "sha": "1c3b8e9b0bab31c062c33ddb449debf2a7dd0322",
+      "protected": false
+    },
+    {
+      "name": "fix/campaign-storage-rules-lexical-parity",
+      "sha": "8b6d18b4803a589ac81c8b378ce1dbd06f9e0b03",
+      "protected": false
+    },
+    {
+      "name": "fix/character-forge-steals-home-on-auth-restore-20261118",
+      "sha": "9c8dfdea8ebe267569bce819dbe86b9c403bc0e0",
+      "protected": false
+    },
+    {
+      "name": "fix/character-ownership",
+      "sha": "1172756db6947340b5821f9346a6dd35ca60b7f6",
+      "protected": false
+    },
+    {
+      "name": "fix/combat-ap-layout-header",
+      "sha": "5d2a91add177771ce6fbd7cf29a15ee50297bd2b",
+      "protected": false
+    },
+    {
+      "name": "fix/combat-mode-sidebar",
+      "sha": "a655f799b679060004b3ab29a6a46b5e2835f1f5",
+      "protected": false
+    },
+    {
+      "name": "fix/content-path-casing",
+      "sha": "e9a6bc8afde6c73eead3f7db50b95c30a51f4da7",
+      "protected": false
+    },
+    {
+      "name": "fix/dashboard-build-and-security-20261105",
+      "sha": "7dc1397780540e5da8ca7d70e01f11313a820146",
+      "protected": false
+    },
+    {
+      "name": "fix/dashboard-editor-interaction-audit-20261106",
+      "sha": "18800c82fe0e56d92b6c60f90d4a5edd4950a3f1",
+      "protected": false
+    },
+    {
+      "name": "fix/dashboard-editor-visible-tiles-text-sizes-20261107",
+      "sha": "2f8dfee1636898855fd8d1ea756c210ba3f8cd86",
+      "protected": false
+    },
+    {
+      "name": "fix/dashboard-frame-header-stacking-20261106",
+      "sha": "8b1075add9b86216d3a648284037e6017d24e401",
+      "protected": false
+    },
+    {
+      "name": "fix/dashboard-menu-position",
+      "sha": "123e841707a8be19ae25f333ff40c4f819eba9ea",
+      "protected": false
+    },
+    {
+      "name": "fix/dashboard-production-loading",
+      "sha": "c36dd7cbad82b0e5f5fdc594f777109b66778a17",
+      "protected": false
+    },
+    {
+      "name": "fix/dashboard-true-visual-parity-20261119",
+      "sha": "45cc0eacd4105db2fcca467987595e3893682d80",
+      "protected": false
+    },
+    {
+      "name": "fix/dashboard-update2-panel-content-fit-20261106",
+      "sha": "1673ae9bbea0c8c78c08f1fc0ff18ed49d0d9d8a",
+      "protected": false
+    },
+    {
+      "name": "fix/dashboard-update2-scoped-panel-container-20261106",
+      "sha": "312fc99ab3c71f8910d504cdeefccad5e32278dc",
+      "protected": false
+    },
+    {
+      "name": "fix/encounter-roster-header",
+      "sha": "bfe6b27998866eac3be8e8c2d3cf39d5035e3f02",
+      "protected": false
+    },
+    {
+      "name": "fix/firebase-index-deploy",
+      "sha": "b3605d04af0c0c8e9fe72ab93e6d0270dea2aecd",
+      "protected": false
+    },
+    {
+      "name": "fix/firebase-production-cli-isolation",
+      "sha": "be6861725a9c67b1b52ca4647876d71b7cd6dae4",
+      "protected": false
+    },
+    {
+      "name": "fix/firebase-security-sync",
+      "sha": "4d00e6e383910afbe69905c544232d75b6f21e68",
+      "protected": false
+    },
+    {
+      "name": "fix/friends-notification-trusted-firebase-workflow",
+      "sha": "e165cfaa21ea4f2b73b0778a6b30bfcb43b4819d",
+      "protected": false
+    },
+    {
+      "name": "fix/friends-notifications-live-rules-drift-audit",
+      "sha": "ae1955a879ce4c5f1bf3235aa45e1149fca8e96b",
+      "protected": false
+    },
+    {
+      "name": "fix/friends-notifications-pinned-live-rules-deploy",
+      "sha": "abe4b549afab224307bf1fbc269983a14bf2224a",
+      "protected": false
+    },
+    {
+      "name": "fix/friends-phase3-2-inbox-clock-and-mobile-layout",
+      "sha": "ca2e2fb2171cb4ebd718e61f56325394cf7d75aa",
+      "protected": false
+    },
+    {
+      "name": "fix/friends-send-from-search-20261113",
+      "sha": "42b679bf9c3fdded6905a0e3e50022dc44629d51",
+      "protected": false
+    },
+    {
+      "name": "fix/github-actions-inapp-identity-interpolation",
+      "sha": "ed6778b0d960c23ebeda0a3caf5888c71dcb39d0",
+      "protected": false
+    },
+    {
+      "name": "fix/header-mega-menu-regressions-20261117",
+      "sha": "b9617f04d72d3dd9782c0a7f615efd90a7de3ce9",
+      "protected": false
+    },
+    {
+      "name": "fix/header-proportions-and-card-widths-20261117",
+      "sha": "fbdbf98dabcb3647020a99971cd92805c67c8cbf",
+      "protected": false
+    },
+    {
+      "name": "fix/header-wordmark-complete-asset",
+      "sha": "77d7ba53091707a45e4f835803f35074c8d4bdad",
+      "protected": false
+    },
+    {
+      "name": "fix/linked-player-record-ids",
+      "sha": "356f7b52c13d4089a5c00d53cd3393481873d603",
+      "protected": false
+    },
+    {
+      "name": "fix/manual-number-inputs",
+      "sha": "dad796d63610a8e1c7fbd3bc10437288aae72ec1",
+      "protected": false
+    },
+    {
+      "name": "fix/mobile-header-first-paint-20261112",
+      "sha": "e80128510d3459bdd6ded2598db3494d7d00339c",
+      "protected": false
+    },
+    {
+      "name": "fix/mobile-home-startup",
+      "sha": "196aed4a17460ccfaaf095c4de533391811e3f40",
+      "protected": false
+    },
+    {
+      "name": "fix/mobile-nav-unresponsive-20261118",
+      "sha": "5187da685780b372b40fd68f7d7020c479443c4f",
+      "protected": false
+    },
+    {
+      "name": "fix/mobile-royal-relic-theme-override-20261105",
+      "sha": "095ec6b98090c41c7d2bcf898c2a27fbbb926729",
+      "protected": false
+    },
+    {
+      "name": "fix/new-character-campaign-link",
+      "sha": "335fb704abc3bd8f7eacbb1ff582d6894c299ce8",
+      "protected": false
+    },
+    {
+      "name": "fix/obsidian-bridge-token-diagnostics-20261106",
+      "sha": "7c21651131813f2eeb1840899e9b066a87689e32",
+      "protected": false
+    },
+    {
+      "name": "fix/panel-header-colour-alignment",
+      "sha": "064ae5c8628aa0a1516a5255ee6a73eba5fa03b7",
+      "protected": false
+    },
+    {
+      "name": "fix/phase5-update1-nav-editor-20261106",
+      "sha": "3f735ed0858658b66ad2408d2a9afa21edc2e839",
+      "protected": false
+    },
+    {
+      "name": "fix/phase6-update1-dashboard-account-nav-20261106",
+      "sha": "adede557b1f152c0a22c67e8e336bc025ed2134c",
+      "protected": false
+    },
+    {
+      "name": "fix/phase7-update1-mobile-editor-20261106",
+      "sha": "daa877eec0668ed04383b38851bd315078b8b0c2",
+      "protected": false
+    },
+    {
+      "name": "fix/phase7-update2-tablet-desktop-20261106",
+      "sha": "6c5d95feb58a7957372eacf8fe3121995e810c27",
+      "protected": false
+    },
+    {
+      "name": "fix/phase7-update3-editor-safeguards-20261106",
+      "sha": "c727bfcedc58f3473f452ec36bd5a107d7747784",
+      "protected": false
+    },
+    {
+      "name": "fix/phase7-update3-grid-save-safeguards-20261106",
+      "sha": "ab45e7141d7c025b76c0794900a2a38e032d4a04",
+      "protected": false
+    },
+    {
+      "name": "fix/phase7-update4-cross-device-final-20261106",
+      "sha": "3e1a4e7885baae72f8df6c2eccea317d1deb3e1d",
+      "protected": false
+    },
+    {
+      "name": "fix/racial-natural-ac",
+      "sha": "ce60e7d5fcb8b3076afaf1ce7f6a207108df2500",
+      "protected": false
+    },
+    {
+      "name": "fix/react-class-talents",
+      "sha": "1b28a943d8767dfdd9882c4c9bceb1015b1ff378",
+      "protected": false
+    },
+    {
+      "name": "fix/react-page-template-actual-parity",
+      "sha": "930d61a6dceb14db7d345bcf1075edee3217e2f1",
+      "protected": false
+    },
+    {
+      "name": "fix/release-audit-respect-wif-trust",
+      "sha": "e5f94a25b7a3db076fa0db7aa2adf0971b049f6b",
+      "protected": false
+    },
+    {
+      "name": "fix/restore-original-dashboard-visuals-20261119",
+      "sha": "7b56897a16b96d4f36b333d4161a534334883f1a",
+      "protected": false
+    },
+    {
+      "name": "fix/royal-relic-panel-textures-20261105",
+      "sha": "6027d6e4f1175844323b5a154cd16d3dec6e6ba5",
+      "protected": false
+    },
+    {
+      "name": "fix/security-link-handbook",
+      "sha": "175fc15b064105c0378ad5f3fe0deaaba446a6ab",
+      "protected": false
+    },
+    {
+      "name": "fix/security-link-release",
+      "sha": "2dc7d46df3d1fbd1f998589d3dd28d67b581d847",
+      "protected": false
+    },
+    {
+      "name": "fix/sync-react-build-after-dashboard-grid-20261105",
+      "sha": "6c5ae345655fdfaa3e065247c785834fb3d9b1ab",
+      "protected": false
+    },
+    {
+      "name": "hotfix/isolate-phase1-template-loading-20261118",
+      "sha": "56db39115d821261f2ef53ba49fa92136f9cfee6",
+      "protected": false
+    },
+    {
+      "name": "hotfix/revert-phase2-mobile-freeze-20261118",
+      "sha": "d981a5624607ff8272243ed9442da2b527b7c913",
+      "protected": false
+    },
+    {
+      "name": "main",
+      "sha": "d7e34f04e77166ed07c154ef6291fb4063535dff",
+      "protected": false
+    },
+    {
+      "name": "ops/friends-notifications-scoped-firebase-deploy",
+      "sha": "d7c73fdd4b32f3bdaec1e2fe30a4ddd8e4c46cb2",
+      "protected": false
+    },
+    {
+      "name": "ops/friends-notifications-staged-activation-and-rollback",
+      "sha": "83c2f4b45c8ba14cf016c5b4063fd2fcb7de99cd",
+      "protected": false
+    },
+    {
+      "name": "ops/friends-phase5-3-scoped-release-and-readiness",
+      "sha": "4018990e5de72c424e21a5030dbf64c03f1c536e",
+      "protected": false
+    },
+    {
+      "name": "perf/compendium-on-demand",
+      "sha": "7dac9a70e0601d0224ed1090bdfffa1f5a7f3ebd",
+      "protected": false
+    },
+    {
+      "name": "perf/dashboard-render-load-20261106",
+      "sha": "c56b6f3c5ac9aa1f5a081beb89a2fe08317b722c",
+      "protected": false
+    },
+    {
+      "name": "perf/faster-startup",
+      "sha": "995758e610dcf4a3fd08c63b712afc3cee40973e",
+      "protected": false
+    },
+    {
+      "name": "perf/phase5-update4-startup-compendium-20261106",
+      "sha": "433ab2fb9a45c1a075b7cbaadc76beddbf48d933",
+      "protected": false
+    },
+    {
+      "name": "react-vite-live",
+      "sha": "934355f8068a670c32e3c85234056c4076ab1984",
+      "protected": false
+    },
+    {
+      "name": "refactor/frontend-react-vite-css-js-overhaul-20261118",
+      "sha": "1deaa88ed070ec8205f2d3f39839e6010608c1e9",
+      "protected": false
+    },
+    {
+      "name": "release/asteria-campaign-friends-single-source",
+      "sha": "f4e05bfc9d6991a2a005fb680004f77dc3f86061",
+      "protected": false
+    },
+    {
+      "name": "release/asteria-inapp-complete-coordinated",
+      "sha": "77508339e3b153d14b0f90ad371f0e091d3fb8d5",
+      "protected": false
+    },
+    {
+      "name": "release/campaign-completion-channels-safe-install",
+      "sha": "8598d23e211b50b5508bb4832bf3e0df5ed31cc0",
+      "protected": false
+    },
+    {
+      "name": "release/campaign-in-app-invitations-no-email",
+      "sha": "c0d5c8ce9b545817e4502ccaaf37c4e560729167",
+      "protected": false
+    },
+    {
+      "name": "release/campaign-v2-consolidated-production-audit",
+      "sha": "260bbb8c94484227655d4ba1260061de434e1bd1",
+      "protected": false
+    },
+    {
+      "name": "restoration/phase-2-baselines",
+      "sha": "90d73fcbf168465b92b86ba83337f8d37d9cc979",
+      "protected": false
+    },
+    {
+      "name": "restoration/phase-3-public-compendium",
+      "sha": "2a9178f26f362f94dd4c9ac139851dba00bf7b02",
+      "protected": false
+    },
+    {
+      "name": "style/forge-campaign-menu-artwork-20261118",
+      "sha": "fb80f21c0bb23833f3e8fef644adfdacfdca64d6",
+      "protected": false
+    },
+    {
+      "name": "style/home-carousel-transparent-controls-20261118",
+      "sha": "1e2b51499f15935eb02b8c965db5e5524719aead",
+      "protected": false
+    },
+    {
+      "name": "style/midnight-obsidian-resource-bars-20261120",
+      "sha": "01e42ae1e4c04b64daaec8e51b007d2f75364a08",
+      "protected": false
+    },
+    {
+      "name": "style/solid-navy-menu-panels-20261118",
+      "sha": "79078f6e7183e259c3d4f40b30a0164b906ff5fd",
+      "protected": false
+    },
+    {
+      "name": "test/campaign-connections-phase-1-3-20261108",
+      "sha": "bd218e863f13b153af38e0edc372c04446a8ca70",
+      "protected": false
+    },
+    {
+      "name": "test/firebase-recovery-isolation-preflight",
+      "sha": "37db3dad86082bb8b022d618123b5349e4f9c746",
+      "protected": false
+    },
+    {
+      "name": "test/firebase-recovery-step-3-1-sandbox-preparation",
+      "sha": "651d6cc82dc3eadc56d355ea6c8dd6a7091abf3e",
+      "protected": false
+    },
+    {
+      "name": "test/frontend-phase-1-5-integrated-acceptance-20261118",
+      "sha": "d110b641f0f7e647e0dc4d545315abb95cbdea2a",
+      "protected": false
+    },
+    {
+      "name": "test/inventory-phase-12-1-player-gm-workflows",
+      "sha": "b29fb0562d84f32c8c3de09e4f3c67098a0e7042",
+      "protected": false
+    },
+    {
+      "name": "test/inventory-phase-12-3-release-readiness",
+      "sha": "25c2f1cf5e06c7227925ddbe8bf5a00a8c763db6",
+      "protected": false
+    },
+    {
+      "name": "ui/dashboard-mobile-roster-navigation-20261105",
+      "sha": "0c6df5a6ce08f84f556a862e637a8bacc7735e80",
+      "protected": false
+    },
+    {
+      "name": "ui/dashboard-navigation-stability-20261105",
+      "sha": "d2325e729522225ca4bd453c2ae3ffed93e28b09",
+      "protected": false
+    },
+    {
+      "name": "ui/player-gm-panel-reliability-20261105",
+      "sha": "b4ba21175ab4760c50416826cf0cf615c9e1226d",
+      "protected": false
+    },
+    {
+      "name": "update/characteristics-ashen-parchment",
+      "sha": "ffb12524cb2970745048635c66e0bfd0e77c27c8",
+      "protected": false
+    }
+  ]
+}
