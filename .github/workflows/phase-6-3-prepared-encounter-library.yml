@@ -1,0 +1,34 @@
+name: Phase 6.3 Prepared Encounter Library Acceptance
+on:
+  pull_request:
+    paths:
+      - 'src/state/preparedEncounterModel.mjs'
+      - 'src/state/preparedEncounterLibraryModel.mjs'
+      - 'frontend/src/combat/**'
+      - 'functions/combatCommands.mjs'
+      - 'scripts/site-prepared-encounters-phase6-3.test.mjs'
+      - '.github/workflows/phase-6-3-prepared-encounter-library.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  prepared-library:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Phase 6.2 and 6.3 prepared encounter regressions
+        run: node --test scripts/site-prepared-encounters-phase6-2.test.mjs scripts/site-prepared-encounters-phase6-3.test.mjs scripts/site-combat-phase7-1.test.mjs
+      - name: Scoped lint
+        run: npx eslint frontend/src/combat src/state/preparedEncounterModel.mjs src/state/preparedEncounterLibraryModel.mjs functions/combatCommands.mjs
+      - name: React site validation
+        run: npm run site:check
+      - name: React production build
+        run: npm run site:build
+      - name: Compiled output verification
+        run: npm run site:verify-dist
