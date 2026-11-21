@@ -4,6 +4,7 @@ import {
 } from '../src/state/playerPresentationModel.mjs';
 import {restrictedPresentationProjection,sessionTimestampMs} from '../src/state/hybridPresentationSessionModel.mjs';
 import {PRESENTATION_MEDIA_SCENES,publishedPresentationAsset} from '../src/state/presentationAssetModel.mjs';
+import {publicCombatPresentation} from '../src/state/livePresentationProjectionModel.mjs';
 const exists=s=>typeof s?.exists==='function'?s.exists():Boolean(s?.exists);
 
 /** All edits are GM-only, server-authorized, revision checked and published as
@@ -51,6 +52,8 @@ export function createPlayerPresentationCommands(context,{requireCampaignGM}){
             if(!exists(media)||!publishedPresentationAsset(media.data(),draft.scene))
               throw Error('The selected media is not ready and published.');
           }
+          const combatSnap=draft.scene==='combat'?
+            await transaction.get(doc(db,'campaigns',campaignId,'systems','encounter')):null;
           const hybridRef=doc(db,'campaigns',campaignId,'hybridSessionControl','current');
           const hybridSnap=await transaction.get(hybridRef);
           const hybrid=exists(hybridSnap)?hybridSnap.data():null;
@@ -68,6 +71,13 @@ export function createPlayerPresentationCommands(context,{requireCampaignGM}){
               ...restrictedPresentationProjection(safe,revision),
               epoch:hybrid.epoch,updatedAt:serverTimestamp()
             });
+            if(safe.scene==='combat'){
+              transaction.set(doc(db,'campaigns',campaignId,'presentationCombat','current'),{
+                ...publicCombatPresentation(exists(combatSnap)?combatSnap.data():{}),
+                epoch:hybrid.epoch,visible:true,
+                updatedAt:serverTimestamp()
+              });
+            }
             transaction.set(accessRef,{
               epoch:hybrid.epoch,
               assetId:PRESENTATION_MEDIA_SCENES.includes(safe.scene)?safe.assetId:'',
