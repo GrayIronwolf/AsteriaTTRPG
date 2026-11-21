@@ -1,0 +1,40 @@
+name: Phase 6.9 Final Combat Acceptance
+on:
+  push:
+    branches: [feature/phase-6-9-final-combat-acceptance]
+  pull_request:
+    paths:
+      - 'functions/combatCommands.mjs'
+      - 'functions/encounterCompletionCommands.mjs'
+      - 'src/state/encounterCompletionModel.mjs'
+      - 'src/state/encounterWaveModel.mjs'
+      - 'frontend/src/combat/**'
+      - 'firestore.rules'
+      - 'scripts/site-combat-final-phase6-9*.test.mjs'
+      - '.github/workflows/phase-6-9-combat-acceptance.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  final-combat:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Combat lifecycle, prior phases, and final acceptance regressions
+        run: node --test scripts/site-combat-final-phase6-9.test.mjs scripts/site-encounter-completion-phase6-8.test.mjs scripts/site-encounter-waves-phase6-7.test.mjs scripts/site-live-combat-phase6-6.test.mjs scripts/site-prepared-battle-maps-phase6-5.test.mjs scripts/site-prepared-encounters-phase6-4.test.mjs scripts/site-prepared-encounters-phase6-3.test.mjs scripts/site-prepared-encounters-phase6-2.test.mjs scripts/site-freeform-phase6-1c.test.mjs scripts/site-combat-phase7-1.test.mjs
+      - name: Final acceptance lint
+        run: npx eslint scripts/site-combat-final-phase6-9.test.mjs scripts/site-combat-final-phase6-9-emulator.test.mjs frontend/src/combat src/state/encounterCompletionModel.mjs functions/combatCommands.mjs functions/encounterCompletionCommands.mjs functions/commands.mjs
+      - name: GM-only encounter history security emulator
+        run: npx firebase emulators:exec --project demo-asteria-combat-phase69 --only firestore "node --test scripts/site-combat-final-phase6-9-emulator.test.mjs"
+      - name: React site checks
+        run: npm run site:check
+      - name: React production build and public security audit
+        run: npm run site:build
+      - name: Verify compiled assets
+        run: npm run site:verify-dist
