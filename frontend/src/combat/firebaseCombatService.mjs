@@ -31,6 +31,7 @@ export function createFirebaseCombatService({
   const gmRef=id=>firestoreSdk.doc(db,'campaigns',id,'systems','gmWorkspace');
   const partyRef=id=>firestoreSdk.collection(db,'campaigns',id,'characters');
   const mapsRef=id=>firestoreSdk.collection(db,'campaigns',id,'battleMaps');
+  const historyRef=id=>firestoreSdk.collection(db,'campaigns',id,'encounterHistory');
   const characterRef=(id,characterId)=>firestoreSdk.doc(db,'campaigns',id,'characters',characterId);
   const sourceRef=(uid,id)=>firestoreSdk.doc(db,'users',uid,'characters',id);
   async function verified(){
@@ -179,6 +180,59 @@ export function createFirebaseCombatService({
     return close;
   }
 
+  // Separate GM-only listener: player subscriptions never touch private history.
+  function watchGMHistory(id,onUpdate,onError){
+    let active=true,stop=()=>{};
+    (async()=>{
+      try{
+        const {uid}=await check(id,'gm');
+        if(!active)return;
+        const query=firestoreSdk.query(historyRef(id),
+          firestoreSdk.orderBy('endedAt','desc'),firestoreSdk.limit(30));
+        stop=firestoreSdk.onSnapshot(query,{includeMetadataChanges:true},snapshot=>{
+          if(!active||snapshot.metadata?.fromCache||
+            snapshot.metadata?.hasPendingWrites)return;
+          try{
+            same(uid);
+            onUpdate(snapshot.docs.map(row=>({...row.data(),id:row.id})));
+          }catch(error){onError?.(error);}
+        },error=>{if(active)onError?.(error);});
+      }catch(error){if(active)onError?.(error);}
+    })();
+    return ()=>{active=false;stop?.();};
+  }
+  async function completionAction(id,input){
+    const {uid}=await check(id,'gm');
+    const action=functionsSdk.httpsCallable(functions,'asteriaAction');
+    const response=await action({
+      action:'manageEncounterCompletion',args:[id,'encounter',input],
+      requestId:crypto.randomUUID()
+    });
+    same(uid);
+    if(response.data?.ok!==true)
+      throw Error(response.data?.error||'Encounter completion review was rejected.');
+    return response.data;
+  }
+  async function deliverCompletion(id,characterId,kind,history){
+    const {uid}=await check(id,'gm');
+    const reward=history?.rewards?.find(row=>row.characterId===characterId);
+    if(!reward||!['xp','bundle'].includes(kind))
+      throw Error('Choose an approved encounter reward.');
+    const action=functionsSdk.httpsCallable(functions,'asteriaAction');
+    const payload=kind==='xp'?
+      {action:'grantCharacterXP',args:[id,characterId,reward.xp,
+        'Approved encounter '+history.id,history.id]}:
+      {action:'grantGMRewardBundle',args:[id,characterId,{
+        items:reward.items,currency:reward.currency,
+        bundleName:'Encounter '+history.id,
+        message:'Approved encounter reward',encounterHistoryId:history.id
+      }]};
+    const response=await action({...payload,requestId:crypto.randomUUID()});
+    same(uid);
+    if(response.data?.ok!==true)
+      throw Error(response.data?.error||'Reward delivery was not confirmed.');
+    return response.data;
+  }
   const watchGM=(id,onUpdate,onError)=>watch(id,'gm','',onUpdate,onError);
   const watchPlayer=(id,characterId,onUpdate,onError)=>
     watch(id,'player',characterId,onUpdate,onError);
@@ -255,7 +309,9 @@ export function createFirebaseCombatService({
     return result;
   }
   return Object.freeze({
-    availability:()=>flags,watchGM,watchPlayer,
+    availability:()=>flags,watchGM,watchPlayer,watchGMHistory,
+    reviewCompletion:(id,input)=>completionAction(id,input),
+    deliverCompletion,
     commandGM:(id,actorId,input)=>command(id,'gm','',actorId,input),
     commandPlayer:(id,characterId,actorId,input)=>command(id,'player',characterId,actorId,input),
     savePrepared:(id,entry,expectedRevision=0)=>writePrepared(id,'save',entry,expectedRevision),
