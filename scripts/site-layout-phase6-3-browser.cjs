@@ -118,6 +118,7 @@ async function captureLayoutEvidence(page,role,name){
      documentWidth:document.documentElement.scrollWidth,
      hero:rect(hero),sidebar:rect(sidebar),navigation:rect(nav),
      menuCount:nav?.querySelectorAll('button').length||0,
+     menuLabels:[...nav?.querySelectorAll('button')||[]].map(item=>item.textContent.trim()),
      menuStyle:style?{background:style.backgroundColor,border:style.borderTopWidth,
        artwork:frame?.borderImageSource}:null,
      resourceColours:fills
@@ -134,7 +135,19 @@ async function captureLayoutEvidence(page,role,name){
    'Dashboard has full-page horizontal overflow: '+name);
  if(gm){
    assert.ok(shell.sidebar?.width>0,'GM party/resource sidebar missing: '+name);
-   assert.equal(shell.menuCount,24,'Original GM navigation destinations missing: '+name);
+   assert.ok(shell.menuCount>=24,'Original GM navigation destinations missing: '+name);
+   const expectedGMNavigation=[
+     'GM Main','GM Toolkit','NPC & Creature Library','Dashboard Settings',
+     'PC Inventory','News & Events','Quests','GM Notes','Session Library',
+     'Soundboard & Ambience','Session Recordings','Player Display','Economy',
+     'Crafting','GM Tools','Gameplay Systems','World Systems','Battle Maps',
+     'Advanced Dice','Random Tables','Encounter Generator','Asteria Calendar',
+     'Weather Generator','World Atlas'
+   ];
+   for(const label of expectedGMNavigation){
+     assert.ok(shell.menuLabels.includes(label),
+       'Original GM navigation destination missing: '+name+' '+label);
+   }
  }else{
    assert.ok(shell.menuCount>=18,'Original Player menu has missing destinations: '+name);
  }
