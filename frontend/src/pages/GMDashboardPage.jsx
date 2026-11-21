@@ -330,7 +330,8 @@ function CampaignGM({api,uid,campaignId}) {
       onNavigate={setTab}/>:null}
     {mediaEnabled&&tab==='presentation'?<CampaignPresentationController
       key={uid+':'+campaignId} api={api.media} campaignId={campaignId}
-      uid={uid} party={snapshot.party}/>:null}
+      uid={uid} party={snapshot.party} combatApi={combatEnabled?api.combat:null}
+      onNavigate={setTab}/>:null}
     {tab==='advanced-dice'&&api.dice?.availability().enabled?
       <AdvancedDiceWorkspace api={api.dice} role="gm"/>:null}
     {tab==='advanced-dice'&&!api.dice?.availability().enabled?
