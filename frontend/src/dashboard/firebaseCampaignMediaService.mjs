@@ -630,6 +630,18 @@ export function createFirebaseCampaignMediaService({
     return blob;
   }
 
+  async function rebuildPresentationProjections(id){
+    const {uid}=await check(id,'gm');
+    const response=await functionsSdk.httpsCallable(functions,'asteriaAction')({
+      action:'rebuildPresentationProjections',
+      args:[id,'gm-scope',{}],requestId:crypto.randomUUID()
+    });
+    same(uid);
+    if(response.data?.ok!==true)
+      throw Error(response.data?.error||'Safe player display refresh failed.');
+    return response.data;
+  }
+
   async function managePresentation(id,action){
     const {uid}=await check(id,'gm');
     validatePresentationAction(action);
@@ -650,6 +662,6 @@ export function createFirebaseCampaignMediaService({
     manageHybridSession,watchGMHybridSession,watchRestrictedViewer,
     watchPresentationAssets,managePresentationAsset,uploadPresentationAsset,
     fetchPresentationAsset,
-    watchRestrictedMap,watchRestrictedCombat,fetchRestrictedMapMedia
+    watchRestrictedMap,watchRestrictedCombat,fetchRestrictedMapMedia,rebuildPresentationProjections
   });
 }
