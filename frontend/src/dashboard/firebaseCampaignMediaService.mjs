@@ -8,6 +8,10 @@ import {validateHybridSessionAction,hybridViewerCanRead,sanitizeRestrictedPresen
 import {validateHybridInvitationResponse,hybridInvitationSummary}
   from '../../../src/state/hybridInvitationModel.mjs';
 import {
+  validateGMScreenShareAction,validateViewerScreenShareAction,
+  screenShareSignalCanRead
+} from '../../../src/state/presentationScreenShareModel.mjs';
+import {
   presentationAssetFileError,presentationAssetDetails,
   presentationAssetPath,presentationAssetId,safePresentationAssetCard,
   PRESENTATION_ASSET_LIMIT
@@ -46,6 +50,7 @@ export function createFirebaseCampaignMediaService({
   const hybridSessionRef=id=>firestoreSdk.doc(db,'campaigns',id,'hybridSessionControl','current');
   const hybridGrantsCol=id=>firestoreSdk.collection(db,'campaigns',id,'hybridViewerGrants');
   const hybridGrantRef=(id,uid)=>firestoreSdk.doc(db,'campaigns',id,'hybridViewerGrants',uid);
+  const screenShareRef=(id,uid)=>firestoreSdk.doc(db,'campaigns',id,'presentationScreenShares',uid);
   const restrictedRef=id=>firestoreSdk.doc(db,'campaigns',id,'presentationRestricted','current');
   const audienceCol=id=>firestoreSdk.collection(db,'campaigns',id,'presentationAudienceReveals');
   const audienceRef=(id,scope,uid)=>firestoreSdk.doc(db,'campaigns',id,
@@ -476,6 +481,90 @@ export function createFirebaseCampaignMediaService({
     return response.data;
   }
 
+  async function manageScreenShare(id,action){
+    const {uid}=await check(id,'gm');
+    validateGMScreenShareAction(action);
+    const response=await functionsSdk.httpsCallable(functions,'asteriaAction')({
+      action:'managePresentationScreenShare',args:[id,'gm-scope',action],
+      requestId:crypto.randomUUID()
+    });
+    same(uid);
+    if(response.data?.ok!==true)
+      throw Error(response.data?.error||'Could not manage screen sharing.');
+    return response.data;
+  }
+  function watchGMScreenShare(id,targetUid,onUpdate,onError){
+    if(typeof targetUid!=='string'||
+      !/^[A-Za-z0-9_-]{1,128}$/.test(targetUid))
+      throw Error('Invalid screen sharing recipient.');
+    return watch(id,'gm',screenShareRef(id,targetUid),
+      row=>row||null,onUpdate,onError,'document');
+  }
+  async function respondScreenShare(id,action){
+    assertGMCampaignId(id);
+    const uid=await verified();
+    validateViewerScreenShareAction(action);
+    const response=await functionsSdk.httpsCallable(functions,'asteriaAction')({
+      action:'respondPresentationScreenShare',args:[id,'viewer-scope',action],
+      requestId:crypto.randomUUID()
+    });
+    same(uid);
+    if(response.data?.ok!==true)
+      throw Error(response.data?.error||'Screen sharing response rejected.');
+    return response.data;
+  }
+  function watchViewerScreenShare(id,onUpdate,onError){
+    assertGMCampaignId(id);
+    let active=true,stop=()=>{},deadlineTimer=null;
+    const close=()=>{
+      active=false;if(deadlineTimer!==null)clearTimeout(deadlineTimer);
+      try{stop();}catch{/* already closed */}
+    };
+    const fail=error=>{if(!active)return;close();onError?.(error);};
+    (async()=>{
+      try{
+        const uid=await verified();
+        const [grantSnap,sessionSnap]=await Promise.all([
+          firestoreSdk.getDocFromServer(hybridGrantRef(id,uid)),
+          firestoreSdk.getDocFromServer(hybridSessionRef(id))
+        ]);
+        same(uid);
+        if(!active)return;
+        const grant=grantSnap.exists()?grantSnap.data():{},
+          session=sessionSnap.exists()?sessionSnap.data():{};
+        if(!hybridViewerCanRead(session,grant,uid)||
+          session.screenShare?.viewerUid!==uid)
+          throw Error('No authorized live screen share is available.');
+        const connectionId=session.screenShare.connectionId;
+        stop=firestoreSdk.onSnapshot(screenShareRef(id,uid),
+          {includeMetadataChanges:true},snapshot=>{
+            if(!active)return;
+            if(snapshot.metadata?.fromCache)
+              return fail(Error('Screen sharing signaling disconnected. Reconnect.'));
+            if(snapshot.metadata?.hasPendingWrites)return;
+            try{
+              same(uid);
+              if(!snapshot.exists())throw Error('Screen share was withdrawn.');
+              const signal=snapshot.data();
+              if(signal.connectionId!==connectionId||
+                !screenShareSignalCanRead(session,grant,signal,uid))
+                throw Error('Screen share expired or changed. Reconnect.');
+              const ends=Math.min(
+                sessionTimestampMs(signal.expiresAt),
+                sessionTimestampMs(grant.expiresAt),
+                sessionTimestampMs(session.expiresAt)
+              );
+              if(deadlineTimer!==null)clearTimeout(deadlineTimer);
+              deadlineTimer=setTimeout(()=>fail(Error('Screen sharing expired.')),
+                Math.min(Math.max(1,ends-Date.now()),2147483647));
+              onUpdate(signal);
+            }catch(error){fail(error);}
+          },fail);
+        if(!active)stop();
+      }catch(error){fail(error);}
+    })();
+    return close;
+  }
   function watchGMHybridSession(id,onUpdate,onError){
     let active=true,stops=[],campaign=null,member=null;
     const state={session:null,grants:[]};
@@ -618,7 +707,9 @@ export function createFirebaseCampaignMediaService({
             timer=setTimeout(()=>fail(Error('Viewer session expired.')),
               Math.min(delay,2147483647));
             onUpdate({...sanitizeRestrictedPresentation(state.scene),
-              epoch:state.session.epoch});
+              epoch:state.session.epoch,
+              screenShare:state.session.screenShare?.viewerUid===uid?
+                state.session.screenShare:null});
           }catch(error){fail(error);}
         };
         const listen=(ref,key,project)=>{
@@ -843,6 +934,7 @@ export function createFirebaseCampaignMediaService({
     saveMap,removeMap,savePrivatePins,managePresentation,managePresentationPlaylist,manageAudienceReveal,emergencyStopPresentation,
     manageHybridSession,watchGMHybridSession,watchOwnHybridInvitation,
     respondHybridInvitation,watchRestrictedViewer,
+    manageScreenShare,watchGMScreenShare,respondScreenShare,watchViewerScreenShare,
     watchPresentationAssets,managePresentationAsset,uploadPresentationAsset,
     fetchPresentationAsset,
     watchRestrictedMap,watchRestrictedCombat,fetchRestrictedMapMedia,rebuildPresentationProjections
