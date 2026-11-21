@@ -4,6 +4,7 @@ import {CombatCommandCentre,CombatCommandPanel} from './CombatCommandCentre.jsx'
 import {PreparedEncounterLibrary} from './PreparedEncounterLibrary.jsx';
 import {CombatBattleMapPanel} from './CombatBattleMapPanel.jsx';
 import {GMLiveCombatPanel} from './GMLiveCombatPanel.jsx';
+import {GMEncounterWavesPanel} from './GMEncounterWavesPanel.jsx';
 import styles from './CombatWorkspace.module.css';
 import {ForgedBadge} from '../components/ui/ForgedBadge.jsx';
 
@@ -184,6 +185,8 @@ export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigat
       </div>
       <GMLiveCombatPanel combat={combat} pending={stream.data.pending}
         log={stream.data.combatLog||[]} busy={busy} onCommand={submit}/>
+      <GMEncounterWavesPanel combat={combat} schedule={stream.data.encounterSchedule}
+        pending={stream.data.pending} busy={busy} onCommand={submit}/>
       </CombatCommandPanel>
       <CombatCommandPanel id="initiative">
         <CombatRoster combat={combat} gm selected={current?.id} onSelect={setSelected}/>
@@ -321,6 +324,9 @@ export function PlayerCombatWorkspace({api,campaignId,characterId}){
     {combat?<>
       <p role="status">{combat.status.toUpperCase()} · Round {combat.round}
         {' · '}Session {stream.data.session.status}</p>
+      {combat.publicEvent?<p role="status" data-testid="site-player-encounter-event">
+        Encounter event: {combat.publicEvent.name} · Round {combat.publicEvent.round}
+      </p>:null}
       <CombatRoster combat={combat}/>
       {actor?<section className={styles.section}>
         <h3>Your Turn: {actor.name}</h3>
