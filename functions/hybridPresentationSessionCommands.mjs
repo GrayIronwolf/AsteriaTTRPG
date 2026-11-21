@@ -15,8 +15,13 @@ export function createHybridPresentationSessionCommands(context,{requireCampaign
           await requireCampaignGM(tx,campaignId);
           const sessionRef=doc(db,'campaigns',campaignId,'hybridSessionControl','current');
           const safeRef=doc(db,'campaigns',campaignId,'presentationRestricted','current');
-          const current=await tx.get(sessionRef);
+          const accessRef=doc(db,'campaigns',campaignId,'presentationAssetAccess','current');
+          const [current,accessSnap]=await Promise.all([
+            tx.get(sessionRef),tx.get(accessRef)
+          ]);
           const session=exists(current)?current.data():HYBRID_SESSION_DEFAULT;
+          const access=exists(accessSnap)?accessSnap.data():{};
+          const viewers={...(access.viewerExpiries||{})};
           if(Number(session.revision||0)!==action.expectedRevision)
             throw Error('Viewer session changed. Refresh before continuing.');
           const now=Date.now(),revision=action.expectedRevision+1;
@@ -29,6 +34,9 @@ export function createHybridPresentationSessionCommands(context,{requireCampaign
               expiresAt:new Date(now+action.durationMinutes*60*1000),
               updatedBy:currentUser.uid,updatedAt:serverTimestamp()};
             tx.set(sessionRef,next);
+            tx.set(accessRef,{assetId:'',scene:'blank',epoch,
+              viewerExpiries:{},expiresAt:next.expiresAt,
+              updatedAt:serverTimestamp()});
             tx.set(safeRef,{...restrictedPresentationProjection({},0),
               epoch,updatedAt:serverTimestamp()});
             return {status:'open',revision,expiresAt:now+action.durationMinutes*60*1000};
@@ -37,6 +45,9 @@ export function createHybridPresentationSessionCommands(context,{requireCampaign
             if(session.status!=='open')throw Error('The viewer session is not open.');
             tx.update(sessionRef,{status:'closed',revision,
               updatedBy:currentUser.uid,updatedAt:serverTimestamp()});
+            tx.set(accessRef,{assetId:'',scene:'blank',epoch:'',
+              viewerExpiries:{},expiresAt:new Date(0),
+              updatedAt:serverTimestamp()});
             tx.set(safeRef,{...restrictedPresentationProjection({},0),
               epoch:session.epoch,updatedAt:serverTimestamp()});
             return {status:'closed',revision};
@@ -57,12 +68,20 @@ export function createHybridPresentationSessionCommands(context,{requireCampaign
               grantedBy:currentUser.uid,grantedAt:serverTimestamp(),
               revision:Number(old?.revision||0)+1};
             tx.set(grantRef,grant);
+            viewers[action.uid]=new Date(until);
+            tx.set(accessRef,{...access,viewerExpiries:viewers,
+              epoch:session.epoch,expiresAt:session.expiresAt,
+              updatedAt:serverTimestamp()});
             tx.update(sessionRef,{revision,grantCount:Number(session.grantCount||0)+(isNew?1:0),
               updatedBy:currentUser.uid,updatedAt:serverTimestamp()});
             return {status:'granted',uid:action.uid,revision,expiresAt:until};
           }
           if(!old||old.epoch!==session.epoch||old.status!=='active')
             throw Error('This viewer has no active access to revoke.');
+          delete viewers[action.uid];
+          tx.set(accessRef,{...access,viewerExpiries:viewers,
+            epoch:session.epoch,expiresAt:session.expiresAt,
+            updatedAt:serverTimestamp()});
           tx.update(grantRef,{status:'revoked',
             revokedBy:currentUser.uid,revokedAt:serverTimestamp(),
             revision:Number(old.revision||0)+1});
