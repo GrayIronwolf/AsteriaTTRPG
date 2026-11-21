@@ -161,7 +161,7 @@ export function createPlayerPresentationCommands(context,{requireCampaignGM}){
             expiresAt:new Date(0),viewerExpiries:{},updatedAt:serverTimestamp()
           });
           transaction.set(sessionRef,{
-            status:'closed',revision:sessionRevision,epoch:'',
+            status:'closed',screenShare:null,revision:sessionRevision,epoch:'',
             grantCount:0,expiresAt:new Date(0),
             mode:session.mode||'in-person',
             updatedBy:currentUser.uid,updatedAt:serverTimestamp(),
