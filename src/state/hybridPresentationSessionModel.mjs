@@ -53,6 +53,8 @@ export function restrictedPresentationProjection(scene={},revision=0){
   const safe=['title','announcement'].includes(scene?.scene);
   const media=PRESENTATION_MEDIA_SCENES.includes(scene?.scene)&&
     presentationAssetId(scene?.assetId);
+  const map=scene?.scene==='battle-map'&&presentationAssetId(scene?.mapId);
+  const combat=scene?.scene==='combat';
   const title=(safe||media)&&typeof scene?.title==='string'?
     scene.title.slice(0,120):'';
   const subtitle=(safe||media)&&typeof scene?.subtitle==='string'?
@@ -61,8 +63,10 @@ export function restrictedPresentationProjection(scene={},revision=0){
     scene.theme:'obsidian';
   return Object.freeze({
     version:1,revision:Number.isSafeInteger(revision)&&revision>=0?revision:0,
-    scene:media?scene.scene:(safe?'title':'blank'),title,subtitle,theme,
-    ...(media?{assetId:scene.assetId}:{})
+    scene:map?'battle-map':combat?'combat':media?scene.scene:(safe?'title':'blank'),
+    title,subtitle,theme,
+    ...(media?{assetId:scene.assetId}:{}),
+    ...(map?{mapId:scene.mapId}:{})
   });
 }
 export function sessionTimestampMs(value){
