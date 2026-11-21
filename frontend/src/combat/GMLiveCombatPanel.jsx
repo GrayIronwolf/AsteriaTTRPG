@@ -14,9 +14,13 @@ function PendingActionReview({pending,combat,busy,onCommand}){
   const [outcome,setOutcome]=useState('manifested');
   const [success,setSuccess]=useState('not-set');
   const [source,setSource]=useState('');
+  const [reactionActor,setReactionActor]=useState('');
+  const [reactionChoice,setReactionChoice]=useState('dodge');
+  const [reactionReason,setReactionReason]=useState('');
   useEffect(()=>{
     setApproval(INITIAL_APPROVAL);setReason('');setOutcome('manifested');
     setSuccess('not-set');setSource('');
+    setReactionActor('');setReactionChoice('dodge');setReactionReason('');
   },[pending?.id]);
   if(!pending)return <p>No GM adjudication is waiting.</p>;
   const isApproval=pending.status==='awaiting-approval';
@@ -95,12 +99,50 @@ function PendingActionReview({pending,combat,busy,onCommand}){
       <p>Reaction window: {pending.reactionActorId?
         combat?.combatants.find(row=>row.id===pending.reactionActorId)?.name||
         'Next reactor':'No queued reactor'}.
-        {' '}Possible choices: {pending.reactionChoices.join(', ')||'None'}</p>
-      {pending.reactionCommitted?<p>A reaction is committed. Resolve it with the
-        existing source-specific reaction controls before continuing.</p>:<>
+        {' '}Available choices: {pending.reactionChoices.join(', ')||'None'}</p>
+      {!pending.reactionCount?<fieldset className={styles.fields}>
+        <legend>Open basic reaction opportunity</legend>
+        <label>Reacting combatant<select value={reactionActor}
+          onChange={event=>setReactionActor(event.target.value)}>
+          <option value="">Select combatant</option>
+          {combat.combatants.filter(row=>row.id!==pending.actorId).map(row=>
+            <option key={row.id} value={row.id}>{row.name}</option>)}
+        </select></label>
+        <label>Allowed reaction<select value={reactionChoice}
+          onChange={event=>setReactionChoice(event.target.value)}>
+          {['dodge','block','parry','opportunity'].map(choice=>
+            <option key={choice} value={choice}>{choice}</option>)}
+        </select></label>
+        <label>Range / awareness / triggering reason<input value={reactionReason}
+          maxLength={160} onChange={event=>setReactionReason(event.target.value)}/></label>
+        <button type="button" disabled={busy||!reactionActor||!reactionReason.trim()}
+          onClick={()=>onCommand('encounter',{operation:'window',reactors:[{
+            actorId:reactionActor,choices:[reactionChoice],reason:reactionReason.trim()
+          }]})}>Open Approved Reaction Window</button>
+      </fieldset>:null}
+      {pending.reactionCommitted?<>
+        <p>Committed reaction: {pending.reactionKey||'Source ability'}.</p>
+        {['dodge','block','parry','opportunity'].includes(pending.reactionKey)?
+          <button type="button" disabled={busy}
+            onClick={()=>onCommand('encounter',{operation:'resolve-reaction'})}>
+            Resolve Basic Reaction</button>:
+          <p>The committed source-specific reaction requires its original adjudication
+            controls and cannot be auto-resolved here.</p>}
+      </>:<>
+        {pending.reactionActorId?<div className={styles.actions}>
+          <button type="button" disabled={busy}
+            onClick={()=>onCommand(pending.reactionActorId,{operation:'pass'})}>
+            Pass Reaction</button>
+          {pending.reactionChoices.filter(choice=>
+            ['dodge','block','parry','opportunity'].includes(choice)).map(choice=>
+            <button type="button" key={choice} disabled={busy}
+              onClick={()=>onCommand(pending.reactionActorId,{
+                operation:'react',reaction:choice
+              })}>Commit {choice}</button>)}
+        </div>:null}
         <label>Reason for closing remaining reactions<input maxLength={160}
           value={reason} onChange={event=>setReason(event.target.value)}/></label>
-        <button type="button" disabled={busy}
+        <button type="button" disabled={busy||Boolean(pending.reactionActorId)&&!reason.trim()}
           onClick={()=>onCommand('encounter',{
             operation:'close-window',reason:reason.trim()
           })}>Close Reaction Window</button>
