@@ -55,11 +55,12 @@ function ActivePlayerPresentation({api,campaignId}){
   const display=presentation.data||PRESENTATION_DEFAULT;
   // Only subscribe to the scene's data. A blackout drops all media, party and
   // combat listeners rather than retaining their last rendered frames.
-  const party=useCampaignStream(api,'watchParty',[campaignId],display.scene==='party');
+  const party=useCampaignStream(api,'watchParty',[campaignId],
+    display.scene==='party'||display.scene==='combat');
   const combat=useCampaignStream(api,'watchEncounter',[campaignId],display.scene==='combat');
   if(presentation.error)return <p role="alert">{presentation.error}</p>;
   if(presentation.loading)return <p role="status">Verifying campaign display access…</p>;
-  if(display.scene==='party'&&(party.loading||party.error))
+  if(['party','combat'].includes(display.scene)&&(party.loading||party.error))
     return <p role={party.error?'alert':'status'}>{party.error||'Synchronising party…'}</p>;
   if(display.scene==='combat'&&(combat.loading||combat.error))
     return <p role={combat.error?'alert':'status'}>{combat.error||'Synchronising combat…'}</p>;
