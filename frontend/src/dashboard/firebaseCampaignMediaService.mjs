@@ -33,6 +33,9 @@ export function createFirebaseCampaignMediaService({
   const memberRef=(id,uid)=>firestoreSdk.doc(db,'campaigns',id,'members',uid);
   const mapRef=(id,map)=>firestoreSdk.doc(db,'campaigns',id,'battleMaps',map);
   const mapCol=id=>firestoreSdk.collection(db,'campaigns',id,'battleMaps');
+  const publicMapCol=id=>firestoreSdk.collection(db,'campaigns',id,'battleMapsPublic');
+  const publicMapRef=(id,map)=>firestoreSdk.doc(db,'campaigns',id,'battleMapsPublic',map);
+  const combatPublicRef=id=>firestoreSdk.doc(db,'campaigns',id,'combatPublic','current');
   const atlasCol=id=>firestoreSdk.collection(db,'campaigns',id,'worldAtlasShared');
   const atlasRef=(id,map)=>firestoreSdk.doc(db,'campaigns',id,'worldAtlasShared',map);
   const notesRef=(id,map)=>firestoreSdk.doc(db,'campaigns',id,'battleMaps',map,'gmNotes','private');
@@ -131,10 +134,15 @@ export function createFirebaseCampaignMediaService({
   const notesProject=rows=>battleMapPrivatePins(rows);
   const partyProject=rows=>gmPartySummary(rows);
   function watchMaps(id,mode,onUpdate,onError){
-    const ref=mode==='gm'?firestoreSdk.query(mapCol(id),firestoreSdk.limit(BATTLE_MAP_MAX_RECORDS)):
-      firestoreSdk.query(mapCol(id),firestoreSdk.where('visibility','==','players'),
-        firestoreSdk.limit(BATTLE_MAP_MAX_RECORDS));
-    return watch(id,mode,ref,mapsProject,onUpdate,onError);
+    const ref=mode==='gm'?
+      firestoreSdk.query(mapCol(id),firestoreSdk.limit(BATTLE_MAP_MAX_RECORDS)):
+      firestoreSdk.query(publicMapCol(id),firestoreSdk.limit(BATTLE_MAP_MAX_RECORDS));
+    const projection=(rows,campaignId)=>mode==='gm'?
+      mapsProject(rows,campaignId,'gm'):
+      mapsProject(rows.map(row=>({...row,
+        storagePath:battleMapAssetPath(campaignId,row.id,row.contentType)
+      })),campaignId,'player');
+    return watch(id,mode,ref,projection,onUpdate,onError);
   }
   function watchAtlas(id,onUpdate,onError){
     return watch(id,'player',atlasCol(id),atlasProject,onUpdate,onError);
@@ -151,9 +159,8 @@ export function createFirebaseCampaignMediaService({
       partyProject,onUpdate,onError);
   }
   function watchEncounter(id,onUpdate,onError){
-    // Shared encounter data is projected by the calling view with safeCombatPresentation.
-    const ref=firestoreSdk.doc(db,'campaigns',id,'systems','encounter');
-    return watch(id,'player',ref,raw=>raw||{},onUpdate,onError,'document');
+    return watch(id,'player',combatPublicRef(id),raw=>raw||{},
+      onUpdate,onError,'document');
   }
   /**
    * GM-only aggregated view of the five existing canonical media collections.
@@ -250,9 +257,12 @@ export function createFirebaseCampaignMediaService({
   async function fetchMapMedia(id,map,mode='player'){
     const {uid}=await check(id,mode);
     if(!mapForViewer(map,id,mode))throw Error('Invalid map media reference.');
-    const snap=await firestoreSdk.getDocFromServer(mapRef(id,map.id));
+    const snap=await firestoreSdk.getDocFromServer(mode==='gm'?
+      mapRef(id,map.id):publicMapRef(id,map.id));
     same(uid);
-    const fresh=snap.exists()?mapForViewer({id:snap.id,...snap.data()},id,mode):null;
+    const fresh=snap.exists()?mapForViewer({id:snap.id,...snap.data(),
+      storagePath:mode==='gm'?snap.data().storagePath:
+        battleMapAssetPath(id,map.id,snap.data().contentType)},id,mode):null;
     if(!fresh||fresh.storagePath!==map.storagePath||fresh.contentType!==map.contentType)
       throw Error('The map is unavailable or no longer shared.');
     const blob=await storageSdk.getBlob(storageSdk.ref(storage,fresh.storagePath));
