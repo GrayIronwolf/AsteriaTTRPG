@@ -225,9 +225,6 @@ export function createFirebaseCombatService({
       const current=stored.find(row=>row.id===identifier);
       if((current?.revision||0)!==expectedRevision)
         throw Error('Prepared encounter changed in another session. Refresh and try again.');
-      if(type==='save'&&current?.archived===true&&payload.archived===true){
-        // Archived encounters remain editable as GM notes, but cannot be loaded.
-      }
       let next;
       if(type==='save'){
         if(!current&&stored.length>=PREPARED_ENCOUNTER_MAX_PLANS)
