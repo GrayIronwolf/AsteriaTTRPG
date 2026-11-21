@@ -1,5 +1,5 @@
 import {
-  PRESENTATION_DEFAULT,publicPresentation,presentationDraft,
+  PRESENTATION_DEFAULT,PRESENTATION_THEMES,publicPresentation,presentationDraft,
   validatePresentationAction
 } from '../src/state/playerPresentationModel.mjs';
 import {restrictedPresentationProjection,sessionTimestampMs} from '../src/state/hybridPresentationSessionModel.mjs';
@@ -91,6 +91,64 @@ export function createPlayerPresentationCommands(context,{requireCampaignGM}){
             });
           }
           return {revision,scene:safe.scene};
+        });
+        return {ok:true,...result};
+      }catch(error){return {ok:false,error:error?.message||String(error)};}
+
+    },
+    /**
+     * Improvement 1: a single, idempotent, GM-authorised safety action.
+     * Unlike ordinary scene edits it cannot fail from a stale client revision
+     * or an unavailable hybrid-viewer subscription. Closing the session,
+     * revoking every staged media byte grant, and blanking both projections
+     * are one Firestore transaction (never separate partial requests).
+     */
+    emergencyStopPresentation:async(campaignId,_scope)=>{
+      try{
+        const result=await runTransaction(db,async transaction=>{
+          await requireCampaignGM(transaction,campaignId);
+          const controlRef=doc(db,'campaigns',campaignId,'presentationControl','current');
+          const sharedRef=doc(db,'campaigns',campaignId,'presentationShared','current');
+          const restrictedRef=doc(db,'campaigns',campaignId,'presentationRestricted','current');
+          const combatRef=doc(db,'campaigns',campaignId,'presentationCombat','current');
+          const sessionRef=doc(db,'campaigns',campaignId,'hybridSessionControl','current');
+          const accessRef=doc(db,'campaigns',campaignId,'presentationAssetAccess','current');
+          const [controlSnap,sessionSnap]=await Promise.all([
+            transaction.get(controlRef),transaction.get(sessionRef)
+          ]);
+          const previous=exists(controlSnap)?controlSnap.data():PRESENTATION_DEFAULT;
+          const session=exists(sessionSnap)?sessionSnap.data():{};
+          const revision=Math.max(0,Number(previous.revision)||0)+1;
+          const sessionRevision=Math.max(0,Number(session.revision)||0)+1;
+          const theme=PRESENTATION_THEMES.includes(previous.theme)?previous.theme:'obsidian';
+          const safe=publicPresentation(presentationDraft({
+            scene:'blank',title:'',subtitle:'',mapId:'',characterIds:[],
+            showRound:false,showPartyHP:false,theme
+          }),revision);
+          // No raw combat, fog or media source references survive this commit.
+          transaction.set(controlRef,{...safe,updatedBy:currentUser.uid,
+            updatedAt:serverTimestamp(),emergencyStoppedAt:serverTimestamp()});
+          transaction.set(sharedRef,{...safe,updatedAt:serverTimestamp()});
+          transaction.set(restrictedRef,{
+            ...restrictedPresentationProjection({},0),epoch:'',
+            updatedAt:serverTimestamp()
+          });
+          transaction.set(combatRef,{
+            active:false,round:0,current:'Combat not active',epoch:'',
+            visible:false,updatedAt:serverTimestamp()
+          });
+          transaction.set(accessRef,{
+            assetId:'',mapId:'',scene:'blank',epoch:'',
+            expiresAt:new Date(0),viewerExpiries:{},updatedAt:serverTimestamp()
+          });
+          transaction.set(sessionRef,{
+            status:'closed',revision:sessionRevision,epoch:'',
+            grantCount:0,expiresAt:new Date(0),
+            mode:session.mode||'in-person',
+            updatedBy:currentUser.uid,updatedAt:serverTimestamp(),
+            emergencyStoppedAt:serverTimestamp()
+          },{merge:true});
+          return {status:'stopped',revision,sessionRevision};
         });
         return {ok:true,...result};
       }catch(error){return {ok:false,error:error?.message||String(error)};}
