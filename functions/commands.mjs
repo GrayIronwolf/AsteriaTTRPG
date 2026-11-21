@@ -649,7 +649,8 @@ const commands = {
     const refs=liveCharacterRefs(campaignId,characterId);
     try {
       const encounterHistoryId=String(input.encounterHistoryId||'');
-      const {encounterHistoryId:_ignored,...rewardInput}=input;
+      const rewardInput={...input};
+      delete rewardInput.encounterHistoryId;
       const reward=validateGMRewardPayload(rewardInput);
       const ids=reward.items.map((_,index)=>`gm-reward-${requestId}-${index}`);
       const eventRefs=ids.map(id=>doc(db,'campaigns',campaignId,'events',id));
