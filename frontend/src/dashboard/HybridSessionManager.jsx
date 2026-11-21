@@ -71,8 +71,8 @@ export function HybridSessionManager({api,campaignId}){
         onChange={e=>setGrantMinutes(Number(e.target.value))}/></label>
       <button type="button" disabled={busy||!hybridViewerId(uid)||
         grants.length>=HYBRID_SESSION_MAX_VIEWERS||!!result.error}
-        onClick={()=>run('grant',{uid,durationMinutes:grantMinutes})}>
-        Grant Restricted Viewer Access</button>
+        onClick={()=>run('invite',{uid,durationMinutes:grantMinutes})}>
+        Create Pending Invitation</button>
       <button type="button" disabled={busy||!!result.error}
         onClick={()=>{
           if(window.confirm('Close this viewer session and revoke all its grants?'))
