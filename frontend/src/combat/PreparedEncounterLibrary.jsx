@@ -45,9 +45,10 @@ export function PreparedEncounterLibrary({
       error=>setMapError(error.message||'Map media is unavailable.'));
   },[mediaApi,campaignId]);
   const activeMap=fullMaps.find(map=>map.id===draft.mapId)||null;
-  const waveEnemyList=(draft.waves||[]).flatMap(wave=>wave.enemies||[]);
+  const selectedWave=placingEnemy.startsWith('wave:')?
+    (draft.waves||[]).find(wave=>wave.id===placingEnemy.split(':')[1]):null;
   const mapPreview=activeMap?preparedBattleMapPreview(
-    activeMap,[...draft.enemies,...waveEnemyList]):null;
+    activeMap,selectedWave?.enemies||draft.enemies):null;
   const reviewPlan=plans.find(row=>row.id===loadReview?.id);
   const currentReview=loadReview&&reviewPlan?
     previewPreparedEncounterLoad(reviewPlan,combat,maps):null;
