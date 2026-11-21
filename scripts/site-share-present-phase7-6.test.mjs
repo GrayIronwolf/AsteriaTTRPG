@@ -33,14 +33,15 @@ test('7.6: capture is stopped on browser end, page hide, background or offline',
   }
   assert.match(capture,/return \(\)=>\{mounted\.current=false;stop\(\);\}/);
 });
-test('7.6: emergency command uses existing GM blackout and session close, never client writes',()=>{
+test('7.6: emergency now uses a single atomic GM server command',()=>{
   const capture=read('frontend/src/dashboard/GMScreenCaptureControls.jsx');
-  assert.match(capture,/api\.managePresentation\(campaignId/);
-  assert.match(capture,/type:'blackout',expectedRevision:controlRevision/);
-  assert.match(capture,/api\.manageHybridSession\(campaignId/);
-  assert.match(capture,/type:'close',expectedRevision:current\.revision\|\|0/);
+  const commands=read('functions/playerPresentationCommands.mjs');
+  assert.match(capture,/api\.emergencyStopPresentation\(campaignId\)/);
+  assert.doesNotMatch(capture,/api\.manageHybridSession\(campaignId|api\.managePresentation\(campaignId/);
+  assert.match(commands,/emergencyStopPresentation:async/);
+  assert.match(commands,/requireCampaignGM\(transaction,campaignId\)/);
   assert.doesNotMatch(capture,/setDoc\(|updateDoc\(|deleteDoc\(/);
-  assert.match(capture,/Some remote controls were not confirmed/);
+  assert.match(capture,/remote blackout\/revocation is NOT confirmed/);
 });
 test('7.6: restricted viewers remain bounded by grant, epoch, identity, expiry',()=>{
   const now=Date.now();
