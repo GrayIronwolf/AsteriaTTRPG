@@ -85,14 +85,14 @@ export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigat
   const [selected,setSelected]=useState(''),[busy,setBusy]=useState(false),
     [notice,setNotice]=useState(''),[error,setError]=useState('');
   const [enemy,setEnemy]=useState(emptyEnemy),[library,setLibrary]=useState('');
-  const [selectedBattleMap,setSelectedBattleMap]=useState('');
+  const [selectedBattleMap,setSelectedBattleMap]=useState(null);
   const [revisionInitiative,setRevisionInitiative]=useState('');
   const [resource,setResource]=useState('hp'),[amount,setAmount]=useState(''),
     [maximum,setMaximum]=useState(''),[reason,setReason]=useState('');
   const combat=stream.data?.combat;
   const current=selected&&combat?.combatants.find(row=>row.id===selected)||
     combat?.current||combat?.combatants[0]||null;
-  useEffect(()=>{setSelected('');setError('');setNotice('');setSelectedBattleMap('');},[campaignId]);
+  useEffect(()=>{setSelected('');setError('');setNotice('');setSelectedBattleMap(null);},[campaignId]);
   const submit=async(actorId,input)=>{
     if(busy||!combat)return;
     setBusy(true);setNotice('');setError('');
@@ -234,7 +234,7 @@ export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigat
           <h3>Battle Map &amp; Player Display</h3>
           <p>Prepare the encounter map using the existing GM Battle Map Manager. A selected prepared map links through the protected combat service when combat begins.</p>
           <p>Prepared map: {stream.data.maps?.find(map=>map.id===combat.preparedMapId)?.name||'Not selected'} · Live map: {stream.data.maps?.find(map=>map.id===combat.battleMapId)?.name||'Not linked'}</p>
-          {canSetup?<label>Encounter battle map<select aria-label="Encounter battle map" value={selectedBattleMap||combat.preparedMapId||''}
+          {canSetup?<label>Encounter battle map<select aria-label="Encounter battle map" value={selectedBattleMap===null?combat.preparedMapId||'':selectedBattleMap}
             onChange={event=>setSelectedBattleMap(event.target.value)}>
             <option value="">No map</option>
             {(stream.data.maps||[]).map(map=><option key={map.id} value={map.id}>{map.name}</option>)}
@@ -243,7 +243,7 @@ export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigat
           <div className={styles.controls}>
             {canSetup?<button type="button" disabled={busy||!combat.sessionEditable}
               onClick={()=>submit('encounter',{operation:'map-prepare',
-                mapId:selectedBattleMap||combat.preparedMapId||''})}>
+                mapId:selectedBattleMap===null?combat.preparedMapId||'':selectedBattleMap})}>
               Save Prepared Map</button>:null}
             {combat.isActive&&combat.preparedMapId&&!combat.battleMapId?
               <button type="button" disabled={busy||!combat.sessionEditable}
