@@ -19,3 +19,10 @@
 .display:fullscreen .content{min-height:calc(100vh - 9rem)}
 .display:fullscreen .textScene{min-height:60vh}
 @media(max-width:660px){.display header{flex-wrap:wrap}.controls{justify-content:flex-start}}
+
+/* Improvement 5: recipient acknowledgement before authorized stage access. */
+.invitation{display:grid;gap:var(--ast-space-3);align-content:start;min-height:35vh;padding:var(--ast-space-4);border:1px solid var(--ast-color-outline-soft);border-radius:var(--ast-radius-panel);background:var(--ast-color-panel)}
+.invitation p,.invitation h2{margin:0}
+.invitation button{min-height:40px;padding:var(--ast-space-2);border:1px solid var(--ast-color-outline-soft);border-radius:var(--ast-radius-sm);background:var(--ast-color-panel-raised);color:var(--ast-color-text);font:inherit}
+.invitation button:disabled{opacity:.55}
+.invitation button:focus-visible{outline:3px solid var(--ast-color-focus);outline-offset:2px}
