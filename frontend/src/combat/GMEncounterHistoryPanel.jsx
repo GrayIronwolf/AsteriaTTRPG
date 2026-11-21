@@ -103,9 +103,9 @@ export function GMEncounterHistoryPanel({api,campaignId,busy=false}){
           {row.message}</li>)}</ul>
       </details>
       <h4>Reward review</h4>
-      <p>Set per-character XP and currency. Item rewards can be prepared
-        through the existing GM Rewards and Party Loot workspaces; no items
-        are added automatically.</p>
+      <p>Set per-character XP, currency and item bundles. The existing GM reward
+        delivery system will stage item identification and owner claims.
+        Nothing is distributed before approval and a separate delivery command.</p>
       {draft.rewards.map(row=>{
         const delivery=selected.deliveries?.[row.characterId]||{};
         const participant=selected.participants.find(p=>p.characterId===row.characterId);
@@ -130,6 +130,32 @@ export function GMEncounterHistoryPanel({api,campaignId,busy=false}){
               }})}/></label>
           </div>:<p>{row.xp} XP · {row.currency.amount} {pretty(row.currency.key)}
             {' · '}{row.items.length} item types</p>}
+          {selected.status==='pending-review'?<div className={styles.items}>
+            <strong>Item rewards (up to 8 types)</strong>
+            {row.items.map((item,index)=><div key={index} className={styles.fields}>
+              <label>Item name<input type="text" maxLength={160}
+                disabled={locked} value={item.name||''}
+                onChange={e=>updateReward(row.characterId,{
+                  items:row.items.map((old,i)=>i===index?{...old,name:e.target.value}:old)
+                })}/></label>
+              <label>Quantity<input type="number" min="1" max="1000000"
+                disabled={locked} value={item.qty||1}
+                onChange={e=>updateReward(row.characterId,{
+                  items:row.items.map((old,i)=>i===index?{
+                    ...old,qty:Math.max(1,Math.min(1000000,Number(e.target.value)||1))
+                  }:old)
+                })}/></label>
+              <button type="button" disabled={locked}
+                onClick={()=>updateReward(row.characterId,{
+                  items:row.items.filter((_,i)=>i!==index)
+                })}>Remove item</button>
+            </div>)}
+            <button type="button" disabled={locked||row.items.length>=8}
+              onClick={()=>updateReward(row.characterId,{
+                items:[...row.items,{name:'',qty:1}]
+              })}>Add item reward</button>
+          </div>:row.items.length?<ul>{row.items.map((item,index)=>
+            <li key={index}>{item.name} × {item.qty}</li>)}</ul>:null}
           {selected.status==='approved'?<div className={styles.actions}>
             {row.xp>0?<button type="button" disabled={locked||Boolean(delivery.xp)}
               onClick={()=>deliver(row.characterId,'xp')}>
