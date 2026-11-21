@@ -258,8 +258,9 @@ export function createFirebaseCombatService({
     commandPlayer:(id,characterId,actorId,input)=>command(id,'player',characterId,actorId,input),
     savePrepared:(id,entry,expectedRevision=0)=>writePrepared(id,'save',entry,expectedRevision),
     deletePrepared:(id,entry,expectedRevision)=>writePrepared(id,'delete',entry,expectedRevision),
-    loadPrepared:(id,preparedId,revision)=>command(id,'gm','','encounter',{
-      operation:'load-prepared',preparedId,replace:true,revision
+    loadPrepared:(id,preparedId,revision,expectedPreparedRevision)=>command(id,'gm','','encounter',{
+      operation:'load-prepared',preparedId,replace:true,revision,
+      expectedPreparedRevision,confirmation:'replace-staged-enemies'
     })
   });
 }
