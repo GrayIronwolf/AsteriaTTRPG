@@ -1,6 +1,6 @@
 import {
   HYBRID_SESSION_DEFAULT,HYBRID_SESSION_MAX_VIEWERS,
-  HYBRID_SESSION_MAX_MINUTES,validateHybridSessionAction,
+  validateHybridSessionAction,
   sessionTimestampMs,restrictedPresentationProjection
 } from '../src/state/hybridPresentationSessionModel.mjs';
 const exists=value=>typeof value?.exists==='function'?value.exists():Boolean(value?.exists);
