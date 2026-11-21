@@ -5,6 +5,7 @@ import {PreparedEncounterLibrary} from './PreparedEncounterLibrary.jsx';
 import {CombatBattleMapPanel} from './CombatBattleMapPanel.jsx';
 import {GMLiveCombatPanel} from './GMLiveCombatPanel.jsx';
 import {GMEncounterWavesPanel} from './GMEncounterWavesPanel.jsx';
+import {GMEncounterHistoryPanel} from './GMEncounterHistoryPanel.jsx';
 import styles from './CombatWorkspace.module.css';
 import {ForgedBadge} from '../components/ui/ForgedBadge.jsx';
 
@@ -177,7 +178,7 @@ export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigat
         <button type="button" disabled={busy||!combat.sessionEditable||!combat.isActive}
           onClick={()=>submit('encounter',{operation:'next'})}>Next Turn</button>
         <button type="button" disabled={busy||!combat.sessionEditable||!combat.isActive}
-          onClick={()=>{if(window.confirm('End combat? Spent resources remain spent.'))
+          onClick={()=>{if(window.confirm('End combat and archive the final roster for GM reward review? Spent resources remain spent.'))
             submit('encounter',{operation:'end'});}}>End Combat</button>
         <button type="button" disabled={busy||!combat.sessionEditable||!canSetup}
           onClick={()=>{if(window.confirm('Clear the encounter roster?'))
@@ -187,6 +188,9 @@ export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigat
         log={stream.data.combatLog||[]} busy={busy} onCommand={submit}/>
       <GMEncounterWavesPanel combat={combat} schedule={stream.data.encounterSchedule}
         pending={stream.data.pending} busy={busy} onCommand={submit}/>
+      </CombatCommandPanel>
+      <CombatCommandPanel id="history">
+        <GMEncounterHistoryPanel api={api} campaignId={campaignId} busy={busy}/>
       </CombatCommandPanel>
       <CombatCommandPanel id="initiative">
         <CombatRoster combat={combat} gm selected={current?.id} onSelect={setSelected}/>
