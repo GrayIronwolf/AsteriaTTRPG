@@ -1,0 +1,44 @@
+name: Share & Present Improvement 1 — Security and Emergency Controls
+on:
+  push:
+    branches: [feature/share-present-improvement-1-security-emergency]
+  pull_request:
+    paths:
+      - 'functions/playerPresentationCommands.mjs'
+      - 'functions/handler.mjs'
+      - 'frontend/src/dashboard/GMScreenCaptureControls.jsx'
+      - 'frontend/src/dashboard/GMScreenCaptureControls.module.css'
+      - 'frontend/src/dashboard/CampaignPresentationWorkspace.jsx'
+      - 'frontend/src/dashboard/firebaseCampaignMediaService.mjs'
+      - 'storage.rules'
+      - 'scripts/share-present-improvement-1.test.mjs'
+      - 'scripts/site-combat-phase7-1-browser.cjs'
+      - '.github/workflows/share-present-improvement-1-security.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  emergency-security-and-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Atomic emergency, backend GM, viewer privacy and inherited model tests
+        run: node --test scripts/share-present-improvement-1.test.mjs scripts/site-share-present-phase7-7.test.mjs scripts/site-share-present-phase7-6.test.mjs scripts/site-share-present-phase7-5.test.mjs scripts/site-share-present-phase7-4.test.mjs scripts/site-share-present-phase7-3.test.mjs scripts/site-share-present-phase7-2.test.mjs scripts/site-share-present-phase7-1.test.mjs scripts/site-share-present-phase7-0.test.mjs scripts/digital-gm-phase10-1.test.mjs
+      - name: Fogged map original restrictions and Phase 7.4 role tests
+        run: npx firebase emulators:exec --project demo-asteria-share-present-phase74 --only firestore,storage "node --test scripts/site-share-present-phase7-4-emulator.test.mjs"
+      - name: Phase 7.3 media grants
+        run: npx firebase emulators:exec --project demo-asteria-presentation-phase73 --only firestore,storage "node --test scripts/site-share-present-phase7-3-emulator.test.mjs"
+      - name: Phase 7.7 multiple-role and revocation suite
+        run: npx firebase emulators:exec --project demo-asteria-share-present-phase77 --only firestore,storage "node --test scripts/site-share-present-phase7-7-emulator.test.mjs"
+      - name: Lint
+        run: npx eslint frontend/src/dashboard/GMScreenCaptureControls.jsx frontend/src/dashboard/CampaignPresentationWorkspace.jsx frontend/src/dashboard/firebaseCampaignMediaService.mjs functions/playerPresentationCommands.mjs functions/handler.mjs scripts/share-present-improvement-1.test.mjs
+      - name: React source checks
+        run: npm run site:check
+      - name: Build and verify React production assets
+        run: npm run site:build && npm run site:verify-dist
