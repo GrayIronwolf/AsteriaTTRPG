@@ -782,7 +782,9 @@ service cloud.firestore {
       }
       match /presentationCombat/{documentId} {
         allow get: if documentId == 'current' &&
-          (isCampaignGM(campaignId) || activeHybridViewer(campaignId));
+          (isCampaignGM(campaignId) ||
+            (activeHybridViewer(campaignId) &&
+              get(/databases/$(database)/documents/campaigns/$(campaignId)/presentationRestricted/current).data.get('scene','') == 'combat'));
         allow list, create, update, delete: if false;
       }
       match /battleMapsPublic/{mapId} {
