@@ -1,10 +1,10 @@
-import {before,after,beforeEach,test} from 'node:test';
+import {before,after,beforeEach,afterEach,test} from 'node:test';
 import {readFileSync} from 'node:fs';
 import {initializeTestEnvironment,assertFails,assertSucceeds}
   from '@firebase/rules-unit-testing';
 import {doc,setDoc,getDoc,getDocs,collection,updateDoc}
   from 'firebase/firestore';
-import {ref,getBytes,uploadBytes} from 'firebase/storage';
+import {ref,getBytes,uploadBytes,deleteObject} from 'firebase/storage';
 
 const projectId='demo-asteria-share-present-phase77',campaign='phase77-security';
 const prefix='campaigns/'+campaign;
@@ -37,6 +37,7 @@ before(async()=>{
   });
 });
 after(async()=>env?.cleanup());
+afterEach(async()=>{await deleteObject(ref(storage('gm77'),originalBytes)).catch(()=>{});});
 beforeEach(async()=>{
   await env.clearFirestore();
   await env.clearStorage();
