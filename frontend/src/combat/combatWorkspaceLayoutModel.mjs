@@ -3,13 +3,14 @@ import {
 } from '../../../src/state/workspaceFreeformModel.mjs';
 
 /** Layout-only state: never includes encounter data, permissions or combat commands. */
-export const COMBAT_PANEL_IDS=Object.freeze(['controls','initiative','actor','setup','map']);
+export const COMBAT_PANEL_IDS=Object.freeze(['controls','initiative','actor','setup','map','history']);
 export const COMBAT_PANEL_LABELS=Object.freeze({
   controls:'Encounter Controls',
   initiative:'Initiative & Turn Order',
   actor:'Combatant Actions & Resources',
   setup:'Encounter Setup',
-  map:'Battle Map & Player Display'
+  map:'Battle Map & Player Display',
+  history:'Encounter Completion & History'
 });
 export const COMBAT_WORKSPACE_PRESET_LIMIT=8;
 const DEFAULT_POSITIONS=Object.freeze({
@@ -17,7 +18,8 @@ const DEFAULT_POSITIONS=Object.freeze({
   initiative:{x:0,y:170,w:490,h:400},
   actor:{x:510,y:0,w:490,h:480},
   setup:{x:510,y:490,w:490,h:400},
-  map:{x:0,y:580,w:490,h:260}
+  map:{x:0,y:580,w:490,h:260},
+  history:{x:0,y:850,w:490,h:400}
 });
 const isRecord=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 const allowed=id=>COMBAT_PANEL_IDS.includes(id);
