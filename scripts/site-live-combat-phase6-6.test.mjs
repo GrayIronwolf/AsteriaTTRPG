@@ -6,7 +6,8 @@ import {
   liveCombatTimerState,resetLiveTurnTimer,applyLiveTimerCommand,
   projectGMLivePending,projectGMLiveLog,gmMayAdvanceTurn
 } from '../src/state/liveCombatCommandModel.mjs';
-import {projectCombat,validateCombatCommand} from '../frontend/src/combat/combatModel.mjs';
+import {projectCombat,validateCombatCommand,COMBAT_BASIC_DECLARATIONS}
+  from '../frontend/src/combat/combatModel.mjs';
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 const now=1_700_000_000_000;
 test('Phase 6.6: timer presets and strict GM-only validation',()=>{
@@ -118,6 +119,25 @@ test('Phase 6.6: existing player projection never includes GM-only action queue 
   assert.equal(player.turnTimer.durationSeconds,60);
   assert.equal(gm.log.length,1);
   assert.equal(gm.turnTimer.autoStart,true);
+});
+test('Phase 6.6: basic declarations work for GM and linked player, but arbitrary options are rejected',()=>{
+  assert.equal(COMBAT_BASIC_DECLARATIONS.length,8);
+  const declaration={operation:'declare',revision:2,optionId:'basic:attack',
+    targetIds:['enemy-2']};
+  assert.equal(validateCombatCommand('player','player-1',declaration).operation,'declare');
+  assert.equal(validateCombatCommand('gm','enemy-1',declaration).operation,'declare');
+  assert.throws(()=>validateCombatCommand('player','player-1',{
+    ...declaration,optionId:'spell:unlearned'
+  }),/approved basic action/);
+  assert.throws(()=>validateCombatCommand('player','player-1',{
+    ...declaration,targetIds:[]
+  }),/required target/);
+  assert.throws(()=>validateCombatCommand('player','player-1',{
+    ...declaration,targetIds:['enemy-2','enemy-3']
+  }),/required target/);
+  const view=read('frontend/src/combat/CombatWorkspace.jsx');
+  assert.match(view,/site-combat-declare-basic/);
+  assert.match(view,/operation:'declare'/);
 });
 test('Phase 6.6: server remains authoritative for timer, action and resource outcomes',()=>{
   const server=read('functions/combatCommands.mjs');
