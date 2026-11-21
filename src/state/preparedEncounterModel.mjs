@@ -49,7 +49,18 @@ export function validatePreparedEncounterInput(input){
     throw Error('Prepare between 1 and 60 enemies before saving.');
   const enemies=input.enemies.map(normalizePreparedEnemy);
   if(enemies.some(row=>!row))throw Error('Each enemy needs a name and valid HP/stat values.');
-  return {name,notes,mapId,enemies};
+  const folder=input.folder??'';
+  if(typeof folder!=='string'||folder.trim().length>60)
+    throw Error('Encounter folder must be at most 60 characters.');
+  const tags=input.tags??[];
+  if(!Array.isArray(tags)||tags.length>8||tags.some(tag=>
+    typeof tag!=='string'||!tag.trim()||tag.trim().length>32))
+    throw Error('Use at most eight tags, each no longer than 32 characters.');
+  const normalizedTags=[...new Set(tags.map(tag=>tag.trim()))];
+  const archived=input.archived??false;
+  if(typeof archived!=='boolean')throw Error('Invalid encounter archive status.');
+  return {name,notes,mapId,enemies,folder:folder.trim(),
+    tags:normalizedTags,archived};
 }
 export function normalizePreparedEncounters(raw){
   if(!Array.isArray(raw))return [];
