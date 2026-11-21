@@ -1,5 +1,6 @@
 import {customEncounterCreature,encounterResourcePair,encounterSourceResources} from '../../../src/state/encounterResourceModel.mjs';
 import {gmSessionState} from '../dashboard/gmDashboardModel.mjs';
+import {liveCombatTimerState} from '../../../src/state/liveCombatCommandModel.mjs';
 
 const validId=value=>typeof value==='string'&&/^[A-Za-z0-9_-]{1,160}$/.test(value);
 const array=value=>Array.isArray(value)?value:[];
@@ -15,7 +16,7 @@ export const COMBAT_AP_ACTIONS=Object.freeze([
 ]);
 export const COMBAT_PLAYER_COMMANDS=Object.freeze(['spend-ap','end-turn','death-save']);
 export const COMBAT_GM_COMMANDS=Object.freeze([
-  'save','load-prepared','map-prepare','map-link','start','next','end','clear','correct','spend-ap','end-turn','death-save'
+  'save','load-prepared','map-prepare','map-link','start','next','end','clear','timer','correct','spend-ap','end-turn','death-save'
 ]);
 
 export function combatRevision(encounter){return revision(encounter?.combat?.revision);}
@@ -57,6 +58,7 @@ export function projectCombat(encounter={},session=null,{role='player',character
   const rawTimer=obj(raw.turnTimer)?raw.turnTimer:obj(raw.timer)?raw.timer:null;
   const timerDeadline=Number(rawTimer?.endsAt);
   const turnTimer=Object.freeze({
+    ...liveCombatTimerState(rawTimer||{}),
     enabled:active&&rawTimer?.enabled===true&&Number.isFinite(timerDeadline)&&timerDeadline>0,
     endsAt:Number.isFinite(timerDeadline)&&timerDeadline>0?Math.trunc(timerDeadline):0
   });
@@ -76,8 +78,9 @@ export function projectCombat(encounter={},session=null,{role='player',character
     ...(gm?{
       battleMapId:validId(raw.battleMapId)?raw.battleMapId:'',
       preparedMapId:validId(raw.preparedMapId)?raw.preparedMapId:'',
-      log:Object.freeze(array(raw.combat?.log).slice(0,15).map(row=>({
-        id:title(row.id,160),message:title(row.message,300)
+      log:Object.freeze(array(raw.combat?.log).slice(0,30).map(row=>({
+        id:title(row.id,160),message:title(row.message,300),
+        at:Number.isFinite(row.at)?row.at:0
       })))
     }:{})
   };
