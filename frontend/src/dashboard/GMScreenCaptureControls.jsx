@@ -1,5 +1,4 @@
 import React,{useCallback,useEffect,useRef,useState} from 'react';
-import {useCampaignStream} from './CampaignMapWorkspace.jsx';
 import styles from './GMScreenCaptureControls.module.css';
 
 /**
@@ -7,8 +6,7 @@ import styles from './GMScreenCaptureControls.module.css';
  * signal, or attach a captured MediaStream to a remote display.
  * The existing approved-scene presentation remains the sole remote channel.
  */
-export function GMScreenCaptureControls({api,campaignId,controlRevision=0}){
-  const session=useCampaignStream(api,'watchGMHybridSession',[campaignId]);
+export function GMScreenCaptureControls({api,campaignId}){
   const [capturing,setCapturing]=useState(false);
   const [busy,setBusy]=useState(false);
   const [notice,setNotice]=useState('');
@@ -16,6 +14,8 @@ export function GMScreenCaptureControls({api,campaignId,controlRevision=0}){
   const video=useRef(null);
   const stream=useRef(null);
   const generation=useRef(0);
+  const emergencyInFlight=useRef(false);
+  const [emergencyBusy,setEmergencyBusy]=useState(false);
   const mounted=useRef(true);
   const stop=useCallback(()=>{
     generation.current+=1;
@@ -91,33 +91,38 @@ export function GMScreenCaptureControls({api,campaignId,controlRevision=0}){
     }
   };
   const stopAndBlackout=async()=>{
-    if(busy||session.loading||session.error)return;
-    stop();setBusy(true);setNotice('');setError('');
-    const failures=[];
-    // An existing presentation blackout removes staged player media and scenes.
+    // Local capture stops synchronously even if an earlier browser permission
+    // dialog or a server request is still in progress.
+    stop();setError('');setNotice('');
+    if(emergencyInFlight.current)return;
+    emergencyInFlight.current=true;
+    setEmergencyBusy(true);
     try{
-      await api.managePresentation(campaignId,{
-        type:'blackout',expectedRevision:controlRevision
-      });
-    }catch(failure){failures.push('Blackout: '+(failure?.message||'failed'));}
-    // Session closure revokes every restricted viewer grant, independent of
-    // the browser capture stream (which has never left this GM device).
-    const current=session.data?.session;
-    if(current?.status==='open'){
-      try{
-        await api.manageHybridSession(campaignId,{
-          type:'close',expectedRevision:current.revision||0
-        });
-      }catch(failure){failures.push('Viewer revocation: '+(failure?.message||'failed'));}
-    }
-    if(mounted.current){
-      setBusy(false);
-      if(failures.length)setError('Some remote controls were not confirmed. '+failures.join('; ')+
-        '. Check session state and use the existing GM Blackout/Close controls.');
-      else setNotice('Local preview stopped; player display blacked out and restricted session closed.');
+      const response=await api.emergencyStopPresentation(campaignId);
+      if(response?.ok!==true)throw Error(response?.error||
+        'The server did not confirm the emergency stop.');
+      if(mounted.current)setNotice('Server confirmed: presentation blacked out and all restricted access closed.');
+    }catch(failure){
+      if(mounted.current)setError(
+        'Local capture stopped, but remote blackout/revocation is NOT confirmed: '+
+        (failure?.message||'Connection failed')+
+        '. Reconnect and retry the emergency stop.');
+    }finally{
+      emergencyInFlight.current=false;
+      if(mounted.current)setEmergencyBusy(false);
     }
   };
   return <section className={styles.panel} data-testid="site-gm-screen-capture">
+    <div className={styles.emergencyBar}>
+      <div><strong>Emergency presentation stop</strong>
+        <p>Immediately stops this device's capture and requests a single
+          server-authorised blackout and viewer revocation.</p></div>
+      <button type="button" onClick={stopAndBlackout}
+        aria-label="Emergency: Stop, Blackout and Revoke Viewers"
+        data-testid="site-screen-capture-emergency">
+        Stop, Blackout &amp; Revoke Viewers
+      </button>
+    </div>
     <h3>Screen Capture &amp; Display Safety</h3>
     <p>This is a <strong>local preview</strong> of a screen, window or tab chosen
       through your browser permission prompt. It is <strong>not</strong> an
@@ -129,17 +134,13 @@ export function GMScreenCaptureControls({api,campaignId,controlRevision=0}){
       <button type="button" disabled={!capturing&& !busy} onClick={()=>{
         stop();setNotice('Local screen preview stopped.');setError('');
       }} data-testid="site-screen-capture-stop">Stop Local Preview</button>
-      <button type="button" disabled={busy||session.loading||Boolean(session.error)}
-        onClick={stopAndBlackout} data-testid="site-screen-capture-emergency">
-        Stop, Blackout &amp; Revoke Viewers
-      </button>
     </div>
     {capturing?<video ref={video} className={styles.video} autoPlay playsInline muted
       aria-label="Private GM screen preview"/>:
       <div className={styles.placeholder}>Screen preview is off.</div>}
     {capturing?<p role="status">Screen preview active on this GM device only.</p>:null}
     {busy?<p role="status">Processing screen permission or safety controls…</p>:null}
-    {session.error?<p role="alert">GM viewer controls unavailable: {session.error}</p>:null}
+    {emergencyBusy?<p role="status">Requesting server blackout and viewer revocation…</p>:null}
     {notice?<p role="status">{notice}</p>:null}
     {error?<p role="alert">{error}</p>:null}
     <p className={styles.note}>For a room display, use your computer's
