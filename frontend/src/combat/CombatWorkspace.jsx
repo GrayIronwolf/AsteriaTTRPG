@@ -3,6 +3,7 @@ import {COMBAT_AP_ACTIONS,customEnemy,libraryEnemy} from './combatModel.mjs';
 import {CombatCommandCentre,CombatCommandPanel} from './CombatCommandCentre.jsx';
 import {PreparedEncounterLibrary} from './PreparedEncounterLibrary.jsx';
 import {CombatBattleMapPanel} from './CombatBattleMapPanel.jsx';
+import {GMLiveCombatPanel} from './GMLiveCombatPanel.jsx';
 import styles from './CombatWorkspace.module.css';
 import {ForgedBadge} from '../components/ui/ForgedBadge.jsx';
 
@@ -150,8 +151,8 @@ export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigat
           onClick={()=>{if(window.confirm('Clear the encounter roster?'))
             submit('encounter',{operation:'clear'});}}>Clear Encounter</button>
       </div>
-      {stream.data.pending?<p role="status">GM action pending: {stream.data.pending.status}.
-        Resolve advanced action decisions in the original combat panel until their migration.</p>:null}
+      <GMLiveCombatPanel combat={combat} pending={stream.data.pending}
+        log={stream.data.combatLog||[]} busy={busy} onCommand={submit}/>
       </CombatCommandPanel>
       <CombatCommandPanel id="initiative">
         <CombatRoster combat={combat} gm selected={current?.id} onSelect={setSelected}/>
