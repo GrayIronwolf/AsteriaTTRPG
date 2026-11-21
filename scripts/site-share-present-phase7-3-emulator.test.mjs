@@ -1,4 +1,4 @@
-import {before,after,beforeEach,test} from 'node:test';
+import {before,after,beforeEach,afterEach,test} from 'node:test';
 import {readFileSync} from 'node:fs';
 import {initializeTestEnvironment,assertFails,assertSucceeds}
   from '@firebase/rules-unit-testing';
@@ -31,6 +31,7 @@ before(async()=>{
   });
 });
 after(async()=>env?.cleanup());
+afterEach(async()=>{await deleteObject(ref(storage('gm'),path)).catch(()=>{});});
 beforeEach(async()=>{
   await env.clearFirestore();await env.clearStorage();
   await env.withSecurityRulesDisabled(async context=>{
@@ -69,9 +70,12 @@ test('7.3: only GM can create correct MIME/length original bytes, never overwrit
 });
 test('7.3: published and currently staged bytes serve linked player and invited viewer',async()=>{
   await assertSucceeds(uploadBytes(ref(storage('gm'),path),bytes,{contentType:'image/png'}));
+  console.log('Phase73 created GM original asset for view test');
   await mutate(recordRef,{status:'ready',visibility:'players'});
   await mutate(accessRef,{assetId,scene:'image'});
+  console.log('Phase73 asset marked ready/published and staged');
   const player=await assertSucceeds(getBytes(ref(storage('alice'),path)));
+  console.log('Phase73 member read succeeded');
   const invitee=await assertSucceeds(getBytes(ref(storage('invitee'),path)));
   if(player.byteLength!==bytes.length||invitee.byteLength!==bytes.length)
     throw Error('The approved media bytes did not load.');
@@ -84,6 +88,7 @@ test('7.3: published and currently staged bytes serve linked player and invited 
 });
 test('7.3: revoke recipient, expire, close session, or switch scene prevents future byte reads',async()=>{
   await assertSucceeds(uploadBytes(ref(storage('gm'),path),bytes,{contentType:'image/png'}));
+  console.log('Phase73 created GM original asset for view test');
   await mutate(recordRef,{status:'ready',visibility:'players'});
   await mutate(accessRef,{assetId,scene:'image'});
   await assertSucceeds(getBytes(ref(storage('invitee'),path)));
