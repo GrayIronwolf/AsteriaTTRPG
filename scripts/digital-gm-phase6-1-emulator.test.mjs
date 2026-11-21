@@ -85,7 +85,8 @@ test('unpublishing immediately revokes both Firestore and authenticated Storage 
   await env.withSecurityRulesDisabled(async ctx=>{
     await deleteDoc(doc(ctx.firestore(),publicMap('video-map')));
   });
-  await assertFails(getDoc(doc(firestore('alice'),publicMap('video-map'))));
+  const withdrawn=await assertSucceeds(getDoc(doc(firestore('alice'),publicMap('video-map'))));
+  assert.equal(withdrawn.exists(),false,'Trusted projection must be removed after unpublishing.');
   await assertFails(getBytes(ref(storage('alice'),video)));
   await assertSucceeds(getBytes(ref(storage('co'),video)));
 });
