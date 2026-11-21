@@ -1,5 +1,6 @@
 import React,{useCallback,useEffect,useRef,useState} from 'react';
 import styles from './GMScreenCaptureControls.module.css';
+import {GMScreenShareControls} from './GMScreenShareControls.jsx';
 
 /**
  * Phase 7.6. Local browser preview only: never upload, persist, broadcast,
@@ -8,6 +9,8 @@ import styles from './GMScreenCaptureControls.module.css';
  */
 export function GMScreenCaptureControls({api,campaignId}){
   const [capturing,setCapturing]=useState(false);
+  const [remoteActive,setRemoteActive]=useState(false);
+  const remoteStop=useRef(null);
   const [busy,setBusy]=useState(false);
   const [notice,setNotice]=useState('');
   const [error,setError]=useState('');
@@ -51,7 +54,7 @@ export function GMScreenCaptureControls({api,campaignId}){
     void video.current.play().catch(()=>{});
   },[capturing]);
   const start=async()=>{
-    if(busy||stream.current)return;
+    if(busy||stream.current||remoteActive)return;
     setError('');setNotice('');
     if(!navigator.mediaDevices?.getDisplayMedia){
       setError('This browser does not support screen capture.');
@@ -93,6 +96,7 @@ export function GMScreenCaptureControls({api,campaignId}){
   const stopAndBlackout=async()=>{
     // Local capture stops synchronously even if an earlier browser permission
     // dialog or a server request is still in progress.
+    remoteStop.current?.();
     stop();setError('');setNotice('');
     if(emergencyInFlight.current)return;
     emergencyInFlight.current=true;
@@ -129,7 +133,7 @@ export function GMScreenCaptureControls({api,campaignId}){
       online video broadcast. Approved Asteria scenes remain the only
       content delivered to invited remote viewers.</p>
     <div className={styles.actions}>
-      <button type="button" disabled={busy||capturing} onClick={start}
+      <button type="button" disabled={busy||capturing||remoteActive} onClick={start}
         data-testid="site-screen-capture-start">Choose Screen to Preview</button>
       <button type="button" disabled={!capturing&& !busy} onClick={()=>{
         stop();setNotice('Local screen preview stopped.');setError('');
@@ -143,6 +147,9 @@ export function GMScreenCaptureControls({api,campaignId}){
     {emergencyBusy?<p role="status">Requesting server blackout and viewer revocation…</p>:null}
     {notice?<p role="status">{notice}</p>:null}
     {error?<p role="alert">{error}</p>:null}
+    <GMScreenShareControls api={api} campaignId={campaignId}
+      previewBusy={capturing||busy} onActivity={setRemoteActive}
+      stopRegistration={remoteStop}/>
     <p className={styles.note}>For a room display, use your computer's
       connected TV/projector or the authorised Player Display. Remote
       live desktop video requires a separately approved transport and
