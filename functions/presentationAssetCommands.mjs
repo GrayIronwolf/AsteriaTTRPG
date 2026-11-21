@@ -47,7 +47,7 @@ export function createPresentationAssetCommands(context,{requireCampaignGM}){
               updatedAt:serverTimestamp()});
             return {id:raw.id,revision:record.revision+1,status:'ready'};
           }
-          if(record.status!=='ready')
+          if(record.status!=='ready'&&type!=='archive')
             throw Error('The presentation file must finish uploading first.');
           if(type==='publish'){
             if(record.visibility==='players')
