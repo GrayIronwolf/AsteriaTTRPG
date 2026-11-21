@@ -2,6 +2,8 @@ import {assertGMCampaignId,gmCampaignAccess,gmPartySummary} from './gmDashboardM
 import {playerCampaignAccess} from '../player/playerDashboardModel.mjs';
 import {battleMapPrivatePins} from '../../../src/state/battleMapFogModel.mjs';
 import {validatePresentationAction} from '../../../src/state/playerPresentationModel.mjs';
+import {audienceRevealUid,validateAudienceRevealAction}
+  from '../../../src/state/presentationAudienceRevealModel.mjs';
 import {validateHybridSessionAction,hybridViewerCanRead,sanitizeRestrictedPresentation} from '../../../src/state/hybridPresentationSessionModel.mjs';
 import {validateHybridInvitationResponse,hybridInvitationSummary}
   from '../../../src/state/hybridInvitationModel.mjs';
@@ -45,6 +47,9 @@ export function createFirebaseCampaignMediaService({
   const hybridGrantsCol=id=>firestoreSdk.collection(db,'campaigns',id,'hybridViewerGrants');
   const hybridGrantRef=(id,uid)=>firestoreSdk.doc(db,'campaigns',id,'hybridViewerGrants',uid);
   const restrictedRef=id=>firestoreSdk.doc(db,'campaigns',id,'presentationRestricted','current');
+  const audienceCol=id=>firestoreSdk.collection(db,'campaigns',id,'presentationAudienceReveals');
+  const audienceRef=(id,scope,uid)=>firestoreSdk.doc(db,'campaigns',id,
+    'presentationAudienceReveals',scope+'_'+uid);
   const assetCol=id=>firestoreSdk.collection(db,'campaigns',id,'presentationAssets');
   const presentationRef=(id,mode)=>firestoreSdk.doc(db,'campaigns',id,
     mode==='gm'?'presentationControl':'presentationShared','current');
@@ -165,6 +170,59 @@ export function createFirebaseCampaignMediaService({
     return watch(id,'gm',
       firestoreSdk.doc(db,'campaigns',id,'presentationPlaylists','current'),
       playlistProject,onUpdate,onError,'document');
+  }
+  function watchGMAudienceReveals(id,onUpdate,onError){
+    return watch(id,'gm',firestoreSdk.query(audienceCol(id),
+      firestoreSdk.limit(100)),rows=>rows.filter(row=>
+      audienceRevealUid(row.targetUid)&&
+      ['member','restricted'].includes(row.audience)&&
+      Number.isSafeInteger(row.sceneRevision)).map(row=>({
+        targetUid:row.targetUid,audience:row.audience,
+        title:typeof row.title==='string'?row.title.slice(0,120):'',
+        sceneRevision:row.sceneRevision
+      })),onUpdate,onError);
+  }
+  function watchAudienceReveal(id,audience,onUpdate,onError){
+    assertGMCampaignId(id);
+    if(!['member','restricted'].includes(audience))
+      throw Error('Invalid reveal audience.');
+    const uid=auth.currentUser?.uid;
+    if(!audienceRevealUid(uid))throw Error('Sign in to check your reveal.');
+    if(audience==='member'){
+      // Existing player stream verifies member status and rejects cached permissions.
+      return watch(id,'player',audienceRef(id,'member',uid),
+        row=>row||null,onUpdate,onError,'document');
+    }
+    // Invited guests cannot fetch campaign documents; bind only their own UID
+    // and the per-document active-viewer Firestore rules.
+    let active=true,stop=()=>{};
+    const close=()=>{active=false;try{stop();}catch{}};
+    const fail=error=>{if(!active)return;close();onError?.(error);};
+    (async()=>{
+      try{
+        const verifiedUid=await verified();
+        if(!active)return;
+        if(verifiedUid!==uid)throw Error('Account changed. Reconnect.');
+        const granted=await firestoreSdk.getDocFromServer(hybridGrantRef(id,uid));
+        same(uid);
+        if(!granted.exists()||granted.data()?.uid!==uid||
+          granted.data()?.status!=='active')
+          throw Error('Restricted viewer invitation is not active.');
+        stop=firestoreSdk.onSnapshot(audienceRef(id,'restricted',uid),
+          {includeMetadataChanges:true},snap=>{
+            if(!active)return;
+            if(snap.metadata?.fromCache)
+              return fail(Error('Audience reveal connection interrupted. Reconnect to verify access.'));
+            if(snap.metadata?.hasPendingWrites)return;
+            try{
+              same(uid);
+              onUpdate(snap.exists()?snap.data():null);
+            }catch(error){fail(error);}
+          },fail);
+        if(!active)stop();
+      }catch(error){fail(error);}
+    })();
+    return close;
   }
   function watchPresentation(id,mode,onUpdate,onError){
     return watch(id,mode,presentationRef(id,mode),presentationProject,onUpdate,onError);
@@ -747,6 +805,18 @@ export function createFirebaseCampaignMediaService({
       throw Error(response.data?.error||'Playlist update was rejected.');
     return response.data;
   }
+  async function manageAudienceReveal(id,action){
+    const {uid}=await check(id,'gm');
+    validateAudienceRevealAction(action);
+    const response=await functionsSdk.httpsCallable(functions,'asteriaAction')({
+      action:'manageAudienceReveal',args:[id,'gm-scope',action],
+      requestId:crypto.randomUUID()
+    });
+    same(uid);
+    if(response.data?.ok!==true)
+      throw Error(response.data?.error||'Recipient reveal was rejected.');
+    return response.data;
+  }
   async function managePresentation(id,action){
     const {uid}=await check(id,'gm');
     validatePresentationAction(action);
@@ -761,9 +831,10 @@ export function createFirebaseCampaignMediaService({
   }
   return Object.freeze({
     availability:()=>flags,watchMaps,watchAtlas,watchPresentation,watchPrivatePins,
-    watchParty,watchEncounter,watchPresentationPlaylists,watchGMMediaLibrary,fetchGMMediaLibraryPreview,
+    watchParty,watchEncounter,watchPresentationPlaylists,
+    watchGMAudienceReveals,watchAudienceReveal,watchGMMediaLibrary,fetchGMMediaLibraryPreview,
     fetchMapMedia,fetchAtlasMedia,uploadMap,
-    saveMap,removeMap,savePrivatePins,managePresentation,managePresentationPlaylist,emergencyStopPresentation,
+    saveMap,removeMap,savePrivatePins,managePresentation,managePresentationPlaylist,manageAudienceReveal,emergencyStopPresentation,
     manageHybridSession,watchGMHybridSession,watchOwnHybridInvitation,
     respondHybridInvitation,watchRestrictedViewer,
     watchPresentationAssets,managePresentationAsset,uploadPresentationAsset,
