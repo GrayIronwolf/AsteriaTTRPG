@@ -60,6 +60,7 @@ export function presentationForViewer(raw){
   if(!raw)return {...PRESENTATION_DEFAULT};
   const draft=presentationDraft({
     scene:raw.scene,title:raw.title,subtitle:raw.subtitle,mapId:raw.mapId,
+    ...(raw.assetId?{assetId:raw.assetId}:{}),
     characterIds:raw.characterIds,showRound:raw.showRound,
     showPartyHP:raw.showPartyHP,theme:raw.theme
   });
