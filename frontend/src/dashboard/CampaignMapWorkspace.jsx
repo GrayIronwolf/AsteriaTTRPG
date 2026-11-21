@@ -5,6 +5,9 @@ import {
 } from './campaignMediaModel.mjs';
 import {paintFogStroke,createFogCells,hiddenFogRuns} from '../../../src/state/battleMapFogModel.mjs';
 import {battleMapPoint} from '../../../src/state/battleMapModel.mjs';
+import {
+  createPresentationRevisionGate,createSmallProjectionGate,sameCampaignStreamScope
+} from '../../../src/state/presentationRealtimeSyncModel.mjs';
 import styles from './CampaignMapWorkspace.module.css';
 
 const empty=()=>({
@@ -33,22 +36,46 @@ const fileSize=async file=>{
   }finally{URL.revokeObjectURL(url);}
 };
 export function useCampaignStream(api,method,args,enabled=true){
-  const [state,setState]=useState({data:null,error:'',loading:true});
+  const [state,setState]=useState(()=>({
+    scope:{api,method,args:[...args],enabled},
+    data:null,error:'',loading:enabled
+  }));
   useEffect(()=>{
-    setState({data:null,error:'',loading:enabled});
+    const scope={api,method,args:[...args],enabled};
+    // Discard old data before mounting a different campaign, map or feed.
+    setState({scope,data:null,error:'',loading:enabled});
     if(!enabled)return undefined;
     let alive=true,stop=()=>{};
+    const revisionGate=['watchPresentation','watchRestrictedViewer'].includes(method)
+      ?createPresentationRevisionGate({restricted:method==='watchRestrictedViewer'}):null;
+    const duplicateGate=createSmallProjectionGate();
+    const fail=error=>{
+      if(!alive)return;
+      alive=false;
+      setState({scope,data:null,error:error?.message||'Access denied.',loading:false});
+      try{stop?.();}catch{/* stop is best-effort */}
+    };
     try{
       stop=api[method](...args,value=>{
-        if(alive)setState({data:value,error:'',loading:false});
-      },error=>{
-        if(alive)setState({data:null,error:error?.message||'Access denied.',loading:false});
-      });
-    }catch(error){setState({data:null,error:error?.message||'Unable to connect.',loading:false});}
-    return ()=>{alive=false;stop?.();};
-  // The parent owns identity/campaign scope and remounts this stream on change.
+        if(!alive)return;
+        try{
+          if(revisionGate&&!revisionGate.accept(value))return;
+          if(!revisionGate&&!duplicateGate.accept(value))return;
+          setState({scope,data:value,error:'',loading:false});
+        }catch(error){fail(error);}
+      },fail);
+    }catch(error){fail(error);}
+    return ()=>{
+      alive=false;revisionGate?.reset();duplicateGate.reset();
+      try{stop?.();}catch{/* cleanup must not retain content */}
+    };
+  // Scope comprises the authenticated service plus primitive campaign/map arguments.
   },[api,method,enabled,...args]);
-  return state;
+  // Render-time fail closed: the old campaign's content must never be painted
+  // while React is waiting to clean up its previous effect.
+  if(!sameCampaignStreamScope(state.scope,api,method,args,enabled))
+    return {data:null,error:'',loading:enabled};
+  return {data:state.data,error:state.error,loading:state.loading};
 }
 function useAuthenticatedMapBlob(api,campaignId,map,mode,atlas=false,restricted=false){
   const [result,setResult]=useState({url:'',error:'',loading:false});
