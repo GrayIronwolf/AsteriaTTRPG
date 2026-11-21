@@ -145,7 +145,7 @@ test('Phase 6.6: server remains authoritative for timer, action and resource out
   const view=read('frontend/src/combat/CombatWorkspace.jsx');
   const panel=read('frontend/src/combat/GMLiveCombatPanel.jsx');
   const css=read('frontend/src/combat/GMLiveCombatPanel.module.css');
-  assert.match(server,/management=new Set\(\['timer'/);
+  assert.match(server,/management=new Set\(\['release-wave','trigger-event','timer'/);
   assert.match(server,/applyLiveTimerCommand\(encounter\.turnTimer/);
   assert.match(server,/resetLiveTurnTimer\(encounter\.turnTimer/);
   assert.match(server,/input\.revision!==oldRevision/);
