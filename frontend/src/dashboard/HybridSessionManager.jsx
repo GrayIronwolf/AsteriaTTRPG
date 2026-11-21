@@ -13,6 +13,7 @@ import {usePresentationDisplayRuntime} from './usePresentationDisplayRuntime.js'
 import {PresentationDisplayModeControls,usePresentationDisplayPreferences}
   from './PresentationDisplayModes.jsx';
 import {AudienceRevealCard} from './AudienceRevealCard.jsx';
+import {ViewerScreenShareControls} from './ViewerScreenShareControls.jsx';
 
 export function HybridSessionManager({api,campaignId}){
   const result=useCampaignStream(api,'watchGMHybridSession',[campaignId]);
@@ -193,6 +194,10 @@ function ActiveRestrictedPresentation({api,campaignId,uid}){
       <p role="status">Display is blacked out.</p>}
     <AudienceRevealCard api={api} campaignId={campaignId} uid={uid}
       audience="restricted" scene={scene} epoch={viewer.data?.epoch||''}/>
+    {scene.screenShare?.viewerUid===uid?
+      <ViewerScreenShareControls key={scene.screenShare.connectionId}
+        api={api} campaignId={campaignId} viewerUid={uid}
+        pointer={scene.screenShare}/>:null}
   </div>;
 }
 export function RestrictedPresentationDisplay({api,campaignId,uid=''}) {
