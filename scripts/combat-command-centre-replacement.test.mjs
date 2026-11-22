@@ -326,3 +326,11 @@ test('GM Resources window reuses live character resources and existing dashboard
  assert.match(css,/\.react-party-card-portrait/);
  assert.match(css,/\.react-modal:has\(\.react-canvas-character-dashboard\)/);
 });
+
+test('Pointer-safe focus does not mistake a previous locked drag for a double-click',()=>{
+ const renderer=file('src/dashboards/combat/CombatCommandCentre.jsx');
+ assert.match(renderer,/const press=lastTitlePress\.current;/);
+ assert.match(renderer,/if\(press&&\(Math\.abs\(event\.clientX-press\.x\)>6\|\|/);
+ assert.match(renderer,/lastTitlePress\.current=null;/);
+ assert.match(renderer,/if\(doublePress\)\{/);
+});
