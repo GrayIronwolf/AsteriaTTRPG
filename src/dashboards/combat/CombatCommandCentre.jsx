@@ -257,8 +257,11 @@ export function CombatCommandCentre({uid,campaignId,children}){
             </button>
           </div>
           <button type="button" className={styles.toolGroup}
-            onClick={()=>document.getElementById('combat-canvas-presets')?.scrollIntoView({
-              behavior:'smooth',block:'nearest'})}>
+            onClick={()=>{
+              const settings=document.getElementById('combat-canvas-preferences');
+              if(settings){settings.open=true;
+                settings.scrollIntoView({behavior:'smooth',block:'nearest'});}
+            }}>
             Saved Layouts
           </button>
           <p className={styles.sidebarHint}>Drag any window header to move it. Resize using its edges. Drag empty canvas space to pan; layout changes save automatically.</p>
@@ -322,7 +325,7 @@ export function CombatCommandCentre({uid,campaignId,children}){
       }}>Confirm reset</button>
       <button type="button" onClick={()=>setConfirmReset(false)}>Cancel</button>
     </div>:null}
-    <details className={styles.canvasSettings}>
+    <details id="combat-canvas-preferences" className={styles.canvasSettings}>
       <summary>Canvas options &amp; saved layouts</summary>
       <div className={styles.editor} role="group" aria-label="Combat canvas preferences">
         <label><input type="checkbox" checked={layout.freeform.snap}
