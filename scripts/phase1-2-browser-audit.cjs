@@ -114,7 +114,7 @@ async function metrics(page) {
     viewport:innerWidth,
     scrollWidth:document.documentElement.scrollWidth,
     visibleTabs:document.querySelectorAll('.react-workspace-main [role="tab"]').length,
-    panels:document.querySelectorAll('.react-dashboard-freeform-grid [data-panel-id]').length,
+    panels:document.querySelectorAll('.react-dashboard-freeform-grid [data-panel-id], [data-testid="site-player-main-canvas"] [data-canvas-window]').length,
     title:document.title
   }));
 }
@@ -145,21 +145,56 @@ async function metrics(page) {
     await p.locator('.react-inventory-workspace').waitFor();
     await p.screenshot({path:path.join(root,'03-player-inventory.png'),fullPage:true});
     await p.getByRole('button',{name:'Dashboard',exact:true}).click();
-    await p.locator('.react-dashboard-freeform-grid [data-panel-id]').first().waitFor();
+    const canvas=p.getByTestId('site-player-main-canvas');
+    await canvas.waitFor();
+    const ids=await canvas.locator('[data-canvas-window]').evaluateAll(nodes=>
+      nodes.map(node=>node.dataset.canvasWindow));
+    assert.equal(ids.length,15,'Player Main must show all original core panels and the Action Log');
+    assert.ok(ids.includes('activityLog')&&ids.includes('rest')&&ids.includes('currency'),
+      'Player core windows or original Action Log disappeared');
+    assert.equal(await p.locator('.react-character-dashboard .react-dashboard-freeform-grid').count(),0,
+      'The Player grid editor must be replaced, not left beneath the canvas');
     const m=await metrics(p);
-    assert.ok(m.panels>=5,'Missing player dashboard panels: '+JSON.stringify(m));
+    assert.equal(m.panels,15,'Missing Player canvas panels: '+JSON.stringify(m));
     await p.screenshot({path:path.join(root,'03-player-dashboard.png'),fullPage:true});
     console.log('PLAYER METRICS',JSON.stringify(m));
   });
   await scenario('04-player-mobile',{width:390,height:844},async p=>{
     await player(p);
     await checkMenuButtonSkin(p,'player');
-    await p.locator('.react-dashboard-freeform-grid [data-panel-id]').first().waitFor();
+    const canvas=p.getByTestId('site-player-main-canvas');
+    await canvas.waitFor();
+    assert.equal(await canvas.locator('[data-layout-mode="stacked"]').count(),1);
     const m=await metrics(p);
     await p.screenshot({path:path.join(root,'04-player-mobile.png'),fullPage:true});
     assert.ok(m.scrollWidth<=m.viewport,'Player dashboard horizontal overflow: '+JSON.stringify(m));
-    assert.ok(m.panels>=5,'Player panels missing on mobile: '+JSON.stringify(m));
+    assert.equal(m.panels,15,'Player panels missing on mobile: '+JSON.stringify(m));
     console.log('PLAYER MOBILE METRICS',JSON.stringify(m));
+  });
+  await scenario('04b-player-canvas-window-management',{width:1440},async p=>{
+    await player(p);
+    const canvas=p.getByTestId('site-player-main-canvas');
+    await canvas.waitFor();
+    const plus=p.getByTestId('player-canvas-add-window');
+    await plus.click();
+    const library=p.getByRole('complementary',{name:'Player Dashboard Window Library'});
+    await library.waitFor();
+    await library.getByRole('button',{name:'Quick Views'}).click();
+    const toggle=library.getByRole('button',{name:/Combat Overview/});
+    assert.equal(await toggle.getAttribute('aria-pressed'),'false');
+    await toggle.click();
+    assert.equal(await canvas.locator('[data-canvas-window]').count(),16,
+      'Adding Player Combat Overview must mount a real canvas window');
+    await toggle.click();
+    assert.equal(await canvas.locator('[data-canvas-window]').count(),15,
+      'Removing an optional Player window must restore the original set');
+    await library.getByRole('button',{name:'Close Dashboard Windows menu'}).click();
+    assert.equal(await p.getByRole('button',{name:'Undo canvas change'}).isEnabled(),true);
+    await p.getByRole('button',{name:'Undo canvas change'}).click();
+    assert.equal(await canvas.locator('[data-canvas-window]').count(),16);
+    await p.getByRole('button',{name:'Redo canvas change'}).click();
+    assert.equal(await canvas.locator('[data-canvas-window]').count(),15);
+    await p.screenshot({path:path.join(root,'04b-player-canvas-window-management.png'),fullPage:true});
   });
   await scenario('05-gm-dashboard-canvas',{width:1440},async p=>{
     await gm(p);

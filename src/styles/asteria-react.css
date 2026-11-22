@@ -4225,3 +4225,43 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 @media(max-width:720px){
   .react-gm-quick-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
+
+/* Player Main Dashboard Phase 3: the existing player panels live directly in
+   the shared canvas, without the old 12-column grid layout wrapper. */
+.react-character-dashboard [data-testid='site-player-main-canvas']{
+  width:100%;min-width:0;
+}
+.react-character-dashboard [data-testid='site-player-main-canvas']
+  [data-canvas-window] :where(.asteria-react-panel,.react-dashboard-panel){
+  min-width:0;max-width:100%;box-sizing:border-box;
+}
+.react-character-dashboard [data-testid='site-player-main-canvas']
+  [data-canvas-window] :where(button,input,select,textarea,img){
+  max-width:100%;box-sizing:border-box;
+}
+.react-character-dashboard [data-testid='site-player-main-canvas']
+  [data-canvas-window] :where(.react-ability-card,.react-loadout-slot,.react-dashboard-skill-grid > button){
+  min-width:0;overflow-wrap:anywhere;
+}
+@container combatWindow (max-width:640px){
+  .react-character-dashboard [data-testid='site-player-main-canvas']
+    :where(.react-ability-grid,.react-dashboard-skill-grid){
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+@container combatWindow (max-width:420px){
+  .react-character-dashboard [data-testid='site-player-main-canvas']
+    :where(.react-weapon-slot-grid,.react-quick-slot-grid,.react-dashboard-party-summary){
+    grid-template-columns: minmax(0,1fr);
+  }
+  .react-character-dashboard [data-testid='site-player-main-canvas']
+    :where(.react-ability-grid,.react-dashboard-skill-grid){
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+@container combatWindow (max-width:270px){
+  .react-character-dashboard [data-testid='site-player-main-canvas']
+    :where(.react-ability-grid,.react-dashboard-skill-grid){
+    grid-template-columns:minmax(0,1fr);
+  }
+}

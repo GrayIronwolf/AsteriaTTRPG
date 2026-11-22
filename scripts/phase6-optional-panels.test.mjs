@@ -69,7 +69,8 @@ test('Both renderers map all four IDs to existing gameplay data and preserve the
  for(const forbidden of ['setDoc','updateDoc','writeBatch','runTransaction','firebaseService','localStorage'])
    assert.ok(!component.includes(forbidden),'Focus panels must remain read-only: '+forbidden);
  assert.match(component,/DashboardPanel/);
- assert.match(player,/DashboardLayoutWorkspace/);
+ assert.match(player,/<CanvasWorkspace/);
+ assert.doesNotMatch(player,/DashboardLayoutWorkspace/);
  assert.match(gm,/<CanvasWorkspace/);
  assert.doesNotMatch(gm,/DashboardLayoutWorkspace/);
  assert.match(read('src/components/DashboardCustomisation.jsx'),/DashboardPanelFrameContext\.Provider/);

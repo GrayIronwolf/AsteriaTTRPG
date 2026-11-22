@@ -41,15 +41,19 @@ const boundsHeight=(freeform,visibleIds)=>Math.max(700,...visibleIds.map(id=>{
  * permission-checked Firebase combat API in CombatWorkspace.
  */
 export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
-  layoutValue=null,onSaveLayout=null}){
+  layoutValue=null,onSaveLayout=null,canvasScopeId='',canEditCanvas=true,
+  forcedPanelIds=[]}){
   const gmCanvas=Boolean(canvasConfig);
+  const playerCanvas=canvasConfig?.kind==='player';
+  const canvasRole=playerCanvas?'Player':'GM';
   const panelIds=canvasConfig?.ids||COMBAT_PANEL_IDS;
   const panelLabels=canvasConfig?.labels||COMBAT_PANEL_LABELS;
   const toolCategories=canvasConfig?.categories||COMBAT_TOOL_CATEGORIES;
   const validKey=value=>typeof value==='string'&&/^[A-Za-z0-9_-]{1,180}$/.test(value);
   const storageKey=gmCanvas?
-    (validKey(uid)&&validKey(campaignId)?
-      'asteria:gm-main-canvas:v1:'+uid+':'+campaignId:null):
+    (validKey(uid)&&validKey(campaignId)&&(!playerCanvas||validKey(canvasScopeId))?
+      (playerCanvas?'asteria:player-main-canvas:v1:':'asteria:gm-main-canvas:v1:')+
+        uid+':'+campaignId+(playerCanvas?':'+canvasScopeId:''):null):
     combatWorkspaceStorageKey(uid,campaignId);
   const normalizeLayout=value=>normalizeCombatWorkspace(value,canvasConfig||undefined);
   const [saved,setSaved]=useState(()=>
@@ -75,7 +79,8 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
   const [frontWindow,setFrontWindow]=useState('');
   const [wide,setWide]=useState(false);
   const [sidebarExpanded,setSidebarExpanded]=useState(false);
-  const [selectedTools,setSelectedTools]=useState(gmCanvas?'core':'overview');
+  const [selectedTools,setSelectedTools]=useState(
+    playerCanvas?canvasConfig.categories[0]?.id||'character':gmCanvas?'core':'overview');
   const root=useRef(null),canvas=useRef(null),stage=useRef(null),gesture=useRef(null);
   const toolToggleRef=useRef(null);
   const cameraRef=useRef(camera),wheelTimer=useRef(null),wheelFrame=useRef(0);
@@ -84,7 +89,9 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
   const layout=saved;
   const panels=collectCombatPanels(children).filter(child=>
     React.isValidElement(child)&&panelIds.includes(child.props.id));
-  const visible=panels.filter(panel=>!layout.hidden.includes(panel.props.id));
+  const forced=new Set(forcedPanelIds.filter(id=>panelIds.includes(id)));
+  const visible=panels.filter(panel=>!layout.hidden.includes(panel.props.id)||
+    forced.has(panel.props.id));
   useEffect(()=>{
     setSaved(gmCanvas?normalizeLayout(layoutValue):readLayout(storageKey));
     setUndoStack([]);setRedoStack([]);
@@ -234,22 +241,23 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
     cancelAnimationFrame(gesture.current.frame);},[]);
   /** Gameplay state never enters the local geometry/history store. */
   const commit=(next,announce=false)=>{
-    if(!storageKey){setMessage('GM account or campaign context is unavailable.');return false;}
+    if(!canEditCanvas){setMessage('This dashboard can be customised only by its owner.');return false;}
+    if(!storageKey){setMessage('Dashboard account or character context is unavailable.');return false;}
     const normalized=normalizeLayout(next);
     if(gmCanvas){
       if(typeof onSaveLayout!=='function'){
-        setMessage('GM dashboard layout storage is not connected.');return false;
+        setMessage(canvasRole+' dashboard layout storage is not connected.');return false;
       }
       const previous=saved;
       setSaved(normalized);
       setMessage('');
       Promise.resolve().then(()=>onSaveLayout(normalized)).then(result=>{
         if(result?.ok===false){
-          setMessage(result.error||'GM dashboard layout could not be saved.');
+          setMessage(result.error||canvasRole+' dashboard layout could not be saved.');
           setSaved(current=>fingerprint(current)===fingerprint(normalized)?previous:current);
-        }else if(announce)setMessage('GM dashboard canvas saved.');
+        }else if(announce)setMessage(canvasRole+' dashboard canvas saved.');
       }).catch(error=>{
-        setMessage(error?.message||'GM dashboard layout could not be saved.');
+        setMessage(error?.message||canvasRole+' dashboard layout could not be saved.');
         setSaved(current=>fingerprint(current)===fingerprint(normalized)?previous:current);
       });
       return true;
@@ -261,6 +269,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
     return true;
   };
   const change=update=>{
+    if(!canEditCanvas)return;
     const next=normalizeLayout(update(layout));
     if(fingerprint(next)===fingerprint(layout))return;
     if(commit(next)){
@@ -270,12 +279,12 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
   };
   const setPreference=change;
   const undo=()=>{
-    if(!undoStack.length)return;
+    if(!canEditCanvas||!undoStack.length)return;
     const previous=undoStack[undoStack.length-1];
     if(commit(previous)){setUndoStack(undoStack.slice(0,-1));setRedoStack(rows=>[layout,...rows].slice(0,40));}
   };
   const redo=()=>{
-    if(!redoStack.length)return;
+    if(!canEditCanvas||!redoStack.length)return;
     const next=redoStack[0];
     if(commit(next)){setRedoStack(redoStack.slice(1));setUndoStack(rows=>[...rows,layout].slice(-40));}
   };
@@ -292,7 +301,8 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
   };
   const begin=(event,id,kind,edge='se')=>{
     if(!wide||gesture.current||spaceHeld.current||event.isPrimary===false||event.button!==0||
-      layout.canvasLocked||layout.locked.includes(id)||layout.hidden.includes(id))return;
+      !canEditCanvas||layout.canvasLocked||layout.locked.includes(id)||
+     (layout.hidden.includes(id)&&!forced.has(id)))return;
     const width=canvas.current?.clientWidth||0,initial=layout.freeform.positions[id];
     if(!width||!initial)return;
     const ids=kind==='move'?layout.groups.find(row=>row.includes(id))||[id]:[id];
@@ -408,7 +418,8 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
     };
   });
   const keyboard=(event,id)=>{
-    if(!wide||layout.canvasLocked||!event.altKey||!event.key.startsWith('Arrow'))return;
+    if(!canEditCanvas||!wide||layout.canvasLocked||!event.altKey||
+      !event.key.startsWith('Arrow'))return;
     const deltas={ArrowLeft:[-10,0],ArrowRight:[10,0],
       ArrowUp:[0,-10],ArrowDown:[0,10]};
     const delta=deltas[event.key],rect=layout.freeform.positions[id];
@@ -443,13 +454,16 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
       [...previous.hidden,id]
   }));
   return <section className={styles.centre} ref={root}
-    aria-label={gmCanvas?'GM Main Dashboard Canvas':'GM Combat Command Centre'}
-    data-testid={gmCanvas?'site-gm-main-canvas':'site-gm-combat-command-centre'}>
+    aria-label={playerCanvas?'Player Main Dashboard Canvas':
+      gmCanvas?'GM Main Dashboard Canvas':'GM Combat Command Centre'}
+    data-testid={playerCanvas?'site-player-main-canvas':
+      gmCanvas?'site-gm-main-canvas':'site-gm-combat-command-centre'}>
     <div className={styles.canvas} ref={canvas}
-      data-editing={wide&&!layout.canvasLocked}
+      data-editing={wide&&canEditCanvas&&!layout.canvasLocked}
       data-layout-mode={wide?'freeform':'stacked'}
       data-overview={wide&&camera.scale<.36}
-      aria-label={gmCanvas?'GM dashboard freeform canvas':'Combat freeform canvas'}
+      aria-label={playerCanvas?'Player dashboard freeform canvas':
+        gmCanvas?'GM dashboard freeform canvas':'Combat freeform canvas'}
       onPointerDown={startPan}
       onPointerMove={move} onPointerUp={end} onPointerCancel={end}
       onAuxClick={event=>{if(event.button===1)event.preventDefault();}}>
@@ -492,15 +506,15 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
               }
               begin(event,id,'move');
             }}>
-            <strong tabIndex={wide&&!isLocked&&!layout.canvasLocked?0:undefined}
+            <strong tabIndex={wide&&canEditCanvas&&!isLocked&&!layout.canvasLocked?0:undefined}
               role="button" aria-label={'Move '+label}
-              aria-disabled={isLocked||layout.canvasLocked}
+              aria-disabled={!canEditCanvas||isLocked||layout.canvasLocked}
               onKeyDown={event=>keyboard(event,id)}>
               {label}{grouped?' · Grouped':''}
             </strong>
             <div className={styles.windowActions}>
               <button type="button" aria-label={(isMinimised?'Restore ':'Minimise ')+label}
-                onClick={()=>minimize(id)}>{isMinimised?'Restore':'−'}</button>
+                disabled={!canEditCanvas} onClick={()=>minimize(id)}>{isMinimised?'Restore':'−'}</button>
               <button type="button" aria-label={(isFocused?'Return from ':'Focus on ')+label}
                 onClick={()=>focusWindow(id)}>{isFocused?'↩':'□'}</button>
               <details className={styles.options}>
@@ -508,7 +522,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
                 <div>
                   <label>Content size
                     <select aria-label={'Content size for '+label}
-                      value={layout.contentScale[id]??1}
+                      value={layout.contentScale[id]??1} disabled={!canEditCanvas}
                       onChange={event=>setPreference(previous=>({...previous,
                         contentScale:{...previous.contentScale,[id]:Number(event.target.value)}
                       }))}>
@@ -519,25 +533,26 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
                       <option value={1.5}>Extra large (150%)</option>
                     </select>
                   </label>
-                  <button type="button" onClick={()=>change(previous=>({...previous,
+                  <button type="button" disabled={!canEditCanvas}
+                    onClick={()=>change(previous=>({...previous,
                     locked:isLocked?previous.locked.filter(other=>other!==id):
                       [...previous.locked,id]
                   }))}>{isLocked?'Unlock window':'Lock window'}</button>
-                  <button type="button" disabled={isLocked}
+                  <button type="button" disabled={!canEditCanvas||isLocked}
                     onClick={()=>change(previous=>({...previous,
                       hidden:[...previous.hidden,id]
                     }))}>Hide window</button>
-                  <button type="button" disabled={isLocked}
+                  <button type="button" disabled={!canEditCanvas||isLocked}
                     onClick={()=>change(previous=>dockCombatWindow(previous,id,'left',canvasConfig||undefined))}>
                     Dock left</button>
-                  <button type="button" disabled={isLocked}
+                  <button type="button" disabled={!canEditCanvas||isLocked}
                     onClick={()=>change(previous=>dockCombatWindow(previous,id,'right',canvasConfig||undefined))}>
                     Dock right</button>
-                  {grouped?<button type="button"
+                  {grouped?<button type="button" disabled={!canEditCanvas}
                     onClick={()=>change(previous=>setCombatGroup(previous,id,'',canvasConfig||undefined))}>
                     Ungroup window</button>:null}
                   <label>Group with
-                    <select value="" disabled={isLocked}
+                    <select value="" disabled={!canEditCanvas||isLocked}
                       onChange={event=>change(previous=>setCombatGroup(previous,id,event.target.value,canvasConfig||undefined))}>
                       <option value="">Select window</option>
                       {panelIds.filter(other=>other!==id&&!hidden.includes(other))
@@ -562,7 +577,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
                 }):panel.props.children}
             </div>
           </div>
-          {wide&&!layout.canvasLocked&&!isLocked&&!isMinimised?
+          {wide&&canEditCanvas&&!layout.canvasLocked&&!isLocked&&!isMinimised?
             ['n','e','s','w','ne','nw','se','sw'].map(edge=>
               <button type="button" key={edge}
                 className={styles.resizeHandle}
@@ -576,7 +591,8 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
       })}
       </div>
       <div className={styles.canvasActions} role="toolbar"
-        aria-label={gmCanvas?'GM dashboard canvas controls':'Combat canvas controls'}>
+        aria-label={playerCanvas?'Player dashboard canvas controls':
+          gmCanvas?'GM dashboard canvas controls':'Combat canvas controls'}>
         <button type="button" ref={toolToggleRef} className={styles.iconButton}
           data-testid="site-combat-tools-toggle"
           aria-label={sidebarExpanded?
@@ -590,20 +606,20 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
         </button>
         <button type="button" className={styles.iconButton}
           aria-label="Undo canvas change" title="Undo canvas change"
-          disabled={!undoStack.length} onClick={undo}>
+          disabled={!canEditCanvas||!undoStack.length} onClick={undo}>
           <AsteriaIcon name="undo" size={19}/>
         </button>
         <button type="button" className={styles.iconButton}
           data-testid="site-combat-canvas-lock"
-          aria-label={layout.canvasLocked?'Unlock Canvas':'Lock Canvas'}
-          title={layout.canvasLocked?'Unlock Canvas':'Lock Canvas'}
-          aria-pressed={layout.canvasLocked}
+          aria-label={!canEditCanvas?'Read-only Canvas':layout.canvasLocked?'Unlock Canvas':'Lock Canvas'}
+          title={!canEditCanvas?'Read-only Canvas':layout.canvasLocked?'Unlock Canvas':'Lock Canvas'}
+          aria-pressed={layout.canvasLocked} disabled={!canEditCanvas}
           onClick={()=>setPreference(previous=>({...previous,canvasLocked:!previous.canvasLocked}))}>
           <AsteriaIcon name={layout.canvasLocked?'lock':'unlock'} size={19}/>
         </button>
         <button type="button" className={styles.iconButton}
           aria-label="Redo canvas change" title="Redo canvas change"
-          disabled={!redoStack.length} onClick={redo}>
+          disabled={!canEditCanvas||!redoStack.length} onClick={redo}>
           <AsteriaIcon name="redo" size={19}/>
         </button>
         {wide?<>
@@ -631,10 +647,12 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
         </>:null}
       </div>
       {gmCanvas?<div className={styles.manageActions} role="toolbar"
-        aria-label="GM dashboard window management">
+        aria-label={canvasRole+' dashboard window management'}>
         <button type="button" className={styles.iconButton}
-          data-testid="gm-canvas-add-window" title="Add or remove GM dashboard windows"
-          aria-label="Add or remove GM dashboard windows"
+          data-testid={playerCanvas?'player-canvas-add-window':'gm-canvas-add-window'}
+          title={'Add or remove '+canvasRole+' dashboard windows'}
+          aria-label={'Add or remove '+canvasRole+' dashboard windows'}
+          disabled={!canEditCanvas}
           aria-expanded={sidebarExpanded}
           onClick={()=>{setSelectedTools('core');setSidebarExpanded(true);}}>
           <AsteriaIcon name="plus" size={20}/>
@@ -644,9 +662,11 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
         aria-label={gmCanvas?'Dismiss Dashboard Windows':'Dismiss Combat Tools'}
         onClick={()=>setSidebarExpanded(false)}/>:null}
       <aside id="asteria-combat-tool-list" hidden={!sidebarExpanded}
-        className={styles.toolSidebar} aria-label={gmCanvas?'GM Dashboard Window Library':'Combat Command Centre tools'}>
+        className={styles.toolSidebar} aria-label={playerCanvas?'Player Dashboard Window Library':
+          gmCanvas?'GM Dashboard Window Library':'Combat Command Centre tools'}>
         <header className={styles.drawerHeader}>
-          <div><h4>{gmCanvas?'GM Dashboard Windows':'Combat Tools'}</h4>
+          <div><h4>{playerCanvas?'Player Dashboard Windows':
+            gmCanvas?'GM Dashboard Windows':'Combat Tools'}</h4>
             <span>{visible.length} of {panels.length} windows visible</span></div>
           <button type="button" className={styles.iconButton}
             aria-label={gmCanvas?'Close Dashboard Windows menu':'Close Combat Tools menu'}
@@ -663,9 +683,10 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
             </button>
             {selectedTools===group.id?<div className={styles.toolItems}>
               {group.panels.map(id=>{
-                const active=!hidden.includes(id);
+                const active=!hidden.includes(id)||forced.has(id);
                 return <button type="button" key={id} className={styles.toolItem}
-                  aria-pressed={active} disabled={active&&visible.length<=1}
+                  aria-pressed={active} disabled={!canEditCanvas||forced.has(id)||
+                  (active&&visible.length<=1)}
                   onClick={()=>togglePanel(id)}>
                   <span aria-hidden="true">{active?'☑':'☐'}</span>{panelLabels[id]||id}
                 </button>;
@@ -673,16 +694,18 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
             </div>:null}
           </section>)}
           <button type="button" className={styles.showAll}
-            disabled={!hidden.length||!storageKey}
+            disabled={!canEditCanvas||!hidden.length||!storageKey}
             onClick={()=>setPreference(previous=>({...previous,hidden:[]}))}>
             Show all panels ({visible.length}/{panels.length})
           </button>
           <details className={styles.drawerSettings}>
             <summary>Canvas Preferences</summary>
             <label><input type="checkbox" checked={layout.freeform.snap}
+               disabled={!canEditCanvas}
               onChange={event=>setPreference(previous=>({...previous,freeform:{
                 ...previous.freeform,snap:event.target.checked}}))}/> Snap windows to grid</label>
             <label><input type="checkbox" checked={layout.freeform.allowOverlap}
+               disabled={!canEditCanvas}
               onChange={event=>setPreference(previous=>({...previous,freeform:{
                 ...previous.freeform,allowOverlap:event.target.checked}}))}/> Allow window overlap</label>
             <p className={styles.sidebarHint}>

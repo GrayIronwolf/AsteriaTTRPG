@@ -1,10 +1,8 @@
 import { ThemeControls } from '../components/ThemeControls.jsx';
-import { DashboardLayoutEditor } from '../components/DashboardCustomisation.jsx';
 import React, { useMemo, useRef, useState } from 'react';
 import { EmptyState, Modal, Panel, StatusPill } from '../components/WorkspaceUI.jsx';
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
 import { OPTIONAL_INFORMATION_FIELDS, normalizeDashboardPreferences } from '../state/liveWorkspaceModel.mjs';
-import { visibleDashboardPanels } from '../state/dashboardLayoutModel.mjs';
 
 const INFORMATION_LABELS = {
   portrait:'Character portrait', title:'Displayed player title', party:'Adventure Party membership',
@@ -101,7 +99,7 @@ export function GalleryTab({ campaignId, character, editable }) {
   </div>;
 }
 
-export function DashboardSettingsTab({ campaignId, character, editable }) {
+export function DashboardSettingsTab({ campaignId, character, editable, onNavigate }) {
   // Live HP/MP/combat updates replace the character snapshot frequently.
   // Only an actual settings change should resynchronise this editing draft.
   const savedPreferencesKey=JSON.stringify(character.dashboardPreferences||{});
@@ -124,20 +122,6 @@ export function DashboardSettingsTab({ campaignId, character, editable }) {
   },[saved,scope]);
   const titles=(Array.isArray(character.titles)?character.titles:[]).map((title,index)=>typeof title==='string'?{id:`title-${index}`,text:title}:title);
   const edit=change=>{dirty.current=true;revision.current++;setPreferences(change);};
-  const updateLayout=update=>edit(current=>({...current,dashboardLayout:typeof update==='function'?update(current.dashboardLayout):update}));
-  const applyLayout=async layout=>{
-    if(!editable)return {ok:false,error:'This dashboard cannot be edited.'};
-    const snapshot={...preferences,dashboardLayout:layout};
-    const currentScope=scope;
-    action.setMessage('Saving dashboard layout...');
-    try{
-      const result=await firebaseService.updateDashboardPreferences(campaignId,character.id,snapshot);
-      if(scopeRef.current!==currentScope)return {ok:false,error:'Account or character changed while saving.'};
-      if(result?.ok){setPreferences(snapshot);dirty.current=false;action.setMessage('Dashboard layout saved.');}
-      else action.setMessage(result?.error||'Dashboard layout could not be saved.');
-      return result;
-    }catch(error){action.setMessage(error.message||String(error));return {ok:false,error:error.message||String(error)};}
-  };
   const toggleInformation=key=>edit(current=>({...current,hiddenInformationFields:current.hiddenInformationFields.includes(key)?current.hiddenInformationFields.filter(value=>value!==key):[...current.hiddenInformationFields,key]}));
   const save=async()=>{
     if(action.busy||!editable)return;
@@ -146,9 +130,19 @@ export function DashboardSettingsTab({ campaignId, character, editable }) {
     if(result?.ok&&scopeRef.current===savedScope&&revision.current===savedRevision)dirty.current=false;
   };
   return <div className="react-settings-workspace"><ThemeControls/>
-    <Panel title="Dashboard Customisation" action={<StatusPill>{visibleDashboardPanels(preferences.dashboardLayout,'player').length} panels</StatusPill>}>
-      <DashboardLayoutEditor role="player" layout={preferences.dashboardLayout} onChange={updateLayout} onApply={applyLayout} disabled={!editable}/>
-      <p className="react-help">Each character has its own layout. Apply Changes inside the editor saves the selected screen-size arrangement immediately.</p>
+    <Panel title="Dashboard Canvas" action={<StatusPill>{
+      preferences.dashboardLayout.playerCanvas?
+        Object.keys(preferences.dashboardLayout.playerCanvas.freeform.positions).filter(
+          id=>!preferences.dashboardLayout.playerCanvas.hidden.includes(id)).length:0
+    } windows</StatusPill>}>
+      <p className="react-help">Your Player Main Dashboard now uses a freeform canvas.
+        Each character retains its own arrangement. Use + in the top-left to
+        add or remove windows, drag their headers to move them, resize from the
+        edges, and use the canvas toolbar to undo, redo, lock and fit all.</p>
+      <button type="button" onClick={()=>onNavigate?.('dashboard')}>
+        Open Player Dashboard Canvas
+      </button>
+      {!editable?<p className="react-help">Only the character owner can change the canvas layout.</p>:null}
     </Panel>
     <Panel title="Sidebar Identity">
       <label>Displayed Title<select disabled={!editable} value={preferences.visibleTitleId} onChange={event=>edit(current=>({...current,visibleTitleId:event.target.value}))}><option value="">No player title</option>{titles.map(title=><option key={title.id} value={title.id}>{title.text}</option>)}</select></label>

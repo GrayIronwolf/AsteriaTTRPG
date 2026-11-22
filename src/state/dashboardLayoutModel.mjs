@@ -164,6 +164,90 @@ export function normalizeGMCanvasLayout(raw,oldGrid=null){
 }
 
 // Twelve-column dashboard: three horizontal units; height is minimum only.
+/** Player Main uses the same canvas geometry/interaction engine as GM and
+ * Combat. The original registry remains the permission-safe panel allowlist. */
+export const PLAYER_CANVAS_DEFAULT_IDS=Object.freeze([
+  ...DASHBOARD_PANEL_REGISTRY.player.filter(item=>!item.optional).map(item=>item.id),
+  'activityLog'
+]);
+const PLAYER_CANVAS_DEFAULT_POSITIONS=Object.freeze({
+  armour:{x:0,y:0,w:490,h:510},
+  weapons:{x:510,y:0,w:490,h:340},
+  quick:{x:510,y:360,w:490,h:350},
+  talents:{x:0,y:530,w:490,h:480},
+  spells:{x:510,y:730,w:490,h:500},
+  skills:{x:0,y:1030,w:490,h:420},
+  conditions:{x:510,y:1250,w:490,h:400},
+  effects:{x:0,y:1470,w:490,h:370},
+  specialDamage:{x:510,y:1670,w:490,h:330},
+  rest:{x:0,y:1860,w:490,h:380},
+  currency:{x:510,y:2020,w:490,h:350},
+  quests:{x:0,y:2260,w:490,h:360},
+  journal:{x:510,y:2390,w:490,h:360},
+  party:{x:0,y:2640,w:490,h:400},
+  activityLog:{x:510,y:2770,w:490,h:370}
+});
+const playerCanvasIds=[...PLAYER_CANVAS_DEFAULT_IDS,
+  ...DASHBOARD_PANEL_REGISTRY.player.filter(item=>item.optional).map(item=>item.id)];
+const playerOptional=playerCanvasIds.filter(id=>!PLAYER_CANVAS_DEFAULT_IDS.includes(id));
+const playerCategories=['Character','Equipment','Abilities','Combat','Adventures',
+  'Social','Focus Panels','Shortcuts'].map(category=>({
+    id:category.toLowerCase().replace(/[^a-z0-9]+/g,'-'),
+    label:category==='Focus Panels'?'Quick Views':category==='Shortcuts'?'Page Shortcuts':category,
+    panels:[
+      ...DASHBOARD_PANEL_REGISTRY.player.filter(item=>item.category===category).map(item=>item.id),
+      ...(category==='Social'?['activityLog']:[])
+    ]
+  }));
+export const PLAYER_DASHBOARD_CANVAS_CONFIG=Object.freeze({
+  kind:'player',
+  ids:Object.freeze(playerCanvasIds),
+  labels:Object.freeze({
+    ...Object.fromEntries(DASHBOARD_PANEL_REGISTRY.player.map(item=>[item.id,item.label])),
+    activityLog:'Action / Resource Log'
+  }),
+  defaultHidden:Object.freeze(playerOptional),
+  defaultPositions:Object.freeze({
+    ...PLAYER_CANVAS_DEFAULT_POSITIONS,
+    ...Object.fromEntries(playerOptional.map((id,i)=>[id,{
+      x:i%2?510:0,y:3260+Math.floor(i/2)*230,w:490,h:350
+    }]))
+  }),
+  categories:Object.freeze(playerCategories)
+});
+export function defaultPlayerCanvasLayout(){
+  return defaultCombatWorkspaceLayout(PLAYER_DASHBOARD_CANVAS_CONFIG);
+}
+export function normalizePlayerCanvasLayout(raw,oldGrid=null){
+  if(raw&&typeof raw==='object'&&!Array.isArray(raw))
+    return normalizeCombatWorkspace(raw,PLAYER_DASHBOARD_CANVAS_CONFIG);
+  const base=defaultPlayerCanvasLayout();
+  if(!oldGrid||typeof oldGrid!=='object')return base;
+  // One-time conversion keeps explicitly hidden player windows, legacy lock
+  // choices and desktop placements. The old grid is not rendered afterwards.
+  const legacyHidden=Array.isArray(oldGrid.hidden)?oldGrid.hidden:[];
+  const hidden=Array.isArray(oldGrid.hidden)?legacyHidden:base.hidden;
+  const locked=(Array.isArray(oldGrid.lockedPositions)?oldGrid.lockedPositions:[])
+    .filter(id=>PLAYER_DASHBOARD_CANVAS_CONFIG.ids.includes(id));
+  const positions={...base.freeform.positions};
+  if(oldGrid.mode==='custom'&&oldGrid.placements&&typeof oldGrid.placements==='object'){
+    for(const id of PLAYER_DASHBOARD_CANVAS_CONFIG.ids){
+      const rect=oldGrid.placements[id];
+      if(!rect||!Number.isFinite(rect.x)||!Number.isFinite(rect.y))continue;
+      positions[id]={
+        x:Math.round(rect.x*1000/12),
+        y:Math.round(rect.y*115),
+        w:Math.max(140,Math.round((rect.w||4)*1000/12)),
+        h:Math.max(230,Math.round((rect.h||2)*190))
+      };
+    }
+  }
+  return normalizeCombatWorkspace({...base,
+    freeform:{...base.freeform,positions},
+    hidden,locked
+  },PLAYER_DASHBOARD_CANVAS_CONFIG);
+}
+
 export const DASHBOARD_SIZE_COLUMNS = Object.freeze({'3x3':4,'6x3':8,'3x6':4,'9x3':12});
 export const DASHBOARD_SIZE_ROWS = Object.freeze({'3x3':1,'6x3':1,'3x6':2,'9x3':1});
 export const DASHBOARD_BACKGROUND_STYLES = Object.freeze(['obsidian','slate','arcane']);
@@ -207,7 +291,8 @@ export function defaultDashboardLayout(role='player') {
     lockedPositions:[],
     backgroundStyle:'obsidian',
     panelBackgrounds:{},
-    ...(role==='gm'?{gmCanvas:defaultGMCanvasLayout()}:{})
+    ...(role==='gm'?{gmCanvas:defaultGMCanvasLayout()}:
+      {playerCanvas:defaultPlayerCanvasLayout()})
   };
 }
 export function normalizeDashboardLayout(value,role='player') {
@@ -287,7 +372,8 @@ export function normalizeDashboardLayout(value,role='player') {
     lockedPositions,
     backgroundStyle,
     panelBackgrounds,
-    ...(scope==='gm'?{gmCanvas:normalizeGMCanvasLayout(value.gmCanvas,value)}:{}),
+    ...(scope==='gm'?{gmCanvas:normalizeGMCanvasLayout(value.gmCanvas,value)}:
+      {playerCanvas:normalizePlayerCanvasLayout(value.playerCanvas,value)}),
     ...(Object.keys(viewportLayouts).length?{viewportLayouts}:{}),
     ...(scope==='gm'&&focusModes.length?{focusModes}:{}),
     ...(scope==='gm'&&focusHome?{focusHome}:{}),
@@ -319,7 +405,9 @@ export function layoutFromPlayerPreferences(preferences={}) {
   const legacy=safeArray(source.hiddenPanels);
   const mapping={weapons:['armour','weapons','quick'],talents:['talents'],spells:['spells'],skills:['skills'],conditions:['conditions']};
   for(const group of legacy)for(const panel of mapping[group]||[]) layout.hidden.push(panel);
-  return {...layout,hidden:unique(layout.hidden)};
+  const hidden=unique(layout.hidden);
+  return {...layout,hidden,
+    playerCanvas:normalizePlayerCanvasLayout(null,{...layout,hidden})};
 }
 export function visibleDashboardPanels(layout,role='player'){
   const normalized=normalizeDashboardLayout(layout,role);

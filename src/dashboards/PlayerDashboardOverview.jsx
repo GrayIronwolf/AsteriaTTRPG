@@ -9,7 +9,11 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { DashboardPanel, Modal, ResourceBar, StatusPill, Tooltip } from '../components/WorkspaceUI.jsx';
 import { AsteriaIcon } from '../components/AsteriaIcons.jsx';
 import { CurrencyPanel } from '../components/DashboardInformation.jsx';
-import { DashboardLayoutWorkspace } from '../components/DashboardCustomisation.jsx';
+import {CanvasWorkspace,CombatCommandPanel} from './combat/CombatCommandCentre.jsx';
+import {
+  PLAYER_DASHBOARD_CANVAS_CONFIG,normalizePlayerCanvasLayout
+} from '../state/dashboardLayoutModel.mjs';
+import {ActivityLog} from './CharacterWorkspaceTabs.jsx';
 import { PlayerCombatOverview, PlayerExplorationOverview, PlayerQuestTracker, PlayerInventoryOverview } from './DashboardFocusPanels.jsx';
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
 import { normalizeDashboardPreferences, parseResourceCost } from '../state/liveWorkspaceModel.mjs';
@@ -295,8 +299,20 @@ export function PlayerDashboardOverview({ campaignId, campaign, character, chara
     () => normalizeDashboardPreferences({dashboardPreferences:character.dashboardPreferences}),
     [character.dashboardPreferences]
   );
-  const visible = key => !preferences.hiddenPanels.includes(key);
-  const order = key => Math.max(0, preferences.panelOrder.indexOf(key)) * 10;
+  const saveQueue=useRef(Promise.resolve());
+  const saveCanvas=nextCanvas=>{
+    if(!canEditLayout)return Promise.resolve({ok:false,error:'Only the character owner can edit this canvas.'});
+    const nextLayout={...preferences.dashboardLayout,
+      playerCanvas:normalizePlayerCanvasLayout(nextCanvas)};
+    // Retain the existing owned-character preference write and permission
+    // checks. A serial queue avoids racing edits when moving several windows.
+    const write=saveQueue.current.then(()=>
+      firebaseService.updateDashboardPreferences(campaignId,character.id,{
+        dashboardLayout:nextLayout
+      }));
+    saveQueue.current=write.catch(()=>{});
+    return write;
+  };
   const summary = id => <SummaryPanels character={character} characters={characters} partyWorkspace={partyWorkspace} onNavigate={onNavigate} only={id}/>;
   const shortcut = (title,description,tab) => <DashboardPanel icon="quick" title={title} compact><p className="react-help">{description}</p><button type="button" onClick={()=>onNavigate(tab)}>Open {title}</button></DashboardPanel>;
   const renderPanel=id=>{
@@ -322,29 +338,32 @@ export function PlayerDashboardOverview({ campaignId, campaign, character, chara
       case 'shortcutCharacter':return shortcut('Character Sheet','Review your character details and progression.','character');
       case 'shortcutSpells':return shortcut('Spellbook','Open known spells and casting details.','spells');
       case 'shortcutGallery':return shortcut('Gallery','Browse your character artwork.','gallery');
-      case 'shortcutSettings':return shortcut('Dashboard Settings','Open full dashboard customisation settings.','settings');
+      case 'shortcutSettings':return shortcut('Dashboard Settings','Open player canvas settings.','settings');
+      case 'activityLog':return <ActivityLog character={character}/>;
       default:return null;
     }
   };
-  const defaultContent=<>
-    <div className="react-player-overview-grid">
-      {visible('weapons') ? <><ArmourPanel character={character} onNavigate={onNavigate} style={{ order:order('weapons') }} /><WeaponsPanel character={character} onNavigate={onNavigate} style={{ order:order('weapons') + 1 }} /><QuickItemsPanel campaignId={campaignId} character={character} editable={editable} busy={busy} onNavigate={onNavigate} run={run} style={{ order:order('weapons') + 2 }} /></> : null}
-      {visible('talents')||combat.selector==='talent' ? <TalentSummary combat={combat} talents={talents} campaignId={campaignId} character={character} editable={editable} onNavigate={onNavigate} style={{ order:order('talents') }} /> : null}
-      {visible('spells')||combat.selector==='spell' ? <SpellSummary combat={combat} campaignId={campaignId} character={character} spells={spells} editable={editable} busy={busy} onNavigate={onNavigate} run={run} style={{ order:order('spells') }} /> : null}
-      {visible('skills')||['skill','technique'].includes(combat.selector) ? <SkillsSummary combat={combat} skills={skills} onNavigate={onNavigate} style={{ order:order('skills') }} /> : null}
-      {visible('conditions') ? <ConditionsPanel campaignId={campaignId} character={character} isGM={isGM} editable={isGM?sessionEditable:editable} clock={clock} style={{ order:order('conditions') }} /> : null}
-      <EffectsSummary character={character} clock={clock} style={{order:order('conditions')+4}}/>
-      <SpecialDamagePanel character={character} style={{ order:order('conditions') + 1 }} />
-      <RestRecoveryPanel campaignId={campaignId} character={character} editable={editable} busy={busy} run={run} style={{ order:order('conditions') + 2 }} />
-      {!preferences.hiddenInformationFields.includes('currency') ? <CurrencyPanel character={character} campaign={campaign} editable={editable} onCurrencyChange={(currency, amount) => run(() => firebaseService.updateCurrency(campaignId, character.id, currency, amount, { source:'Character Dashboard Currency' }))} className="react-overview-currency" style={{ order:order('conditions') + 3 }} /> : null}
-    </div>
-    <SummaryPanels character={character} characters={characters} partyWorkspace={partyWorkspace} onNavigate={onNavigate} />
-  </>;
+  // Combat selectors are visibility overrides only. They do not alter the
+  // player's saved hidden-window preferences or create duplicate panels.
+  const forcedPanels=combat?.active?(
+    combat.selector==='talent'?['talents']:
+    combat.selector==='spell'?['spells']:
+    ['skill','technique'].includes(combat.selector)?['skills']:[]
+  ):[];
   return <>
-    <DashboardLayoutWorkspace key={character.id} role="player" layout={preferences.dashboardLayout} canEdit={canEditLayout}
-      forcedPanels={combat?.active ? (combat.selector==='talent'?['talents']:combat.selector==='spell'?['spells']:['skill','technique'].includes(combat.selector)?['skills']:[]) : []}
-      title="Player Dashboard" onSave={layout=>firebaseService.updateDashboardPreferences(campaignId,character.id,{dashboardLayout:layout})}
-      renderPanel={renderPanel} defaultContent={defaultContent}/>
+    <CanvasWorkspace key={character.id+':player-main-canvas'}
+      uid={firebaseService.currentUser()?.uid||''}
+      campaignId={campaignId||'unassigned'}
+      canvasScopeId={character.id}
+      canvasConfig={PLAYER_DASHBOARD_CANVAS_CONFIG}
+      layoutValue={preferences.dashboardLayout.playerCanvas}
+      onSaveLayout={saveCanvas}
+      canEditCanvas={canEditLayout}
+      forcedPanelIds={forcedPanels}>
+      {PLAYER_DASHBOARD_CANVAS_CONFIG.ids.map(id=><CombatCommandPanel id={id} key={id}>
+        {renderPanel(id)}
+      </CombatCommandPanel>)}
+    </CanvasWorkspace>
     <p className="react-action-message" role="status">{message}</p>
   </>;
 }

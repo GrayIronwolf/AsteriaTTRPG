@@ -45,7 +45,8 @@ test('Tablet panel reflow keeps DOM order, desktop saved placements and fixed re
  }
  const player=read('src/dashboards/PlayerDashboardOverview.jsx');
  const gm=read('src/dashboards/GMDashboard.jsx');
- assert.match(player,/DashboardLayoutWorkspace/);
+ assert.match(player,/<CanvasWorkspace/);
+ assert.doesNotMatch(player,/DashboardLayoutWorkspace/);
  assert.match(gm,/<CanvasWorkspace key=\{campaignId/);
  assert.doesNotMatch(gm,/DashboardLayoutWorkspace/);
 });

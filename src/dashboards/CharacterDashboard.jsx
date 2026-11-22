@@ -34,7 +34,6 @@ import { PlayerItemRequestCenter } from './PlayerItemExchange.jsx';
 import { PlayerDashboardOverview } from './PlayerDashboardOverview.jsx';
 import { CombatDashboardLayout, useCombatPanel } from './CombatPanel.jsx';
 import {
-  ActivityLog,
   CharacterTab,
   JournalTab,
   PartyTab,
@@ -204,7 +203,7 @@ function CharacterDashboardContent({campaignId,characterId,live}) {
     {campaignId?<PlayerRecordingNotice key={campaignId} campaignId={campaignId}/>:null}
     <DashboardNavigation role="player" storageScope={characterId+":"+uid} tabs={tabs} active={activeTab} onChange={navigate} ariaLabel="Character Dashboard menu" />
     <CombatDashboardLayout combat={combat}>
-    {activeTab === 'dashboard' ? <><PlayerDashboardOverview combat={combat} isGM={window.AsteriaCharacterAccess.isGM(live.campaign,uid)} sessionEditable={live.session?.editable} clock={{encounter:live.encounter,now:live.clock}} campaignId={campaignId} campaign={live.campaign || {}} character={character} characters={live.characters} partyWorkspace={live.partyWorkspace} editable={editable} canEditLayout={isOwner} onNavigate={navigate} /><ActivityLog character={character} /></> : null}
+    {activeTab === 'dashboard' ? <><PlayerDashboardOverview combat={combat} isGM={window.AsteriaCharacterAccess.isGM(live.campaign,uid)} sessionEditable={live.session?.editable} clock={{encounter:live.encounter,now:live.clock}} campaignId={campaignId} campaign={live.campaign || {}} character={character} characters={live.characters} partyWorkspace={live.partyWorkspace} editable={editable} canEditLayout={isOwner} onNavigate={navigate} /></> : null}
     {activeTab === 'character' ? <CharacterTab campaignId={campaignId} character={character} editable={editable} /> : null}
     {activeTab === 'talents' ? <TalentsTab campaignId={campaignId} character={character} editable={editable} characters={live.characters} encounter={live.encounter} /> : null}
     {activeTab === 'skills' ? <SkillsTab clock={{encounter:live.encounter,now:live.clock}} campaignId={campaignId} character={character} editable={editable} /> : null}
@@ -227,7 +226,8 @@ function CharacterDashboardContent({campaignId,characterId,live}) {
     {activeTab === 'session-library' && campaignId ? <PlayerSessionLibraryWorkspace campaignId={campaignId}/> : null}
     {activeTab === 'soundboard' && campaignId ? <PlayerCampaignAmbience campaignId={campaignId}/> : null}
     {activeTab === 'session-recordings' && campaignId ? <PlayerSessionRecordingWorkspace campaignId={campaignId}/> : null}
-    {activeTab === 'settings' ? <DashboardSettingsTab campaignId={campaignId} character={character} editable={isOwner} /> : null}
+    {activeTab === 'settings' ? <DashboardSettingsTab campaignId={campaignId} character={character} editable={isOwner}
+      onNavigate={navigate} /> : null}
     {campaignId&&isOwner?<PlayerUniversalCheckPopup campaignId={campaignId} characterId={characterId}/>:null}
     {campaignId?<PlayerItemRequestCenter campaignId={campaignId} character={character} characters={live.characters} ecosystem={live.itemEcosystem} editable={editable} />:null}
     </CombatDashboardLayout>
