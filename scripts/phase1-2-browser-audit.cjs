@@ -176,7 +176,7 @@ async function metrics(page) {
   await scenario('08-gm-combat-command-centre',{width:1440},async p=>{
     await gm(p);
     await p.getByTestId('asteria-gm-hybrid-menu').getByRole('button',{name:'Combat',exact:true}).click();
-    await p.getByRole('button',{name:'Open Combat Command Centre',exact:true}).click();
+    await p.getByTestId('asteria-dashboard-card-dropdown').getByRole('button',{name:'Open Combat Command Centre',exact:true}).click();
     await p.locator('[data-testid="site-gm-combat"]').waitFor();
     await p.locator('[data-testid="site-gm-combat-command-centre"]').waitFor();
     await p.getByText('Prepared Encounters',{exact:true}).first().waitFor();
