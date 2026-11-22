@@ -7,6 +7,7 @@ on:
       - 'src/dashboards/combat/**'
       - 'src/dashboards/GMDashboard.jsx'
       - 'src/dashboards/CombatPanel.jsx'
+      - 'src/devFixtures.js'
       - 'src/styles/combat.css'
       - 'src/state/combatProgressionCore.mjs'
       - '.github/workflows/build-combat-test-assets.yml'

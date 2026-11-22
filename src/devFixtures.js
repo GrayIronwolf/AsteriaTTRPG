@@ -312,6 +312,16 @@ export function installDevFixtures() {
     subscribePartyChat: (_campaignId, callback) => subscribe('partyChat', callback),
     subscribeCampaignItemEcosystem: (_campaignId, callback) => subscribe('itemEcosystem', callback),
     subscribePartyLoot: (_campaignId,callback) => subscribe('partyLoot',callback),
+    // The isolated player Inventory and Lore tabs subscribe to these collections.
+    // Return empty read-only snapshots: no production Firebase connection or writes.
+    subscribeMerchantRelationships: (_campaignId,callback) => {
+      queueMicrotask(()=>callback([]));
+      return ()=>{};
+    },
+    subscribeItemDiscoveries: (_campaignId,callback) => {
+      queueMicrotask(()=>callback([]));
+      return ()=>{};
+    },
     // Read-only defaults for dashboard notifications in isolated browser tests.
     // These mock subscriptions never contact Firebase or change production data.
     subscribeUniversalChecks: (_campaignId,callback) => {
