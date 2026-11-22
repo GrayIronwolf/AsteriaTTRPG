@@ -453,8 +453,10 @@ export function CombatCommandCentre({uid,campaignId,children}){
       data-layout-mode={wide?'freeform':'stacked'}
       aria-label="Combat freeform canvas"
       onPointerDown={startPan}
-      onPointerMove={move} onPointerUp={end} onPointerCancel={end}
-      onLostPointerCapture={end}>
+      onPointerMove={move} onPointerUp={end} onPointerCancel={end}>
+      {/* Pointer capture is released explicitly at the end of each gesture.
+          A delayed lostpointercapture from a previous mouse drag can share the
+          next drag's pointerId; treating it as an end event cancels that drag. */}
       <div ref={stage} className={styles.stage+(maximised?' '+styles.stageMaximised:'')}
         data-stage="combat-canvas-stage"
         style={{'--combat-canvas-height':boundsHeight(layout.freeform,
