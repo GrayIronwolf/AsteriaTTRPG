@@ -234,7 +234,7 @@ async function metrics(page) {
       'The Combat Tools drawer should start closed');
     await p.screenshot({path:path.join(root,'08-gm-combat-command-centre.png'),fullPage:true});
     const panels=await p.locator('[data-combat-panel]').count();
-    assert.equal(panels,13,'All 13 combat systems should appear in a new workspace');
+    assert.equal(panels,14,'All 13 combat systems and the GM Player Resources window must be present');
     const appearance=await p.locator('[data-combat-panel="controls"]').evaluate(panel=>{
       const shell=getComputedStyle(panel),bar=getComputedStyle(panel.querySelector('header'));
       const colour=value=>value.replaceAll(' ','');
@@ -424,7 +424,7 @@ async function metrics(page) {
     await p.getByTestId('asteria-dashboard-card-dropdown').getByRole('button',{name:'Open Combat Command Centre',exact:true}).click();
     const windows=p.locator('[data-combat-panel]');
     await windows.first().waitFor();
-    assert.equal(await windows.count(),13,'Mobile combat windows disappeared');
+    assert.equal(await windows.count(),14,'Mobile combat windows or GM resources disappeared');
     const layout=await p.locator('[data-testid="site-gm-combat-command-centre"]').evaluate(el=>({
       mode:el.querySelector('[data-layout-mode]')?.dataset.layoutMode,
       panels:[...el.querySelectorAll('[data-combat-panel]')].slice(0,3).map(w=>({
@@ -438,6 +438,69 @@ async function metrics(page) {
     assert.ok(layout.scrollWidth<=layout.viewport,
       'Combat workspace causes horizontal overflow: '+JSON.stringify(layout));
     await p.screenshot({path:path.join(root,'09-gm-combat-mobile.png'),fullPage:true});
+  });
+  await scenario('10-gm-combat-camera-and-player-resources',{width:1440,height:900},async p=>{
+    await gm(p);
+    await p.getByTestId('asteria-gm-hybrid-menu')
+      .getByRole('button',{name:'Combat',exact:true}).click();
+    await p.getByTestId('asteria-dashboard-card-dropdown')
+      .getByRole('button',{name:'Open Combat Command Centre',exact:true}).click();
+    const canvas=p.locator('[aria-label="Combat freeform canvas"]');
+    await canvas.waitFor();
+    assert.equal(await p.getByTestId('gm-player-resources-strip').count(),0,
+      'Combat must replace the fixed GM resources strip instead of duplicating it');
+    const party=p.getByTestId('gm-combat-party-resources');
+    await party.waitFor();
+    const roster=party.locator('[data-resource-character]');
+    assert.ok(await roster.count()>=2,'Live GM party cards must appear');
+    assert.ok(await roster.first().locator('.react-party-card-portrait').count()===1,
+      'Each resources card must include a portrait');
+    assert.ok(await party.getByRole('button',{name:/Reorder/}).count()>=2,
+      'Cards need independent three-line reorder handles');
+    const originalIds=await roster.evaluateAll(nodes=>nodes.map(node=>node.dataset.resourceCharacter));
+    await party.getByRole('button',{name:/Reorder/}).first().press('Alt+ArrowDown');
+    const changedIds=await roster.evaluateAll(nodes=>nodes.map(node=>node.dataset.resourceCharacter));
+    assert.notDeepEqual(changedIds,originalIds,
+      'The card handle must reorder live character cards without dragging the window');
+    const controls=p.getByTestId('combat-drag-header-controls');
+    const positionBefore=await p.locator('[data-combat-panel="controls"]')
+      .evaluate(el=>[el.style.getPropertyValue('--combat-x'),el.style.getPropertyValue('--combat-y')]);
+    await controls.dblclick({position:{x:34,y:20}});
+    const returnFocus=p.getByRole('button',{name:'Return from Encounter Controls'});
+    await returnFocus.waitFor();
+    await returnFocus.click();
+    const positionAfter=await p.locator('[data-combat-panel="controls"]')
+      .evaluate(el=>[el.style.getPropertyValue('--combat-x'),el.style.getPropertyValue('--combat-y')]);
+    assert.deepEqual(positionAfter,positionBefore,
+      'Double-click focus must not modify saved window coordinates');
+    const canvasRect=await canvas.boundingBox();
+    const beforeScroll=await p.evaluate(()=>window.scrollY);
+    await p.mouse.move(canvasRect.x+canvasRect.width-18,canvasRect.y+canvasRect.height/2);
+    await p.mouse.wheel(0,-120);
+    assert.equal(await p.evaluate(()=>window.scrollY),beforeScroll,
+      'Zooming inside the canvas must not move the website page');
+    await p.getByTestId('site-combat-fit-all').click();
+    await party.locator('[data-resource-character]').first().dblclick({position:{x:80,y:40}});
+    await p.getByTestId('gm-canvas-character-dashboard').waitFor();
+    assert.ok(await p.getByTestId('gm-canvas-character-dashboard')
+      .locator('.react-character-dashboard').count()===1,
+      'Overlay must mount the real Player Dashboard, not a replacement preview');
+    await p.getByRole('button',{name:'Close dialog'}).click();
+    assert.equal(await p.getByTestId('gm-canvas-character-dashboard').count(),0,
+      'Close should restore the workspace and remove the overlay');
+    await p.reload({waitUntil:'domcontentloaded'});
+    await p.waitForFunction(()=>window.AsteriaReactMigration?.available);
+    await p.evaluate(()=>window.AsteriaReactMigration.openGM('demo-campaign'));
+    await p.getByTestId('asteria-gm-hybrid-menu')
+      .getByRole('button',{name:'Combat',exact:true}).click();
+    await p.getByTestId('asteria-dashboard-card-dropdown')
+      .getByRole('button',{name:'Open Combat Command Centre',exact:true}).click();
+    const restoredIds=await p.getByTestId('gm-combat-party-resources')
+      .locator('[data-resource-character]')
+      .evaluateAll(nodes=>nodes.map(node=>node.dataset.resourceCharacter));
+    assert.deepEqual(restoredIds,changedIds,
+      'Reordered party resources must persist across a reload');
+    await p.screenshot({path:path.join(root,'10-gm-combat-camera-and-player-resources.png'),fullPage:true});
   });
   console.log('PHASE 1.2 RESULT:',results.filter(r=>r.status==='pass').length,'passed,',failures.length,'failed.');
   save();

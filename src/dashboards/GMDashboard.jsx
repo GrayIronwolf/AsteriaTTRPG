@@ -32,11 +32,13 @@ import { isManualNumber, manualNumber } from '../state/manualNumber.mjs';
 import { openGMCharacter, restoredGMView } from '../app/gmCharacterNavigation.mjs';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
-import { AsteriaAppShell, DashboardNavigation, EmptyState, LiveSyncStatus, Panel, ResourceBar, StatusPill } from '../components/WorkspaceUI.jsx';
+import { AsteriaAppShell, DashboardNavigation, EmptyState, LiveSyncStatus, Modal, Panel, ResourceBar, StatusPill } from '../components/WorkspaceUI.jsx';
 import { useCampaignLiveData } from '../sessions/useCampaignLiveData.js';
 import { useArmourClass } from '../systems/armour/useArmourClass.js';
 import { validateMarketPricing } from '../systems/items/marketPricing.mjs';
 import {GMCombatWorkspace} from './combat/CombatWorkspace.jsx';
+import {orderedCombatPartyIds} from './combat/combatWorkspaceLayoutModel.mjs';
+import {CharacterDashboard} from './CharacterDashboard.jsx';
 import {createSiteCombatApi,createSiteCombatMediaApi} from './combat/siteCombatApi.js';
 import { migrateLegacyGMWorkspace, normalizeGMWorkspace } from '../state/gmWorkspaceModel.mjs';
 import { resourcePair, soulDamageValue, soulHealingCap } from '../state/specialDamageModel.mjs';
@@ -54,39 +56,97 @@ function progression(character = {}) {
   return window.AsteriaProgression?.progressSummary?.(Object.assign({}, character)) || fallback;
 }
 
-function CharacterRosterCard({ character, selected, presence, onSelect, onOpen }) {
-  const xp = progression(character);
-  const armour = useArmourClass(character);
-  const soulDamage = soulDamageValue(character);
-  const online = Object.values(presence || {}).some(record => record.characterId === character.id && record.state === 'online');
-  return <article className={`react-party-card ${selected ? 'active' : ''}`}>
-    <div className="react-party-name"><div><b>{character.name || 'Unnamed Character'}</b><small>{character.klass || character.class || 'Class'} | Level {Number(character.level || 0)}</small></div><StatusPill tone="info">AC {armour.finalAC}</StatusPill><span className={online ? 'presence online' : 'presence'} title={online ? 'Online' : 'Offline'} /></div>
-    {resourceDefinitions(character).map(row=>{const [value,maximum]=resourcePair(storedResource(character,row.id));return <ResourceBar key={row.id} compact label={row.name} kind={row.id} value={value} maximum={maximum} reserved={row.id==='hp'?soulDamage:0}/>;})}
-    <ResourceBar compact label="XP" kind="xp" value={xp.xp} maximum={xp.xpMax} />
+function CharacterRosterCard({character,selected,presence,onSelect,onOpen,onFocus,
+  reorderable=false,onStartDrag,onDropCard,onMoveByKey}){
+  const xp=progression(character);
+  const armour=useArmourClass(character);
+  const soulDamage=soulDamageValue(character);
+  const online=Object.values(presence||{}).some(record=>record.characterId===character.id&&record.state==='online');
+  const portrait=character.image||character.portrait||character.characterImage||
+    character.appearance?.image||character.appearance?.portrait;
+  return <article className={`react-party-card ${selected?'active':''}`}
+    data-resource-character={character.id}
+    onDoubleClick={event=>{
+      if(onFocus&&!event.target.closest('button,input,select,textarea,a'))onFocus();
+    }}
+    onDragOver={reorderable?event=>{event.preventDefault();event.dataTransfer.dropEffect='move';}:undefined}
+    onDrop={reorderable?event=>{event.preventDefault();onDropCard(character.id);}:undefined}>
+    <div className="react-party-card-header">
+      <span className="react-party-card-portrait">
+        {portrait?<img src={portrait} alt="" loading="lazy" decoding="async"/>:
+          <span aria-hidden="true">{String(character.name||'?').charAt(0)}</span>}
+      </span>
+      <div className="react-party-card-identity">
+        <div className="react-party-name"><div><b>{character.name||'Unnamed Character'}</b>
+          <small>{character.klass||character.class||'Class'} | Level {Number(character.level||0)}</small></div>
+          <StatusPill tone="info">AC {armour.finalAC}</StatusPill>
+          <span className={online?'presence online':'presence'}
+            title={online?'Online':'Offline'}/>
+        </div>
+      </div>
+      {reorderable?<button type="button" className="react-party-reorder"
+        draggable="true" title="Drag to reorder characters"
+        aria-label={`Reorder ${character.name||'character'}; drag or use Alt + arrow keys`}
+        onDragStart={event=>{event.stopPropagation();event.dataTransfer.effectAllowed='move';
+          event.dataTransfer.setData('text/plain',character.id);onStartDrag(character.id);}}
+        onDragEnd={()=>onStartDrag('')}
+        onKeyDown={onMoveByKey}>≡</button>:null}
+    </div>
+    {resourceDefinitions(character).map(row=>{
+      const [value,maximum]=resourcePair(storedResource(character,row.id));
+      return <ResourceBar key={row.id} compact label={row.name} kind={row.id}
+        value={value} maximum={maximum} reserved={row.id==='hp'?soulDamage:0}/>;
+    })}
+    <ResourceBar compact label="XP" kind="xp" value={xp.xp} maximum={xp.xpMax}/>
     <div className="react-party-card-actions">
-      <button type="button" aria-pressed={selected} onClick={onSelect}>{selected ? 'Selected' : 'Select'}</button>
-      <button type="button" onClick={onOpen} aria-label={`Open ${character.name || 'character'} dashboard`}>Open Character</button>
+      <button type="button" aria-pressed={selected} onClick={onSelect}>
+        {selected?'Selected':'Select'}</button>
+      <button type="button" onClick={onOpen}
+        aria-label={`Open ${character.name||'character'} dashboard`}>Open Character</button>
     </div>
   </article>;
 }
 
-function PartySidebar({ campaign, characters, selectedId, setSelectedId, presence, onOpen }) {
-  const partyIds = campaign?.party?.length ? campaign.party : Object.keys(characters);
-  return <Panel title="Player Resources" className="react-party-sidebar">
-    <p>{campaign?.name || 'Campaign'} party</p>
+function PartySidebar({campaign,characters,selectedId,setSelectedId,presence,onOpen,
+  embedded=false,order=[],onReorder=null,onFocus=null}){
+  const dragId=useRef('');
+  const partyIds=campaign?.party?.length?campaign.party:Object.keys(characters);
+  const present=partyIds.filter(id=>Boolean(characters[id]));
+  const orderedIds=orderedCombatPartyIds(present,order);
+  const list=<>
+    <p>{campaign?.name||'Campaign'} party</p>
     <div className="react-party-list">
-      {partyIds.map(id => characters[id]).filter(Boolean).map(character => <CharacterRosterCard
-        key={character.id}
-        character={character}
-        selected={selectedId === character.id}
-        presence={presence}
-        onSelect={() => setSelectedId(character.id)}
-        onOpen={() => onOpen(character)}
-      />)}
-      {!partyIds.some(id => Boolean(characters[id])) ? <EmptyState title="No linked characters">Characters appear here as soon as they join this campaign.</EmptyState> : null}
+      {orderedIds.map(id=>{
+        const character=characters[id];
+        return <CharacterRosterCard key={id} character={character}
+          selected={selectedId===id} presence={presence}
+          onSelect={()=>setSelectedId(id)} onOpen={()=>onOpen(character)}
+          onFocus={onFocus?()=>onFocus(character):null}
+          reorderable={Boolean(onReorder)}
+          onStartDrag={value=>{dragId.current=value;}}
+          onDropCard={target=>{
+            if(dragId.current&&dragId.current!==target)
+              onReorder?.(dragId.current,target,orderedIds);
+            dragId.current='';
+          }}
+          onMoveByKey={event=>{
+            if(!event.altKey||!['ArrowUp','ArrowDown'].includes(event.key))return;
+            event.preventDefault();event.stopPropagation();
+            const index=orderedIds.indexOf(id);
+            const target=orderedIds[index+(event.key==='ArrowUp'?-1:1)];
+            if(target)onReorder?.(id,target,orderedIds);
+          }}/>
+      })}
+      {!present.length?<EmptyState title="No linked characters">
+        Characters appear here as soon as they join this campaign.</EmptyState>:null}
     </div>
-    <p className="react-help">Select a character to manage them, or open their Character Dashboard.</p>
-  </Panel>;
+    <p className="react-help">{embedded?
+      'Drag the three-line handles to reorder cards. Double-click a card to inspect its dashboard.':
+      'Select a character to manage them, or open their Character Dashboard.'}</p>
+  </>;
+  return embedded?<section className="react-party-sidebar react-party-sidebar-in-canvas"
+    aria-label="GM Player Resources" data-testid="gm-combat-party-resources">{list}</section>:
+    <Panel title="Player Resources" className="react-party-sidebar">{list}</Panel>;
 }
 
 function SessionActions({ campaignId, session, busy, run }) {
@@ -405,6 +465,7 @@ export function GMDashboard({ campaignId }) {
   const [tab, setTab] = useState(() => GM_TABS.some(item => item.id === restored.tab) ? restored.tab : 'main');
   const [selectedId, setSelectedId] = useState(restored.selectedId || '');
   const [gmHubDestination,setGMHubDestination]=useState(null);
+  const [canvasCharacterId,setCanvasCharacterId]=useState('');
   const [gmSearchTarget,setGMSearchTarget]=useState(null);
   const [savedDashboardLayout,setSavedDashboardLayout] = useState(null);
   const [dashboardLayoutReady,setDashboardLayoutReady] = useState(false);
@@ -421,6 +482,13 @@ export function GMDashboard({ campaignId }) {
   const combatMediaApi=useMemo(()=>accountUid?createSiteCombatMediaApi():null,[campaignId,accountUid]);
   const gmTradeHub=useMemo(()=>gmTradeLootOverview({itemEcosystem:live.itemEcosystem,partyLoot:live.partyLoot}),
     [live.itemEcosystem,live.partyLoot]);
+  const openCanvasCharacter=character=>{
+    if(!window.AsteriaCharacterAccess?.canGMView(live.campaign,character,accountUid)){
+      setActionError('You do not have permission to view this character.');
+      return;
+    }
+    setCanvasCharacterId(character.id);
+  };
   const openGMHubLink=link=>{
     // The toolkit is a directory of existing GM views, not an arbitrary route.
     if(!GM_TABS.some(item=>item.id===link?.tab))return;
@@ -436,7 +504,7 @@ export function GMDashboard({ campaignId }) {
     target.focus({preventScroll:true});
     setGMHubDestination(null);
   },[tab,gmHubDestination]);
-  useEffect(()=>{setGMHubDestination(null);setGMSearchTarget(null);},[campaignId,accountUid]);
+  useEffect(()=>{setGMHubDestination(null);setGMSearchTarget(null);setCanvasCharacterId('');},[campaignId,accountUid]);
   useEffect(()=>{
     dashboardDraftDirty.current=false;
     dashboardDraftRevision.current++;
@@ -661,13 +729,13 @@ export function GMDashboard({ campaignId }) {
     subtitle="Live campaign control, party resources, rewards, encounters, and session tools."
     actions={<><SessionActions campaignId={campaignId} session={live.session} busy={busy} run={run} /><LiveSyncStatus online={live.online} connectionState={live.connectionState} error={live.error || actionError || coreSyncError} loading={live.loading} session={live.session} /></>}
   >
-    <section className="react-gm-party-strip" aria-label="GM Player Resources"
+    {tab!=='combat'?<section className="react-gm-party-strip" aria-label="GM Player Resources"
       data-testid="gm-player-resources-strip">
       <PartySidebar campaign={live.campaign || { id: campaignId }}
         characters={live.characters} selectedId={selectedId}
         setSelectedId={setSelectedId} presence={live.presence}
         onOpen={character=>openGMCharacter(live.campaign,character,{tab})}/>
-    </section>
+    </section>:null}
     <GMRecordingParticipationNotice key={campaignId} campaignId={campaignId}/>
     <DashboardNavigation role="gm" storageScope={campaignId+":"+accountUid} tabs={GM_TABS} active={tab} onChange={next=>{setGMSearchTarget(null);setGMHubDestination(null);setTab(next);}} ariaLabel="GM Dashboard menu" />
     {tab === 'bestiary' ? <GMNpcCreatureLibrary key={campaignId+':'+accountUid+':bestiary'}
@@ -711,7 +779,15 @@ export function GMDashboard({ campaignId }) {
 
     </div> : null}
     {dashboardLayoutError?<p role="alert">{dashboardLayoutError}</p>:null}
-    {tab === 'combat' ? <GMCombatWorkspace key={campaignId+':'+accountUid+':combat'} api={combatApi} campaignId={campaignId} uid={accountUid} mediaApi={combatMediaApi} onNavigate={setTab} legacyEncounter={live.encounter} legacyCharacters={live.characters} legacyCombatState={live.gmWorkspace?.combatState}/> : null}
+    {tab === 'combat' ? <GMCombatWorkspace key={campaignId+':'+accountUid+':combat'}
+      api={combatApi} campaignId={campaignId} uid={accountUid} mediaApi={combatMediaApi}
+      onNavigate={setTab} legacyEncounter={live.encounter}
+      legacyCharacters={live.characters} legacyCombatState={live.gmWorkspace?.combatState}
+      renderPartyResources={({order,onReorder})=><PartySidebar embedded
+        campaign={live.campaign||{id:campaignId}} characters={live.characters}
+        selectedId={selectedId} setSelectedId={setSelectedId} presence={live.presence}
+        order={order} onReorder={onReorder} onFocus={openCanvasCharacter}
+        onOpen={character=>openGMCharacter(live.campaign,character,{tab})}/>}/> : null}
     {tab === 'inventory' ? <><GMTradeLootHub overview={gmTradeHub} onNavigate={openGMHubLink}/><PCInventory campaignId={campaignId} characters={live.characters} selectedId={selectedId} onSelect={setSelectedId} editable={live.session?.editable} rewards={<><section id="react-gm-inventory-audit" tabIndex={-1}><GMInventoryAuditWorkspace characters={live.characters} events={live.events}/></section><LootRewards campaignId={campaignId} characters={live.characters} events={live.events} customItems={live.customItems}/><GMRewardTools campaignId={campaignId} characters={live.characters} events={live.events} workspace={workspace} saveSection={saveSection} customItems={live.customItems} editable={live.session?.editable}/><section id="react-gm-party-loot" tabIndex={-1}><GMPartyLootPanel campaignId={campaignId} characters={live.characters} partyLoot={live.partyLoot} customItems={live.customItems} editable={live.session?.editable}/></section></>}/></> : null}
     {tab === 'information' ? <CampaignInformationWorkspace campaignId={campaignId} campaign={live.campaign} workspace={workspace} characters={live.characters}/> : null}
     {tab === 'quests' ? <QuestWorkspace campaignId={campaignId} workspace={workspace} characters={live.characters} saveSection={saveSection} searchTarget={gmSearchTarget}/> : null}
@@ -733,5 +809,13 @@ export function GMDashboard({ campaignId }) {
     {tab === 'asteria-calendar' ? <AsteriaCalendarWorkspace key={campaignId} campaignId={campaignId} workspace={workspace}/> : null}
     {tab === 'weather-environment' ? <GMWeatherEnvironmentWorkspace key={campaignId} campaignId={campaignId}/> : null}
     {tab === 'world-atlas' ? <GMWorldAtlasWorkspace key={campaignId} campaignId={campaignId} searchTarget={gmSearchTarget}/> : null}
+    {tab==='combat'&&canvasCharacterId&&live.characters[canvasCharacterId]&&
+      window.AsteriaCharacterAccess?.canGMView(live.campaign,live.characters[canvasCharacterId],accountUid)?
+      <Modal title={(live.characters[canvasCharacterId]?.name||'Character')+' — Player Dashboard'}
+        eyebrow="GM Character Inspection" onClose={()=>setCanvasCharacterId('')}>
+        <div className="react-canvas-character-dashboard" data-testid="gm-canvas-character-dashboard">
+          <CharacterDashboard campaignId={campaignId} characterId={canvasCharacterId}/>
+        </div>
+      </Modal>:null}
   </AsteriaAppShell>;
 }

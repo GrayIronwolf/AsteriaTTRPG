@@ -72,7 +72,8 @@ test('Combat Command Centre uses current design tokens, including all combat pan
 test('Combat windows remain visible during loading or denied Firestore access',()=>{
  const workspace=file('src/dashboards/combat/CombatWorkspace.jsx');
  const renderer=file('src/dashboards/combat/CombatCommandCentre.jsx');
- assert.match(workspace,/COMBAT_PANEL_IDS\.map\(id=>/);
+ assert.match(workspace,/COMBAT_PANEL_IDS\.filter\(id=>id!=='resources'\)\.map\(id=>/);
+ assert.match(workspace,/<CombatCommandPanel id="resources">/);
  assert.match(workspace,/connectionPlaceholder/);
  assert.match(workspace,/stream\.error/);
  assert.match(renderer,/collectCombatPanels\(children\)/);
@@ -245,7 +246,7 @@ test('Combat canvas replaces old layout bars with a full-width icon HUD and over
 test('Canvas wheel is contained and bezel content can focus and scale',()=>{
  const renderer=file('src/dashboards/combat/CombatCommandCentre.jsx');
  const css=file('src/dashboards/combat/CombatCommandCentre.module.css');
- assert.match(renderer,/viewport\.addEventListener\('wheel',wheel,\{passive:false\}\)/);
+ assert.match(renderer,/viewport\.addEventListener\('wheel',wheel,\{passive:false,capture:true\}\)/);
  assert.match(renderer,/const zoomRequested=!overWindow\|\|event\.ctrlKey\|\|event\.metaKey/);
  assert.match(renderer,/event\.preventDefault\(\)/);
  assert.match(renderer,/data-combat-scroll/);
@@ -255,4 +256,72 @@ test('Canvas wheel is contained and bezel content can focus and scale',()=>{
  assert.match(css,/container-name:combatWindow/);
  assert.match(css,/\.window\[data-combat-panel\]::before/);
  assert.doesNotMatch(css,/\.zoomTools\{|\.canvasTitle\{|\.toolsToggle\{/);
+});
+
+test('GM Combat Phase 1 uses one canvas camera, bounded placements and recoverable focus',async()=>{
+ const renderer=file('src/dashboards/combat/CombatCommandCentre.jsx');
+ const css=file('src/dashboards/combat/CombatCommandCentre.module.css');
+ const {defaultCombatWorkspaceLayout,normalizeCombatWorkspace,editCombatWindow,
+  COMBAT_PANEL_IDS,fitCombatCamera,focusCombatCamera,clampCombatCamera,
+  normalizeCombatCamera,orderedCombatPartyIds,moveCombatPartyCard}=
+   await import('../src/dashboards/combat/combatWorkspaceLayoutModel.mjs');
+ const layout=defaultCombatWorkspaceLayout();
+ assert.equal(COMBAT_PANEL_IDS.length,14);
+ assert.ok(COMBAT_PANEL_IDS.includes('resources'));
+ assert.ok(layout.freeform.positions.resources);
+ assert.equal(layout.hidden.includes('resources'),false);
+ const legacy=normalizeCombatWorkspace({...layout,freeform:{
+   ...layout.freeform,positions:Object.fromEntries(
+     Object.entries(layout.freeform.positions).filter(([id])=>id!=='resources'))}});
+ assert.equal(legacy.freeform.positions.resources.x,1020,
+   'Existing GM combat placements must not be overwritten by the Resources window');
+ const moved=editCombatWindow(layout,'resources','move',{x:99999,y:99999});
+ assert.ok(moved.freeform.positions.resources.x<=4500);
+ assert.ok(moved.freeform.positions.resources.y<=4500);
+ const far=editCombatWindow(layout,'resources','move',{x:3600,y:3800});
+ const visible=COMBAT_PANEL_IDS.filter(id=>!far.hidden.includes(id));
+ const fit=fitCombatCamera(far,visible,1440,680);
+ assert.ok(fit.scale>=.04&&fit.scale<=2.5);
+ const clamped=clampCombatCamera({scale:1,x:-12000,y:-12000},far,visible,1440,680);
+ assert.ok(clamped.x>-12000&&clamped.y>-12000,
+   'Panning should not strand the canvas in empty space');
+ const focus=focusCombatCamera(far,'resources',1440,680);
+ assert.ok(focus.scale>0);
+ assert.notDeepEqual(focus,fit,'Focus must target selected window, not Fit All');
+ assert.deepEqual(normalizeCombatCamera(focus),focus);
+ assert.deepEqual(orderedCombatPartyIds(['kael','lyra','new'],['lyra','old']),['lyra','kael','new']);
+ assert.deepEqual(moveCombatPartyCard(['kael','lyra','new'],'new','kael'),['new','kael','lyra']);
+ const stored=normalizeCombatWorkspace({...layout,partyCardOrder:['lyra','kael','lyra']});
+ assert.deepEqual(stored.partyCardOrder,['lyra','kael']);
+ assert.match(renderer,/focusWindow=id=>/);
+ assert.match(renderer,/onDoubleClick=\{event=>/);
+ assert.match(renderer,/event\.button===1/);
+ assert.match(renderer,/spaceHeld\.current/);
+ assert.match(renderer,/data-overview=/);
+ assert.match(renderer,/renderPartyResources|onReorder:/);
+ assert.doesNotMatch(renderer,/setMaximised|stageMaximised|styles\.maximised/);
+ assert.match(css,/\.cameraFocus\{/);
+ assert.match(css,/\.canvas\[data-overview='true'\]/);
+});
+test('GM Resources window reuses live character resources and existing dashboard permission checks',()=>{
+ const gm=file('src/dashboards/GMDashboard.jsx');
+ const workspace=file('src/dashboards/combat/CombatWorkspace.jsx');
+ const css=file('src/styles/asteria-react.css');
+ assert.match(gm,/resourceDefinitions\(character\)\.map/);
+ assert.match(gm,/storedResource\(character,row\.id\)/);
+ assert.match(gm,/ResourceBar compact label="XP"/);
+ assert.match(gm,/character\.image\|\|character\.portrait/);
+ assert.match(gm,/react-party-reorder/);
+ assert.match(gm,/orderedCombatPartyIds\(present,order\)/);
+ assert.match(gm,/onDragStart=\{event=>/);
+ assert.match(gm,/onDrop=\{reorderable\?/);
+ assert.match(gm,/data-testid="gm-combat-party-resources"/);
+ assert.match(gm,/data-testid="gm-player-resources-strip"/);
+ assert.match(gm,/\{tab!=='combat'\?/);
+ assert.match(gm,/window\.AsteriaCharacterAccess\?\.canGMView/);
+ assert.match(gm,/<CharacterDashboard campaignId=\{campaignId\} characterId=\{canvasCharacterId\}/);
+ assert.match(gm,/react-canvas-character-dashboard/);
+ assert.match(workspace,/renderPartyResources/);
+ assert.match(css,/\.react-party-card-portrait/);
+ assert.match(css,/\.react-modal:has\(\.react-canvas-character-dashboard\)/);
 });

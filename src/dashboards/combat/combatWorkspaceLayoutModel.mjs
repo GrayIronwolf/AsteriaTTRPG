@@ -4,12 +4,12 @@ import {
 
 /** Layout-only state: never includes encounter data, permissions or combat commands. */
 export const COMBAT_PANEL_IDS=Object.freeze([
-  'controls','initiative','actor','setup','map','history',
+  'resources','controls','initiative','actor','setup','map','history',
   'queue','timer','waves','events','log','advanced','prepared'
 ]);
 /** Sidebar categories are launchers; they do not create duplicate combat state. */
 export const COMBAT_TOOL_CATEGORIES=Object.freeze([
-  {id:'overview',label:'Combat Overview',panels:['controls','initiative']},
+  {id:'overview',label:'Combat Overview',panels:['resources','controls','initiative']},
   {id:'builder',label:'Encounter Builder',panels:['setup']},
   {id:'prepared',label:'Prepared Encounters',panels:['prepared']},
   {id:'live',label:'Live Combat',panels:['actor','queue','timer','waves','events','log','advanced']},
@@ -17,7 +17,7 @@ export const COMBAT_TOOL_CATEGORIES=Object.freeze([
   {id:'rewards',label:'Rewards & History',panels:['history']}
 ]);
 const DEFAULT_HIDDEN=Object.freeze([]); // All tools on new GM canvases.
-const MAX_CANVAS_COORD=12000;
+const MAX_CANVAS_COORD=4500;
 const CANVAS_INTERACTION_VERSION=2;
 const MIN_CANVAS_SIZE=140;
 const MAX_CANVAS_SIZE=1800;
@@ -32,7 +32,7 @@ export function normalizeCombatCanvasRect(value={},fallback={x:0,y:0,w:490,h:300
  return {x:bounded(whole(candidate.x,fallback.x),-MAX_CANVAS_COORD,MAX_CANVAS_COORD),
   y:bounded(whole(candidate.y,fallback.y),-MAX_CANVAS_COORD,MAX_CANVAS_COORD),w,h};
 }
-export const COMBAT_CANVAS_ZOOM_MIN=.25;
+export const COMBAT_CANVAS_ZOOM_MIN=.04;
 export const COMBAT_CANVAS_ZOOM_MAX=2.5;
 export function normalizeCombatCamera(raw){
  const camera=raw&&typeof raw==='object'?raw:{};
@@ -49,18 +49,66 @@ export function zoomCombatCamera(camera,scale,pivot={x:0,y:0}){
    x:pivot.x-(pivot.x-prev.x)*next/prev.scale,
    y:pivot.y-(pivot.y-prev.y)*next/prev.scale});
 }
-export function fitCombatCamera(layout,visibleIds,viewportWidth,viewportHeight){
- const ids=visibleIds.filter(id=>layout.freeform.positions[id]);
- if(!ids.length||!viewportWidth||!viewportHeight)return normalizeCombatCamera({});
- const left=Math.min(...ids.map(id=>layout.freeform.positions[id].x));
- const top=Math.min(...ids.map(id=>layout.freeform.positions[id].y));
- const right=Math.max(...ids.map(id=>layout.freeform.positions[id].x+layout.freeform.positions[id].w));
- const bottom=Math.max(...ids.map(id=>layout.freeform.positions[id].y+layout.freeform.positions[id].h));
- const scale=bounded(Math.min((viewportWidth-40)/(Math.max(200,right-left)*viewportWidth/1000),
-   (viewportHeight-40)/(Math.max(200,bottom-top)*viewportWidth/1000)),COMBAT_CANVAS_ZOOM_MIN,COMBAT_CANVAS_ZOOM_MAX);
- return normalizeCombatCamera({scale,x:20-left*viewportWidth/1000*scale,
-   y:20-top*viewportWidth/1000*scale});
+/** Fit and focus change only the camera; window geometry never changes. */
+export function combatWindowBounds(layout,visibleIds){
+ const rects=visibleIds.map(id=>layout.freeform.positions[id]).filter(Boolean);
+ if(!rects.length)return null;
+ return {left:Math.min(...rects.map(rect=>rect.x)),
+  top:Math.min(...rects.map(rect=>rect.y)),
+  right:Math.max(...rects.map(rect=>rect.x+rect.w)),
+  bottom:Math.max(...rects.map(rect=>rect.y+rect.h))};
 }
+export function fitCombatCamera(layout,visibleIds,viewportWidth,viewportHeight){
+ const bounds=combatWindowBounds(layout,visibleIds);
+ if(!bounds||!viewportWidth||!viewportHeight)return normalizeCombatCamera({});
+ const pixels=viewportWidth/1000;
+ const scale=bounded(Math.min((viewportWidth-56)/((bounds.right-bounds.left)*pixels),
+   (viewportHeight-56)/((bounds.bottom-bounds.top)*pixels)),
+   COMBAT_CANVAS_ZOOM_MIN,COMBAT_CANVAS_ZOOM_MAX);
+ return normalizeCombatCamera({scale,
+   x:(viewportWidth-(bounds.left+bounds.right)*pixels*scale)/2,
+   y:(viewportHeight-(bounds.top+bounds.bottom)*pixels*scale)/2});
+}
+export function focusCombatCamera(layout,id,viewportWidth,viewportHeight){
+ const rect=layout.freeform.positions[id];
+ if(!rect||!viewportWidth||!viewportHeight)return normalizeCombatCamera({});
+ const pixels=viewportWidth/1000;
+ const usableWidth=Math.max(100,viewportWidth-80),usableHeight=Math.max(100,viewportHeight-80);
+ const scale=bounded(Math.min(1.45,usableWidth/(rect.w*pixels),usableHeight/(rect.h*pixels)),
+   COMBAT_CANVAS_ZOOM_MIN,COMBAT_CANVAS_ZOOM_MAX);
+ return normalizeCombatCamera({scale,
+  x:viewportWidth/2-(rect.x+rect.w/2)*pixels*scale,
+  y:viewportHeight/2-(rect.y+rect.h/2)*pixels*scale});
+}
+/** Bound blank-space panning while preserving free movement and overlapping windows. */
+export function clampCombatCamera(camera,layout,visibleIds,viewportWidth,viewportHeight){
+ const view=normalizeCombatCamera(camera),bounds=combatWindowBounds(layout,visibleIds);
+ if(!bounds||!viewportWidth||!viewportHeight)return view;
+ const unit=viewportWidth/1000*view.scale,padding=60;
+ const clampAxis=(start,end,viewport,offset)=>{
+   const minimum=viewport-padding-end*unit;
+   const maximum=padding-start*unit;
+   return minimum>maximum?(viewport-(start+end)*unit)/2:
+     bounded(offset,minimum,maximum);
+ };
+ return normalizeCombatCamera({...view,
+  x:clampAxis(bounds.left,bounds.right,viewportWidth,view.x),
+  y:clampAxis(bounds.top,bounds.bottom,viewportHeight,view.y)});
+}
+/** Party card order is presentation-only; keep current campaign roster authoritative. */
+export function orderedCombatPartyIds(ids=[],saved=[]){
+ const available=[...new Set(ids.filter(id=>typeof id==='string'&&id))];
+ const preferred=Array.isArray(saved)?saved:[];
+ return [...preferred.filter(id=>available.includes(id)),...available.filter(id=>!preferred.includes(id))];
+}
+export function moveCombatPartyCard(ids=[],from='',to=''){
+ const ordered=[...ids];
+ if(from===to||!ordered.includes(from)||!ordered.includes(to))return ordered;
+ ordered.splice(ordered.indexOf(from),1);
+ ordered.splice(ordered.indexOf(to),0,from);
+ return ordered;
+}
+
 const MIGRATED_NEW_HIDDEN=Object.freeze(['advanced','waves','events','log']);
 /** One-click views reuse the same panels and Firebase listeners; only visibility changes. */
 export const COMBAT_WORKSPACE_MODES=Object.freeze([
@@ -73,6 +121,7 @@ export const COMBAT_WORKSPACE_MODES=Object.freeze([
 ]);
 
 export const COMBAT_PANEL_LABELS=Object.freeze({
+  resources:'GM Player Resources',
   controls:'Encounter Controls',
   initiative:'Initiative & Turn Order',
   actor:'Combatant Actions & Resources',
@@ -89,19 +138,20 @@ export const COMBAT_PANEL_LABELS=Object.freeze({
 });
 export const COMBAT_WORKSPACE_PRESET_LIMIT=8;
 const DEFAULT_POSITIONS=Object.freeze({
-  controls:{x:0,y:0,w:490,h:180},
-  initiative:{x:0,y:190,w:490,h:420},
-  actor:{x:510,y:0,w:490,h:480},
-  setup:{x:0,y:1540,w:490,h:430},
-  map:{x:0,y:620,w:490,h:300},
-  history:{x:510,y:2490,w:490,h:450},
+  resources:{x:0,y:0,w:490,h:670},
+  controls:{x:510,y:0,w:490,h:180},
+  initiative:{x:510,y:190,w:490,h:420},
+  actor:{x:510,y:620,w:490,h:480},
+  setup:{x:0,y:1250,w:490,h:430},
+  map:{x:0,y:680,w:490,h:300},
+  history:{x:510,y:2680,w:490,h:450},
   queue:{x:510,y:490,w:490,h:430},
-  timer:{x:0,y:930,w:490,h:250},
-  waves:{x:510,y:1540,w:490,h:430},
-  events:{x:0,y:1980,w:490,h:430},
-  log:{x:0,y:2420,w:490,h:280},
-  advanced:{x:510,y:1980,w:490,h:500},
-  prepared:{x:510,y:930,w:490,h:600}
+  timer:{x:0,y:990,w:490,h:250},
+  waves:{x:510,y:1730,w:490,h:430},
+  events:{x:0,y:1690,w:490,h:430},
+  log:{x:0,y:2130,w:490,h:280},
+  advanced:{x:510,y:2170,w:490,h:500},
+  prepared:{x:510,y:1120,w:490,h:600}
 });
 const isRecord=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 const allowed=id=>COMBAT_PANEL_IDS.includes(id);
@@ -127,8 +177,10 @@ function normaliseBase(raw){
     log:{x:510,y:priorBottom+1310,w:490,h:280}
   });
   const positions=Object.fromEntries(COMBAT_PANEL_IDS.map(id=>[
-    id,normalizeCombatCanvasRect(entries[id],isLegacy&&appended[id]?
-      appended[id]:DEFAULT_POSITIONS[id])
+    id,normalizeCombatCanvasRect(entries[id],id==='resources'&&
+      Object.keys(entries).length&&!Object.hasOwn(entries,'resources')?
+      {x:1020,y:0,w:510,h:670}:
+      isLegacy&&appended[id]?appended[id]:DEFAULT_POSITIONS[id])
   ]));
   const contentScale=Object.fromEntries(
     Object.entries(isRecord(source.contentScale)?source.contentScale:{})
@@ -151,6 +203,8 @@ function normaliseBase(raw){
     locked:unique(source.locked),
     minimized:unique(source.minimized),
     contentScale,
+    partyCardOrder:[...new Set((Array.isArray(source.partyCardOrder)?source.partyCardOrder:[])
+      .filter(id=>typeof id==='string'&&id.length>0&&id.length<=180))].slice(0,200),
     groups,
     canvasLocked:source.canvasLocked===true
   };

@@ -3,6 +3,7 @@ import {freeformPercent} from '../../../src/state/workspaceFreeformModel.mjs';
 import {
   COMBAT_PANEL_IDS,COMBAT_PANEL_LABELS,COMBAT_TOOL_CATEGORIES,
   normalizeCombatCamera,zoomCombatCamera,fitCombatCamera,
+  focusCombatCamera,clampCombatCamera,orderedCombatPartyIds,moveCombatPartyCard,
   combatWorkspaceStorageKey,defaultCombatWorkspaceLayout,dockCombatWindow,
   editCombatWindow,normalizeCombatWorkspace,setCombatGroup
 } from './combatWorkspaceLayoutModel.mjs';
@@ -48,11 +49,17 @@ export function CombatCommandCentre({uid,campaignId,children}){
   const camera=cameraState.scope===storageKey?cameraState.view:normalizeCombatCamera({});
   const updateCamera=update=>{
     const current=cameraRef.current;
-    const next=normalizeCombatCamera(typeof update==='function'?update(current):update);
+    const candidate=normalizeCombatCamera(typeof update==='function'?update(current):update);
+    const viewport=canvas.current;
+    const next=viewport&&viewport.clientWidth>=700?
+      clampCombatCamera(candidate,saved,
+        COMBAT_PANEL_IDS.filter(id=>!saved.hidden.includes(id)),
+        viewport.clientWidth,Math.max(200,viewport.clientHeight-64)):candidate;
     cameraRef.current=next;
+    drawCamera(next);
     setCameraState({scope:storageKey,view:next});
   };
-  const [maximised,setMaximised]=useState('');
+  const [focused,setFocused]=useState(null);
   const [message,setMessage]=useState('');
   const [frontWindow,setFrontWindow]=useState('');
   const [wide,setWide]=useState(false);
@@ -61,7 +68,7 @@ export function CombatCommandCentre({uid,campaignId,children}){
   const root=useRef(null),canvas=useRef(null),stage=useRef(null),gesture=useRef(null);
   const toolToggleRef=useRef(null);
   const cameraRef=useRef(camera),wheelTimer=useRef(null),wheelFrame=useRef(0);
-  const zoomReadout=useRef(null);
+  const zoomReadout=useRef(null),spaceHeld=useRef(false),focusTimer=useRef(null);
   const layout=saved;
   const panels=collectCombatPanels(children).filter(child=>
     React.isValidElement(child)&&COMBAT_PANEL_IDS.includes(child.props.id));
@@ -71,7 +78,7 @@ export function CombatCommandCentre({uid,campaignId,children}){
     setUndoStack([]);setRedoStack([]);
     const freshCamera=readCamera(storageKey);
     cameraRef.current=freshCamera;setCameraState({scope:storageKey,view:freshCamera});
-    setMaximised('');setFrontWindow('');setMessage('');
+    setFocused(null);setFrontWindow('');setMessage('');
     setSidebarExpanded(false);
   },[storageKey]);
   useEffect(()=>{
@@ -82,6 +89,29 @@ export function CombatCommandCentre({uid,campaignId,children}){
     if(host)observer?.observe(host);
     if(viewport)observer?.observe(viewport);
     return ()=>observer?.disconnect();
+  },[]);
+  useEffect(()=>{
+    if(!wide)return;
+    const viewport=canvas.current;
+    if(!viewport)return;
+    const next=clampCombatCamera(cameraRef.current,layout,
+      visible.map(panel=>panel.props.id),viewport.clientWidth,
+      Math.max(200,viewport.clientHeight-64));
+    if(JSON.stringify(next)!==JSON.stringify(cameraRef.current))updateCamera(next);
+  },[wide,storageKey]);
+  useEffect(()=>{
+    const onDown=event=>{
+      if(event.code==='Space'&&!/INPUT|TEXTAREA|SELECT/.test(event.target?.tagName||'')&&!event.target?.isContentEditable){
+        spaceHeld.current=true;
+      }
+    };
+    const onUp=event=>{if(event.code==='Space')spaceHeld.current=false;};
+    const clear=()=>{spaceHeld.current=false;};
+    window.addEventListener('keydown',onDown);
+    window.addEventListener('keyup',onUp);
+    window.addEventListener('blur',clear);
+    return ()=>{window.removeEventListener('keydown',onDown);
+      window.removeEventListener('keyup',onUp);window.removeEventListener('blur',clear);};
   },[]);
   useEffect(()=>{
     if(cameraState.scope!==storageKey||!storageKey)return;
@@ -106,14 +136,38 @@ export function CombatCommandCentre({uid,campaignId,children}){
   // Persist camera state once at the end, not once per pointer/wheel event.
   const drawCamera=value=>{
     if(stage.current)stage.current.style.transform=
-      'translate3d('+value.x+'px,'+value.y+'px,0) scale('+value.scale+')';
+      'translate3d('+Math.round(value.x*100)/100+'px,'+
+        Math.round(value.y*100)/100+'px,0) scale('+value.scale+')';
     if(zoomReadout.current)zoomReadout.current.textContent=Math.round(value.scale*100)+'%';
+  };
+  const animateCamera=()=>{
+    const node=stage.current;
+    if(!node||window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;
+    clearTimeout(focusTimer.current);
+    node.classList.add(styles.cameraFocus);
+    focusTimer.current=setTimeout(()=>node.classList.remove(styles.cameraFocus),280);
+  };
+  const focusWindow=id=>{
+    const viewport=canvas.current;
+    if(!viewport||!wide)return;
+    animateCamera();
+    if(focused?.id===id){
+      updateCamera(focused.previous);
+      setFocused(null);
+      return;
+    }
+    const previous=focused?.previous||{...cameraRef.current};
+    setFocused({id,previous});
+    updateCamera(focusCombatCamera(layout,id,viewport.clientWidth,
+      Math.max(200,viewport.clientHeight-64)));
+    setFrontWindow(id);
   };
   useEffect(()=>{
     const viewport=canvas.current;
     if(!viewport||!wide)return;
     const wheel=event=>{
       const overWindow=Boolean(event.target.closest?.('[data-combat-panel]'));
+      stage.current?.classList.remove(styles.cameraFocus);
       const zoomRequested=!overWindow||event.ctrlKey||event.metaKey;
       if(!zoomRequested){
         // Preserve scrolling inside long combat windows, but never scroll the
@@ -134,9 +188,15 @@ export function CombatCommandCentre({uid,campaignId,children}){
       event.preventDefault();
       if(!event.deltaY)return;
       const rect=viewport.getBoundingClientRect();
-      cameraRef.current=zoomCombatCamera(cameraRef.current,
-        cameraRef.current.scale*(event.deltaY<0?1.08:1/1.08),
-        {x:event.clientX-rect.left,y:event.clientY-rect.top});
+      const delta=event.deltaY*(event.deltaMode===1?16:event.deltaMode===2?
+        viewport.clientHeight:1);
+      const factor=Math.exp(-Math.max(-140,Math.min(140,delta))*.0015);
+      const requested=zoomCombatCamera(cameraRef.current,
+        cameraRef.current.scale*factor,
+        {x:event.clientX-rect.left,y:event.clientY-rect.top-60});
+      cameraRef.current=clampCombatCamera(requested,layout,
+        visible.map(panel=>panel.props.id),viewport.clientWidth,
+        Math.max(200,viewport.clientHeight-64));
       if(!wheelFrame.current)wheelFrame.current=requestAnimationFrame(()=>{
         wheelFrame.current=0;drawCamera(cameraRef.current);
       });
@@ -145,15 +205,15 @@ export function CombatCommandCentre({uid,campaignId,children}){
         setCameraState({scope:storageKey,view:cameraRef.current});
       },140);
     };
-    viewport.addEventListener('wheel',wheel,{passive:false});
+    viewport.addEventListener('wheel',wheel,{passive:false,capture:true});
     return ()=>{
-      viewport.removeEventListener('wheel',wheel);
+      viewport.removeEventListener('wheel',wheel,{capture:true});
       clearTimeout(wheelTimer.current);
       if(wheelFrame.current)cancelAnimationFrame(wheelFrame.current);
       wheelFrame.current=0;
     };
-  },[wide,storageKey]);
-  useEffect(()=>()=>{if(gesture.current?.frame)
+  },[wide,storageKey,layout]);
+  useEffect(()=>()=>{clearTimeout(focusTimer.current);if(gesture.current?.frame)
     cancelAnimationFrame(gesture.current.frame);},[]);
   /** Gameplay state never enters the local geometry/history store. */
   const commit=(next,announce=false)=>{
@@ -185,14 +245,18 @@ export function CombatCommandCentre({uid,campaignId,children}){
     if(commit(next)){setRedoStack(redoStack.slice(1));setUndoStack(rows=>[...rows,layout].slice(-40));}
   };
   const startPan=event=>{
-    if(!wide||gesture.current||event.button!==0||event.isPrimary===false||
-       (event.target!==canvas.current&&event.target!==stage.current))return;
+    const middle=event.button===1,space=spaceHeld.current&&event.button===0;
+    if(!wide||gesture.current||event.isPrimary===false||
+       (!middle&&!space&&(event.button!==0||
+         (event.target!==canvas.current&&event.target!==stage.current))))return;
+    stage.current?.classList.remove(styles.cameraFocus);
+    if(middle||space)setFocused(null);
     gesture.current={kind:'pan',pointer:event.pointerId,x:event.clientX,y:event.clientY,
       origin:{...cameraRef.current},latestCamera:{...cameraRef.current},frame:0};
     event.preventDefault();canvas.current?.setPointerCapture?.(event.pointerId);
   };
   const begin=(event,id,kind,edge='se')=>{
-    if(!wide||maximised||gesture.current||event.isPrimary===false||event.button!==0||
+    if(!wide||gesture.current||spaceHeld.current||event.isPrimary===false||event.button!==0||
       layout.canvasLocked||layout.locked.includes(id)||layout.hidden.includes(id))return;
     const width=canvas.current?.clientWidth||0,initial=layout.freeform.positions[id];
     if(!width||!initial)return;
@@ -230,8 +294,11 @@ export function CombatCommandCentre({uid,campaignId,children}){
   const paintGesture=g=>{
     if(gesture.current!==g||!g.pending)return;
     if(g.kind==='pan'){
-      const candidate=normalizeCombatCamera({...g.origin,
-        x:g.origin.x+g.pending.x-g.x,y:g.origin.y+g.pending.y-g.y});
+      const viewport=canvas.current;
+      const candidate=clampCombatCamera({...g.origin,
+        x:g.origin.x+g.pending.x-g.x,y:g.origin.y+g.pending.y-g.y},
+        layout,visible.map(panel=>panel.props.id),
+        viewport?.clientWidth||1000,Math.max(200,(viewport?.clientHeight||700)-64));
       g.latestCamera=candidate;
       cameraRef.current=candidate;
       drawCamera(candidate);
@@ -314,9 +381,15 @@ export function CombatCommandCentre({uid,campaignId,children}){
       {w:rect.w+delta[0],h:rect.h+delta[1]};
     change(previous=>editCombatWindow(previous,id,kind,values));
   };
+  useEffect(()=>{
+    if(!focused)return;
+    if(layout.hidden.includes(focused.id))setFocused(null);
+  },[layout.hidden,focused]);
   const fitAll=()=>{
     const viewport=canvas.current;
     if(!viewport||!wide)return;
+    setFocused(null);
+    animateCamera();
     updateCamera(fitCombatCamera(layout,visible.map(panel=>panel.props.id),
       viewport.clientWidth,Math.max(200,viewport.clientHeight-64)));
   };
@@ -336,10 +409,12 @@ export function CombatCommandCentre({uid,campaignId,children}){
     <div className={styles.canvas} ref={canvas}
       data-editing={wide&&!layout.canvasLocked}
       data-layout-mode={wide?'freeform':'stacked'}
+      data-overview={wide&&camera.scale<.36}
       aria-label="Combat freeform canvas"
       onPointerDown={startPan}
-      onPointerMove={move} onPointerUp={end} onPointerCancel={end}>
-      <div ref={stage} className={styles.stage+(maximised?' '+styles.stageMaximised:'')}
+      onPointerMove={move} onPointerUp={end} onPointerCancel={end}
+      onAuxClick={event=>{if(event.button===1)event.preventDefault();}}>
+      <div ref={stage} className={styles.stage}
         data-stage="combat-canvas-stage"
         style={{'--combat-canvas-height':boundsHeight(layout.freeform,
           visible.map(panel=>panel.props.id)),
@@ -347,24 +422,24 @@ export function CombatCommandCentre({uid,campaignId,children}){
           '--combat-scale':camera.scale}}>
       {visible.map(panel=>{
         const id=panel.props.id,rect=layout.freeform.positions[id];
-        const isMinimised=layout.minimized.includes(id),isMaximised=maximised===id;
+        const isMinimised=layout.minimized.includes(id),isFocused=focused?.id===id;
         const isLocked=layout.locked.includes(id);
         const grouped=layout.groups.some(row=>row.includes(id));
         const label=COMBAT_PANEL_LABELS[id];
         return <article key={id} className={styles.window+
           (isMinimised?' '+styles.minimised:'')+
-          (isMaximised?' '+styles.maximised:'')}
+          (isFocused?' '+styles.focused:'')}
           data-combat-panel={id}
           onPointerDownCapture={()=>setFrontWindow(current=>current===id?current:id)}
-          style={{zIndex:isMaximised?3000:frontWindow===id?50:1,
+          style={{zIndex:frontWindow===id?50:1,
             '--combat-x':freeformPercent(rect.x),'--combat-y':rect.y/10+'cqw',
             '--combat-w':freeformPercent(rect.w),'--combat-h':rect.h/10+'cqw'}}>
           <header className={styles.windowBar}
             data-testid={'combat-drag-header-'+id}
-            title="Drag to move; double-click to focus or restore"
+            title="Drag to move; double-click to focus or return"
             onDoubleClick={event=>{
               if(event.target.closest('button,input,select,textarea,a,summary,details,label'))return;
-              setMaximised(current=>current===id?'':id);
+              focusWindow(id);
             }}
             onPointerDown={event=>{
               if(event.target.closest('button,input,select,textarea,a,summary,details,label'))return;
@@ -379,9 +454,8 @@ export function CombatCommandCentre({uid,campaignId,children}){
             <div className={styles.windowActions}>
               <button type="button" aria-label={(isMinimised?'Restore ':'Minimise ')+label}
                 onClick={()=>minimize(id)}>{isMinimised?'Restore':'−'}</button>
-              <button type="button" aria-label={(isMaximised?'Restore size of ':'Maximise ')+label}
-                onClick={()=>setMaximised(isMaximised?'':id)}>
-                {isMaximised?'Restore':'□'}</button>
+              <button type="button" aria-label={(isFocused?'Return from ':'Focus on ')+label}
+                onClick={()=>focusWindow(id)}>{isFocused?'↩':'□'}</button>
               <details className={styles.options}>
                 <summary aria-label={'Window options for '+label} title="Window options"><AsteriaIcon name="settings" size={17}/></summary>
                 <div>
@@ -431,10 +505,17 @@ export function CombatCommandCentre({uid,campaignId,children}){
             aria-hidden={isMinimised} inert={isMinimised?true:undefined}>
             <div className={styles.windowBody}
               style={{'--combat-content-scale':layout.contentScale[id]??1}}>
-              {panel.props.children}
+              {typeof panel.props.children==='function'?
+                panel.props.children({
+                  order:layout.partyCardOrder,
+                  onReorder:(from,to,ids)=>change(previous=>({
+                    ...previous,partyCardOrder:moveCombatPartyCard(
+                      orderedCombatPartyIds(ids,previous.partyCardOrder),from,to)
+                  }))
+                }):panel.props.children}
             </div>
           </div>
-          {wide&&!layout.canvasLocked&&!isLocked&&!isMinimised&&!isMaximised?
+          {wide&&!layout.canvasLocked&&!isLocked&&!isMinimised?
             ['n','e','s','w','ne','nw','se','sw'].map(edge=>
               <button type="button" key={edge}
                 className={styles.resizeHandle}
@@ -543,10 +624,11 @@ export function CombatCommandCentre({uid,campaignId,children}){
               onChange={event=>setPreference(previous=>({...previous,freeform:{
                 ...previous.freeform,allowOverlap:event.target.checked}}))}/> Allow window overlap</label>
             <p className={styles.sidebarHint}>
-              Drag window headers to move (double-click to focus), resize from edges,
-              and drag empty space to pan. Scroll over empty canvas to zoom; use Ctrl/Command
-              + wheel over a window to zoom the canvas instead of its contents.
-              Content size is adjustable per window. Changes save automatically.
+              Drag window headers to move, double-click to focus, or drag empty space to pan.
+              Middle-drag or Space + drag to pan across windows. Scroll empty canvas
+              to zoom, or Ctrl/Command + wheel over window content. The Fit All button
+              recovers every window without rearranging it. Content size is adjustable
+              per window and changes save automatically.
               Canvas lock does not disable combat controls.
             </p>
           </details>

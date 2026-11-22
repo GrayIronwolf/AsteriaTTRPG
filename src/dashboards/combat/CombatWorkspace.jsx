@@ -121,7 +121,7 @@ function Actions({combat,actor,disabled,onCommand,mode}){
       onClick={()=>onCommand(actor.id,{operation:'spend-ap',ap:cost})}>Spend selected AP</button></label>:null}
   </div>;
 }
-export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigate=null,legacyEncounter=null,legacyCharacters={},legacyCombatState=null}){
+export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigate=null,legacyEncounter=null,legacyCharacters={},legacyCombatState=null,renderPartyResources=null}){
   const stream=useCombatStream(api,'watchGM',[campaignId]);
   const [selected,setSelected]=useState(''),[busy,setBusy]=useState(false),
     [notice,setNotice]=useState(''),[error,setError]=useState('');
@@ -175,6 +175,11 @@ export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigat
     {stream.loading?<p role="status">Verifying live combat access…</p>:null}
     {stream.error?<p role="alert">{stream.error}</p>:null}
     <CombatCommandCentre key={uid+':'+campaignId} uid={uid} campaignId={campaignId}>
+    <CombatCommandPanel id="resources">
+      {typeof renderPartyResources==='function'?
+        ({order,onReorder})=>renderPartyResources({order,onReorder}):
+        <p>GM Player Resources are available when the campaign roster is connected.</p>}
+    </CombatCommandPanel>
     {combat?<React.Fragment>
       <CombatCommandPanel id="controls">
       <p role="status">{combat.status.toUpperCase()} · Round {combat.round} · Revision {combat.revision}
@@ -332,7 +337,7 @@ export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigat
           maps={stream.data.maps||[]} mediaApi={mediaApi}
           library={stream.data.library||[]}/>
       </CombatCommandPanel>
-    </React.Fragment>:COMBAT_PANEL_IDS.map(id=><CombatCommandPanel id={id} key={id}>
+    </React.Fragment>:COMBAT_PANEL_IDS.filter(id=>id!=='resources').map(id=><CombatCommandPanel id={id} key={id}>
       <div className={styles.connectionPlaceholder}>
         <p>{stream.loading?'Connecting to the authenticated combat service…':
           stream.error?'This tool is unavailable until combat access is restored.':
