@@ -5,6 +5,7 @@ on:
     branches: [Website-Build-Test]
     paths:
       - 'scripts/phase1-2-browser-audit.cjs'
+      - 'src/devFixtures.js'
       - '.github/workflows/phase1-2-browser-audit.yml'
   workflow_dispatch:
 
