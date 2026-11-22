@@ -5,6 +5,15 @@ on:
     branches: [Website-Build-Test]
     paths:
       - 'src/dashboards/combat/**'
+      - 'src/dashboards/presentation/**'
+      - 'src/dashboards/PlayerPresentationWorkspace.jsx'
+      - 'src/state/*Presentation*.mjs'
+      - 'src/state/campaignMediaLibraryModel.mjs'
+      - 'src/state/presentationAssetModel.mjs'
+      - 'src/firebase/asteriaFirebaseService.js'
+      - 'js/firebase-auth.js'
+      - 'src/sessions/useCampaignLiveData.js'
+      - 'functions/playerPresentationCommands.mjs'
       - 'src/dashboards/GMDashboard.jsx'
       - 'src/dashboards/CharacterDashboard.jsx'
       - 'src/components/DashboardNavigation.jsx'
