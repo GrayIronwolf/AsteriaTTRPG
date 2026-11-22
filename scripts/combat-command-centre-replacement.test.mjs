@@ -295,7 +295,7 @@ test('GM Combat Phase 1 uses one canvas camera, bounded placements and recoverab
  const stored=normalizeCombatWorkspace({...layout,partyCardOrder:['lyra','kael','lyra']});
  assert.deepEqual(stored.partyCardOrder,['lyra','kael']);
  assert.match(renderer,/focusWindow=id=>/);
- assert.match(renderer,/onDoubleClick=\{event=>/);
+ assert.match(renderer,/doublePress=previous\?\.id===id/);
  assert.match(renderer,/event\.button===1/);
  assert.match(renderer,/spaceHeld\.current/);
  assert.match(renderer,/data-overview=/);
