@@ -113,7 +113,7 @@ test('NPC library is GM-only; custom cards and generator preserve official read-
   const mount=read('src/app/mountDashboard.jsx');
   const workspace=read('src/state/gmWorkspaceModel.mjs');
   assert.match(dashboard,/AsteriaCharacterAccess\.isGM\(/);
-  assert.match(dashboard,/\{ id: 'bestiary', label: 'NPC & Creature Library'/);
+   assert.match(read('src/state/dashboardMenuModel.mjs'),/page\\('bestiary','NPC & Creature Library'/);
   assert.match(dashboard,/\{tab === 'bestiary' \? <GMNpcCreatureLibrary/);
   const combatModel=read('src/dashboards/combat/combatModel.mjs');
   const combatService=read('src/dashboards/combat/firebaseCombatService.mjs');
