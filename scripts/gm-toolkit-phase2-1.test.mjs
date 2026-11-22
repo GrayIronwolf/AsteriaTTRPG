@@ -2,12 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {GM_TOOLKIT_GROUPS,GM_TOOLKIT_TOOLS,gmToolkitTool,filterGMToolkit,gmToolkitOverview} from '../src/state/gmToolkitModel.mjs';
+import {dashboardTabs} from '../src/state/dashboardMenuModel.mjs';
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 
 test('Phase 2.1 catalog contains only existing GM Dashboard tabs with distinct tool IDs',()=>{
   const source=read('src/dashboards/GMDashboard.jsx');
   const workspace=read('src/dashboards/GMWorkspacePanels.jsx');
-  const tabs=[...source.matchAll(/\{ id:\s*'([^']+)', label:/g)].map(item=>item[1]);
+  const tabs=dashboardTabs('gm').map(item=>item.id);
   assert.ok(tabs.includes('main')&&tabs.includes('toolkit')&&tabs.includes('inventory'));
   assert.equal(GM_TOOLKIT_GROUPS.length,4);
   assert.equal(new Set(GM_TOOLKIT_GROUPS.map(g=>g.id)).size,4);
