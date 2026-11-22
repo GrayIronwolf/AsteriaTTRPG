@@ -465,7 +465,6 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
     <div className={styles.canvas} ref={canvas}
       data-editing={wide&&canEditCanvas&&!layout.canvasLocked}
       data-layout-mode={wide?'freeform':'stacked'}
-      data-overview={wide&&camera.scale<.36}
       aria-label={playerCanvas?'Player dashboard freeform canvas':
         gmCanvas?'GM dashboard freeform canvas':'Combat freeform canvas'}
       onPointerDown={startPan}

@@ -4141,26 +4141,74 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 .react-gm-dashboard .react-party-sidebar-in-canvas{padding:0;min-height:0;
  background:transparent;border:0;box-shadow:none;width:100%;display:block}
 .react-gm-dashboard .react-party-sidebar-in-canvas>.react-party-list{
- display:grid;grid-template-columns:minmax(0,1fr);gap:12px;
- width:100%;min-height:0;overflow:visible}
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;
+ width:100%;min-height:0;overflow:visible;align-items:stretch
+}
 .react-gm-dashboard .react-party-sidebar-in-canvas .react-party-card{
- min-width:0;width:100%;height:auto;min-height:0;padding:12px;
- gap:10px;cursor:default;box-sizing:border-box;
+ min-width:0;width:100%;height:auto;min-height:340px;padding:12px;
+ display:grid;align-content:space-between;gap:12px;cursor:default;
+ box-sizing:border-box;position:relative;
  background:linear-gradient(150deg,#162333,#08111c 65%);
- border:1px solid #72808c;box-shadow:inset 0 1px 0 rgb(255 255 255 / .08)}
+ border:1px solid #72808c;box-shadow:inset 0 1px 0 rgb(255 255 255 / .08);
+ transition:border-color 160ms ease,box-shadow 160ms ease,opacity 160ms ease
+}
+.react-gm-dashboard .react-party-sidebar-in-canvas .react-party-card-header{
+ display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+ gap:9px;text-align:center;position:relative;padding-top:4px
+}
+.react-gm-dashboard .react-party-sidebar-in-canvas .react-party-card-identity{
+ width:100%;min-width:0
+}
+.react-gm-dashboard .react-party-sidebar-in-canvas .react-party-name{
+ justify-content:center;align-items:center;flex-wrap:wrap;text-align:center;gap:6px
+}
+.react-gm-dashboard .react-party-sidebar-in-canvas .react-party-name>div{
+ min-width:0;width:100%
+}
+.react-gm-dashboard .react-party-sidebar-in-canvas .react-party-card-header .react-party-reorder{
+ position:absolute;top:0;right:0;width:32px;height:32px;min-width:32px;
+ touch-action:none;cursor:grab
+}
 .react-gm-dashboard .react-party-sidebar-in-canvas .react-party-card:hover{
- border-color:var(--asteria-border-active)}
+ border-color:var(--asteria-border-active)
+}
 .react-gm-dashboard .react-party-sidebar-in-canvas .react-resource-track{
- height:9px}
-.react-gm-dashboard .react-party-sidebar-in-canvas .react-party-card-actions{
- display:flex;flex-wrap:wrap;gap:8px}
+ height:9px
+}
+.react-gm-dashboard .react-party-sidebar-in-canvas .react-party-card.is-lifted{
+ opacity:.26;border-style:dashed;border-color:var(--asteria-border-active)
+}
+.react-gm-dashboard .react-party-sidebar-in-canvas .react-party-card.is-drop-target{
+ border-color:var(--asteria-accent);box-shadow:0 0 0 2px var(--asteria-accent-soft),
+ inset 0 1px 0 rgb(255 255 255 / .15)
+}
+.react-party-drag-overlay{
+ position:fixed;top:0;left:0;z-index:99999;pointer-events:none;
+ transform-origin:0 0;will-change:transform
+}
+.react-party-drag-overlay .react-party-card{
+ opacity:.98;transform:rotate(-.8deg) scale(1.035);
+ box-shadow:0 16px 45px rgb(0 0 0 / .65),0 0 0 2px var(--asteria-border-active)
+}
 @container combatWindow (min-width:760px){
  .react-gm-dashboard .react-party-sidebar-in-canvas .react-party-list{
-   grid-template-columns:repeat(2,minmax(0,1fr))}
+   grid-template-columns:repeat(4,minmax(0,1fr))
+ }
 }
 @container combatWindow (min-width:1250px){
  .react-gm-dashboard .react-party-sidebar-in-canvas .react-party-list{
-   grid-template-columns:repeat(3,minmax(0,1fr))}
+   grid-template-columns:repeat(6,minmax(0,1fr))
+ }
+}
+@container combatWindow (max-width:420px){
+ .react-gm-dashboard .react-party-sidebar-in-canvas .react-party-list{
+   grid-template-columns:minmax(0,1fr)
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ .react-gm-dashboard .react-party-sidebar-in-canvas .react-party-card{
+   transition:none
+ }
 }
 .react-modal:has(.react-canvas-character-dashboard){
  width:min(1700px,96vw);max-width:96vw;height:min(94dvh,1100px);

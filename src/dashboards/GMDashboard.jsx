@@ -36,7 +36,7 @@ import { resourceDefinitions, storedResource } from '../state/resourceEngine.mjs
 import { ManualNumberInput } from '../components/ManualNumberInput.jsx';
 import { isManualNumber, manualNumber } from '../state/manualNumber.mjs';
 import { openGMCharacter, restoredGMView } from '../app/gmCharacterNavigation.mjs';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
 import { AsteriaAppShell, DashboardNavigation, EmptyState, LiveSyncStatus, Modal, Panel, ResourceBar, StatusPill } from '../components/WorkspaceUI.jsx';
 import { useCampaignLiveData } from '../sessions/useCampaignLiveData.js';
@@ -63,20 +63,19 @@ function progression(character = {}) {
 }
 
 function CharacterRosterCard({character,selected,presence,onSelect,onOpen,onFocus,
-  reorderable=false,onStartDrag,onDropCard,onMoveByKey}){
+  reorderable=false,onBeginDrag,onMoveDrag,onEndDrag,onMoveByKey,embedded=false,
+  dragging=false}){
   const xp=progression(character);
   const armour=useArmourClass(character);
   const soulDamage=soulDamageValue(character);
   const online=Object.values(presence||{}).some(record=>record.characterId===character.id&&record.state==='online');
   const portrait=character.image||character.portrait||character.characterImage||
     character.appearance?.image||character.appearance?.portrait;
-  return <article className={`react-party-card ${selected?'active':''}`}
+  return <article className={'react-party-card'+(selected?' active':'')+(dragging?' is-lifted':'')}
     data-resource-character={character.id}
     onDoubleClick={event=>{
       if(onFocus&&!event.target.closest('button,input,select,textarea,a'))onFocus();
-    }}
-    onDragOver={reorderable?event=>{event.preventDefault();event.dataTransfer.dropEffect='move';}:undefined}
-    onDrop={reorderable?event=>{event.preventDefault();onDropCard(character.id);}:undefined}>
+    }}>
     <div className="react-party-card-header">
       <span className="react-party-card-portrait">
         {portrait?<img src={portrait} alt="" loading="lazy" decoding="async"/>:
@@ -91,11 +90,13 @@ function CharacterRosterCard({character,selected,presence,onSelect,onOpen,onFocu
         </div>
       </div>
       {reorderable?<button type="button" className="react-party-reorder"
-        draggable="true" title="Drag to reorder characters"
-        aria-label={`Reorder ${character.name||'character'}; drag or use Alt + arrow keys`}
-        onDragStart={event=>{event.stopPropagation();event.dataTransfer.effectAllowed='move';
-          event.dataTransfer.setData('text/plain',character.id);onStartDrag(character.id);}}
-        onDragEnd={()=>onStartDrag('')}
+        title="Hold and drag to move this card"
+        aria-label={'Reorder '+(character.name||'character')+'; drag or use Alt + arrow keys'}
+        onPointerDown={event=>onBeginDrag?.(event,character.id)}
+        onPointerMove={onMoveDrag}
+        onPointerUp={onEndDrag}
+        onPointerCancel={onEndDrag}
+        onLostPointerCapture={onEndDrag}
         onKeyDown={onMoveByKey}>≡</button>:null}
     </div>
     {resourceDefinitions(character).map(row=>{
@@ -104,50 +105,141 @@ function CharacterRosterCard({character,selected,presence,onSelect,onOpen,onFocu
         value={value} maximum={maximum} reserved={row.id==='hp'?soulDamage:0}/>;
     })}
     <ResourceBar compact label="XP" kind="xp" value={xp.xp} maximum={xp.xpMax}/>
-    <div className="react-party-card-actions">
+    {!embedded?<div className="react-party-card-actions">
       <button type="button" aria-pressed={selected} onClick={onSelect}>
         {selected?'Selected':'Select'}</button>
       <button type="button" onClick={onOpen}
-        aria-label={`Open ${character.name||'character'} dashboard`}>Open Character</button>
-    </div>
+        aria-label={'Open '+(character.name||'character')+' dashboard'}>Open Character</button>
+    </div>:null}
   </article>;
 }
 
 function PartySidebar({campaign,characters,selectedId,setSelectedId,presence,onOpen,
   embedded=false,order=[],onReorder=null,onFocus=null}){
-  const dragId=useRef('');
+  const drag=useRef(null),listRef=useRef(null),beforeReorder=useRef(new Map());
+  const animateReorder=useRef(false);
+  const [draggingId,setDraggingId]=useState('');
   const partyIds=campaign?.party?.length?campaign.party:Object.keys(characters);
   const present=partyIds.filter(id=>Boolean(characters[id]));
   const orderedIds=orderedCombatPartyIds(present,order);
+  const orderKey=orderedIds.join('|');
+  const reorder=(from,to)=>{
+    if(!onReorder||!from||!to||from===to)return;
+    const cards=[...listRef.current?.querySelectorAll('[data-resource-character]')||[]];
+    beforeReorder.current=new Map(cards.map(card=>
+      [card.dataset.resourceCharacter,card.getBoundingClientRect()]));
+    animateReorder.current=true;
+    onReorder(from,to,orderedIds);
+  };
+  useLayoutEffect(()=>{
+    if(!animateReorder.current)return;
+    animateReorder.current=false;
+    if(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;
+    const cards=listRef.current?.querySelectorAll('[data-resource-character]')||[];
+    for(const card of cards){
+      const previous=beforeReorder.current.get(card.dataset.resourceCharacter);
+      if(!previous)continue;
+      const next=card.getBoundingClientRect();
+      const dx=previous.left-next.left,dy=previous.top-next.top;
+      if(Math.hypot(dx,dy)<2)continue;
+      card.animate?.([
+        {transform:'translate3d('+dx+'px,'+dy+'px,0)'},
+        {transform:'translate3d(0,0,0)'}
+      ],{duration:250,easing:'cubic-bezier(.22,1,.36,1)'});
+    }
+  },[orderKey]);
+  useEffect(()=>()=>{if(drag.current?.frame)cancelAnimationFrame(drag.current.frame);
+    drag.current?.overlay?.remove();},[]);
+  const beginDrag=(event,id)=>{
+    if(!embedded||!onReorder||drag.current||event.isPrimary===false||
+      event.button!==0)return;
+    const source=event.currentTarget.closest('.react-party-card');
+    if(!source||!listRef.current?.contains(source))return;
+    const rect=source.getBoundingClientRect();
+    const overlay=document.createElement('div');
+    overlay.className='react-gm-dashboard react-party-drag-overlay';
+    overlay.setAttribute('aria-hidden','true');
+    overlay.style.width=source.offsetWidth+'px';
+    const contents=document.createElement('div');
+    contents.className='react-party-sidebar-in-canvas';
+    const card=source.cloneNode(true);
+    card.classList.remove('active','is-lifted','is-drop-target');
+    card.removeAttribute('data-resource-character');
+    card.setAttribute('aria-hidden','true');
+    card.querySelectorAll('button').forEach(button=>{
+      button.tabIndex=-1;button.draggable=false;
+    });
+    contents.appendChild(card);overlay.appendChild(contents);
+    document.body.appendChild(overlay);
+    const scale=rect.width/Math.max(1,source.offsetWidth);
+    overlay.style.transform='translate3d('+rect.left+'px,'+rect.top+'px,0) scale('+scale+')';
+    drag.current={id,pointerId:event.pointerId,source,overlay,scale,
+      left:rect.left,top:rect.top,startX:event.clientX,startY:event.clientY,
+      x:event.clientX,y:event.clientY,target:null,moved:false,frame:0};
+    setDraggingId(id);
+    event.preventDefault();event.stopPropagation();
+    try{event.currentTarget.setPointerCapture(event.pointerId);}catch{/* no capture support */}
+  };
+  const moveDrag=event=>{
+    const gesture=drag.current;
+    if(!gesture||gesture.pointerId!==event.pointerId)return;
+    gesture.x=event.clientX;gesture.y=event.clientY;
+    gesture.moved ||= Math.hypot(gesture.x-gesture.startX,gesture.y-gesture.startY)>6;
+    const candidate=document.elementFromPoint(gesture.x,gesture.y)
+      ?.closest?.('[data-resource-character]');
+    const target=candidate&&candidate!==gesture.source&&
+      listRef.current?.contains(candidate)?candidate:null;
+    if(target!==gesture.target){
+      gesture.target?.classList.remove('is-drop-target');
+      gesture.target=target;
+      target?.classList.add('is-drop-target');
+    }
+    if(!gesture.frame)gesture.frame=requestAnimationFrame(()=>{
+      gesture.frame=0;
+      gesture.overlay.style.transform='translate3d('+
+        (gesture.left+gesture.x-gesture.startX)+'px,'+
+        (gesture.top+gesture.y-gesture.startY)+'px,0) scale('+gesture.scale+')';
+    });
+    event.preventDefault();event.stopPropagation();
+  };
+  const endDrag=event=>{
+    const gesture=drag.current;
+    if(!gesture||gesture.pointerId!==event.pointerId)return;
+    drag.current=null;
+    if(gesture.frame)cancelAnimationFrame(gesture.frame);
+    const to=gesture.target?.dataset.resourceCharacter||'';
+    gesture.target?.classList.remove('is-drop-target');
+    gesture.overlay.remove();
+    setDraggingId('');
+    if(event.type==='pointerup'&&gesture.moved&&to)reorder(gesture.id,to);
+    try{event.currentTarget.releasePointerCapture?.(event.pointerId);}catch{/* already released */}
+    event.stopPropagation();
+  };
   const list=<>
     <p>{campaign?.name||'Campaign'} party</p>
-    <div className="react-party-list">
+    <div className="react-party-list" ref={listRef}>
       {orderedIds.map(id=>{
         const character=characters[id];
         return <CharacterRosterCard key={id} character={character}
-          selected={selectedId===id} presence={presence}
+          selected={selectedId===id} presence={presence} embedded={embedded}
+          dragging={draggingId===id}
           onSelect={()=>setSelectedId(id)} onOpen={()=>onOpen(character)}
           onFocus={onFocus?()=>onFocus(character):null}
           reorderable={Boolean(onReorder)}
-          onStartDrag={value=>{dragId.current=value;}}
-          onDropCard={target=>{
-            if(dragId.current&&dragId.current!==target)
-              onReorder?.(dragId.current,target,orderedIds);
-            dragId.current='';
-          }}
+          onBeginDrag={beginDrag} onMoveDrag={moveDrag} onEndDrag={endDrag}
           onMoveByKey={event=>{
             if(!event.altKey||!['ArrowUp','ArrowDown'].includes(event.key))return;
             event.preventDefault();event.stopPropagation();
             const index=orderedIds.indexOf(id);
             const target=orderedIds[index+(event.key==='ArrowUp'?-1:1)];
-            if(target)onReorder?.(id,target,orderedIds);
+            if(target)reorder(id,target);
           }}/>
       })}
       {!present.length?<EmptyState title="No linked characters">
         Characters appear here as soon as they join this campaign.</EmptyState>:null}
     </div>
     <p className="react-help">{embedded?
-      'Drag the three-line handles to reorder cards. Double-click a card to inspect its dashboard.':
+      'Drag the top-right handle to lift and reorder cards, or use Alt + Up/Down on the handle. Double-click a card to inspect its dashboard.':
       'Select a character to manage them, or open their Character Dashboard.'}</p>
   </>;
   return embedded?<section className="react-party-sidebar react-party-sidebar-in-canvas"

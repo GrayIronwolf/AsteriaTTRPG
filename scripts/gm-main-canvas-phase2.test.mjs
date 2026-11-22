@@ -67,7 +67,7 @@ test('Existing GM layout and named focus content remain available after canvas m
  assert.deepEqual(normalizeDashboardLayout(JSON.parse(JSON.stringify(migrated)),'gm').gmCanvas,
    migrated.gmCanvas);
  const player=normalizeDashboardLayout(defaultDashboardLayout('player'),'player');
- assert.equal('gmCanvas' in player,false,'Player grid must not be replaced in Phase 2');
+ assert.equal('gmCanvas' in player,false,'Player and GM layouts must remain independent');
 });
 
 test('GM Main is an in-place canvas replacement, not an overlaid grid editor',()=>{
@@ -96,5 +96,5 @@ test('GM Main is an in-place canvas replacement, not an overlaid grid editor',()
  assert.match(quick,/subscribeWeatherReports/);
  assert.match(quick,/saveSection\('notes'/);
  assert.match(auth,/normalizeDashboardLayout\(layout,role\)/);
- assert.match(player,/DashboardLayoutWorkspace/);
+ assert.match(player,/<CanvasWorkspace key=\{character\.id\+':player-main-canvas'\}/);
 });
