@@ -359,7 +359,8 @@ export function PlayerDashboardOverview({ campaignId, campaign, character, chara
       layoutValue={preferences.dashboardLayout.playerCanvas}
       onSaveLayout={saveCanvas}
       canEditCanvas={canEditLayout}
-      forcedPanelIds={forcedPanels}>
+      forcedPanelIds={forcedPanels}
+      suppressedPanelIds={preferences.hiddenInformationFields.includes('currency')?['currency']:[]}>
       {PLAYER_DASHBOARD_CANVAS_CONFIG.ids.map(id=><CombatCommandPanel id={id} key={id}>
         {renderPanel(id)}
       </CombatCommandPanel>)}

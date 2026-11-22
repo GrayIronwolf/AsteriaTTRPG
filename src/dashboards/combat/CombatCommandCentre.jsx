@@ -42,7 +42,7 @@ const boundsHeight=(freeform,visibleIds)=>Math.max(700,...visibleIds.map(id=>{
  */
 export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
   layoutValue=null,onSaveLayout=null,canvasScopeId='',canEditCanvas=true,
-  forcedPanelIds=[]}){
+  forcedPanelIds=[],suppressedPanelIds=[]}){
   const gmCanvas=Boolean(canvasConfig);
   const playerCanvas=canvasConfig?.kind==='player';
   const canvasRole=playerCanvas?'Player':'GM';
@@ -90,8 +90,9 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
   const panels=collectCombatPanels(children).filter(child=>
     React.isValidElement(child)&&panelIds.includes(child.props.id));
   const forced=new Set(forcedPanelIds.filter(id=>panelIds.includes(id)));
-  const visible=panels.filter(panel=>!layout.hidden.includes(panel.props.id)||
-    forced.has(panel.props.id));
+  const suppressed=new Set(suppressedPanelIds.filter(id=>panelIds.includes(id)));
+  const visible=panels.filter(panel=>!suppressed.has(panel.props.id)&&
+    (!layout.hidden.includes(panel.props.id)||forced.has(panel.props.id)));
   useEffect(()=>{
     setSaved(gmCanvas?normalizeLayout(layoutValue):readLayout(storageKey));
     setUndoStack([]);setRedoStack([]);
@@ -447,12 +448,15 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
       previous.minimized.filter(other=>other!==id):[...previous.minimized,id]
   }));
   const hidden=layout.hidden;
-  const togglePanel=id=>setPreference(previous=>({
+  const togglePanel=id=>{
+    if(suppressed.has(id))return;
+    setPreference(previous=>({
     ...previous,
     hidden:previous.hidden.includes(id)?
       previous.hidden.filter(other=>other!==id):
       [...previous.hidden,id]
-  }));
+    }));
+  };
   return <section className={styles.centre} ref={root}
     aria-label={playerCanvas?'Player Main Dashboard Canvas':
       gmCanvas?'GM Main Dashboard Canvas':'GM Combat Command Centre'}
@@ -685,7 +689,9 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
               {group.panels.map(id=>{
                 const active=!hidden.includes(id)||forced.has(id);
                 return <button type="button" key={id} className={styles.toolItem}
-                  aria-pressed={active} disabled={!canEditCanvas||forced.has(id)||
+                  aria-pressed={active&&!suppressed.has(id)}
+                  title={suppressed.has(id)?'Hidden by Player Information Settings':undefined}
+                  disabled={!canEditCanvas||suppressed.has(id)||forced.has(id)||
                   (active&&visible.length<=1)}
                   onClick={()=>togglePanel(id)}>
                   <span aria-hidden="true">{active?'☑':'☐'}</span>{panelLabels[id]||id}
