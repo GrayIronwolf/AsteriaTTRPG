@@ -90,10 +90,10 @@ test('6.9: History is a movable window without overwriting saved GM layouts',()=
   const state=defaultCombatWorkspaceLayout();
   assert.ok(COMBAT_PANEL_IDS.includes('history'));
   assert.deepEqual(Object.keys(state.freeform.positions),COMBAT_PANEL_IDS);
-  const moved=editCombatWindow(state,'controls','move',{x:10,y:900});
+  const moved=editCombatWindow(state,'controls','move',{x:10,y:3100});
   assert.notEqual(moved,state,'the original drag-and-snap acceptance remains valid');
   const original=state.freeform.positions.history;
-  const positioned=editCombatWindow(state,'history','move',{x:510,y:1350});
+  const positioned=editCombatWindow(state,'history','move',{x:510,y:3400});
   assert.notEqual(positioned,state);
   assert.deepEqual(state.freeform.positions.history,original);
   const preset=saveCombatPreset(state,'Combat before history','layout-combat');
