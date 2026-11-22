@@ -116,8 +116,9 @@ test('combat default layout keeps every possible window out of overlap',()=>{
   assert.equal(layout.hidden.includes('prepared'),false);
   assert.equal(layout.hidden.includes('queue'),false);
   assert.equal(layout.hidden.includes('timer'),false);
-  assert.equal(layout.hidden.includes('advanced'),true);
-  assert.equal(layout.hidden.includes('setup'),true);
+  assert.equal(layout.hidden.includes('advanced'),false);
+  assert.equal(layout.hidden.includes('setup'),false);
+  assert.equal(layout.hidden.length,0,'New GM combat workspaces show all 13 systems');
 });
 
 test('existing GM saved combat layouts preserve six previous window positions',()=>{
