@@ -54,7 +54,13 @@ export function synchronizeCombatMapTokens(map,encounter,idFactory=()=>crypto.ra
       isPlayer&&t.kind==='character'&&t.refId===row.characterId);
     if(linked&&!already)usedManual.add(linked.id);
     const point=suggestedPoint(isPlayer?playerIndex++:enemyIndex++,isPlayer);
-    return {...(linked||{id:idFactory(),...point}),combatantId:row.id,
+    const placed=!isPlayer&&already===undefined&&
+      typeof encounter.combatants?.find(entry=>entry.id===row.id)?.spawn?.x==='number'
+      ?encounter.combatants.find(entry=>entry.id===row.id).spawn:null;
+    const preparedPoint=placed?battleMapPoint(placed.x,placed.y,{
+      columns:map.gridColumns,rows:map.gridRows,snap:true
+    }):point;
+    return {...(linked||{id:idFactory(),...preparedPoint}),combatantId:row.id,
       kind:isPlayer?'character':'creature',label:row.name.slice(0,48),
       refId:isPlayer?row.characterId:''};
   });

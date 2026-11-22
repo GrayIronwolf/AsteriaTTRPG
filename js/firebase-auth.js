@@ -913,6 +913,17 @@ const firebasePublicApi = {
   isReady:()=>Boolean(db && currentUser && ownershipReadyUid === currentUser.uid),
   getUser:()=>currentUser,
   getProfile:()=>currentProfile,
+  // Reuse the existing authenticated app for GM React combat; no duplicate Firebase app.
+  getReactCombatRuntime:()=>!auth||!db||!functionsClient?null:({
+    auth,db,functions:functionsClient,
+    firestoreSdk:{doc,collection,getDocFromServer,onSnapshot,query,orderBy,limit,runTransaction,serverTimestamp},
+    functionsSdk:{httpsCallable},
+    readCanonical:async user=>{
+      if(!user?.uid||auth.currentUser?.uid!==user.uid)throw Error('Authentication changed.');
+      const snapshot=await getDocFromServer(doc(db,'users',user.uid));
+      return snapshot.exists()?{uid:user.uid,...snapshot.data()}:null;
+    }
+  }),
   // The My Profile view may display only a fresh server-read projection.
   // Never fall back to an offline cache or automatically allocate an ID.
   // Authenticated self-service password reset. Never accept an arbitrary

@@ -1,0 +1,78 @@
+/* Phase 6.1C — scoped React combat window layout, without legacy CSS overrides. */
+.centre{display:grid;gap:var(--ast-space-3);min-width:0;container-type:inline-size}
+.toolbar{display:flex;align-items:start;justify-content:space-between;flex-wrap:wrap;gap:var(--ast-space-3);
+  padding:var(--ast-space-3);background:var(--ast-color-panel-raised);
+  border:1px solid var(--ast-color-outline-soft);border-radius:var(--ast-radius-sm)}
+.toolbar h3,.toolbar p{margin:0}
+.toolbar p,.note{color:var(--ast-color-text-muted);font-size:var(--ast-font-sm)}
+.actions,.editor,.presets,.hidden{display:flex;flex-wrap:wrap;align-items:center;gap:var(--ast-space-2)}
+.actions button,.editor button,.presets button,.hidden button,.windowActions button,.moveHandle,
+.resizeHandle,.options summary{font:inherit;color:var(--ast-color-text);cursor:pointer;
+  border:1px solid var(--ast-color-outline-soft);border-radius:var(--ast-radius-sm);
+  background:var(--ast-color-panel-raised);padding:var(--ast-space-1) var(--ast-space-2);
+  min-height:32px}
+.centre button:disabled{opacity:.5;cursor:not-allowed}
+.centre button:focus-visible,.centre input:focus-visible,.centre select:focus-visible,
+.options summary:focus-visible{outline:3px solid var(--ast-color-focus);outline-offset:2px}
+.editor,.presets,.hidden{background:var(--ast-color-panel);padding:var(--ast-space-3);
+  border:1px solid var(--ast-color-outline-soft);border-radius:var(--ast-radius-sm)}
+.editor label{display:flex;align-items:center;gap:var(--ast-space-2)}
+.editor label input[type='text']{max-width:170px}
+.editor input,.options select{background:var(--ast-color-panel-raised);color:var(--ast-color-text);
+  border:1px solid var(--ast-color-outline-soft);padding:var(--ast-space-1)}
+.editor p{flex-basis:100%;margin:0;font-size:var(--ast-font-sm);color:var(--ast-color-text-muted)}
+.presets>span{display:flex;align-items:center;gap:var(--ast-space-2);padding:var(--ast-space-1);
+  border:1px solid var(--ast-color-outline-soft);border-radius:var(--ast-radius-sm)}
+.hidden strong{margin-right:var(--ast-space-1)}
+.note{margin:0}
+.canvas{position:relative;container-type:inline-size;min-width:0;
+  height:calc(var(--combat-canvas-height) * .1cqw)}
+.window{position:absolute;display:flex;flex-direction:column;box-sizing:border-box;
+  min-width:0;min-height:0;left:var(--combat-x);top:var(--combat-y);
+  width:var(--combat-w);height:var(--combat-h);background:var(--ast-color-panel);
+  border:1px solid var(--ast-color-outline-soft);border-radius:var(--ast-radius-panel);
+  color:var(--ast-color-text);box-shadow:0 6px 18px rgb(0 0 0 / .13);isolation:isolate}
+.windowBar{display:flex;align-items:center;gap:var(--ast-space-2);min-height:43px;
+  padding:var(--ast-space-2);border-bottom:1px solid var(--ast-color-outline-soft);
+  background:var(--ast-color-panel-raised);border-radius:var(--ast-radius-panel) var(--ast-radius-panel) 0 0}
+.windowBar strong{flex:1;min-width:0;font-size:var(--ast-font-sm);overflow-wrap:anywhere}
+.windowActions{display:flex;align-items:center;gap:3px;flex-wrap:wrap}
+.windowActions button{min-width:30px}
+.moveHandle,.resizeHandle{touch-action:none;user-select:none;cursor:grab}
+.resizeHandle{position:absolute;right:8px;bottom:6px;z-index:5;cursor:nwse-resize}
+.windowContent{flex:1;min-width:0;min-height:0;overflow:auto;overscroll-behavior:contain;
+  padding:var(--ast-space-3);scrollbar-width:thin}
+.windowContent>section{padding:0;border:0;background:transparent}
+.windowContent :where(h3,p){margin-top:0}
+.windowContent :where(input,select,textarea){max-width:100%}
+.windowContent :where(button){max-width:100%;white-space:normal}
+.canvas[data-editing='true'] .window{outline:1px dashed var(--ast-color-outline-active);outline-offset:-3px}
+.minimised{height:min(var(--combat-h),5rem)}
+.minimised .windowContent{visibility:hidden;height:0;min-height:0;padding:0;overflow:hidden;pointer-events:none}
+.canvas .maximised{position:fixed;inset:4vh 3vw;left:3vw;top:4vh;width:94vw;height:92vh;
+  z-index:1100;box-shadow:0 16px 80px rgb(0 0 0 / .7)}
+.maximised .windowContent{overflow:auto}
+.options{position:relative}
+.options summary{list-style:none;display:inline-flex;align-items:center}
+.options summary::-webkit-details-marker{display:none}
+.options>div{position:absolute;right:0;top:calc(100% + 5px);z-index:15;width:190px;
+  max-height:60vh;overflow:auto;padding:var(--ast-space-2);display:grid;gap:var(--ast-space-1);
+  background:var(--ast-color-panel-raised);border:1px solid var(--ast-color-outline-active);
+  border-radius:var(--ast-radius-sm);box-shadow:0 9px 22px rgb(0 0 0 / .35)}
+.options label{display:grid;gap:var(--ast-space-1);font-size:var(--ast-font-sm)}
+.options select{width:100%}
+@container (max-width:899px){
+  .canvas{height:auto;display:flex;flex-direction:column;gap:var(--ast-space-3)}
+  .window{position:relative;left:auto;top:auto;width:100%;height:auto;min-height:160px}
+  .windowContent{max-height:none;overflow:visible}
+  .minimised{min-height:0}
+  .minimised .windowContent{display:none}
+  .canvas .maximised{position:fixed;width:94vw;height:92vh;inset:4vh 3vw}
+  .maximised .windowContent{overflow:auto}
+}
+@media(max-width:600px){
+  .toolbar{padding:var(--ast-space-2)}
+  .windowBar{flex-wrap:wrap}
+  .windowContent{padding:var(--ast-space-2)}
+  .options>div{right:0;max-width:70vw}
+}

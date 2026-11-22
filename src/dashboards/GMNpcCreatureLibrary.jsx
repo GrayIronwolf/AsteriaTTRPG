@@ -240,7 +240,7 @@ export function GMNpcCreatureLibrary({workspace={},saveSection,onOpenEncounter,o
             </button>:null}
           {!row.official?<p className="react-gm-library-encounter">
             {libraryEncounterReady(row)?
-              'Encounter ready — searchable on the GM Main encounter board.':
+              'Encounter ready — available in the Combat Command Centre.':
               'Encounter stats incomplete — saved for world and story use.'}
           </p>:<p className="react-gm-library-encounter">Read-only official entry; see the Asteria Compendium for full details.</p>}
         </div>}

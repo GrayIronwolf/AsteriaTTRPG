@@ -1,3 +1,4 @@
+import {projectCombat} from './dashboards/combat/combatModel.mjs';
 import { SESSION_LIMIT_MS, applyCharacteristicAllocations, applyCharacteristicPoints, characterKnowsIdentify, firstFreeStorageSlot, nextSkillProgress, normalizeCharacterStorages, normalizeDashboardPreferences, parseResourceCost, slug, stackableStorageItem, talentRankCost, unidentifiedItemName } from './state/liveWorkspaceModel.mjs';
 import { applyRest, applySoulDamage, clampHpForSoulDamage, recoverSoulDamage } from './state/specialDamageModel.mjs';
 import { createAsteriaItem, normalizeMarketPricing } from './systems/items/marketPricing.mjs';
@@ -175,8 +176,87 @@ export function installDevFixtures() {
   };
   const itemRequestById=requestId=>(itemEcosystem.playerItemRequests||[]).find(value=>String(value.id)===String(requestId));
 
+
+  // Local-only combat provider uses the SAME fixture encounter state. It is
+  // never installed outside ?reactFixture=1 on a loopback host.
+  const combatListeners=new Set(),combatHistory=[];
+  const publishCombat=()=>{
+    const projected=projectCombat(encounter,session,{role:'gm',party:Object.values(characters)});
+    const state={combat:projected,session:{id:session.id,status:session.status,editable:session.status==='active'},
+      candidates:[],library:[],pending:null,combatLog:[],encounterSchedule:[],
+      preparedEncounters:gmWorkspace?.preparedEncounters||[],
+      maps:[],party:Object.values(characters)};
+    for(const callback of combatListeners)callback(clone(state));
+  };
+  const fixtureCombatService={
+    availability:()=>({enabled:true}),
+    watchGM:(_campaignId,onUpdate)=>{
+      combatListeners.add(onUpdate);
+      queueMicrotask(()=>{if(combatListeners.has(onUpdate))publishCombat();});
+      return()=>combatListeners.delete(onUpdate);
+    },
+    watchGMHistory:(_campaignId,onUpdate)=>{
+      queueMicrotask(()=>onUpdate(clone(combatHistory)));
+      return()=>{};
+    },
+    commandGM:async(_campaignId,actorId,input)=>{
+      const nextRev=Number(encounter.combat?.revision||0)+1;
+      const previous={...encounter};
+      switch(input.operation){
+      case 'start':
+        encounter={...encounter,status:'active',round:1,turnIndex:0,
+          combat:{version:1,revision:nextRev,participants:Object.fromEntries(
+            (encounter.combatants||[]).map(x=>[x.id,{ap:3,bonus:true,turnComplete:false}]))}};
+        break;
+      case 'next':
+        encounter={...encounter,turnIndex:(Number(encounter.turnIndex||0)+1)%
+          Math.max(1,(encounter.combatants||[]).length),
+          round:Number(encounter.round||1)+(Number(encounter.turnIndex||0)+1>=
+            (encounter.combatants||[]).length?1:0),combat:{...(encounter.combat||{}),revision:nextRev}};
+        break;
+      case 'end':encounter={...encounter,status:'ended',combat:{...(encounter.combat||{}),revision:nextRev}};break;
+      case 'clear':encounter={status:'ready',round:1,turnIndex:0,combatants:[],enemies:[],combat:{revision:nextRev}};break;
+      case 'save':encounter={...encounter,...(input.encounter||{}),combat:{...(encounter.combat||{}),revision:nextRev}};break;
+      case 'map-prepare':encounter={...encounter,preparedMapId:input.mapId||'',combat:{...(encounter.combat||{}),revision:nextRev}};break;
+      case 'map-link':encounter={...encounter,battleMapId:input.mapId||'',combat:{...(encounter.combat||{}),revision:nextRev}};break;
+      case 'load-prepared':{
+        const plan=(gmWorkspace?.preparedEncounters||[]).find(row=>row.id===input.preparedId);
+        if(!plan)throw Error('Prepared encounter does not exist.');
+        const enemies=(plan.enemies||[]).map((row,i)=>({...row,id:'enemy-fixture-'+i}));
+        encounter={...encounter,status:'ready',round:1,turnIndex:0,
+          enemies,combatants:enemies,preparedMapId:plan.mapId||'',
+          combat:{...(encounter.combat||{}),revision:nextRev}};
+        break;
+      }
+      default:encounter={...encounter,combat:{...(encounter.combat||{}),revision:nextRev}};
+      }
+      notify('encounter');publishCombat();
+      return {ok:true,message:'Fixture combat state updated',previous:clone(previous)};
+    },
+    savePrepared:async(_id,plan,expectedRevision=0)=>{
+      const all=[...(gmWorkspace?.preparedEncounters||[])];
+      const index=all.findIndex(row=>row.id===plan.id);
+      const updated={...clone(plan),revision:Number(expectedRevision)+1};
+      if(index>=0)all[index]=updated;else all.push(updated);
+      gmWorkspace={...(gmWorkspace||{}),preparedEncounters:all};
+      notify('gmWorkspace');publishCombat();
+      return {ok:true,id:plan.id,revision:updated.revision};
+    },
+    deletePrepared:async(_id,plan)=>{
+      gmWorkspace={...(gmWorkspace||{}),
+        preparedEncounters:(gmWorkspace?.preparedEncounters||[]).filter(row=>row.id!==plan.id)};
+      notify('gmWorkspace');publishCombat();return {ok:true};
+    },
+    loadPrepared:async(campaignId,preparedId,revision,expectedPreparedRevision)=>
+      fixtureCombatService.commandGM(campaignId,'encounter',{
+        operation:'load-prepared',preparedId,revision,expectedPreparedRevision
+      }),
+    reviewCompletion:async()=>({ok:true,status:'approved'}),
+    deliverCompletion:async()=>({ok:true})
+  };
   const fixtureApi = {
     isReady: () => true,
+    getReactCombatFixtureService:()=>fixtureCombatService,
     // The fixture already publishes clock/system snapshots through its subscriptions.
     refreshCharacterSystems: async () => ({ok:true}),
     getUser: () => ({ uid: 'player-demo', email: 'preview@asteria.local' }),

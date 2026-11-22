@@ -713,6 +713,12 @@ service cloud.firestore {
         allow create, update, delete: if false;
       }
 
+      // GM-only history: writes are performed by trusted Firebase callable transactions.
+      match /encounterHistory/{encounterId} {
+        allow get, list: if isCampaignGM(campaignId);
+        allow create, update, delete: if false;
+      }
+
       match /systems/{systemId} {
         allow read: if canUseCampaignSystems(campaignId) && (
           (systemId == 'itemEcosystem' || systemId == 'gmWorkspace')
