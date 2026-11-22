@@ -69,6 +69,7 @@ export function CombatCommandCentre({uid,campaignId,children}){
   const toolToggleRef=useRef(null);
   const cameraRef=useRef(camera),wheelTimer=useRef(null),wheelFrame=useRef(0);
   const zoomReadout=useRef(null),spaceHeld=useRef(false),focusTimer=useRef(null);
+  const lastTitlePress=useRef(null);
   const layout=saved;
   const panels=collectCombatPanels(children).filter(child=>
     React.isValidElement(child)&&COMBAT_PANEL_IDS.includes(child.props.id));
@@ -326,6 +327,8 @@ export function CombatCommandCentre({uid,campaignId,children}){
   const move=event=>{
     const g=gesture.current;
     if(!g||g.pointer!==event.pointerId)return;
+    if(g.kind==='move'&&(Math.abs(event.clientX-g.x)>6||
+      Math.abs(event.clientY-g.y)>6))lastTitlePress.current=null;
     g.pending=g.kind==='pan'?{x:event.clientX,y:event.clientY}:
       proposal(g,event.clientX,event.clientY);
     if(!g.frame)g.frame=requestAnimationFrame(()=>{
@@ -437,12 +440,20 @@ export function CombatCommandCentre({uid,campaignId,children}){
           <header className={styles.windowBar}
             data-testid={'combat-drag-header-'+id}
             title="Drag to move; double-click to focus or return"
-            onDoubleClick={event=>{
-              if(event.target.closest('button,input,select,textarea,a,summary,details,label'))return;
-              focusWindow(id);
-            }}
             onPointerDown={event=>{
               if(event.target.closest('button,input,select,textarea,a,summary,details,label'))return;
+              const previous=lastTitlePress.current;
+              const doublePress=previous?.id===id&&
+                event.timeStamp-previous.time<380&&
+                Math.abs(event.clientX-previous.x)<8&&
+                Math.abs(event.clientY-previous.y)<8;
+              lastTitlePress.current=doublePress?null:{
+                id,time:event.timeStamp,x:event.clientX,y:event.clientY};
+              if(doublePress){
+                event.preventDefault();event.stopPropagation();
+                focusWindow(id);
+                return;
+              }
               begin(event,id,'move');
             }}>
             <strong tabIndex={wide&&!isLocked&&!layout.canvasLocked?0:undefined}

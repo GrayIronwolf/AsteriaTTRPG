@@ -250,7 +250,8 @@ test('Canvas wheel is contained and bezel content can focus and scale',()=>{
  assert.match(renderer,/const zoomRequested=!overWindow\|\|event\.ctrlKey\|\|event\.metaKey/);
  assert.match(renderer,/event\.preventDefault\(\)/);
  assert.match(renderer,/data-combat-scroll/);
- assert.match(renderer,/onDoubleClick=\{event=>/);
+ assert.match(renderer,/doublePress=previous\?\.id===id/);
+ assert.match(renderer,/focusWindow\(id\)/);
  assert.match(renderer,/aria-label=\{'Content size for '\+label\}/);
  assert.match(css,/\.windowBody\{/);
  assert.match(css,/container-name:combatWindow/);
