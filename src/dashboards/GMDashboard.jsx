@@ -729,7 +729,7 @@ export function GMDashboard({ campaignId }) {
     {tab === 'session-library' ? <GMSessionLibraryWorkspace campaignId={campaignId}/> : null}
     {tab === 'soundboard' ? <GMCampaignSoundboard campaignId={campaignId}/> : null}
     {tab === 'session-recordings' ? <GMSessionRecordingWorkspace campaignId={campaignId} session={live.session}/> : null}
-    {tab === 'presentation' ? <GMPlayerPresentationWorkspace campaignId={campaignId} characters={live.characters}/> : null}
+    {tab === 'presentation' ? <GMPlayerPresentationWorkspace campaignId={campaignId} characters={live.characters} onNavigate={setTab}/> : null}
     {tab === 'economy' ? <><GMTradeLootHub overview={gmTradeHub} onNavigate={openGMHubLink}/><EconomyWorkspace campaignId={campaignId} workspace={workspace} characters={live.characters} itemEcosystem={live.itemEcosystem} customItems={live.customItems} saveSection={saveSection} searchTarget={gmSearchTarget}/></> : null}
     {tab === 'crafting' ? <CraftingWorkspace campaignId={campaignId} workspace={workspace} characters={live.characters} saveSection={saveSection}/> : null}
     <GMUniversalCheckNotification campaignId={campaignId} onOpen={()=>setTab('tools')}/>

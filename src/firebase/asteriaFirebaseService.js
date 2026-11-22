@@ -25,6 +25,7 @@ function requireMethod(name) {
 }
 
 export const firebaseService = {
+  presentationRuntime:()=>api()?.getReactPresentationRuntime?.()||null,
   currentUser: () => api()?.getUser?.() || null,
   advancedDiceAction: data=>requireMethod('advancedDiceAction')(data),
   subscribeDiceWorkspace: onChange=>requireMethod('subscribeDiceWorkspace')(onChange),

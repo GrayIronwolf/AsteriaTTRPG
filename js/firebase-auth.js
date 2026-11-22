@@ -924,6 +924,20 @@ const firebasePublicApi = {
       return snapshot.exists()?{uid:user.uid,...snapshot.data()}:null;
     }
   }),
+  /** Phase 7 extends the SAME Firebase app used by the existing GM/Player
+   * dashboards. No second Auth, Firestore, Functions or Storage connection. */
+  getReactPresentationRuntime:()=>!auth||!db||!storage||!functionsClient?null:({
+    auth,db,storage,functions:functionsClient,
+    firestoreSdk:{doc,collection,getDocFromServer,onSnapshot,query,orderBy,limit,
+      runTransaction,serverTimestamp},
+    storageSdk:{ref:storageRef,getBlob,uploadBytes,deleteObject},
+    functionsSdk:{httpsCallable},
+    readCanonical:async user=>{
+      if(!user?.uid||auth.currentUser?.uid!==user.uid)throw Error('Account changed.');
+      const snapshot=await getDocFromServer(doc(db,'users',user.uid));
+      return snapshot.exists()?{uid:user.uid,...snapshot.data()}:null;
+    }
+  }),
   // The My Profile view may display only a fresh server-read projection.
   // Never fall back to an offline cache or automatically allocate an ID.
   // Authenticated self-service password reset. Never accept an arbitrary
