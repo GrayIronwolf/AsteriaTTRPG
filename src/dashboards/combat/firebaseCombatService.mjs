@@ -1,6 +1,6 @@
 import {assertGMCampaignId,gmCampaignAccess,gmPartySummary} from './combatAccess.mjs';
 import {requireDashboardId,playerCampaignAccess,linkedCharacterAccess,matchesOwnedSource} from './combatAccess.mjs';
-import {gmSessionState} from '../dashboard/gmDashboardModel.mjs';
+import {gmSessionState} from './combatAccess.mjs';
 import {
   projectCombat,eligiblePlayerCombatants,gmEncounterCandidates,validateCombatCommand,
   combatRevision
