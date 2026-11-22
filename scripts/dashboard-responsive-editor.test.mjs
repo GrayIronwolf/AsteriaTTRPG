@@ -103,6 +103,7 @@ test('Player/GM apply saves directly and editor provides confirmation controls',
  assert.match(editor,/dashboardPanelSizeChoices/);
  assert.doesNotMatch(editor,/className="react-grid-editor-tile-resize"/);
  assert.match(player,/onApply=\{applyLayout\}/);
- assert.match(gm,/onApply=\{applyGMLayout\}/);
+ assert.match(gm,/canvasConfig=\{GM_DASHBOARD_CANVAS_CONFIG\}/);
+ assert.doesNotMatch(gm,/onApply=\{applyGMLayout\}|DashboardLayoutWorkspace|DashboardLayoutEditor/);
  assert.match(gm,/saveUserDashboardLayout/);
 });

@@ -161,66 +161,64 @@ async function metrics(page) {
     assert.ok(m.panels>=5,'Player panels missing on mobile: '+JSON.stringify(m));
     console.log('PLAYER MOBILE METRICS',JSON.stringify(m));
   });
-  await scenario('05-gm-dashboard',{width:1440},async p=>{
+  await scenario('05-gm-dashboard-canvas',{width:1440},async p=>{
     await gm(p);
     await checkMenuButtonSkin(p,'gm');
-    await p.locator('.react-dashboard-freeform-grid [data-panel-id]').first().waitFor();
-    const m=await metrics(p);
-    assert.ok(m.panels>=3,'Missing GM dashboard panels: '+JSON.stringify(m));
-    const strip=p.getByTestId('gm-player-resources-strip');
-    assert.equal(await strip.count(),1,'GM Player Resources strip missing');
-    const placement=await p.locator('.react-workspace-main').evaluate(root=>{
-      const header=root.querySelector('.react-workspace-header');
-      const party=root.querySelector('[data-testid="gm-player-resources-strip"]');
-      const menu=root.querySelector('[data-testid="asteria-gm-hybrid-menu"]');
-      return {headerBottom:header.getBoundingClientRect().bottom,
-        partyTop:party.getBoundingClientRect().top,
-        partyWidth:party.getBoundingClientRect().width,
-        menuTop:menu.getBoundingClientRect().top,
-        search:!!root.querySelector('.asteria-gm-unified-search'),
-        toolkit:!!root.querySelector('.react-gm-toolkit-quick')};
-    });
-    assert.ok(placement.partyTop>=placement.headerBottom-2,
-      'Player Resources must be immediately below the campaign/session header');
-    assert.ok(placement.menuTop>=placement.partyTop,
-      'Player Resources must be above GM navigation');
-    assert.ok(placement.partyWidth>600,'Player Resources must span the GM page');
-    assert.equal(placement.search,false,'Remove redundant GM search launcher');
-    assert.equal(placement.toolkit,false,'Remove redundant GM Toolkit quick panel');
+    const canvas=p.getByTestId('site-gm-main-canvas');
+    await canvas.waitFor();
+    const windows=canvas.locator('[data-canvas-window]');
+    const ids=await windows.evaluateAll(nodes=>nodes.map(el=>el.dataset.canvasWindow));
+    const expected=['gmResources','combatOverview','requestsOverview','preparedOverview',
+      'quickNotes','questTracker','calendarWeather','sessionOverview'];
+    assert.deepEqual(ids,expected,'GM Main must start with the eight approved quick windows');
+    assert.equal(await p.getByTestId('gm-player-resources-strip').count(),0,
+      'GM Main must not keep the old fixed Resources strip');
+    assert.equal(await p.locator('.react-gm-dashboard .react-dashboard-freeform-grid').count(),0,
+      'GM Main must replace the legacy grid, not render it under a new canvas');
+    assert.ok(await canvas.getByTestId('gm-combat-party-resources')
+      .locator('[data-resource-character]').count()>=2,
+      'Reuse live Resources cards within the GM Main window');
     await p.screenshot({path:path.join(root,'05-gm-dashboard.png'),fullPage:true});
-    console.log('GM METRICS',JSON.stringify(m));
   });
-  await scenario('06-gm-layout-editor',{width:1440},async p=>{
+  await scenario('06-gm-canvas-window-management',{width:1440},async p=>{
     await gm(p);
-    await p.getByRole('button',{name:'Settings',exact:true}).click();
-    const open=p.getByRole('button',{name:'Customise Dashboard Layout',exact:true});
-    await open.waitFor();
-    await open.click();
-    const dialog=p.getByRole('dialog',{name:'Dashboard visual grid editor'});
-    await dialog.waitFor();
-    const initial=dialog.locator('[data-grid-panel-id]');
-    assert.ok(await initial.count()>0,'No editable grid tiles');
-    await p.screenshot({path:path.join(root,'06-gm-layout-editor.png'),fullPage:true});
-    const lock=dialog.locator('button[aria-label^="Lock "]').first();
-    const label=await lock.getAttribute('aria-label');
-    assert.ok(label,'No unlocked panel to exercise');
-    await lock.click();
-    await dialog.locator('button[aria-label="'+label.replace(/^Lock /,'Unlock ')+'"]').waitFor();
-    await dialog.getByRole('button',{name:'Apply Changes',exact:true}).click();
-    await dialog.waitFor({state:'hidden'});
-    await open.click();
-    await dialog.waitFor();
-    await dialog.locator('button[aria-label="'+label.replace(/^Lock /,'Unlock ')+'"]').waitFor();
-    await dialog.getByRole('button',{name:'Cancel',exact:true}).click();
-    await dialog.waitFor({state:'hidden'});
+    const canvas=p.getByTestId('site-gm-main-canvas');
+    await canvas.waitFor();
+    const plus=p.getByTestId('gm-canvas-add-window');
+    await plus.click();
+    const library=p.getByRole('complementary',{name:'GM Dashboard Window Library'});
+    await library.waitFor();
+    await library.getByRole('button',{name:'GM Controls & Rewards'}).click();
+    const toggle=library.getByRole('button',{name:/XP Distribution/});
+    assert.equal(await toggle.getAttribute('aria-pressed'),'false');
+    await toggle.click();
+    assert.equal(await canvas.locator('[data-canvas-window]').count(),9,
+      'Adding XP Distribution must create a real canvas window');
+    assert.equal(await toggle.getAttribute('aria-pressed'),'true');
+    await toggle.click();
+    assert.equal(await canvas.locator('[data-canvas-window]').count(),8,
+      'Removing a GM window must hide it without deleting its data');
+    await toggle.click();
+    await library.getByRole('button',{name:'Close Dashboard Windows menu'}).click();
+    await p.getByRole('button',{name:'Undo canvas change'}).click();
+    assert.equal(await canvas.locator('[data-canvas-window]').count(),8,
+      'Canvas undo should restore the previous GM window selection');
+    await p.getByRole('button',{name:'Redo canvas change'}).click();
+    assert.equal(await canvas.locator('[data-canvas-window]').count(),9,
+      'Canvas redo should reapply the selected GM window');
+    await p.screenshot({path:path.join(root,'06-gm-canvas-window-management.png'),fullPage:true});
   });
-  await scenario('07-gm-mobile',{width:390,height:844},async p=>{
+  await scenario('07-gm-mobile-canvas',{width:390,height:844},async p=>{
     await gm(p);
-    await p.locator('.react-dashboard-freeform-grid [data-panel-id]').first().waitFor();
+    const canvas=p.getByTestId('site-gm-main-canvas');
+    await canvas.waitFor();
+    assert.equal(await canvas.locator('[data-canvas-window]').count(),8);
+    assert.equal(await canvas.locator('[data-layout-mode="stacked"]').count(),1);
+    assert.equal(await p.getByTestId('gm-player-resources-strip').count(),0);
     const m=await metrics(p);
     await p.screenshot({path:path.join(root,'07-gm-mobile.png'),fullPage:true});
-    assert.ok(m.scrollWidth<=m.viewport,'GM dashboard horizontal overflow: '+JSON.stringify(m));
-    console.log('GM MOBILE METRICS',JSON.stringify(m));
+    assert.ok(m.scrollWidth<=m.viewport,
+      'GM canvas must not cause horizontal overflow on mobile: '+JSON.stringify(m));
   });
   await scenario('08-gm-combat-command-centre',{width:1440},async p=>{
     await gm(p);

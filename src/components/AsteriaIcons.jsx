@@ -17,6 +17,7 @@ const paths = {
   grid: <><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z" /></>,
   list: <><path d="M9 6h12M9 12h12M9 18h12" /><circle cx="4" cy="6" r="1" /><circle cx="4" cy="12" r="1" /><circle cx="4" cy="18" r="1" /></>,
   menu: <><path d="M4 6h16M4 12h16M4 18h16" /></>,
+  plus: <><path d="M12 4v16M4 12h16" /></>,
   close: <><path d="m6 6 12 12M18 6 6 18" /></>,
   chevronDown: <><path d="m6 9 6 6 6-6" /></>,
   chevronLeft: <><path d="m15 18-6-6 6-6" /></>,

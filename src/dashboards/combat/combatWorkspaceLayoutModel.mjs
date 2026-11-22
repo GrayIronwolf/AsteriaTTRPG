@@ -154,18 +154,26 @@ const DEFAULT_POSITIONS=Object.freeze({
   advanced:{x:510,y:2600,w:490,h:500},
   prepared:{x:510,y:1550,w:490,h:600}
 });
+const COMBAT_CANVAS_CONFIG=Object.freeze({
+  ids:COMBAT_PANEL_IDS,defaultPositions:DEFAULT_POSITIONS,defaultHidden:DEFAULT_HIDDEN,
+  kind:'combat'
+});
+const scopeOf=config=>Array.isArray(config?.ids)?config:COMBAT_CANVAS_CONFIG;
 const isRecord=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
-const allowed=id=>COMBAT_PANEL_IDS.includes(id);
-const unique=values=>[...new Set(Array.isArray(values)?values.filter(allowed):[])];
+const allowed=(id,config)=>scopeOf(config).ids.includes(id);
+const unique=(values,config)=>[...new Set(Array.isArray(values)?
+  values.filter(id=>allowed(id,config)):[])];
 const nameOf=value=>typeof value==='string'?value.trim().replace(/\s+/g,' ').slice(0,48):'';
 
-function normaliseBase(raw){
+function normaliseBase(raw,config=COMBAT_CANVAS_CONFIG){
+  const scope=scopeOf(config);
   const source=isRecord(raw)?raw:{},input=isRecord(source.freeform)?source.freeform:{};
   const entries=isRecord(input.positions)?input.positions:{};
   // v1 stored collision protection and snapping as implicit defaults, even when
   // the GM had not selected them. Migrate those layouts to true freeform once.
   const configured=Number(input.interactionVersion)>=CANVAS_INTERACTION_VERSION;
-  const isLegacy=Object.keys(entries).length>0&&!Object.hasOwn(entries,'queue');
+  const isLegacy=scope.kind==='combat'&&Object.keys(entries).length>0&&
+    !Object.hasOwn(entries,'queue');
   const priorBottom=isLegacy?Math.max(...Object.values(entries).map(
     rect=>Number(rect?.y||0)+Number(rect?.h||0)),0):0;
   const appended=Object.freeze({
@@ -177,20 +185,21 @@ function normaliseBase(raw){
     events:{x:510,y:priorBottom+900,w:490,h:400},
     log:{x:510,y:priorBottom+1310,w:490,h:280}
   });
-  const positions=Object.fromEntries(COMBAT_PANEL_IDS.map(id=>[
-    id,normalizeCombatCanvasRect(entries[id],id==='resources'&&
-      Object.keys(entries).length&&!Object.hasOwn(entries,'resources')?
-      {x:1020,y:0,w:510,h:670}:
-      isLegacy&&appended[id]?appended[id]:DEFAULT_POSITIONS[id])
+  const positions=Object.fromEntries(scope.ids.map(id=>[
+    id,normalizeCombatCanvasRect(entries[id],
+      scope.kind==='combat'&&id==='resources'&&Object.keys(entries).length&&
+        !Object.hasOwn(entries,'resources')?{x:1020,y:0,w:510,h:670}:
+      isLegacy&&appended[id]?appended[id]:
+      scope.defaultPositions?.[id]||{x:0,y:0,w:490,h:300})
   ]));
   const contentScale=Object.fromEntries(
     Object.entries(isRecord(source.contentScale)?source.contentScale:{})
-      .filter(([id,value])=>allowed(id)&&Number.isFinite(value))
+      .filter(([id,value])=>allowed(id,scope)&&Number.isFinite(value))
       .map(([id,value])=>[id,bounded(Math.round(value*100)/100,.85,1.6)])
   );
   const groups=[];
   for(const group of Array.isArray(source.groups)?source.groups:[]){
-    const ids=unique(group).filter(id=>!groups.some(row=>row.includes(id)));
+    const ids=unique(group,scope).filter(id=>!groups.some(row=>row.includes(id)));
     if(ids.length>=2)groups.push(ids);
     if(groups.length===2)break;
   }
@@ -198,11 +207,11 @@ function normaliseBase(raw){
     freeform:{enabled:true,snap:configured&&input.snap===true,
       allowOverlap:configured?input.allowOverlap!==false:true,
       interactionVersion:CANVAS_INTERACTION_VERSION,positions},
-    hidden:unique(source.hidden??DEFAULT_HIDDEN).concat(
-      isLegacy?MIGRATED_NEW_HIDDEN.filter(id=>!unique(source.hidden).includes(id)):[]
+    hidden:unique(source.hidden??scope.defaultHidden??DEFAULT_HIDDEN,scope).concat(
+      isLegacy?MIGRATED_NEW_HIDDEN.filter(id=>!unique(source.hidden,scope).includes(id)):[]
     ),
-    locked:unique(source.locked),
-    minimized:unique(source.minimized),
+    locked:unique(source.locked,scope),
+    minimized:unique(source.minimized,scope),
     contentScale,
     partyCardOrder:[...new Set((Array.isArray(source.partyCardOrder)?source.partyCardOrder:[])
       .filter(id=>typeof id==='string'&&id.length>0&&id.length<=180))].slice(0,200),
@@ -210,18 +219,18 @@ function normaliseBase(raw){
     canvasLocked:source.canvasLocked===true
   };
 }
-export function defaultCombatWorkspaceLayout(){
-  return {...normaliseBase({}),savedWorkspaces:[]};
+export function defaultCombatWorkspaceLayout(config=COMBAT_CANVAS_CONFIG){
+  return {...normaliseBase({},config),savedWorkspaces:[]};
 }
-export function normalizeCombatWorkspace(raw){
-  const source=isRecord(raw)?raw:{},base=normaliseBase(source);
+export function normalizeCombatWorkspace(raw,config=COMBAT_CANVAS_CONFIG){
+  const source=isRecord(raw)?raw:{},base=normaliseBase(source,config);
   const seenIds=new Set(),seenNames=new Set(),savedWorkspaces=[];
   for(const item of Array.isArray(source.savedWorkspaces)?source.savedWorkspaces:[]){
     if(!isRecord(item)||typeof item.id!=='string'||!/^layout-[A-Za-z0-9_-]{1,90}$/.test(item.id))continue;
     const name=nameOf(item.name),key=name.toLowerCase();
     if(!name||seenIds.has(item.id)||seenNames.has(key))continue;
     seenIds.add(item.id);seenNames.add(key);
-    savedWorkspaces.push({id:item.id,name,layout:normaliseBase(item.layout)});
+    savedWorkspaces.push({id:item.id,name,layout:normaliseBase(item.layout,config)});
     if(savedWorkspaces.length>=COMBAT_WORKSPACE_PRESET_LIMIT)break;
   }
   return {...base,savedWorkspaces};
@@ -233,8 +242,8 @@ export function combatWorkspaceStorageKey(uid,campaignId){
 }
 /** Atomic freeform move/resize with bounds, optional snapping and collision safety.
  * Unlike the shared dashboard grid, x and y may extend beyond the visible viewport. */
-export function editCombatWindow(layout,id,operation,values={}){
- if(!allowed(id)||layout.canvasLocked||layout.locked.includes(id)||
+export function editCombatWindow(layout,id,operation,values={},config=COMBAT_CANVAS_CONFIG){
+ if(!allowed(id,config)||layout.canvasLocked||layout.locked.includes(id)||
     layout.hidden.includes(id)||!['move','resize'].includes(operation))return layout;
  const state=layout.freeform,before=state.positions[id];
  if(!before)return layout;
@@ -274,21 +283,21 @@ export function editCombatWindow(layout,id,operation,values={}){
  return {...layout,freeform:{...state,positions}};
 }
 
-export function dockCombatWindow(layout,id,edge){
-  if(!allowed(id)||!['left','right'].includes(edge)||layout.canvasLocked||layout.locked.includes(id))return layout;
+export function dockCombatWindow(layout,id,edge,config=COMBAT_CANVAS_CONFIG){
+  if(!allowed(id,config)||!['left','right'].includes(edge)||layout.canvasLocked||layout.locked.includes(id))return layout;
   const rect=layout.freeform.positions[id];
   const proposed={...rect,x:edge==='left'?0:1000-rect.w,y:0};
   const state=layout.freeform;
-  if(!state.allowOverlap&&COMBAT_PANEL_IDS.some(other=>
+  if(!state.allowOverlap&&scopeOf(config).ids.some(other=>
     other!==id&&!layout.hidden.includes(other)&&
     freeformOverlaps(proposed,state.positions[other])))return layout;
   return {...layout,freeform:{...state,positions:{...state.positions,[id]:proposed}}};
 }
-export function setCombatGroup(layout,id,withId=''){
-  if(!allowed(id))return layout;
+export function setCombatGroup(layout,id,withId='',config=COMBAT_CANVAS_CONFIG){
+  if(!allowed(id,config))return layout;
   const groups=layout.groups.filter(row=>!row.includes(id))
     .map(row=>row.filter(other=>other!==withId)).filter(row=>row.length>=2);
-  if(allowed(withId)&&withId!==id&&!layout.hidden.includes(id)&&
+  if(allowed(withId,config)&&withId!==id&&!layout.hidden.includes(id)&&
     !layout.hidden.includes(withId)&&!layout.locked.includes(id)&&
     !layout.locked.includes(withId))groups.push([id,withId]);
   return {...layout,groups:groups.slice(0,2)};

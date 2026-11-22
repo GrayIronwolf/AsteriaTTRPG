@@ -4186,3 +4186,42 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
  .react-party-reorder{width:32px;min-width:32px;height:32px}
  .react-modal:has(.react-canvas-character-dashboard){padding:10px}
 }
+
+/* GM Main Dashboard Phase 2: quick content inside the same freeform canvas engine.
+   Legacy GM grid tiles are not mounted; the Player grid retains its existing CSS. */
+.react-gm-quick-panel{display:grid;align-content:start;gap:12px;min-width:0;
+  color:var(--asteria-text);font-size:.95rem}
+.react-gm-quick-panel p{margin:0;line-height:1.5;overflow-wrap:anywhere}
+.react-gm-quick-panel h3{margin:6px 0 0;font-size:1rem}
+.react-gm-quick-panel button{min-height:32px;max-width:100%;white-space:normal}
+.react-gm-quick-panel .react-gm-quick-row{display:flex;align-items:center;
+  justify-content:space-between;gap:8px;min-width:0;
+  border:1px solid var(--asteria-border-subtle);border-radius:5px;
+  background:rgba(15,28,41,.56);padding:8px}
+.react-gm-quick-row>div{display:grid;gap:3px;min-width:0}
+.react-gm-quick-row strong{overflow-wrap:anywhere;font-size:.88rem}
+.react-gm-quick-row small,.react-gm-quick-row span{color:var(--asteria-text-muted);
+  font-size:.77rem;overflow-wrap:anywhere}
+.react-gm-quick-list{display:grid;gap:8px;min-width:0}
+.react-gm-quick-notepad{display:block;width:100%;min-height:190px;
+  resize:vertical;box-sizing:border-box;background:var(--asteria-surface);
+  color:var(--asteria-text);border:1px solid var(--asteria-border);
+  border-radius:4px;padding:12px;line-height:1.5}
+.react-gm-quick-events{display:grid;gap:7px;list-style-position:inside;
+  margin:0;padding:0}
+.react-gm-quick-events li{display:flex;flex-wrap:wrap;justify-content:space-between;
+  align-items:start;gap:8px;padding:6px 0;
+  border-bottom:1px solid var(--asteria-border-subtle);font-size:.82rem}
+.react-gm-quick-events li span{color:var(--asteria-text-muted)}
+.react-gm-quick-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}
+.react-gm-quick-stats>div{display:grid;gap:5px;padding:10px;border:1px solid
+  var(--asteria-border-subtle);background:rgba(15,28,41,.56);border-radius:5px}
+.react-gm-quick-stats>div span{color:var(--asteria-text-muted);font-size:.73rem}
+.react-gm-quick-stats>div strong{font-size:1.04rem}
+.react-gm-dashboard [data-testid='site-gm-main-canvas']{width:100%;min-width:0}
+.react-gm-dashboard [data-testid='site-gm-main-canvas'] .react-gm-quick-panel
+ .asteria-react-panel{background:transparent;box-shadow:none;border:0;padding:0}
+.react-gm-dashboard [data-testid='site-gm-main-canvas'] .react-gm-focus{margin:0;padding:0}
+@media(max-width:720px){
+  .react-gm-quick-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+}

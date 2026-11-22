@@ -1,7 +1,7 @@
 import {
   DASHBOARD_LAYOUT_PRESETS,DASHBOARD_VIEWPORTS,GM_FOCUS_LIMIT,
   normalizeDashboardLayout,applyDashboardPreset,dashboardLayoutForViewport,
-  setDashboardViewportLayout
+  setDashboardViewportLayout,GM_DASHBOARD_CANVAS_CONFIG,normalizeGMCanvasLayout
 } from './dashboardLayoutModel.mjs';
 
 // All Focus data stays in the existing per-account, per-campaign GM layout.
@@ -96,7 +96,20 @@ export function activateBuiltinGMFocus(layout,preset){
     updated=setDashboardViewportLayout(updated,'gm',viewport,next);
   }
   const withoutActive={...updated};delete withoutActive.activeFocusId;
-  return outcome({...withoutActive,focusHome:home});
+  // Built-in Focus modes now switch freeform GM windows, not the old grid.
+  // Positions remain untouched; visibility is the only preset effect.
+  const modePanels={
+    combat:['gmResources','combatOverview','requestsOverview','preparedOverview','sessionOverview','diceQuick'],
+    exploration:['gmResources','explorationOverview','questTracker','calendarWeather','quickNotes','sessionOverview'],
+    roleplaying:['gmResources','quickNotes','questTracker','npcQuick','sessionOverview'],
+    encounter:['gmResources','preparedOverview','combatOverview','requestsOverview','sessionOverview']
+  };
+  const canvas=normalizeGMCanvasLayout(current.gmCanvas);
+  const allowed=new Set([...modePanels[preset],
+    ...(!canvas.hidden.includes('focusModes')?['focusModes']:[])]);
+  const gmCanvas={...canvas,
+    hidden:GM_DASHBOARD_CANVAS_CONFIG.ids.filter(id=>!allowed.has(id))};
+  return outcome({...withoutActive,gmCanvas,focusHome:home});
 }
 
 export function leaveGMFocus(layout){

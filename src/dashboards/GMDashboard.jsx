@@ -4,7 +4,11 @@ import { ConditionsPanel, RestRequestsPanel, ResourceRulesPanel } from './Charac
 import { useCharacterSystemsSync } from '../sessions/useCharacterSystemsSync.js';
 import { reconcileCharacterSystems } from '../state/characterSystems.mjs';
 import { resolveRosterSelection } from '../state/dashboardNavigation.mjs';
-import { DashboardLayoutEditor, DashboardLayoutWorkspace } from '../components/DashboardCustomisation.jsx';
+import {CanvasWorkspace,CombatCommandPanel} from './combat/CombatCommandCentre.jsx';
+import {
+  GMQuickRequests,GMQuickPreparedEncounters,GMQuickNotes,
+  GMQuickCalendarWeather,GMQuickSession,GMQuickReference
+} from './GMDashboardQuickPanels.jsx';
 import { GMCombatOverview, GMExplorationOverview, GMQuestTracker, GMInventoryOverview } from './DashboardFocusPanels.jsx';
 import { GMToolkitHub } from './GMToolkitHub.jsx';
 import { GMUniversalCheckManager, GMUniversalCheckNotification } from './UniversalCheckWorkspace.jsx';
@@ -23,7 +27,9 @@ import {GMCampaignSoundboard} from './CampaignSoundboardWorkspace.jsx';
 import {GMSessionRecordingWorkspace,GMRecordingParticipationNotice} from './SessionRecordingWorkspace.jsx';
 import {GMPlayerPresentationWorkspace} from './PlayerPresentationWorkspace.jsx';
 import { GMLayoutBackup } from './GMLayoutBackup.jsx';
-import { defaultDashboardLayout, normalizeDashboardLayout, visibleDashboardPanels } from '../state/dashboardLayoutModel.mjs';
+import {
+  normalizeDashboardLayout,normalizeGMCanvasLayout,GM_DASHBOARD_CANVAS_CONFIG
+} from '../state/dashboardLayoutModel.mjs';
 import {dashboardTabs} from '../state/dashboardMenuModel.mjs';
 import { talentCatalog } from './characterWorkspaceData.js';
 import { resourceDefinitions, storedResource } from '../state/resourceEngine.mjs';
@@ -469,14 +475,11 @@ export function GMDashboard({ campaignId }) {
   const [gmSearchTarget,setGMSearchTarget]=useState(null);
   const [savedDashboardLayout,setSavedDashboardLayout] = useState(null);
   const [dashboardLayoutReady,setDashboardLayoutReady] = useState(false);
-  const [dashboardSettingsDraft,setDashboardSettingsDraft] = useState(()=>defaultDashboardLayout('gm'));
-  const [dashboardSettingsMessage,setDashboardSettingsMessage] = useState('');
   const [savingDashboardSettings,setSavingDashboardSettings] = useState(false);
   const [dashboardLayoutError,setDashboardLayoutError] = useState('');
-  const dashboardDraftDirty=useRef(false);
-  const dashboardDraftRevision=useRef(0);
   const dashboardSaveScope=useRef('');
   const focusSavePending=useRef(false);
+  const canvasSaveChain=useRef(Promise.resolve());
   const accountUid=firebaseService.currentUser()?.uid || '';
   const combatApi=useMemo(()=>accountUid?createSiteCombatApi():null,[campaignId,accountUid]);
   const combatMediaApi=useMemo(()=>accountUid?createSiteCombatMediaApi():null,[campaignId,accountUid]);
@@ -506,14 +509,11 @@ export function GMDashboard({ campaignId }) {
   },[tab,gmHubDestination]);
   useEffect(()=>{setGMHubDestination(null);setGMSearchTarget(null);setCanvasCharacterId('');},[campaignId,accountUid]);
   useEffect(()=>{
-    dashboardDraftDirty.current=false;
-    dashboardDraftRevision.current++;
     dashboardSaveScope.current=campaignId+':'+accountUid;
     focusSavePending.current=false;
+    canvasSaveChain.current=Promise.resolve();
     setDashboardLayoutReady(false);
-    setDashboardSettingsDraft(defaultDashboardLayout('gm'));
     setSavedDashboardLayout(null);
-    setDashboardSettingsMessage('');
     setDashboardLayoutError('');
     if(!campaignId||!accountUid)return;
     const subscriptionScope=campaignId+':'+accountUid;
@@ -523,10 +523,6 @@ export function GMDashboard({ campaignId }) {
       // server snapshot while the private layout write is in flight.
       if(!focusSavePending.current)setSavedDashboardLayout(layout);
       setDashboardLayoutReady(true);
-      // Session clocks and background sync can re-emit the same snapshot.
-      // Do not erase unsaved edits while the settings editor is open.
-      if(!dashboardDraftDirty.current)
-        setDashboardSettingsDraft(normalizeDashboardLayout(layout,'gm'));
       setDashboardLayoutError('');
     });
   },[campaignId,accountUid]);
@@ -622,7 +618,6 @@ export function GMDashboard({ campaignId }) {
   };
   const commitGMFocus=async layout=>{
     if(!accountUid||!dashboardLayoutReady)return {ok:false,error:'Connect your GM dashboard before changing Focus.'};
-    if(dashboardDraftDirty.current)return {ok:false,error:'Save or discard pending Dashboard Settings before switching Focus.'};
     if(focusSavePending.current||savingDashboardSettings)return {ok:false,error:'A dashboard save is already in progress.'};
     const scope=campaignId+':'+accountUid;
     const previous=normalizeDashboardLayout(savedDashboardLayout,'gm');
@@ -636,8 +631,6 @@ export function GMDashboard({ campaignId }) {
       if(dashboardSaveScope.current!==scope)return {ok:false,error:'Campaign or account changed during Focus save.'};
       if(result?.ok){
         setSavedDashboardLayout(next);
-        setDashboardSettingsDraft(next);
-        setDashboardSettingsMessage('');
       }else{
         setSavedDashboardLayout(previous);
         setDashboardLayoutError(result?.error||'Could not save GM Focus.');
@@ -654,47 +647,78 @@ export function GMDashboard({ campaignId }) {
       if(dashboardSaveScope.current===scope)focusSavePending.current=false;
     }
   };
-  const updateDashboardSettingsDraft=change=>{
-    dashboardDraftDirty.current=true;
-    dashboardDraftRevision.current++;
-    setDashboardSettingsDraft(change);
-  };
-  const applyGMLayout=async layout=>{
-    if(!accountUid)return {ok:false,error:'Sign in to customise this dashboard.'};
-    const applyScope=campaignId+':'+accountUid;
+  const saveGMCanvas=async canvas=>{
+    if(!accountUid||!dashboardLayoutReady)
+      return {ok:false,error:'GM dashboard layout is not connected.'};
+    const scope=campaignId+':'+accountUid;
+    const previous=normalizeDashboardLayout(savedDashboardLayout,'gm');
+    const next=normalizeDashboardLayout({
+      ...previous,gmCanvas:normalizeGMCanvasLayout(canvas)
+    },'gm');
+    // Save through the existing GM-owned dashboard document; do not
+    // create a second layout record or store gameplay state here.
+    setSavedDashboardLayout(next);
+    setDashboardLayoutError('');
     setSavingDashboardSettings(true);
-    setDashboardSettingsMessage('Saving layout...');
+    focusSavePending.current=true;
+    const write=canvasSaveChain.current.then(()=>
+      firebaseService.saveUserDashboardLayout(campaignId,'gm',next));
+    canvasSaveChain.current=write.catch(()=>{});
     try{
-      const result=await saveDashboardLayout(layout);
-      if(dashboardSaveScope.current!==applyScope)return {ok:false,error:'Account or campaign changed while saving.'};
-      if(result?.ok){
-        dashboardDraftDirty.current=false;
-        setDashboardSettingsDraft(layout);
-        setDashboardSettingsMessage('Dashboard layout saved.');
-      }else setDashboardSettingsMessage(result?.error||'Could not save dashboard layout.');
+      const result=await write;
+      if(dashboardSaveScope.current!==scope)return {ok:false,error:'GM context changed while saving.'};
+      if(result?.ok===false){
+        setDashboardLayoutError(result.error||'Could not save GM canvas.');
+        setSavedDashboardLayout(current=>
+          current?.gmCanvas===next.gmCanvas?previous:current);
+      }
       return result;
     }catch(error){
-      const failure={ok:false,error:error?.message||'Could not save dashboard layout.'};
-      setDashboardSettingsMessage(failure.error);return failure;
-    }finally{setSavingDashboardSettings(false);}
+      const failure={ok:false,error:error?.message||'Could not save GM canvas.'};
+      if(dashboardSaveScope.current===scope)setDashboardLayoutError(failure.error);
+      return failure;
+    }finally{
+      if(dashboardSaveScope.current===scope){
+        setSavingDashboardSettings(false);focusSavePending.current=false;
+      }
+    }
   };
-  const saveDashboardSettings=async()=>{
-    if(savingDashboardSettings)return;
-    const saveScope=campaignId+':'+accountUid,saveRevision=dashboardDraftRevision.current;
-    setSavingDashboardSettings(true);
-    setDashboardSettingsMessage('Saving panel settings...');
-    try{
-      const result=await saveDashboardLayout(dashboardSettingsDraft);
-      if(dashboardSaveScope.current!==saveScope)return;
-      if(result?.ok&&dashboardDraftRevision.current===saveRevision)dashboardDraftDirty.current=false;
-      setDashboardSettingsMessage(result?.ok===false?result.error||'Could not save panel settings.':dashboardDraftDirty.current?'Earlier settings saved; newer changes still need saving.':'Dashboard panel settings saved.');
-    }catch(error){
-      if(dashboardSaveScope.current===saveScope)setDashboardSettingsMessage(error?.message||'Could not save panel settings.');
-    }finally{setSavingDashboardSettings(false);}
-  };
+  const gmCanvasLayout=useMemo(()=>
+    normalizeDashboardLayout(savedDashboardLayout,'gm').gmCanvas,
+    [savedDashboardLayout]);
   const gmPanel=id=>{
     const shortcut=(title,tab)=> <Panel title={title}><p className="react-help">Open the full {title} workspace.</p><button type="button" onClick={()=>setTab(tab)}>Open {title}</button></Panel>;
     switch(id){
+      case 'gmResources':return ({order,onReorder})=><PartySidebar embedded
+        campaign={live.campaign||{id:campaignId}} characters={live.characters}
+        selectedId={selectedId} setSelectedId={setSelectedId} presence={live.presence}
+        order={order} onReorder={onReorder} onFocus={openCanvasCharacter}
+        onOpen={character=>openGMCharacter(live.campaign,character,{tab})}/>;
+      case 'requestsOverview':return <GMQuickRequests campaignId={campaignId}
+        characters={live.characters} editable={live.session?.editable}
+        onNavigate={setTab}/>;
+      case 'preparedOverview':return <GMQuickPreparedEncounters
+        api={combatApi} campaignId={campaignId} onNavigate={setTab}/>;
+      case 'quickNotes':return <GMQuickNotes workspace={workspace}
+        saveSection={saveSection} onNavigate={setTab}/>;
+      case 'calendarWeather':return <GMQuickCalendarWeather campaignId={campaignId}
+        onNavigate={setTab}/>;
+      case 'sessionOverview':return <GMQuickSession session={live.session}
+        presence={live.presence} events={live.events} characters={live.characters}
+        onNavigate={setTab}/>;
+      case 'focusModes':return <GMFocusModes key={campaignId+':'+accountUid}
+        layout={savedDashboardLayout} onCommit={commitGMFocus}
+        disabled={!accountUid||!dashboardLayoutReady||savingDashboardSettings}/>;
+      case 'diceQuick':return <AdvancedDiceWorkspace role="gm"/>;
+      case 'npcQuick':return <GMQuickReference title="NPC & Creature Library"
+        description={Object.keys(workspace.npcs||{}).length+' campaign NPC entries'}
+        target="bestiary" onNavigate={setTab}/>;
+      case 'soundboardQuick':return <GMCampaignSoundboard campaignId={campaignId}/>;
+      case 'worldQuick':return <GMExplorationOverview workspace={workspace}
+        campaign={live.campaign} onNavigate={setTab}/>;
+      case 'playerDisplayQuick':return <GMQuickReference title="Player Display"
+        description="Manage the existing live presentation screen."
+        target="presentation" onNavigate={setTab}/>;
       case 'restRequests':return <RestRequestsPanel campaignId={campaignId} characters={live.characters} editable={live.session?.editable}/>;
       case 'encounter':return <Panel title="Combat Command Centre"><p className="react-help">Encounters, initiative, turns and prepared combat now live in the dedicated Combat menu.</p><button type="button" onClick={()=>setTab('combat')}>Open Combat Command Centre</button></Panel>;
       case 'xp':return <XPDistribution campaignId={campaignId} characters={live.characters} events={live.events}/>;
@@ -729,7 +753,7 @@ export function GMDashboard({ campaignId }) {
     subtitle="Live campaign control, party resources, rewards, encounters, and session tools."
     actions={<><SessionActions campaignId={campaignId} session={live.session} busy={busy} run={run} /><LiveSyncStatus online={live.online} connectionState={live.connectionState} error={live.error || actionError || coreSyncError} loading={live.loading} session={live.session} /></>}
   >
-    {tab!=='combat'?<section className="react-gm-party-strip" aria-label="GM Player Resources"
+    {tab!=='combat'&&tab!=='main'?<section className="react-gm-party-strip" aria-label="GM Player Resources"
       data-testid="gm-player-resources-strip">
       <PartySidebar campaign={live.campaign || { id: campaignId }}
         characters={live.characters} selectedId={selectedId}
@@ -751,32 +775,27 @@ export function GMDashboard({ campaignId }) {
         onNavigate={openGMHubLink}
         onOpenCharacter={character=>openGMCharacter(live.campaign,character,{tab})}/>
     </> : null}
-    {tab === 'main' ? <>
-      <GMFocusModes key={campaignId+':'+accountUid} layout={savedDashboardLayout}
-        onCommit={commitGMFocus} disabled={!accountUid||!dashboardLayoutReady||savingDashboardSettings}/>
-      <DashboardLayoutWorkspace key={campaignId+':'+accountUid} role="gm" title="GM Main Dashboard"
-      layout={savedDashboardLayout} canEdit={Boolean(accountUid)} onSave={saveDashboardLayout} renderPanel={gmPanel}
-      defaultContent={<div className="react-gm-main-grid">
-        <RestRequestsPanel campaignId={campaignId} characters={live.characters} editable={live.session?.editable}/>
-        <Panel title="Combat Command Centre"><p className="react-help">Encounters, initiative, turns and prepared combat now live in the dedicated Combat menu.</p><button type="button" onClick={()=>setTab('combat')}>Open Combat Command Centre</button></Panel>
-        <XPDistribution campaignId={campaignId} characters={live.characters} events={live.events}/>
-        <SpecialDamageControl campaignId={campaignId} characters={live.characters} encounter={live.encounter}/>
-      </div>}
-    />
-    </> : null}
+    {tab === 'main' ? <CanvasWorkspace key={campaignId+':'+accountUid+':gm-main'}
+        uid={accountUid} campaignId={campaignId}
+        canvasConfig={GM_DASHBOARD_CANVAS_CONFIG} layoutValue={gmCanvasLayout}
+        onSaveLayout={saveGMCanvas}>
+        {GM_DASHBOARD_CANVAS_CONFIG.ids.map(id=><CombatCommandPanel id={id} key={id}>
+          {gmPanel(id)}
+        </CombatCommandPanel>)}
+      </CanvasWorkspace> : null}
     {tab === 'settings' ? <div className="react-settings-workspace">
-      <Panel title="GM Dashboard Settings" action={<StatusPill>{visibleDashboardPanels(dashboardSettingsDraft,'gm').length} panels</StatusPill>}>
-        <p className="react-help">Manage all GM dashboard panels here. The full-width Player Resources strip and dashboard navigation remain fixed.</p>
-        <DashboardLayoutEditor role="gm" layout={dashboardSettingsDraft} onChange={updateDashboardSettingsDraft} onApply={applyGMLayout} disabled={!accountUid||savingDashboardSettings}/>
-        <div className="react-settings-save">
-          <button type="button" className="primary" disabled={!accountUid||savingDashboardSettings} onClick={saveDashboardSettings}>{savingDashboardSettings?'Saving...':'Save Dashboard Settings'}</button>
-        </div>
-        <p role="status">{dashboardSettingsMessage}</p>
+      <Panel title="GM Dashboard Settings">
+        <p className="react-help">The GM Main Dashboard now uses the freeform
+          canvas instead of the old grid layout editor. Use the + icon in
+          the top-left of that canvas to add or remove windows. Drag titles
+          to move them, resize from the edges, and use the toolbar to
+          focus, lock, undo, redo or fit your workspace.</p>
+        <button type="button" onClick={()=>setTab('main')}>Open GM Canvas</button>
+        {dashboardLayoutError?<p role="alert">{dashboardLayoutError}</p>:null}
       </Panel>
       <GMLayoutBackup key={campaignId+':'+accountUid+':backup'} layout={savedDashboardLayout}
         onRestore={commitGMFocus}
         disabled={!accountUid||!dashboardLayoutReady||savingDashboardSettings}/>
-
     </div> : null}
     {dashboardLayoutError?<p role="alert">{dashboardLayoutError}</p>:null}
     {tab === 'combat' ? <GMCombatWorkspace key={campaignId+':'+accountUid+':combat'}
@@ -809,7 +828,7 @@ export function GMDashboard({ campaignId }) {
     {tab === 'asteria-calendar' ? <AsteriaCalendarWorkspace key={campaignId} campaignId={campaignId} workspace={workspace}/> : null}
     {tab === 'weather-environment' ? <GMWeatherEnvironmentWorkspace key={campaignId} campaignId={campaignId}/> : null}
     {tab === 'world-atlas' ? <GMWorldAtlasWorkspace key={campaignId} campaignId={campaignId} searchTarget={gmSearchTarget}/> : null}
-    {tab==='combat'&&canvasCharacterId&&live.characters[canvasCharacterId]&&
+    {(tab==='combat'||tab==='main')&&canvasCharacterId&&live.characters[canvasCharacterId]&&
       window.AsteriaCharacterAccess?.canGMView(live.campaign,live.characters[canvasCharacterId],accountUid)?
       <Modal title={(live.characters[canvasCharacterId]?.name||'Character')+' — Player Dashboard'}
         eyebrow="GM Character Inspection" onClose={()=>setCanvasCharacterId('')}>

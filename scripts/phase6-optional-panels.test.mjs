@@ -70,7 +70,8 @@ test('Both renderers map all four IDs to existing gameplay data and preserve the
    assert.ok(!component.includes(forbidden),'Focus panels must remain read-only: '+forbidden);
  assert.match(component,/DashboardPanel/);
  assert.match(player,/DashboardLayoutWorkspace/);
- assert.match(gm,/DashboardLayoutWorkspace/);
+ assert.match(gm,/<CanvasWorkspace/);
+ assert.doesNotMatch(gm,/DashboardLayoutWorkspace/);
  assert.match(read('src/components/DashboardCustomisation.jsx'),/DashboardPanelFrameContext\.Provider/);
  const html=read('index.html');
  for(const asset of ['asteria-panel-headers.css','asteria-button-images.css','asteria-dashboard-panel-images.css'])

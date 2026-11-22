@@ -1,4 +1,7 @@
 import {
+  defaultCombatWorkspaceLayout,normalizeCombatWorkspace
+} from '../dashboards/combat/combatWorkspaceLayoutModel.mjs';
+import {
   DASHBOARD_GRID_RULES, DASHBOARD_GRID_COLUMNS, DASHBOARD_GRID_START_ROWS,
   dashboardGridRule, dashboardPointerProposal, defaultGridDimensions, clampGridDimensions, legacyGridDimensions,
   normalizeGridPlacements, packGridPlacements, gridPositionIsFree, gridRowCount, validGridPlacement
@@ -63,6 +66,103 @@ export const DASHBOARD_PANEL_REGISTRY = {
   ]
 };
 
+/** The GM Main Dashboard is a freeform canvas. Player grid logic stays active until Phase 3.
+ * The existing GM panel registry is still the sole allowlist for legacy panel types.
+ * No GM grid renderer/editor is mounted after Phase 2. */
+export const GM_CANVAS_DEFAULT_IDS=Object.freeze([
+  'gmResources','combatOverview','requestsOverview','preparedOverview',
+  'quickNotes','questTracker','calendarWeather','sessionOverview'
+]);
+const GM_CANVAS_NEW_OPTIONALS=Object.freeze([
+  'diceQuick','npcQuick','soundboardQuick','worldQuick','playerDisplayQuick','focusModes'
+]);
+const GM_CORE_POSITIONS=Object.freeze({
+  gmResources:{x:0,y:0,w:480,h:800},
+  combatOverview:{x:500,y:0,w:500,h:310},
+  requestsOverview:{x:500,y:330,w:500,h:320},
+  preparedOverview:{x:500,y:670,w:500,h:340},
+  quickNotes:{x:0,y:820,w:480,h:460},
+  questTracker:{x:500,y:1030,w:500,h:420},
+  calendarWeather:{x:0,y:1300,w:480,h:370},
+  sessionOverview:{x:500,y:1470,w:500,h:360}
+});
+const GM_CANVAS_LABEL_EXTRAS=Object.freeze({
+  gmResources:'GM Player Resources',
+  requestsOverview:'Player Requests & Notifications',
+  preparedOverview:'Prepared Encounters',
+  quickNotes:'GM Quick Notes',
+  calendarWeather:'Asteria Calendar & Weather',
+  sessionOverview:'Session Overview',
+  diceQuick:'Dice Roller',
+  npcQuick:'NPC Quick Reference',
+  soundboardQuick:'Soundboard & Ambience',
+  worldQuick:'World Overview',
+  playerDisplayQuick:'Player Display',
+  focusModes:'GM Focus Modes'
+});
+const gmCanvasIds=[...GM_CANVAS_DEFAULT_IDS,
+  ...DASHBOARD_PANEL_REGISTRY.gm.map(item=>item.id).filter(id=>!GM_CANVAS_DEFAULT_IDS.includes(id)),
+  ...GM_CANVAS_NEW_OPTIONALS];
+const gmOptional=gmCanvasIds.filter(id=>!GM_CANVAS_DEFAULT_IDS.includes(id));
+export const GM_DASHBOARD_CANVAS_CONFIG=Object.freeze({
+  kind:'gm',
+  ids:Object.freeze(gmCanvasIds),
+  labels:Object.freeze({
+    ...Object.fromEntries(DASHBOARD_PANEL_REGISTRY.gm.map(item=>[item.id,item.label])),
+    ...GM_CANVAS_LABEL_EXTRAS
+  }),
+  defaultHidden:Object.freeze(gmOptional),
+  defaultPositions:Object.freeze({
+    ...GM_CORE_POSITIONS,
+    ...Object.fromEntries(gmOptional.map((id,i)=>[id,{
+      x:i%2?510:0,y:1880+Math.floor(i/2)*460,w:490,h:440
+    }]))
+  }),
+  categories:Object.freeze([
+    {id:'core',label:'Core GM Windows',panels:GM_CANVAS_DEFAULT_IDS},
+    {id:'tools',label:'GM Controls & Rewards',panels:[
+      'restRequests','encounter','xp','specialDamage','loot','magicRewards',
+      'acInspector','playerManagement','partySummary','focusModes'
+    ]},
+    {id:'overviews',label:'Quick Reference',panels:[
+      'diceQuick','npcQuick','soundboardQuick','worldQuick','playerDisplayQuick',
+      'explorationOverview','inventoryOverview'
+    ]},
+    {id:'shortcuts',label:'Other Page Shortcuts',panels:DASHBOARD_PANEL_REGISTRY.gm
+      .filter(item=>item.category==='Shortcuts').map(item=>item.id)}
+  ])
+});
+export function defaultGMCanvasLayout(){
+  return defaultCombatWorkspaceLayout(GM_DASHBOARD_CANVAS_CONFIG);
+}
+export function normalizeGMCanvasLayout(raw,oldGrid=null){
+  if(raw&&typeof raw==='object'&&!Array.isArray(raw))
+    return normalizeCombatWorkspace(raw,GM_DASHBOARD_CANVAS_CONFIG);
+  const base=defaultGMCanvasLayout();
+  // Preserve legacy optional selections (including named Focus snapshots) on
+  // first conversion, but use the eight approved quick windows for the default.
+  if(!oldGrid||oldGrid.mode!=='custom')return base;
+  const oldHidden=new Set(Array.isArray(oldGrid.hidden)?oldGrid.hidden:[]);
+  const enabled=DASHBOARD_PANEL_REGISTRY.gm.filter(item=>item.optional&&!oldHidden.has(item.id))
+    .map(item=>item.id);
+  if(!enabled.length)return base;
+  const positions={...base.freeform.positions};
+  for(const [index,id] of enabled.entries()){
+    const saved=oldGrid.placements?.[id],position=positions[id];
+    if(saved&&Number.isFinite(saved.x)&&Number.isFinite(saved.y)){
+      positions[id]={
+        ...position,
+        x:Math.round(Math.max(0,saved.x)*1000/12),
+        y:1900+Math.max(0,saved.y)*85,
+        w:Math.round(Math.max(3,saved.w||5)*1000/12),
+        h:Math.max(260,Math.round(Math.max(3,saved.h||4)*85))
+      };
+    }else positions[id]={...position,y:1900+index*400};
+  }
+  return normalizeCombatWorkspace({...base,freeform:{...base.freeform,positions},
+    hidden:base.hidden.filter(id=>!enabled.includes(id))},GM_DASHBOARD_CANVAS_CONFIG);
+}
+
 // Twelve-column dashboard: three horizontal units; height is minimum only.
 export const DASHBOARD_SIZE_COLUMNS = Object.freeze({'3x3':4,'6x3':8,'3x6':4,'9x3':12});
 export const DASHBOARD_SIZE_ROWS = Object.freeze({'3x3':1,'6x3':1,'3x6':2,'9x3':1});
@@ -106,7 +206,8 @@ export function defaultDashboardLayout(role='player') {
     placements:normalizeGridPlacements(role,panels.map(p=>p.id),panels.filter(p=>p.optional).map(p=>p.id)),
     lockedPositions:[],
     backgroundStyle:'obsidian',
-    panelBackgrounds:{}
+    panelBackgrounds:{},
+    ...(role==='gm'?{gmCanvas:defaultGMCanvasLayout()}:{})
   };
 }
 export function normalizeDashboardLayout(value,role='player') {
@@ -186,6 +287,7 @@ export function normalizeDashboardLayout(value,role='player') {
     lockedPositions,
     backgroundStyle,
     panelBackgrounds,
+    ...(scope==='gm'?{gmCanvas:normalizeGMCanvasLayout(value.gmCanvas,value)}:{}),
     ...(Object.keys(viewportLayouts).length?{viewportLayouts}:{}),
     ...(scope==='gm'&&focusModes.length?{focusModes}:{}),
     ...(scope==='gm'&&focusHome?{focusHome}:{}),

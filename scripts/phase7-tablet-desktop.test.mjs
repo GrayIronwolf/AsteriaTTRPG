@@ -46,7 +46,8 @@ test('Tablet panel reflow keeps DOM order, desktop saved placements and fixed re
  const player=read('src/dashboards/PlayerDashboardOverview.jsx');
  const gm=read('src/dashboards/GMDashboard.jsx');
  assert.match(player,/DashboardLayoutWorkspace/);
- assert.match(gm,/DashboardLayoutWorkspace/);
+ assert.match(gm,/<CanvasWorkspace key=\{campaignId/);
+ assert.doesNotMatch(gm,/DashboardLayoutWorkspace/);
 });
 test('GM local browser fixture supports account-scoped layout save/subscribe calls',()=>{
  const fixture=read('src/devFixtures.js');
