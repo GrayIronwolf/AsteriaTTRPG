@@ -6,6 +6,7 @@ on:
     paths:
       - 'scripts/phase1-2-browser-audit.cjs'
       - 'src/devFixtures.js'
+      - 'scripts/react-migration-parity-contract.test.cjs'
       - '.github/workflows/phase1-2-browser-audit.yml'
   workflow_dispatch:
 
@@ -31,6 +32,8 @@ jobs:
           cache: npm
       - name: Install existing application dependencies
         run: npm ci
+      - name: Verify recovered website migration source contract
+        run: node --test scripts/react-migration-parity-contract.test.cjs
       - name: Install temporary browser test runtime without changing the lockfile
         run: npm install --no-save --package-lock=false --ignore-scripts playwright@1.56.1
       - name: Install Chromium and Linux browser dependencies
