@@ -67,6 +67,24 @@ test('React/Vite replaces top-level flat tabs with header-style card menus',()=>
     /label:'Combat Command Centre',tab:'combat'/);
 });
 
+test('dashboard main menu reuses approved header frame, crystal and press states',()=>{
+  const menu=source('src/components/DashboardNavigation.jsx');
+  const css=source('src/components/DashboardNavigation.module.css');
+  const header=source('index.html');
+  const frame=source('css/asteria-button-images.css');
+  const shared=source('css/asteria-menu-buttons.css');
+  // This is the same class and size family used by live Asteria header buttons.
+  assert.match(header,/crystal-button asteria-menu-button/);
+  assert.match(menu,/className=\{'asteria-menu-button '\+styles\.category/);
+  assert.match(menu,/className=\{'asteria-menu-button '\+styles\.searchButton/);
+  assert.equal((menu.match(/data-asteria-button-size="standard"/g)||[]).length,2);
+  assert.ok(menu.includes("(current?' active':'')"),'Selected categories must keep crystal active state');
+  assert.match(frame,/button-standard-frame\.webp/);
+  assert.match(frame,/button-standard-crystal\.webp/);
+  assert.match(shared,/--asteria-dashboard-tab/);
+  assert.doesNotMatch(css,/\.category,\.searchButton\{[^}]*background:/);
+});
+
 test('combat launcher keeps all tools attached to one window system',()=>{
   assert.equal(COMBAT_PANEL_IDS.length,13);
   assert.ok(unique(COMBAT_PANEL_IDS));

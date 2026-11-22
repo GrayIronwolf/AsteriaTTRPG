@@ -78,7 +78,8 @@ export function DashboardNavigation({tabs=[],active,onChange,ariaLabel='Dashboar
         const direct=group.items.length===1&&['main','dashboard','settings'].includes(group.id);
         const current=activeGroup===group.id;
         return <button type="button" key={group.id}
-          className={styles.category+(current?' '+styles.current:'')}
+          className={'asteria-menu-button '+styles.category+(current?' active':'')}
+          data-asteria-button-size="standard"
           aria-current={direct&&current?'page':undefined}
           aria-haspopup={direct?undefined:'true'}
           aria-expanded={direct?undefined:opened===group.id}
@@ -87,7 +88,8 @@ export function DashboardNavigation({tabs=[],active,onChange,ariaLabel='Dashboar
           {!direct?<span aria-hidden="true" className={styles.chevron}>▾</span>:null}
         </button>;
       })}
-      <button type="button" className={styles.searchButton}
+      <button type="button" className={'asteria-menu-button '+styles.searchButton}
+        data-asteria-button-size="standard"
         aria-label="Find dashboard page" aria-expanded={opened==='search'}
         onClick={()=>{setOpened(value=>value==='search'?'':'search');setQuery('');}}>
         <AsteriaIcon name="search"/><span className={styles.searchText}>Find</span>

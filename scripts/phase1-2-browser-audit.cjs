@@ -83,6 +83,32 @@ async function gm(page) {
   await page.evaluate(()=>window.AsteriaReactMigration.openGM('demo-campaign'));
   await page.locator('.react-gm-dashboard').waitFor({timeout:20000});
 }
+/** Verify the SAME approved source images used by header menu buttons.
+ * Checking real Chromium computed pseudo-elements catches JSX classes that
+ * exist in source but fail to receive the image skin after React mounts. */
+async function checkMenuButtonSkin(page,role) {
+  const values=await page.getByTestId('asteria-'+role+'-hybrid-menu')
+    .locator('button.asteria-menu-button[data-asteria-button-size="standard"]')
+    .first().evaluate(button=>{
+      const base=getComputedStyle(button);
+      const metal=getComputedStyle(button,'::before');
+      return {
+        height:Math.round(button.getBoundingClientRect().height),
+        frame:metal.borderImageSource,
+        crystal:base.getPropertyValue('--asteria-approved-crystal').trim(),
+        colour:base.getPropertyValue('--button-crystal-color').trim(),
+        width:Math.round(button.getBoundingClientRect().width)
+      };
+    });
+  assert.match(values.frame,/button-standard-frame\\.webp/,
+    role+' menu has lost the approved metal frame: '+JSON.stringify(values));
+  assert.match(values.crystal,/button-standard-crystal\\.webp/,
+    role+' menu has lost the approved crystal layer');
+  assert.ok(values.height>=44&&values.width>60,
+    role+' menu must retain an accessible button target: '+JSON.stringify(values));
+  assert.ok(values.colour,role+' menu must use the existing dashboard crystal colour');
+}
+
 async function metrics(page) {
   return page.evaluate(()=>({
     viewport:innerWidth,
@@ -113,6 +139,7 @@ async function metrics(page) {
   });
   await scenario('03-player-dashboard',{width:1440},async p=>{
     await player(p);
+    await checkMenuButtonSkin(p,'player');
     await p.getByRole('button',{name:'Inventory',exact:true}).click();
     await p.getByRole('button',{name:'Open Inventory & Equipment',exact:true}).click();
     await p.locator('.react-inventory-workspace').waitFor();
@@ -126,6 +153,7 @@ async function metrics(page) {
   });
   await scenario('04-player-mobile',{width:390,height:844},async p=>{
     await player(p);
+    await checkMenuButtonSkin(p,'player');
     await p.locator('.react-dashboard-freeform-grid [data-panel-id]').first().waitFor();
     const m=await metrics(p);
     await p.screenshot({path:path.join(root,'04-player-mobile.png'),fullPage:true});
@@ -135,6 +163,7 @@ async function metrics(page) {
   });
   await scenario('05-gm-dashboard',{width:1440},async p=>{
     await gm(p);
+    await checkMenuButtonSkin(p,'gm');
     await p.locator('.react-dashboard-freeform-grid [data-panel-id]').first().waitFor();
     const m=await metrics(p);
     assert.ok(m.panels>=3,'Missing GM dashboard panels: '+JSON.stringify(m));

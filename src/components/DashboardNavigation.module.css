@@ -5,19 +5,15 @@
 .bar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr)) auto;gap:5px;
   padding:6px;background:#162839;border:1px solid #607b90;border-radius:4px;
   box-shadow:0 6px 22px #0007}
-.category,.searchButton{display:flex;justify-content:center;align-items:center;gap:7px;
-  min-height:44px;min-width:0;padding:7px 9px;cursor:pointer;
-  background:#263743;border:1px solid #536d81;border-radius:3px;
-  color:#eef3f6;font:600 .83rem/1.2 var(--asteria-font-display,Georgia,serif);
-  transition:background .14s,border-color .14s,box-shadow .14s}
+/* Main menu triggers reuse the EXACT global header metal-frame + crystal
+   image classes, button-standard size, focus and press states. This module
+   owns positioning only; never paint a second rectangular button skin here. */
+.category,.searchButton{display:flex;justify-content:center;align-items:center;gap:6px;
+  min-height:var(--asteria-button-standard-height,48px);min-width:0;cursor:pointer}
 .category>span:not(.chevron){overflow-wrap:anywhere}
 .category :global(.asteria-icon),.searchButton :global(.asteria-icon){
   width:17px;height:17px;color:var(--asteria-accent,#9ecce8);flex-shrink:0}
-.category:hover,.searchButton:hover,.category:focus-visible,.searchButton:focus-visible,
-.current{border-color:var(--asteria-accent,#9ecce8);background:#334d60;
-  box-shadow:inset 0 -2px var(--asteria-accent,#9ecce8)}
 .chevron{font-size:12px;margin-left:auto}
-.searchButton{padding-inline:12px}
 .searchText{font-size:.72rem}
 .favourites{display:flex;align-items:center;flex-wrap:wrap;gap:5px;padding:7px 9px;
   background:rgb(8 16 27 / .8);border:1px solid #4b657a;border-top:0}
@@ -73,12 +69,9 @@
 .root :is(button,input):focus-visible{outline:2px solid #bfefff;outline-offset:2px}
 @media(max-width:900px){
   .bar{grid-template-columns:repeat(4,minmax(0,1fr))}
-  .category{font-size:.75rem;min-height:44px}
-  .searchButton{min-height:44px}
 }
 @media(max-width:540px){
   .bar{grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;padding:4px}
-  .category{justify-content:flex-start;padding:8px 10px}
   .dropdown{position:relative;top:3px;max-height:min(640px,73dvh)}
   .dropdownHeader{grid-template-columns:1fr 40px;gap:8px}
   .dropdownHeader>div{grid-column:1}
