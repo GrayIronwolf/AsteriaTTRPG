@@ -184,7 +184,7 @@ async function metrics(page) {
     const panels=await p.locator('[data-combat-panel]').count();
     assert.ok(panels>=7,'Combat Command Centre tool windows missing: '+panels);
     await p.getByRole('button',{name:'Encounter Builder',exact:true}).click();
-    await p.getByRole('button',{name:/Encounter Setup/}).click();
+    await p.getByRole('complementary',{name:'Combat Command Centre tools'}).getByRole('button',{name:/Encounter Setup/}).click();
     assert.equal(await p.locator('[data-combat-panel="setup"]').count(),1,
       'Encounter setup must remain mounted in the original freeform canvas');
     await p.getByRole('button',{name:'Prepared Encounters',exact:true}).click();
