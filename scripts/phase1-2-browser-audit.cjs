@@ -480,7 +480,7 @@ async function metrics(page) {
     assert.equal(await p.evaluate(()=>window.scrollY),beforeScroll,
       'Zooming inside the canvas must not move the website page');
     await p.getByTestId('site-combat-fit-all').click();
-    await p.getByRole('button',{name:'Focus on GM Player Resources'}).click();
+    await p.getByTestId('combat-drag-header-resources').dblclick();
     await p.getByRole('button',{name:'Return from GM Player Resources'}).waitFor();
     await party.locator('[data-resource-character]').first().dblclick({position:{x:80,y:40}});
     await p.getByTestId('gm-canvas-character-dashboard').waitFor();
