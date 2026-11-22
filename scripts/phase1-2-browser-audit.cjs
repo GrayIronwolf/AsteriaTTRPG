@@ -173,6 +173,22 @@ async function metrics(page) {
     assert.ok(m.scrollWidth<=m.viewport,'GM dashboard horizontal overflow: '+JSON.stringify(m));
     console.log('GM MOBILE METRICS',JSON.stringify(m));
   });
+  await scenario('08-gm-combat-command-centre',{width:1440},async p=>{
+    await gm(p);
+    await p.getByRole('tab',{name:'Combat Command Centre',exact:true}).click();
+    await p.locator('[data-testid="site-gm-combat"]').waitFor();
+    await p.locator('[data-testid="site-gm-combat-command-centre"]').waitFor();
+    await p.getByText('Prepared Encounters',{exact:true}).first().waitFor();
+    await p.screenshot({path:path.join(root,'08-gm-combat-command-centre.png'),fullPage:true});
+    const panels=await p.locator('[data-combat-panel]').count();
+    assert.ok(panels>=4,'Combat Command Centre windows missing: '+panels);
+    const edit=p.locator('[data-testid="site-combat-layout-edit"]');
+    await edit.waitFor();
+    assert.ok(await edit.isEnabled(),'Desktop combat workspace edit not enabled');
+    await edit.click();
+    await p.locator('[data-testid="site-combat-layout-save"]').click();
+    await edit.waitFor();
+  });
   console.log('PHASE 1.2 RESULT:',results.filter(r=>r.status==='pass').length,'passed,',failures.length,'failed.');
   save();
   await browser.close();
