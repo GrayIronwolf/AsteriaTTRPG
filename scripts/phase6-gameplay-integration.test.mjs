@@ -91,5 +91,9 @@ test('Core gameplay commands remain existing Firebase transactions, not new clie
  assert.match(player,/firebaseService\.castSpell/);
  assert.match(player,/firebaseService\.updateQuestProgress/);
  assert.match(gm,/firebaseService\.grantXP/);
- assert.match(gm,/firebaseService\.saveEncounter/);
+ const combat=source('src/dashboards/combat/CombatWorkspace.jsx');
+ const service=source('src/dashboards/combat/firebaseCombatService.mjs');
+ assert.match(gm,/<GMCombatWorkspace\\b/);
+ assert.match(combat,/api\.commandGM/);
+ assert.match(service,/action:'combatCommand'/);
 });
