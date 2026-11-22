@@ -17,6 +17,7 @@ export const COMBAT_TOOL_CATEGORIES=Object.freeze([
   {id:'rewards',label:'Rewards & History',panels:['history']}
 ]);
 const DEFAULT_HIDDEN=Object.freeze(['setup','history','advanced','waves','events','log']);
+const MIGRATED_NEW_HIDDEN=Object.freeze(['advanced','waves','events','log']);
 export const COMBAT_PANEL_LABELS=Object.freeze({
   controls:'Encounter Controls',
   initiative:'Initiative & Turn Order',
@@ -34,19 +35,19 @@ export const COMBAT_PANEL_LABELS=Object.freeze({
 });
 export const COMBAT_WORKSPACE_PRESET_LIMIT=8;
 const DEFAULT_POSITIONS=Object.freeze({
-  controls:{x:0,y:0,w:490,h:160},
-  initiative:{x:0,y:170,w:490,h:400},
+  controls:{x:0,y:0,w:490,h:180},
+  initiative:{x:0,y:190,w:490,h:420},
   actor:{x:510,y:0,w:490,h:480},
-  setup:{x:510,y:490,w:490,h:400},
-  map:{x:0,y:580,w:490,h:260},
-  history:{x:510,y:900,w:490,h:400},
-  queue:{x:510,y:490,w:490,h:480},
-  timer:{x:0,y:850,w:490,h:260},
-  waves:{x:0,y:1140,w:490,h:400},
-  events:{x:0,y:1550,w:490,h:400},
-  log:{x:0,y:1960,w:490,h:280},
-  advanced:{x:510,y:1530,w:490,h:500},
-  prepared:{x:510,y:990,w:490,h:520}
+  setup:{x:0,y:1540,w:490,h:430},
+  map:{x:0,y:620,w:490,h:300},
+  history:{x:510,y:2490,w:490,h:450},
+  queue:{x:510,y:490,w:490,h:430},
+  timer:{x:0,y:930,w:490,h:250},
+  waves:{x:510,y:1540,w:490,h:430},
+  events:{x:0,y:1980,w:490,h:430},
+  log:{x:0,y:2420,w:490,h:280},
+  advanced:{x:510,y:1980,w:490,h:500},
+  prepared:{x:510,y:930,w:490,h:600}
 });
 const isRecord=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 const allowed=id=>COMBAT_PANEL_IDS.includes(id);
@@ -56,8 +57,21 @@ const nameOf=value=>typeof value==='string'?value.trim().replace(/\s+/g,' ').sli
 function normaliseBase(raw){
   const source=isRecord(raw)?raw:{},input=isRecord(source.freeform)?source.freeform:{};
   const entries=isRecord(input.positions)?input.positions:{};
+  const isLegacy=Object.keys(entries).length>0&&!Object.hasOwn(entries,'queue');
+  const priorBottom=isLegacy?Math.max(...Object.values(entries).map(
+    rect=>Number(rect?.y||0)+Number(rect?.h||0)),0):0;
+  const appended=Object.freeze({
+    queue:{x:0,y:priorBottom+30,w:490,h:430},
+    timer:{x:510,y:priorBottom+30,w:490,h:250},
+    prepared:{x:510,y:priorBottom+290,w:490,h:600},
+    advanced:{x:0,y:priorBottom+470,w:490,h:500},
+    waves:{x:0,y:priorBottom+980,w:490,h:400},
+    events:{x:510,y:priorBottom+900,w:490,h:400},
+    log:{x:510,y:priorBottom+1310,w:490,h:280}
+  });
   const positions=Object.fromEntries(COMBAT_PANEL_IDS.map(id=>[
-    id,normalizeFreeformRect(entries[id],DEFAULT_POSITIONS[id])
+    id,normalizeFreeformRect(entries[id],isLegacy&&appended[id]?
+      appended[id]:DEFAULT_POSITIONS[id])
   ]));
   const groups=[];
   for(const group of Array.isArray(source.groups)?source.groups:[]){
@@ -68,8 +82,7 @@ function normaliseBase(raw){
   return {
     freeform:{enabled:true,snap:input.snap!==false,allowOverlap:input.allowOverlap===true,positions},
     hidden:unique(source.hidden??DEFAULT_HIDDEN).concat(
-      isRecord(input.positions)&&!Object.hasOwn(input.positions,'queue')
-        ?DEFAULT_HIDDEN.filter(id=>!unique(source.hidden).includes(id)):[]
+      isLegacy?MIGRATED_NEW_HIDDEN.filter(id=>!unique(source.hidden).includes(id)):[]
     ),
     locked:unique(source.locked),
     minimized:unique(source.minimized),
