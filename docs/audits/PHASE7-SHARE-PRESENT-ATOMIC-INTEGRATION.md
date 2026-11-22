@@ -25,3 +25,7 @@ Deployment: Not authorised for main or production Firebase.
 - Browser smoke testing and authenticated GM/Player tests are needed before approving production.
 - No production Firebase Functions, Firestore or Storage rule deployment has been performed.
 - Do not merge old Phase 7 branches over this modern React code; those contain duplicate frontend implementations.
+
+## Compiled React asset verification
+
+The test branch compiled the replacement Share & Present React/Vite source and committed the generated react-dist artifacts as commit 8a7076a5affe4d8ae328ecfb635e0c355f5de960. Production remains untouched. A clean CI run against this settled source-plus-bundle tree is required for the release gate.
