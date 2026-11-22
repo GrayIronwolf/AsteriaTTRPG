@@ -288,6 +288,7 @@ async function metrics(page) {
       assert.equal(count,0,'Canvas must start unlocked'));
     await modes.getByRole('button',{name:'Encounter Preparation'}).click();
     const header=p.getByTestId('combat-drag-header-controls');
+    await header.scrollIntoViewIfNeeded();
     const drag=await header.boundingBox();
     const hit=await p.evaluate(({x,y})=>{
       const el=document.elementFromPoint(x,y);

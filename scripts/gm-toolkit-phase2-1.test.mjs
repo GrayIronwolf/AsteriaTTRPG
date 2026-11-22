@@ -60,7 +60,8 @@ test('GM Toolkit is in authenticated GM view, with no independent data collectio
   const mount=read('src/app/mountDashboard.jsx');
   assert.ok(dashboard.indexOf("if(!window.AsteriaCharacterAccess.isGM(")<dashboard.indexOf('return <AsteriaAppShell'));
   assert.match(dashboard,/<GMToolkitHub key=\{campaignId\+':'\+accountUid\}/);
-  assert.match(dashboard,/<GMToolkitQuickAccess onNavigate=\{openGMHubLink\}/);
+  assert.doesNotMatch(dashboard,/<GMToolkitQuickAccess/);
+  assert.match(dashboard,/<DashboardNavigation/);
   assert.match(dashboard,/GM_TABS\.some\(item=>item\.id===link\?\.tab\)/);
   assert.match(dashboard,/setTab\(link\.tab\)/);
   assert.match(dashboard,/setGMHubDestination\(link\.targetId/);
