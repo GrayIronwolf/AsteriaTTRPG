@@ -381,7 +381,7 @@ async function metrics(page) {
     assert.equal(freeOverlap.overlapped,true,
       'Default canvas must allow moving across and overlapping another window');
     await p.getByRole('button',{name:'Zoom into canvas'}).click();
-    assert.notEqual((await p.getByLabel('Canvas zoom').innerText()).trim(),'100%',
+    assert.notEqual((await p.locator('output[aria-label="Canvas zoom"]').innerText()).trim(),'100%',
       'Zoom must change directly on the canvas');
     await p.getByTestId('site-combat-fit-all').click();
     await p.reload({waitUntil:'domcontentloaded'});
