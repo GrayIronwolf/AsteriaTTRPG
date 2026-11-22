@@ -43,33 +43,33 @@ test('Presentation routing is campaign-bound and separate from GM and character 
  assert.match(read('src/app/AsteriaReactRoot.jsx'),/\$\{accountScope\}\/\$\{route\.type\}/);
  assert.match(read('src/app/AsteriaAppContext.jsx'),/asteria:firebase-signed-out/);
 });
-test('GM access gate stays ahead of unified search and presentation controller',()=>{
+test('GM access gate remains ahead of the Player Resources and presentation workspaces',()=>{
  const gate=gm.indexOf('if(!window.AsteriaCharacterAccess.isGM(');
- const searchMount=gm.indexOf('<GMUnifiedSearch');
+ const resourceMount=gm.indexOf('data-testid="gm-player-resources-strip"');
  const presentationMount=gm.indexOf('<GMPlayerPresentationWorkspace');
- assert.ok(gate>=0 && gate<searchMount && gate<presentationMount);
+ assert.ok(gate>=0&&gate<resourceMount&&gate<presentationMount);
+ assert.doesNotMatch(gm,/<GMUnifiedSearch/);
+ assert.doesNotMatch(gm,/<GMToolkitQuickAccess/);
  assert.ok(!player.includes('<GMUnifiedSearch'));
  assert.ok(!player.includes('<GMPlayerPresentationWorkspace'));
  assert.match(service,/subscribePresentationDisplay/);
  assert.match(service,/managePlayerPresentation/);
  assert.match(backend,/managePlayerPresentation/);
 });
-test('GM search uses private, lazy, unsubscribed listeners and no global shared index',()=>{
+test('Retired dashboard search has no mounted subscriptions; the search module remains private',()=>{
  assert.match(search,/if\(!campaignId\|\|!enabled\)return undefined/);
  assert.match(search,/subscriptions\.forEach\(stop=>/);
  assert.match(search,/setSources\(emptySources\(\)\)/);
- assert.match(search,/setOpen\(false\);setQuery\(''\);setCategory\('all'\)/);
  assert.match(search,/useMemo\(\(\)=>open\?buildGMSearchIndex/);
- assert.match(gm,/characters=\{rawLive\.characters\}/);
+ assert.doesNotMatch(gm,/<GMUnifiedSearch/);
  assert.ok(SEARCH_INDEX_LIMIT<=3000&&SEARCH_LIMIT<=50);
  assert.ok(!/setDoc\(|addDoc\(|localStorage\.setItem|fetch\(/.test(search));
 });
-test('Opening a searched character selects the matching live roster before navigation',()=>{
- assert.match(gm,/if\(result\.category==='character'\)/);
- assert.match(gm,/if\(!result\.id\|\|!rawLive\.characters\[result\.id\]\)return/);
- assert.match(gm,/setSelectedId\(result\.id\)/);
+test('GM navigation preserves contextual deep links without a global search panel',()=>{
  assert.match(gm,/setGMSearchTarget\(null\);setGMHubDestination\(null\);setTab\(next\)/);
  assert.match(gm,/setGMHubDestination\(null\);setGMSearchTarget\(null\)/);
+ assert.match(gm,/<GMToolkitHub/);
+ assert.match(gm,/searchTarget=\{gmSearchTarget\}/);
  const index=buildGMSearchIndex(sources);
  const match=searchGMIndex(index,'Lyris')[0];
  assert.deepEqual(searchResultDestination(match),{
