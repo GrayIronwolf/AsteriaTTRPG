@@ -31,7 +31,11 @@ async function scenario(name, options, fn) {
   const page=await context.newPage();
   page.setDefaultTimeout(12000);
   const errors=[];
+  const consoleErrors=[];
+  const failedLocalRequests=[];
   page.on('pageerror',error=>errors.push(error.message));
+  page.on('console',message=>{if(message.type()==='error')consoleErrors.push(message.text().slice(0,1400));});
+  page.on('requestfailed',request=>{if(request.url().startsWith(base))failedLocalRequests.push({url:request.url(),reason:request.failure()?.errorText});});
   await page.route('**/*',route=>{
     const u=new URL(route.request().url());
     if(u.hostname==='127.0.0.1' && u.protocol==='http:')return route.continue();
@@ -44,13 +48,23 @@ async function scenario(name, options, fn) {
     console.log('PASS:',name);
   } catch(e) {
     status='fail';
-    note=String(e.stack||e).slice(0,3500);
+    const diagnostic=await page.evaluate(()=>({
+      hash:location.hash,
+      reactAvailable:window.AsteriaReactMigration?.available,
+      userId:window.AsteriaFirebase?.getUser?.()?.uid,
+      rootText:document.querySelector('#asteriaReactRoot')?.textContent?.slice(0,700),
+      dashboardVisible:document.querySelector('#reactDashboard')?.classList.contains('show')
+    })).catch(error=>({diagnosticError:String(error)}));
+    note=[String(e.stack||e).slice(0,2500),
+      'Browser state: '+JSON.stringify(diagnostic),
+      'Console errors: '+JSON.stringify(consoleErrors.slice(-12)),
+      'Failed local requests: '+JSON.stringify(failedLocalRequests.slice(-12))].join('\n');
     failures.push(name);
     console.error('FAIL:',name,note);
     try {await page.screenshot({path:path.join(root,name+'-failure.png'),fullPage:true,timeout:5000});}
     catch(_){/* a failed page should not prevent reporting other scenarios */}
   } finally {
-    results.push({name,status,detail:note,pageErrors:errors.slice(0,12)});
+    results.push({name,status,detail:note,pageErrors:errors.slice(0,12),consoleErrors:consoleErrors.slice(-12),failedLocalRequests:failedLocalRequests.slice(-12)});
     await context.close();
     save();
   }
