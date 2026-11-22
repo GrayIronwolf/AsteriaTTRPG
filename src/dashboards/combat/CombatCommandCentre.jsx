@@ -1,7 +1,7 @@
 import React,{useEffect,useMemo,useRef,useState} from 'react';
 import {freeformCanvasHeight,freeformPercent} from '../../../src/state/workspaceFreeformModel.mjs';
 import {
-  COMBAT_PANEL_IDS,COMBAT_PANEL_LABELS,COMBAT_WORKSPACE_PRESET_LIMIT,
+  COMBAT_PANEL_IDS,COMBAT_PANEL_LABELS,COMBAT_TOOL_CATEGORIES,COMBAT_WORKSPACE_PRESET_LIMIT,
   applyCombatPreset,arrangeCombatWorkspace,combatWorkspaceStorageKey,
   defaultCombatWorkspaceLayout,dockCombatWindow,editCombatWindow,
   normalizeCombatWorkspace,removeCombatPreset,saveCombatPreset,setCombatGroup
@@ -39,6 +39,9 @@ export function CombatCommandCentre({uid,campaignId,children}){
   const [message,setMessage]=useState('');
   const [preview,setPreview]=useState(null);
   const [wide,setWide]=useState(false);
+  const [sidebarExpanded,setSidebarExpanded]=useState(()=>
+    typeof window!=='undefined'&&window.innerWidth>=800);
+  const [selectedTools,setSelectedTools]=useState('live');
   const root=useRef(null),canvas=useRef(null),gesture=useRef(null);
   const layout=history?.present||saved,editing=Boolean(history);
   const panels=React.Children.toArray(children).filter(child=>
@@ -142,6 +145,44 @@ export function CombatCommandCentre({uid,campaignId,children}){
   };
   return <section className={styles.centre} ref={root}
     aria-label="GM Combat Command Centre" data-testid="site-gm-combat-command-centre">
+
+    <div className={styles.workArea}>
+      <aside className={styles.toolSidebar} aria-label="Combat Command Centre tools">
+        <button type="button" className={styles.sidebarToggle}
+          aria-expanded={sidebarExpanded} aria-controls="asteria-combat-tool-list"
+          onClick={()=>setSidebarExpanded(value=>!value)}>
+          {sidebarExpanded?'Collapse Combat Tools':'Show Combat Tools'}
+        </button>
+        {sidebarExpanded?<div id="asteria-combat-tool-list" className={styles.toolList}>
+          {COMBAT_TOOL_CATEGORIES.map(group=><section key={group.id}>
+            <button type="button" className={styles.toolGroup}
+              aria-expanded={selectedTools===group.id}
+              onClick={()=>setSelectedTools(current=>current===group.id?'':group.id)}>
+              {group.label}<span aria-hidden="true">{selectedTools===group.id?'−':'+'}</span>
+            </button>
+            {selectedTools===group.id?<div className={styles.toolItems}>
+              {group.panels.map(id=>{
+                const active=!hidden.includes(id);
+                return <button type="button" key={id} className={styles.toolItem}
+                  aria-pressed={active} onClick={()=>setPreference(previous=>({
+                    ...previous,hidden:active?
+                      [...previous.hidden,id]:
+                      previous.hidden.filter(other=>other!==id)
+                  }))}>
+                  <span aria-hidden="true">{active?'☑':'☐'}</span>{COMBAT_PANEL_LABELS[id]}
+                </button>;
+              })}
+            </div>:null}
+          </section>)}
+          <button type="button" className={styles.toolGroup}
+            disabled={!wide||!storageKey}
+            onClick={()=>{setHistory({present:saved,past:[],future:[]});setMessage('');}}>
+            Workspace Layouts
+          </button>
+          <p className={styles.sidebarHint}>Open or close individual tools without losing combat progress. Arrange and save windows with Customise Combat Workspace.</p>
+        </div>:null}
+      </aside>
+      <div className={styles.mainWorkspace}>
     <header className={styles.toolbar}>
       <div>
         <h3>Combat Command Centre</h3>
@@ -275,5 +316,7 @@ export function CombatCommandCentre({uid,campaignId,children}){
       })}
     </div>
     {message?<p className={styles.note} role="status">{message}</p>:null}
+      </div>
+    </div>
   </section>;
 }

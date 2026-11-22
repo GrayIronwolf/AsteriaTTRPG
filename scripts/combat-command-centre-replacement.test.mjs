@@ -4,7 +4,8 @@ import {readFileSync,existsSync} from 'node:fs';
 const file=path=>readFileSync(path,'utf8');
 test('GM combat renderer is replaced, not duplicated',()=>{
  const gm=file('src/dashboards/GMDashboard.jsx');
- assert.match(gm,/id:'combat',label:'Combat Command Centre'/);
+ assert.match(gm,/dashboardTabs\('gm'\)/);
+ assert.match(file('src/state/dashboardMenuModel.mjs'),/page\('combat','Combat Command Centre'/);
  assert.match(gm,/<GMCombatWorkspace\b/);
  assert.doesNotMatch(gm,/function CampaignEncounter\(/);
  assert.doesNotMatch(gm,/import \{ GMCombatPanel \}/);

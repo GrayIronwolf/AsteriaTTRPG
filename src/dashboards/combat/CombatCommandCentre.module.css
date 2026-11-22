@@ -76,3 +76,36 @@
   .windowContent{padding:var(--ast-space-2)}
   .options>div{right:0;max-width:70vw}
 }
+
+/* The Combat Command Centre's internal navigation is a launcher, not a parallel
+   combat router or separate gameplay store. Uses the original freeform canvas. */
+.workArea{display:grid;grid-template-columns:210px minmax(0,1fr);gap:var(--ast-space-3);
+  align-items:start;min-width:0}
+.mainWorkspace{min-width:0;display:grid;gap:var(--ast-space-3)}
+.toolSidebar{position:sticky;top:12px;min-width:0;display:grid;align-content:start;gap:4px;
+  padding:8px;background:var(--ast-color-panel-raised);border:1px solid var(--ast-color-outline-soft);
+  border-radius:var(--ast-radius-sm);max-height:calc(100vh - 80px);overflow-y:auto}
+.sidebarToggle,.toolGroup,.toolItem{width:100%;display:flex;align-items:center;
+  gap:7px;min-width:0;min-height:39px;padding:8px 9px;cursor:pointer;text-align:left;
+  color:var(--ast-color-text);background:var(--ast-color-panel);border:1px solid var(--ast-color-outline-soft);
+  border-radius:var(--ast-radius-sm);font:600 var(--ast-font-sm)/1.25 inherit}
+.sidebarToggle{background:#243c50;border-color:var(--ast-color-outline-active)}
+.toolList,.toolItems{display:grid;gap:4px;min-width:0}
+.toolGroup{justify-content:space-between}
+.toolGroup>span{color:var(--ast-color-text-muted)}
+.toolItem{font-weight:500;font-size:.76rem;min-height:33px;padding:7px;background:transparent;
+  border-color:transparent}
+.toolItem span{color:var(--ast-color-text-muted);flex-shrink:0}
+.toolItem[aria-pressed="true"]{color:var(--ast-color-text);background:var(--ast-color-accent-soft);
+  border-color:var(--ast-color-outline-soft)}
+.toolItem:hover,.toolGroup:hover{border-color:var(--ast-color-outline-active)}
+.sidebarHint{font-size:.69rem;line-height:1.45;margin:8px 0 0;
+  color:var(--ast-color-text-muted)}
+.centre :is(.sidebarToggle,.toolGroup,.toolItem):focus-visible{
+  outline:3px solid var(--ast-color-focus);outline-offset:2px}
+@container (max-width:899px){
+  .workArea{grid-template-columns:1fr}
+  .toolSidebar{position:static;max-height:300px}
+  .toolList{grid-template-columns:repeat(auto-fit,minmax(180px,1fr));align-items:start}
+}
+@media(max-width:600px){.toolList{grid-template-columns:1fr}}
