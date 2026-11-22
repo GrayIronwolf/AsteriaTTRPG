@@ -112,11 +112,12 @@ test('UI, backend commands and member-only Firestore rules are connected',()=>{
  'src/app/AsteriaReactRoot.jsx','src/dashboards/BattleMapWorkspace.jsx',
  'src/dashboards/WorldAtlasWorkspace.jsx','functions/commands.mjs',
  'functions/handler.mjs','js/firebase-auth.js','src/firebase/asteriaFirebaseService.js',
- 'firestore.rules'
+  'firestore.rules','src/dashboards/presentation/CampaignPresentationWorkspace.jsx',
+  'src/dashboards/presentation/firebaseCampaignMediaService.mjs'
  ].map(file).join('\n');
  for(const token of ['GMPlayerPresentationWorkspace','PlayerPresentationDisplay',
   'managePlayerPresentation','subscribePresentationDisplay','presentationShared',
-  'presentationControl','mapId={display.mapId}','PlayerBattleMapView',
+  'presentationControl','selectedMapId={display.mapId}','PlayerBattleMapView',
   'PlayerWorldAtlas'])assert.ok(source.includes(token),'Missing '+token);
  assert.match(file('firestore.rules'),/match \/presentationShared/);
 });
