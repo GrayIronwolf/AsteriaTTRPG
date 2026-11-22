@@ -483,7 +483,7 @@ test('40. Player navigation uses one SVG icon system and preserves every dashboa
   const ui = read('src/components/WorkspaceUI.jsx');
   const menu = read('src/state/dashboardMenuModel.mjs');
   ['dashboard','character','talents','skills','spells','inventory','quest','journal','party','gallery','settings'].forEach(route => assert.match(menu, new RegExp(`page\\('${route}'`)));
-  assert.match(dashboard,/dashboardTabs\\('player'\\)/);
+  assert.ok(dashboard.includes("dashboardTabs('player')"));
   assert.match(icons, /viewBox="0 0 24 24"/);
   assert.match(ui, /<AsteriaIcon name=\{tab\.icon/);
   assert.doesNotMatch(dashboard, /icon: '\\u/);
@@ -597,7 +597,10 @@ test('51. The redesigned player dashboard responds by reflowing panels and scrol
   assert.match(styles, /react-ability-grid/);
   assert.match(styles, /@container \(max-width: 900px\)/);
   assert.match(styles, /@container \(max-width: 620px\)/);
-  assert.match(styles, /react-character-dashboard \.react-workspace-main > \.react-tabs[\s\S]*overflow-x: auto/);
+  const menuStyles = read('src/components/DashboardNavigation.module.css');
+  assert.match(menuStyles, /\\.bar\\{display:grid/);
+  assert.match(menuStyles, /@media\\(max-width:540px\\)/);
+  assert.doesNotMatch(styles, /react-character-dashboard \\.react-workspace-main > \\.react-tabs/);
 });
 
 test('52. Production chunks share one React entry URL', () => {
