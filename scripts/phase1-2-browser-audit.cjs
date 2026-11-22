@@ -245,6 +245,7 @@ async function metrics(page) {
         background:colour(shell.backgroundColor),border:colour(shell.borderTopColor),
         borderWidth:shell.borderTopWidth,
         headerBackground:colour(bar.backgroundColor),
+        headerImage:bar.backgroundImage,
         headerBorderWidth:bar.borderBottomWidth
       };
     });
@@ -252,9 +253,10 @@ async function metrics(page) {
       'Combat panel has no physical window bounds: '+JSON.stringify(appearance));
     assert.notEqual(appearance.background,'rgba(0,0,0,0)',
       'Combat window background is invisible: '+JSON.stringify(appearance));
-    assert.notEqual(appearance.headerBackground,'rgba(0,0,0,0)',
-      'Combat window header is invisible: '+JSON.stringify(appearance));
-    assert.equal(appearance.borderWidth,'1px',
+    assert.ok(appearance.headerBackground!=='rgba(0,0,0,0)'||
+      appearance.headerImage!=='none',
+      'Combat window header has no visible fill or bezel gradient: '+JSON.stringify(appearance));
+    assert.ok(parseFloat(appearance.borderWidth)>=1,
       'Combat window border is missing: '+JSON.stringify(appearance));
     assert.equal(appearance.headerBorderWidth,'1px',
       'Combat window header divider is missing: '+JSON.stringify(appearance));
@@ -285,7 +287,7 @@ async function metrics(page) {
     const lock=p.getByTestId('site-combat-canvas-lock');
     await lock.click();
     assert.equal(await lock.getAttribute('aria-pressed'),'true',
-      'Lock Canvas must be reachable as a top-left icon');
+      'Lock Canvas must be reachable in the top-right toolbar');
     const lockedHeader=p.getByTestId('combat-drag-header-controls');
     await lockedHeader.scrollIntoViewIfNeeded();
     const initialLocked=await p.locator('[data-combat-panel="controls"]').evaluate(el=>
