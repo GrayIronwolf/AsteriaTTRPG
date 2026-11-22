@@ -325,11 +325,15 @@ async function metrics(page) {
       y:panel.style.getPropertyValue('--combat-y')
     }));
     assert.notDeepEqual(changed,before,'Dragging title bar must move a panel without customisation mode: '+JSON.stringify({hit,before,changed}));
+    await header.scrollIntoViewIfNeeded();
+    await header.hover({position:{x:35,y:20}});
     const second=await header.boundingBox();
     const nextHit=await p.evaluate(({x,y})=>({
       tag:document.elementFromPoint(x,y)?.tagName,
       panel:document.elementFromPoint(x,y)?.closest('[data-combat-panel]')?.dataset.combatPanel
     }),{x:second.x+35,y:second.y+20});
+    assert.equal(nextHit.panel,'controls',
+      'The second drag must begin over Encounter Controls, not the canvas background');
     console.log('SECOND DRAG HIT',JSON.stringify(nextHit));
     await canvas.evaluate(node=>{
       window.__combatDragEvents=[];
@@ -346,7 +350,7 @@ async function metrics(page) {
     const current=await p.locator('[data-combat-panel="controls"]').boundingBox();
     const dx=Math.round(target.x-current.x);
     const dy=Math.round(target.y-current.y);
-    await p.mouse.move(second.x+35,second.y+20);
+    await header.hover({position:{x:35,y:20}});
     await p.mouse.down();
     console.log('SECOND DRAG EVENTS',JSON.stringify(await p.evaluate(()=>
       window.__combatDragEvents)));
