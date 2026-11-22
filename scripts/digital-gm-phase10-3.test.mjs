@@ -87,26 +87,29 @@ test('Search only exposes allowlisted metadata, not GM notes or stored inventory
  assert.equal(searchGMIndex(index,'oak city')[0]?.section,'settlements');
  assert.match(model,/SEARCH_INDEX_LIMIT/);
 });
-test('Projector never loads private GM battle map subscriptions, encounter metadata or GM map controls',()=>{
- assert.match(presentation,/subscribePresentationDisplay/);
- assert.match(presentation,/subscribeBattleMaps\(campaignId,rows=>setBattleMaps\(rows\),\{gm:false\}\)/);
- assert.match(presentation,/subscribeWorldAtlas\(campaignId,rows=>setWorldMaps\(rows\),'player'\)/);
- assert.match(presentation,/return <PlayerBattleMapView campaignId=\{campaignId\} mapId=\{display\.mapId\} presentation\/>/);
- assert.match(battle,/useBattleMaps\(campaignId,false\)/);
- assert.match(battle,/mapId\?maps\.find\(row=>row\.id===mapId\)\|\|null:/);
- assert.match(atlas,/mapId\?maps\.find\(x=>x\.id===mapId\)\|\|null:/);
- assert.match(atlas,/useEffect\(\(\)=>setPin\(null\),\[map\?\.id\]\)/);
- assert.match(read('firestore.rules'),/match \/presentationControl\/\{documentId\}[\s\S]*?allow get, list: if isCampaignGM/);
- assert.match(read('firestore.rules'),/match \/presentationShared\/\{documentId\}[\s\S]*?allow get, list: if canUseCampaignSystems/);
-});
-test('Title and announcement scene banners are rendered only once; mobile controls remain visible',()=>{
- assert.match(presentation,/!\['title','announcement'\]\.includes\(scene\)\?<header/);
- assert.match(presentation,/scene==='blank'\?' blackout'/);
- assert.match(read('src/styles/player-presentation.css'),/@media \(hover:none\), \(pointer:coarse\)/);
- assert.match(read('src/styles/player-presentation.css'),/@media \(max-width:600px\)/);
- assert.match(presentation,/Toggle Fullscreen/);
-});
-test('Blackout and strict schema prevent stale GM material reaching the shared screen',()=>{
+test('Projector uses safe campaign media projections, never raw GM encounter or map readers',()=>{
+  const view=read('src/dashboards/presentation/CampaignPresentationWorkspace.jsx');
+  const media=read('src/dashboards/presentation/firebaseCampaignMediaService.mjs');
+  assert.match(presentation,/CampaignPresentationDisplay/);
+  assert.match(presentation,/RestrictedPresentationDisplay/);
+  assert.match(view,/watchPresentation/);
+  assert.match(media,/combatPublicRef/);
+  assert.match(media,/publicMapCol/);
+  assert.match(media,/watchRestrictedViewer/);
+  assert.match(read('src/state/livePresentationProjectionModel.mjs'),/publicCombatSnapshot/);
+  assert.doesNotMatch(view,/subscribeCampaignEncounter/);
+  assert.match(battle,/useBattleMaps\(campaignId,false\)/);
+  assert.match(read('firestore.rules'),/match \/combatPublic\/\{documentId\}/);
+  assert.match(read('firestore.rules'),/match \/battleMapsPublic\/\{mapId\}/);
+});test('Title and announcements share one safe projector scene and responsive fullscreen runtime',()=>{
+  const view=read('src/dashboards/presentation/CampaignPresentationWorkspace.jsx');
+  const runtime=read('src/dashboards/presentation/usePresentationDisplayRuntime.js');
+  assert.ok(view.includes("['title','announcement']"));
+  assert.match(view,/sceneTitle/);
+  assert.match(view,/toggleFullscreen/);
+  assert.match(runtime,/visibilitychange/);
+  assert.match(read('src/dashboards/presentation/CampaignPresentationWorkspace.module.css'),/@media\(max-width:660px\)/);
+});test('Blackout and strict schema prevent stale GM material reaching the shared screen',()=>{
  const draft={scene:'party',title:'The Heroes',subtitle:'',mapId:'',
   characterIds:['hero'],showRound:false,showPartyHP:false,theme:'obsidian'};
  const scene=publicPresentation(draft,1);
