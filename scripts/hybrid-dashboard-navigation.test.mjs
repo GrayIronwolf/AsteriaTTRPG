@@ -97,7 +97,8 @@ test('combat launcher keeps all tools attached to one window system',()=>{
   const command=source('src/dashboards/combat/CombatCommandCentre.jsx');
   for(const id of COMBAT_PANEL_IDS)
     assert.ok(workspace.includes('<CombatCommandPanel id="'+id+'">'),id);
-  assert.match(command,/COMBAT_TOOL_CATEGORIES\.map/);
+  assert.match(command,/toolCategories\.map/);
+  assert.match(command,/canvasConfig\?\.categories\|\|COMBAT_TOOL_CATEGORIES/);
   assert.match(command,/onPointerMove=\{move\}/);
   assert.match(command,/setPreference\(previous=>/);
   assert.match(workspace,/<PreparedEncounterLibrary/);
