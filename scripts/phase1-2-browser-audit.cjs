@@ -311,8 +311,21 @@ async function metrics(page) {
       panel:document.elementFromPoint(x,y)?.closest('[data-combat-panel]')?.dataset.combatPanel
     }),{x:second.x+35,y:second.y+20});
     console.log('SECOND DRAG HIT',JSON.stringify(nextHit));
+    await canvas.evaluate(node=>{
+      window.__combatDragEvents=[];
+      for(const type of ['pointerdown','pointerup','pointercancel','lostpointercapture']){
+        node.addEventListener(type,event=>window.__combatDragEvents.push({
+          type,button:event.button,buttons:event.buttons,isPrimary:event.isPrimary,
+          target:event.target.tagName,
+          panel:event.target.closest('[data-combat-panel]')?.dataset.combatPanel||'',
+          active:node.dataset.draggingWindow||''
+        }),true);
+      }
+    });
     await p.mouse.move(second.x+35,second.y+20);
     await p.mouse.down();
+    console.log('SECOND DRAG EVENTS',JSON.stringify(await p.evaluate(()=>
+      window.__combatDragEvents)));
     assert.equal(await canvas.getAttribute('data-dragging-window'),'controls',
       'Direct header pointer must start a combat drag');
     await p.mouse.move(second.x+75,second.y+220,{steps:20});
