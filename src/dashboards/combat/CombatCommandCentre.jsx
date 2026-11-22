@@ -274,6 +274,17 @@ export function CombatCommandCentre({uid,campaignId,children}){
     }
     try{canvas.current?.releasePointerCapture?.(event.pointerId);}catch{/* released */}
   };
+  // A captured drag may finish outside the canvas or even outside its visible
+  // browser rectangle. Complete it from the window-level pointer release too.
+  // The gesture pointer guard makes a second call after canvas bubbling harmless.
+  useEffect(()=>{
+    window.addEventListener('pointerup',end);
+    window.addEventListener('pointercancel',end);
+    return ()=>{
+      window.removeEventListener('pointerup',end);
+      window.removeEventListener('pointercancel',end);
+    };
+  });
   const keyboard=(event,id)=>{
     if(!wide||layout.canvasLocked||!event.altKey||!event.key.startsWith('Arrow'))return;
     const deltas={ArrowLeft:[-10,0],ArrowRight:[10,0],

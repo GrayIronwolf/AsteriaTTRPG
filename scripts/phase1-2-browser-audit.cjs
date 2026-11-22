@@ -325,7 +325,10 @@ async function metrics(page) {
       y:panel.style.getPropertyValue('--combat-y')
     }));
     assert.notDeepEqual(changed,before,'Dragging title bar must move a panel without customisation mode: '+JSON.stringify({hit,before,changed}));
-    await header.scrollIntoViewIfNeeded();
+    // Keep both windows within the visible browser viewport. Off-viewport
+    // synthetic mouse release is platform-dependent and is not a fair
+    // acceptance test for window-to-window canvas overlap.
+    await header.evaluate(el=>el.scrollIntoView({block:'center',inline:'nearest'}));
     await header.hover({position:{x:35,y:20}});
     const second=await header.boundingBox();
     const nextHit=await p.evaluate(({x,y})=>({
@@ -350,6 +353,9 @@ async function metrics(page) {
     const current=await p.locator('[data-combat-panel="controls"]').boundingBox();
     const dx=Math.round(target.x-current.x);
     const dy=Math.round(target.y-current.y);
+    const releaseY=second.y+20+dy;
+    assert.ok(releaseY>0&&releaseY<(p.viewportSize()?.height||900)-10,
+      'Canvas overlap test needs a visible release location: '+JSON.stringify({second,target,current,releaseY}));
     await header.hover({position:{x:35,y:20}});
     await p.mouse.down();
     console.log('SECOND DRAG EVENTS',JSON.stringify(await p.evaluate(()=>
@@ -371,6 +377,8 @@ async function metrics(page) {
       'Pointer movements must not persist panel geometry before release');
     assert.ok(Number(preview.zIndex)>1,'Active dragged window must rise above other panels');
     await p.mouse.up();
+    assert.equal(await canvas.getAttribute('data-dragging-window'),null,
+      'Released drag must not leave a captured canvas gesture');
     const freeOverlap=await p.locator('[data-combat-panel="controls"]').evaluate(panel=>{
       const other=panel.parentElement.querySelector('[data-combat-panel="initiative"]');
       const a=panel.getBoundingClientRect(),b=other.getBoundingClientRect();
