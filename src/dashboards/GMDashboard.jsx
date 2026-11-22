@@ -6,8 +6,7 @@ import { reconcileCharacterSystems } from '../state/characterSystems.mjs';
 import { resolveRosterSelection } from '../state/dashboardNavigation.mjs';
 import { DashboardLayoutEditor, DashboardLayoutWorkspace } from '../components/DashboardCustomisation.jsx';
 import { GMCombatOverview, GMExplorationOverview, GMQuestTracker, GMInventoryOverview } from './DashboardFocusPanels.jsx';
-import { GMToolkitHub, GMToolkitQuickAccess } from './GMToolkitHub.jsx';
-import {GMUnifiedSearch} from './GMUnifiedSearch.jsx';
+import { GMToolkitHub } from './GMToolkitHub.jsx';
 import { GMUniversalCheckManager, GMUniversalCheckNotification } from './UniversalCheckWorkspace.jsx';
 import { GMFocusModes } from './GMFocusModes.jsx';
 import { GMPartyControl } from './GMPartyControl.jsx';
@@ -422,18 +421,6 @@ export function GMDashboard({ campaignId }) {
   const combatMediaApi=useMemo(()=>accountUid?createSiteCombatMediaApi():null,[campaignId,accountUid]);
   const gmTradeHub=useMemo(()=>gmTradeLootOverview({itemEcosystem:live.itemEcosystem,partyLoot:live.partyLoot}),
     [live.itemEcosystem,live.partyLoot]);
-  const openGMSearchResult=result=>{
-    if(!GM_TABS.some(item=>item.id===result?.tab))return;
-    // Select the requested character before opening its inventory. Reject
-    // stale results from another campaign rather than opening an unrelated PC.
-    if(result.category==='character'){
-      if(!result.id||!rawLive.characters[result.id])return;
-      setSelectedId(result.id);
-    }
-    setGMSearchTarget({...result});
-    setGMHubDestination(result.targetId?{tab:result.tab,targetId:result.targetId}:null);
-    setTab(result.tab);
-  };
   const openGMHubLink=link=>{
     // The toolkit is a directory of existing GM views, not an arbitrary route.
     if(!GM_TABS.some(item=>item.id===link?.tab))return;
@@ -672,12 +659,16 @@ export function GMDashboard({ campaignId }) {
     eyebrow="GM Dashboard"
     title={live.campaign?.name || 'Campaign'}
     subtitle="Live campaign control, party resources, rewards, encounters, and session tools."
-    sidebar={<PartySidebar campaign={live.campaign || { id: campaignId }} characters={live.characters} selectedId={selectedId} setSelectedId={setSelectedId} presence={live.presence} onOpen={character => openGMCharacter(live.campaign, character, { tab })} />}
     actions={<><SessionActions campaignId={campaignId} session={live.session} busy={busy} run={run} /><LiveSyncStatus online={live.online} connectionState={live.connectionState} error={live.error || actionError || coreSyncError} loading={live.loading} session={live.session} /></>}
   >
+    <section className="react-gm-party-strip" aria-label="GM Player Resources"
+      data-testid="gm-player-resources-strip">
+      <PartySidebar campaign={live.campaign || { id: campaignId }}
+        characters={live.characters} selectedId={selectedId}
+        setSelectedId={setSelectedId} presence={live.presence}
+        onOpen={character=>openGMCharacter(live.campaign,character,{tab})}/>
+    </section>
     <GMRecordingParticipationNotice key={campaignId} campaignId={campaignId}/>
-    <GMUnifiedSearch campaignId={campaignId} workspace={workspace}
-      characters={rawLive.characters} itemEcosystem={live.itemEcosystem} onNavigate={openGMSearchResult}/>
     <DashboardNavigation role="gm" storageScope={campaignId+":"+accountUid} tabs={GM_TABS} active={tab} onChange={next=>{setGMSearchTarget(null);setGMHubDestination(null);setTab(next);}} ariaLabel="GM Dashboard menu" />
     {tab === 'bestiary' ? <GMNpcCreatureLibrary key={campaignId+':'+accountUid+':bestiary'}
       workspace={workspace} saveSection={saveSection} campaignId={campaignId} characters={live.characters} searchTarget={gmSearchTarget}
@@ -693,7 +684,6 @@ export function GMDashboard({ campaignId }) {
         onOpenCharacter={character=>openGMCharacter(live.campaign,character,{tab})}/>
     </> : null}
     {tab === 'main' ? <>
-      <GMToolkitQuickAccess onNavigate={openGMHubLink}/>
       <GMFocusModes key={campaignId+':'+accountUid} layout={savedDashboardLayout}
         onCommit={commitGMFocus} disabled={!accountUid||!dashboardLayoutReady||savingDashboardSettings}/>
       <DashboardLayoutWorkspace key={campaignId+':'+accountUid} role="gm" title="GM Main Dashboard"
@@ -708,7 +698,7 @@ export function GMDashboard({ campaignId }) {
     </> : null}
     {tab === 'settings' ? <div className="react-settings-workspace">
       <Panel title="GM Dashboard Settings" action={<StatusPill>{visibleDashboardPanels(dashboardSettingsDraft,'gm').length} panels</StatusPill>}>
-        <p className="react-help">Manage all GM dashboard panels here. The party/resource sidebar and dashboard navigation remain fixed.</p>
+        <p className="react-help">Manage all GM dashboard panels here. The full-width Player Resources strip and dashboard navigation remain fixed.</p>
         <DashboardLayoutEditor role="gm" layout={dashboardSettingsDraft} onChange={updateDashboardSettingsDraft} onApply={applyGMLayout} disabled={!accountUid||savingDashboardSettings}/>
         <div className="react-settings-save">
           <button type="button" className="primary" disabled={!accountUid||savingDashboardSettings} onClick={saveDashboardSettings}>{savingDashboardSettings?'Saving...':'Save Dashboard Settings'}</button>

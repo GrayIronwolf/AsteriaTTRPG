@@ -1,8 +1,9 @@
 import React,{useEffect,useMemo,useRef,useState} from 'react';
-import {freeformCanvasHeight,freeformPercent} from '../../../src/state/workspaceFreeformModel.mjs';
+import {freeformPercent} from '../../../src/state/workspaceFreeformModel.mjs';
 import {
   COMBAT_PANEL_IDS,COMBAT_PANEL_LABELS,COMBAT_TOOL_CATEGORIES,COMBAT_WORKSPACE_PRESET_LIMIT,
   COMBAT_WORKSPACE_MODES,applyCombatWorkspaceMode,resetCombatWorkspace,
+  normalizeCombatCamera,zoomCombatCamera,fitCombatCamera,
   applyCombatPreset,arrangeCombatWorkspace,combatWorkspaceStorageKey,
   defaultCombatWorkspaceLayout,dockCombatWindow,editCombatWindow,
   normalizeCombatWorkspace,removeCombatPreset,saveCombatPreset,setCombatGroup
@@ -25,12 +26,14 @@ function readLayout(key){
     return normalizeCombatWorkspace(value?JSON.parse(value):null);
   }catch{return defaultCombatWorkspaceLayout();}
 }
-function scopedUpdate(history,update){
-  if(!history)return history;
-  const next=normalizeCombatWorkspace(update(history.present));
-  if(fingerprint(next)===fingerprint(history.present))return history;
-  return {present:next,past:[...history.past,history.present].slice(-40),future:[]};
+const cameraStorageKey=key=>key?key+':camera':null;
+function readCamera(key){
+ try{return normalizeCombatCamera(JSON.parse(localStorage.getItem(cameraStorageKey(key))||'null'));}
+ catch{return normalizeCombatCamera({});}
 }
+const boundsHeight=(freeform,visibleIds)=>Math.max(700,...visibleIds.map(id=>{
+ const rect=freeform.positions[id];return rect?rect.y+rect.h+80:700;
+}));
 
 /**
  * The GM Combat Command Centre stores layout-only preferences under the GM UID
@@ -40,7 +43,15 @@ function scopedUpdate(history,update){
 export function CombatCommandCentre({uid,campaignId,children}){
   const storageKey=combatWorkspaceStorageKey(uid,campaignId);
   const [saved,setSaved]=useState(()=>readLayout(storageKey));
-  const [history,setHistory]=useState(null);
+  const [undoStack,setUndoStack]=useState([]);
+  const [redoStack,setRedoStack]=useState([]);
+  const [cameraState,setCameraState]=useState(()=>({scope:storageKey,view:readCamera(storageKey)}));
+  const camera=cameraState.scope===storageKey?cameraState.view:normalizeCombatCamera({});
+  const updateCamera=update=>setCameraState(previous=>{
+    const current=previous.scope===storageKey?previous.view:readCamera(storageKey);
+    return {scope:storageKey,view:normalizeCombatCamera(
+      typeof update==='function'?update(current):update)};
+  });
   const [presetName,setPresetName]=useState('');
   const [maximised,setMaximised]=useState('');
   const [message,setMessage]=useState('');
@@ -50,71 +61,121 @@ export function CombatCommandCentre({uid,campaignId,children}){
   const [sidebarExpanded,setSidebarExpanded]=useState(()=>
     typeof window!=='undefined'&&window.innerWidth>=800);
   const [selectedTools,setSelectedTools]=useState('overview');
-  const root=useRef(null),canvas=useRef(null),gesture=useRef(null);
-  const layout=history?.present||saved,editing=Boolean(history);
+  const root=useRef(null),canvas=useRef(null),stage=useRef(null),gesture=useRef(null);
+  const layout=saved;
   const panels=collectCombatPanels(children).filter(child=>
     React.isValidElement(child)&&COMBAT_PANEL_IDS.includes(child.props.id));
   const visible=panels.filter(panel=>!layout.hidden.includes(panel.props.id));
   useEffect(()=>{
-    setSaved(readLayout(storageKey));setHistory(null);setPreview(null);
+    setSaved(readLayout(storageKey));setPreview(null);
+    setUndoStack([]);setRedoStack([]);setCameraState({scope:storageKey,view:readCamera(storageKey)});
     setMaximised('');setMessage('');setPresetName('');setConfirmReset(false);
   },[storageKey]);
   useEffect(()=>{
-    const host=root.current;
-    const refresh=()=>setWide((host?.getBoundingClientRect().width||0)>=900);
+    const host=root.current,viewport=canvas.current;
+    const refresh=()=>setWide((viewport?.clientWidth||host?.clientWidth||0)>=700);
     refresh();
-    const observer=typeof ResizeObserver==='undefined'||!host?null:new ResizeObserver(refresh);
-    observer?.observe(host);
+    const observer=typeof ResizeObserver==='undefined'?null:new ResizeObserver(refresh);
+    if(host)observer?.observe(host);
+    if(viewport)observer?.observe(viewport);
     return ()=>observer?.disconnect();
   },[]);
-  const previewLayout=useMemo(()=>preview&&editing?
+  useEffect(()=>{
+    if(cameraState.scope!==storageKey||!storageKey)return;
+    const timeout=setTimeout(()=>{
+      try{localStorage.setItem(cameraStorageKey(storageKey),JSON.stringify(cameraState.view));}
+      catch{/* The canvas remains usable without browser persistence. */}
+    },180);
+    return ()=>clearTimeout(timeout);
+  },[cameraState,storageKey]);
+  useEffect(()=>{
+    const viewport=canvas.current;
+    if(!viewport||!wide)return;
+    const wheel=event=>{
+      if(event.target.closest?.('[data-combat-panel]'))return;
+      event.preventDefault();
+      const rect=viewport.getBoundingClientRect();
+      updateCamera(current=>zoomCombatCamera(current,
+        current.scale*(event.deltaY<0?1.12:1/1.12),
+        {x:event.clientX-rect.left,y:event.clientY-rect.top}));
+    };
+    viewport.addEventListener('wheel',wheel,{passive:false});
+    return ()=>viewport.removeEventListener('wheel',wheel);
+  },[wide,storageKey]);
+  const previewLayout=useMemo(()=>preview&&wide?
     editCombatWindow(layout,preview.id,preview.kind,preview.values):layout,
-  [layout,preview,editing]);
-  const change=update=>{setHistory(previous=>scopedUpdate(previous,update));setMessage('');};
-  const commit=next=>{
+    [layout,preview,wide]);
+  /** Gameplay state never enters the local geometry/history store. */
+  const commit=(next,announce=false)=>{
     if(!storageKey){setMessage('GM account or campaign context is unavailable.');return false;}
     const normalized=normalizeCombatWorkspace(next);
-    try{
-      localStorage.setItem(storageKey,JSON.stringify(normalized));
-    }catch{
-      setMessage('Browser storage is unavailable. Your layout has not been saved.');
-      return false;
-    }
-    setSaved(normalized);setHistory(null);setPreview(null);
-    setMessage('Combat workspace saved on this device for this GM and campaign.');
+    try{localStorage.setItem(storageKey,JSON.stringify(normalized));}
+    catch{setMessage('Browser storage is unavailable. Layout changes have not been saved.');return false;}
+    setSaved(normalized);
+    setMessage(announce?'Canvas layout saved on this device.':'');
     return true;
   };
-  const setPreference=update=>{
-    if(editing)change(update);
-    else commit(update(layout));
+  const change=update=>{
+    const next=normalizeCombatWorkspace(update(layout));
+    if(fingerprint(next)===fingerprint(layout))return;
+    if(commit(next)){
+      setUndoStack(previous=>[...previous,layout].slice(-40));
+      setRedoStack([]);
+    }
   };
-  const begin=(event,id,kind)=>{
-    if(!editing||!wide||gesture.current||event.isPrimary===false||event.button!==0||
-      layout.locked.includes(id)||layout.hidden.includes(id))return;
-    const width=canvas.current?.getBoundingClientRect().width||0,initial=layout.freeform.positions[id];
+  const setPreference=change;
+  const undo=()=>{
+    if(!undoStack.length)return;
+    const previous=undoStack[undoStack.length-1];
+    if(commit(previous)){setUndoStack(undoStack.slice(0,-1));setRedoStack(rows=>[layout,...rows].slice(0,40));}
+  };
+  const redo=()=>{
+    if(!redoStack.length)return;
+    const next=redoStack[0];
+    if(commit(next)){setRedoStack(redoStack.slice(1));setUndoStack(rows=>[...rows,layout].slice(-40));}
+  };
+  const startPan=event=>{
+    if(!wide||gesture.current||event.button!==0||event.isPrimary===false||
+       (event.target!==canvas.current&&event.target!==stage.current))return;
+    gesture.current={kind:'pan',pointer:event.pointerId,x:event.clientX,y:event.clientY,
+      origin:camera};
+    event.preventDefault();canvas.current?.setPointerCapture?.(event.pointerId);
+  };
+  const begin=(event,id,kind,edge='se')=>{
+    if(!wide||gesture.current||event.isPrimary===false||event.button!==0||
+      layout.canvasLocked||layout.locked.includes(id)||layout.hidden.includes(id))return;
+    const width=canvas.current?.clientWidth||0,initial=layout.freeform.positions[id];
     if(!width||!initial)return;
-    gesture.current={id,kind,initial,width,pointer:event.pointerId,
-      x:event.clientX,y:event.clientY};
+    gesture.current={id,kind,edge,initial,width,scale:camera.scale,
+      pointer:event.pointerId,x:event.clientX,y:event.clientY};
     setPreview(null);setMessage('');
     event.preventDefault();event.stopPropagation();
     canvas.current?.setPointerCapture?.(event.pointerId);
   };
   const proposal=(g,event)=>{
-    const dx=Math.round((event.clientX-g.x)*1000/g.width);
-    const dy=Math.round((event.clientY-g.y)*1000/g.width);
-    return g.kind==='move'?{x:g.initial.x+dx,y:g.initial.y+dy}:
-      {w:g.initial.w+dx,h:g.initial.h+dy};
+    const dx=Math.round((event.clientX-g.x)*1000/(g.width*g.scale));
+    const dy=Math.round((event.clientY-g.y)*1000/(g.width*g.scale));
+    if(g.kind==='move')return {x:g.initial.x+dx,y:g.initial.y+dy};
+    const values={...g.initial};
+    if(g.edge.includes('e'))values.w+=dx;
+    if(g.edge.includes('w')){values.x+=dx;values.w-=dx;}
+    if(g.edge.includes('s'))values.h+=dy;
+    if(g.edge.includes('n')){values.y+=dy;values.h-=dy;}
+    return values;
   };
   const move=event=>{
     const g=gesture.current;
-    if(g?.pointer===event.pointerId)
-      setPreview({id:g.id,kind:g.kind,values:proposal(g,event)});
+    if(!g||g.pointer!==event.pointerId)return;
+    if(g.kind==='pan'){
+      updateCamera({...g.origin,x:g.origin.x+event.clientX-g.x,
+        y:g.origin.y+event.clientY-g.y});
+    }else setPreview({id:g.id,kind:g.kind,values:proposal(g,event)});
   };
   const end=event=>{
     const g=gesture.current;
     if(!g||g.pointer!==event.pointerId)return;
     gesture.current=null;
-    if(event.type==='pointerup'){
+    if(g.kind!=='pan'&&event.type==='pointerup'){
       const values=proposal(g,event);
       if(editCombatWindow(layout,g.id,g.kind,values)===layout)
         setMessage('That move or resize is blocked by a lock, boundary or another panel.');
@@ -124,7 +185,7 @@ export function CombatCommandCentre({uid,campaignId,children}){
     try{canvas.current?.releasePointerCapture?.(event.pointerId);}catch{/* released */}
   };
   const keyboard=(event,id)=>{
-    if(!editing||!wide||!event.altKey||!event.key.startsWith('Arrow'))return;
+    if(!wide||layout.canvasLocked||!event.altKey||!event.key.startsWith('Arrow'))return;
     const deltas={ArrowLeft:[-10,0],ArrowRight:[10,0],
       ArrowUp:[0,-10],ArrowDown:[0,10]};
     const delta=deltas[event.key],rect=layout.freeform.positions[id];
@@ -135,6 +196,12 @@ export function CombatCommandCentre({uid,campaignId,children}){
       {w:rect.w+delta[0],h:rect.h+delta[1]};
     change(previous=>editCombatWindow(previous,id,kind,values));
   };
+  const fitAll=()=>{
+    const viewport=canvas.current;
+    if(!viewport||!wide)return;
+    updateCamera(fitCombatCamera(layout,visible.map(panel=>panel.props.id),
+      viewport.clientWidth,viewport.clientHeight));
+  };
   const minimize=id=>setPreference(previous=>({...previous,
     minimized:previous.minimized.includes(id)?
       previous.minimized.filter(other=>other!==id):[...previous.minimized,id]
@@ -144,7 +211,7 @@ export function CombatCommandCentre({uid,campaignId,children}){
     hidden:previous.hidden.filter(other=>other!==id)
   }));
   const savePreset=()=>{
-    if(!presetName.trim()||!history)return;
+    if(!presetName.trim())return;
     const id='layout-'+crypto.randomUUID();
     const next=saveCombatPreset(layout,presetName,id);
     if(next===layout){setMessage('A layout with that name exists, or the preset limit was reached.');return;}
@@ -190,11 +257,11 @@ export function CombatCommandCentre({uid,campaignId,children}){
             </button>
           </div>
           <button type="button" className={styles.toolGroup}
-            disabled={!wide||!storageKey}
-            onClick={()=>{setHistory({present:saved,past:[],future:[]});setMessage('');}}>
-            Workspace Layouts
+            onClick={()=>document.getElementById('combat-canvas-presets')?.scrollIntoView({
+              behavior:'smooth',block:'nearest'})}>
+            Saved Layouts
           </button>
-          <p className={styles.sidebarHint}>Open or close individual tools without losing combat progress. Arrange and save windows with Customise Combat Workspace.</p>
+          <p className={styles.sidebarHint}>Drag any window header to move it. Resize using its edges. Drag empty canvas space to pan; layout changes save automatically.</p>
         </div>:null}
       </aside>
       <div className={styles.mainWorkspace}>
@@ -204,23 +271,16 @@ export function CombatCommandCentre({uid,campaignId,children}){
         <p>Adjust window positions without changing combat state or your saved dashboard.</p>
       </div>
       <div className={styles.actions}>
-        {!editing?<button type="button" disabled={!storageKey||!wide}
-          data-testid="site-combat-layout-edit"
-          onClick={()=>{setHistory({present:saved,past:[],future:[]});setMessage('');}}>
-          Customise Combat Workspace</button>:<>
-          <button type="button" onClick={()=>setHistory(previous=>previous?.past.length?{
-            present:previous.past.at(-1),past:previous.past.slice(0,-1),
-            future:[previous.present,...previous.future].slice(0,40)
-          }:previous)} disabled={!history.past.length}>Undo</button>
-          <button type="button" onClick={()=>setHistory(previous=>previous?.future.length?{
-            present:previous.future[0],past:[...previous.past,previous.present].slice(-40),
-            future:previous.future.slice(1)
-          }:previous)} disabled={!history.future.length}>Redo</button>
-          <button type="button" onClick={()=>change(arrangeCombatWorkspace)}>Auto-arrange</button>
-          <button type="button" onClick={()=>{setHistory(null);setPreview(null);}}>Discard</button>
-          <button type="button" data-testid="site-combat-layout-save"
-            onClick={()=>commit(layout)}>Save Layout</button>
-        </>}
+        <button type="button" disabled={!undoStack.length} onClick={undo}
+          aria-label="Undo canvas change">Undo</button>
+        <button type="button" disabled={!redoStack.length} onClick={redo}
+          aria-label="Redo canvas change">Redo</button>
+        <button type="button" disabled={layout.canvasLocked}
+          onClick={()=>change(arrangeCombatWorkspace)}>Auto-arrange</button>
+        <button type="button" aria-pressed={layout.canvasLocked}
+          onClick={()=>setPreference(previous=>({...previous,canvasLocked:!previous.canvasLocked}))}>
+          {layout.canvasLocked?'Unlock Canvas':'Lock Canvas'}
+        </button>
       </div>
     </header>
     <div className={styles.modeBar} role="group" aria-label="Combat workspace quick layouts">
@@ -234,6 +294,21 @@ export function CombatCommandCentre({uid,campaignId,children}){
         onClick={()=>setPreference(previous=>({...previous,hidden:[]}))}>
         Show all {panels.length} panels
       </button>
+      <button type="button" onClick={fitAll} disabled={!wide}
+        data-testid="site-combat-fit-all">Fit all</button>
+      <button type="button" onClick={()=>updateCamera(current=>zoomCombatCamera(current,
+        current.scale/1.2,{x:(canvas.current?.clientWidth||0)/2,
+          y:(canvas.current?.clientHeight||0)/2}))} disabled={!wide}
+        aria-label="Zoom out of canvas">−</button>
+      <output aria-label="Canvas zoom" className={styles.zoomValue}>
+        {Math.round(camera.scale*100)}%
+      </output>
+      <button type="button" onClick={()=>updateCamera(current=>zoomCombatCamera(current,
+        current.scale*1.2,{x:(canvas.current?.clientWidth||0)/2,
+          y:(canvas.current?.clientHeight||0)/2}))} disabled={!wide}
+        aria-label="Zoom into canvas">+</button>
+      <button type="button" onClick={()=>updateCamera(normalizeCombatCamera({}))}
+        disabled={!wide}>Reset view</button>
       <button type="button" disabled={!storageKey} onClick={()=>setConfirmReset(true)}>
         Reset layout
       </button>
@@ -247,32 +322,33 @@ export function CombatCommandCentre({uid,campaignId,children}){
       }}>Confirm reset</button>
       <button type="button" onClick={()=>setConfirmReset(false)}>Cancel</button>
     </div>:null}
-    {editing?<div className={styles.editor} role="group" aria-label="Combat window preferences">
-      <label><input type="checkbox" checked={layout.freeform.snap}
-        onChange={event=>change(previous=>({...previous,freeform:{
-          ...previous.freeform,snap:event.target.checked
-        }}))}/> Snap to grid</label>
-      <label><input type="checkbox" checked={layout.freeform.allowOverlap}
-        onChange={event=>change(previous=>({...previous,freeform:{
-          ...previous.freeform,allowOverlap:event.target.checked
-        }}))}/> Allow overlap</label>
-      <label>Named layout
-        <input type="text" maxLength={48} placeholder="e.g. Boss Battle"
-          value={presetName} onChange={event=>setPresetName(event.target.value)}/></label>
-      <button type="button" onClick={savePreset} disabled={!presetName.trim()||
-        layout.savedWorkspaces.length>=COMBAT_WORKSPACE_PRESET_LIMIT}>Save preset</button>
-      <p>Drag a window's Move handle or resize corner. Alt+arrow moves; Alt+Shift+arrow resizes.
-        Lock, dock, group or hide individual windows using Window options.</p>
-    </div>:null}
-    {layout.savedWorkspaces.length?<div className={styles.presets} aria-label="Combat layout presets">
+    <details className={styles.canvasSettings}>
+      <summary>Canvas options &amp; saved layouts</summary>
+      <div className={styles.editor} role="group" aria-label="Combat canvas preferences">
+        <label><input type="checkbox" checked={layout.freeform.snap}
+          onChange={event=>setPreference(previous=>({...previous,freeform:{
+            ...previous.freeform,snap:event.target.checked}}))}/> Snap panel edges</label>
+        <label><input type="checkbox" checked={layout.freeform.allowOverlap}
+          onChange={event=>setPreference(previous=>({...previous,freeform:{
+            ...previous.freeform,allowOverlap:event.target.checked}}))}/> Allow panel overlap</label>
+        <label>Layout name
+          <input type="text" maxLength={48} placeholder="e.g. Boss Battle"
+            value={presetName} onChange={event=>setPresetName(event.target.value)}/></label>
+        <button type="button" onClick={savePreset}
+          disabled={!presetName.trim()||
+            layout.savedWorkspaces.length>=COMBAT_WORKSPACE_PRESET_LIMIT}>Save layout preset</button>
+        <p>Drag panel headers directly to move, and edges or corners to resize.
+          Alt+arrow moves a focused panel; Alt+Shift+arrow resizes.
+          Pan the empty canvas by dragging it, or use the zoom buttons.</p>
+      </div>
+    </details>
+    {layout.savedWorkspaces.length?<div id="combat-canvas-presets" className={styles.presets} aria-label="Combat layout presets">
       <strong>Combat layouts</strong>
       {layout.savedWorkspaces.map(item=><span key={item.id}>
         <span>{item.name}</span>
-        <button type="button" disabled={editing}
-          onClick={()=>commit(applyCombatPreset(layout,item.id))}>Apply</button>
-        <button type="button" disabled={editing}
-          aria-label={'Delete layout '+item.name}
-          onClick={()=>commit(removeCombatPreset(layout,item.id))}>Delete</button>
+        <button type="button" onClick={()=>change(previous=>applyCombatPreset(previous,item.id))}>Apply</button>
+        <button type="button" aria-label={'Delete layout '+item.name}
+          onClick={()=>change(previous=>removeCombatPreset(previous,item.id))}>Delete</button>
       </span>)}
     </div>:null}
     {hidden.length?<div className={styles.hidden} aria-label="Hidden combat windows">
@@ -286,14 +362,21 @@ export function CombatCommandCentre({uid,campaignId,children}){
         Show all panels
       </button>
     </div>:null}
-    {!wide?<p className={styles.note}>On narrow screens, windows use a readable stacked layout.
-      Open this workspace on a wide screen to move or resize them.</p>:null}
+    {!wide?<p className={styles.note}>On narrow screens combat tools stack vertically for
+      readable controls. The freeform canvas and pan/zoom controls are available on wider screens.</p>:null}
     <div className={styles.canvas} ref={canvas}
-      data-editing={editing} data-layout-mode={wide?'freeform':'stacked'}
-      style={{'--combat-canvas-height':freeformCanvasHeight(previewLayout.freeform,
-        visible.map(panel=>panel.props.id))}}
+      data-editing={wide&&!layout.canvasLocked}
+      data-layout-mode={wide?'freeform':'stacked'}
+      aria-label="Combat freeform canvas"
+      onPointerDown={startPan}
       onPointerMove={move} onPointerUp={end} onPointerCancel={end}
       onLostPointerCapture={end}>
+      <div ref={stage} className={styles.stage+(maximised?' '+styles.stageMaximised:'')}
+        data-stage="combat-canvas-stage"
+        style={{'--combat-canvas-height':boundsHeight(previewLayout.freeform,
+          visible.map(panel=>panel.props.id)),
+          '--combat-pan-x':camera.x+'px','--combat-pan-y':camera.y+'px',
+          '--combat-scale':camera.scale}}>
       {visible.map(panel=>{
         const id=panel.props.id,rect=previewLayout.freeform.positions[id];
         const isMinimised=layout.minimized.includes(id),isMaximised=maximised===id;
@@ -306,19 +389,25 @@ export function CombatCommandCentre({uid,campaignId,children}){
           data-combat-panel={id}
           style={{'--combat-x':freeformPercent(rect.x),'--combat-y':rect.y/10+'cqw',
             '--combat-w':freeformPercent(rect.w),'--combat-h':rect.h/10+'cqw'}}>
-          <header className={styles.windowBar}>
-            {editing?<button type="button" className={styles.moveHandle}
-              disabled={isLocked} aria-label={'Move '+label}
-              onPointerDown={event=>begin(event,id,'move')}
-              onKeyDown={event=>keyboard(event,id)}>Move</button>:null}
-            <strong>{label}{grouped?' · Grouped':''}</strong>
+          <header className={styles.windowBar}
+            data-testid={'combat-drag-header-'+id}
+            onPointerDown={event=>{
+              if(event.target.closest('button,input,select,textarea,a,summary,details,label'))return;
+              begin(event,id,'move');
+            }}>
+            <strong tabIndex={wide&&!isLocked&&!layout.canvasLocked?0:undefined}
+              role="button" aria-label={'Move '+label}
+              aria-disabled={isLocked||layout.canvasLocked}
+              onKeyDown={event=>keyboard(event,id)}>
+              {label}{grouped?' · Grouped':''}
+            </strong>
             <div className={styles.windowActions}>
               <button type="button" aria-label={(isMinimised?'Restore ':'Minimise ')+label}
                 onClick={()=>minimize(id)}>{isMinimised?'Restore':'−'}</button>
               <button type="button" aria-label={(isMaximised?'Restore size of ':'Maximise ')+label}
                 onClick={()=>setMaximised(isMaximised?'':id)}>
                 {isMaximised?'Restore':'□'}</button>
-              {editing?<details className={styles.options}>
+              <details className={styles.options}>
                 <summary aria-label={'Window options for '+label}>Options</summary>
                 <div>
                   <button type="button" onClick={()=>change(previous=>({...previous,
@@ -347,18 +436,24 @@ export function CombatCommandCentre({uid,campaignId,children}){
                     </select>
                   </label>
                 </div>
-              </details>:null}
+              </details>
             </div>
           </header>
           <div className={styles.windowContent} aria-hidden={isMinimised}
             inert={isMinimised?true:undefined}>{panel.props.children}</div>
-          {editing&&!isLocked&&!isMinimised&&!isMaximised?
-            <button type="button" className={styles.resizeHandle}
-              aria-label={'Resize '+label}
-              onPointerDown={event=>begin(event,id,'resize')}
-              onKeyDown={event=>keyboard(event,id)}>↘</button>:null}
+          {wide&&!layout.canvasLocked&&!isLocked&&!isMinimised&&!isMaximised?
+            ['n','e','s','w','ne','nw','se','sw'].map(edge=>
+              <button type="button" key={edge}
+                className={styles.resizeHandle}
+                data-resize-edge={edge}
+                aria-label={'Resize '+label+' '+edge}
+                onPointerDown={event=>begin(event,id,'resize',edge)}
+                onKeyDown={event=>keyboard(event,id)}>
+                <span aria-hidden="true">{edge==='se'?'↘':''}</span>
+              </button>):null}
         </article>;
       })}
+      </div>
     </div>
     {message?<p className={styles.note} role="status">{message}</p>:null}
       </div>

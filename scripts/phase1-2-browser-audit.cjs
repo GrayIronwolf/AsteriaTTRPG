@@ -167,6 +167,26 @@ async function metrics(page) {
     await p.locator('.react-dashboard-freeform-grid [data-panel-id]').first().waitFor();
     const m=await metrics(p);
     assert.ok(m.panels>=3,'Missing GM dashboard panels: '+JSON.stringify(m));
+    const strip=p.getByTestId('gm-player-resources-strip');
+    assert.equal(await strip.count(),1,'GM Player Resources strip missing');
+    const placement=await p.locator('.react-workspace-main').evaluate(root=>{
+      const header=root.querySelector('.react-workspace-header');
+      const party=root.querySelector('[data-testid="gm-player-resources-strip"]');
+      const menu=root.querySelector('[data-testid="asteria-gm-hybrid-menu"]');
+      return {headerBottom:header.getBoundingClientRect().bottom,
+        partyTop:party.getBoundingClientRect().top,
+        partyWidth:party.getBoundingClientRect().width,
+        menuTop:menu.getBoundingClientRect().top,
+        search:!!root.querySelector('.asteria-gm-unified-search'),
+        toolkit:!!root.querySelector('.react-gm-toolkit-quick')};
+    });
+    assert.ok(placement.partyTop>=placement.headerBottom-2,
+      'Player Resources must be immediately below the campaign/session header');
+    assert.ok(placement.menuTop>=placement.partyTop,
+      'Player Resources must be above GM navigation');
+    assert.ok(placement.partyWidth>600,'Player Resources must span the GM page');
+    assert.equal(placement.search,false,'Remove redundant GM search launcher');
+    assert.equal(placement.toolkit,false,'Remove redundant GM Toolkit quick panel');
     await p.screenshot({path:path.join(root,'05-gm-dashboard.png'),fullPage:true});
     console.log('GM METRICS',JSON.stringify(m));
   });
@@ -257,12 +277,44 @@ async function metrics(page) {
       .getByRole('button',{name:'Cancel'}).click();
     assert.equal(await p.locator('[data-combat-panel]').count(),13,
       'Cancelling layout reset must preserve combat windows');
-    const edit=p.locator('[data-testid="site-combat-layout-edit"]');
-    await edit.waitFor();
-    assert.ok(await edit.isEnabled(),'Desktop combat workspace edit not enabled');
-    await edit.click();
-    await p.locator('[data-testid="site-combat-layout-save"]').click();
-    await edit.waitFor();
+    const canvas=p.locator('[aria-label="Combat freeform canvas"]');
+    assert.equal(await canvas.getAttribute('data-layout-mode'),'freeform');
+    assert.ok(await p.getByTestId('site-combat-fit-all').isEnabled());
+    const before=await p.locator('[data-combat-panel="controls"]').evaluate(panel=>({
+      x:panel.style.getPropertyValue('--combat-x'),
+      y:panel.style.getPropertyValue('--combat-y')
+    }));
+    await p.getByRole('button',{name:'Unlock Canvas'}).count().then(count=>
+      assert.equal(count,0,'Canvas must start unlocked'));
+    await modes.getByRole('button',{name:'Encounter Preparation'}).click();
+    const header=p.getByTestId('combat-drag-header-controls');
+    const drag=await header.boundingBox();
+    await p.mouse.move(drag.x+35,drag.y+20);
+    await p.mouse.down();
+    await p.mouse.move(drag.x+85,drag.y+20,{steps:5});
+    await p.mouse.up();
+    await p.locator('[data-combat-panel="controls"]').waitFor();
+    const changed=await p.locator('[data-combat-panel="controls"]').evaluate(panel=>({
+      x:panel.style.getPropertyValue('--combat-x'),
+      y:panel.style.getPropertyValue('--combat-y')
+    }));
+    assert.notDeepEqual(changed,before,'Dragging title bar must move a panel without customisation mode');
+    await p.getByRole('button',{name:'Zoom into canvas'}).click();
+    assert.notEqual((await p.getByLabel('Canvas zoom').innerText()).trim(),'100%',
+      'Zoom must change directly on the canvas');
+    await p.getByTestId('site-combat-fit-all').click();
+    await p.reload({waitUntil:'domcontentloaded'});
+    await p.waitForFunction(()=>window.AsteriaReactMigration?.available);
+    await p.evaluate(()=>window.AsteriaReactMigration.openGM('demo-campaign'));
+    await p.getByTestId('asteria-gm-hybrid-menu').getByRole('button',{name:'Combat',exact:true}).click();
+    await p.getByTestId('asteria-dashboard-card-dropdown')
+      .getByRole('button',{name:'Open Combat Command Centre',exact:true}).click();
+    const restored=await p.locator('[data-combat-panel="controls"]').evaluate(panel=>({
+      x:panel.style.getPropertyValue('--combat-x'),
+      y:panel.style.getPropertyValue('--combat-y')
+    }));
+    assert.deepEqual(restored,changed,'Canvas positions must persist across reload');
+    await p.screenshot({path:path.join(root,'08-gm-combat-command-centre.png'),fullPage:true});
   });
   await scenario('09-gm-combat-mobile',{width:390,height:844},async p=>{
     await gm(p);

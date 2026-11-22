@@ -98,3 +98,49 @@ test('Combat layout reset and quick modes preserve custom layouts and combat pri
  assert.equal(normalizeCombatWorkspace(reset).savedWorkspaces[0].name,'Custom view');
  assert.equal('combat' in reset,false);
 });
+
+test('Direct canvas actions retain combat authority and use no parallel page or editor',()=>{
+ const renderer=file('src/dashboards/combat/CombatCommandCentre.jsx');
+ const gm=file('src/dashboards/GMDashboard.jsx');
+ assert.doesNotMatch(renderer,/Customise Combat Workspace|setHistory\(/);
+ assert.match(renderer,/onPointerDown=\{startPan\}/);
+ assert.match(renderer,/begin\(event,id,'move'\)/);
+ assert.match(renderer,/\['n','e','s','w','ne','nw','se','sw'\]/);
+ assert.match(renderer,/zoomCombatCamera/);
+ assert.match(renderer,/fitCombatCamera/);
+ assert.match(renderer,/localStorage\.setItem\(storageKey/);
+ assert.match(renderer,/canvasLocked/);
+ assert.match(gm,/data-testid="gm-player-resources-strip"/);
+ assert.doesNotMatch(gm,/<GMUnifiedSearch|<GMToolkitQuickAccess/);
+ assert.match(gm,/<GMToolkitHub/);
+ assert.match(gm,/searchTarget=\{gmSearchTarget\}/);
+});
+test('Canvas geometry supports offscreen positions, zoom, persistence and collision safety',async()=>{
+ const {defaultCombatWorkspaceLayout,editCombatWindow,normalizeCombatWorkspace,
+  normalizeCombatCamera,zoomCombatCamera,fitCombatCamera}=await import(
+  '../src/dashboards/combat/combatWorkspaceLayoutModel.mjs');
+ const first=defaultCombatWorkspaceLayout();
+ const moved=editCombatWindow(first,'controls','move',{x:3500,y:3600});
+ assert.notEqual(moved,first,'Canvas must move windows beyond the old 1000-unit boundary');
+ assert.equal(moved.freeform.positions.controls.x,3500);
+ assert.equal(moved.freeform.positions.controls.y,3600);
+ assert.deepEqual(normalizeCombatWorkspace(JSON.parse(JSON.stringify(moved))).freeform.positions.controls,
+   moved.freeform.positions.controls);
+ const blocked=editCombatWindow(first,'controls','move',{x:0,y:200});
+ assert.equal(blocked,first,'Overlapping a visible window is blocked by default');
+ const unlocked={...first,freeform:{...first.freeform,allowOverlap:true}};
+ const overlapped=editCombatWindow(unlocked,'controls','move',{x:0,y:200});
+ assert.notEqual(overlapped,unlocked);
+ const locked={...first,canvasLocked:true};
+ assert.equal(editCombatWindow(locked,'controls','move',{x:3500,y:3600}),locked);
+ const camera=normalizeCombatCamera({});
+ const closer=zoomCombatCamera(camera,1.5,{x:250,y:200});
+ assert.equal(closer.scale,1.5);
+ assert.equal(closer.x,250-(250-camera.x)*1.5);
+ assert.equal(normalizeCombatCamera({scale:200}).scale,2.5);
+ const fitted=fitCombatCamera(first,['controls','initiative'],1200,650);
+ assert.ok(fitted.scale>=.25&&fitted.scale<=2.5);
+ const resized=editCombatWindow(moved,'controls','resize',{w:700,h:500});
+ assert.equal(resized.freeform.positions.controls.w,700);
+ assert.equal(resized.freeform.positions.controls.h,500);
+});
