@@ -41,6 +41,8 @@ jobs:
         run: npm ci
       - name: Verify recovered website migration source contract
         run: node --test scripts/react-migration-parity-contract.test.cjs
+      - name: Compile current branch React/Vite source for accurate browser acceptance
+        run: npm run build
       - name: Install temporary browser test runtime without changing the lockfile
         run: npm install --no-save --package-lock=false --ignore-scripts playwright@1.56.1
       - name: Install Chromium and Linux browser dependencies
