@@ -350,6 +350,7 @@ export function installDevFixtures() {
     },
     syncCampaignItemPrivacy: async () => ({ok:true,migrated:0,remaining:0}),
     syncCampaignShopStores: async () => ({ok:true,migrated:0,remaining:0}),
+    syncGMRewardBundles: async () => ({ok:true,migrated:0,remaining:0}),
     subscribeCustomItems: callback => subscribe('customItems', callback),
     saveCampaignEncounter: async (_campaignId, next) => { encounter = { ...encounter, ...clone(next) }; notify('encounter'); return { ok:true }; },
     saveGMWorkspace: async (_campaignId,patch) => { gmWorkspace={...(gmWorkspace||{}),...clone(patch),version:'asteria-react-gm-workspace-v1'};notify('gmWorkspace');return {ok:true}; },
