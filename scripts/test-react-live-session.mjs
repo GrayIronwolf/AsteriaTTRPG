@@ -598,8 +598,8 @@ test('51. The redesigned player dashboard responds by reflowing panels and scrol
   assert.match(styles, /@container \(max-width: 900px\)/);
   assert.match(styles, /@container \(max-width: 620px\)/);
   const menuStyles = read('src/components/DashboardNavigation.module.css');
-  assert.match(menuStyles, /\\.bar\\{display:grid/);
-  assert.match(menuStyles, /@media\\(max-width:540px\\)/);
+  assert.ok(menuStyles.includes('.bar{display:grid'));
+  assert.ok(menuStyles.includes('@media(max-width:540px)'));
   assert.doesNotMatch(styles, /react-character-dashboard \\.react-workspace-main > \\.react-tabs/);
 });
 
