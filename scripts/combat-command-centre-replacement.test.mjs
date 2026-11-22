@@ -187,3 +187,28 @@ test('Freeform pointer interaction uses frame updates, one commit and active-win
  assert.match(css,/\.window\.dragging\{/);
  assert.match(css,/will-change:transform/);
 });
+
+test('Combat canvas replaces old layout bars with a full-width icon HUD and overlay tool drawer',()=>{
+ const renderer=file('src/dashboards/combat/CombatCommandCentre.jsx');
+ const css=file('src/dashboards/combat/CombatCommandCentre.module.css');
+ const icons=file('src/components/AsteriaIcons.jsx');
+ assert.doesNotMatch(renderer,/Auto-arrange|Quick layouts|Restore windows:|Reset layout|Reset view|Saved Layouts|Save layout preset/);
+ assert.doesNotMatch(renderer,/className=\{styles\.workArea\}|className=\{styles\.modeBar\}/);
+ assert.match(renderer,/className=\{styles\.canvasActions\}/);
+ assert.match(renderer,/data-testid="site-combat-canvas-lock"/);
+ assert.match(renderer,/aria-label="Undo canvas change"/);
+ assert.match(renderer,/aria-label="Redo canvas change"/);
+ assert.match(renderer,/data-testid="site-combat-tools-toggle"/);
+ assert.match(renderer,/className=\{styles\.drawerBackdrop\}/);
+ assert.match(renderer,/className=\{styles\.toolSidebar\}/);
+ assert.match(renderer,/className=\{styles\.zoomTools\}/);
+ assert.match(renderer,/aria-label="Canvas zoom controls"/);
+ assert.match(renderer,/togglePanel\(id\)/);
+ assert.match(renderer,/Snap windows to grid/);
+ assert.match(renderer,/Allow window overlap/);
+ assert.match(css,/\.toolSidebar\[hidden\]\{display:none\}/);
+ assert.match(css,/\.canvas\{[^}]*height:max\(580px,calc\(100dvh - 190px\)\)/s);
+ assert.doesNotMatch(css,/\.workArea\{|\.modeBar\{|\.quickActions\{/);
+ for(const name of ['unlock','undo','redo','zoomIn','zoomOut','fitCanvas'])
+   assert.match(icons,new RegExp('  '+name+':'));
+});

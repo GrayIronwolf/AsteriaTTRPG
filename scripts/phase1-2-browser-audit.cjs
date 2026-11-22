@@ -228,7 +228,10 @@ async function metrics(page) {
     await p.getByTestId('asteria-dashboard-card-dropdown').getByRole('button',{name:'Open Combat Command Centre',exact:true}).click();
     await p.locator('[data-testid="site-gm-combat"]').waitFor();
     await p.locator('[data-testid="site-gm-combat-command-centre"]').waitFor();
-    await p.getByText('Prepared Encounters',{exact:true}).first().waitFor();
+    const drawerToggle=p.getByTestId('site-combat-tools-toggle');
+    await drawerToggle.waitFor();
+    assert.equal(await drawerToggle.getAttribute('aria-expanded'),'false',
+      'The Combat Tools drawer should start closed');
     await p.screenshot({path:path.join(root,'08-gm-combat-command-centre.png'),fullPage:true});
     const panels=await p.locator('[data-combat-panel]').count();
     assert.equal(panels,13,'All 13 combat systems should appear in a new workspace');
@@ -255,38 +258,55 @@ async function metrics(page) {
       'Combat window border is missing: '+JSON.stringify(appearance));
     assert.equal(appearance.headerBorderWidth,'1px',
       'Combat window header divider is missing: '+JSON.stringify(appearance));
-    await p.getByRole('button',{name:'Encounter Builder',exact:true}).click();
-    await p.getByRole('complementary',{name:'Combat Command Centre tools'}).getByRole('button',{name:/Encounter Setup/}).click();
-    assert.equal(await p.locator('[data-combat-panel="setup"]').count(),0,
-      'Panel library must hide the selected window without deleting gameplay');
-    await p.getByRole('complementary',{name:'Combat Command Centre tools'}).getByRole('button',{name:/Encounter Setup/}).click();
-    assert.equal(await p.locator('[data-combat-panel="setup"]').count(),1,
-      'Panel library must restore the same original freeform window');
-    await p.getByRole('button',{name:'Prepared Encounters',exact:true}).click();
-    assert.equal(await p.locator('[data-combat-panel="prepared"]').count(),1,
-      'Prepared encounter library must be inside the original freeform canvas');
-    const modes=p.getByRole('group',{name:'Combat workspace quick layouts'});
-    await modes.getByRole('button',{name:'Encounter Preparation'}).click();
-    assert.equal(await p.locator('[data-combat-panel]').count(),7,
-      'Preparation quick layout should show seven relevant systems');
-    await modes.getByRole('button',{name:'Show all 13 panels'}).click();
-    assert.equal(await p.locator('[data-combat-panel]').count(),13,
-      'Show all panels must restore every combat system');
-    await modes.getByRole('button',{name:'Reset layout'}).click();
-    await p.getByRole('group',{name:'Confirm combat layout reset'})
-      .getByRole('button',{name:'Cancel'}).click();
-    assert.equal(await p.locator('[data-combat-panel]').count(),13,
-      'Cancelling layout reset must preserve combat windows');
+    assert.equal(await p.locator('[aria-label="Combat workspace quick layouts"]').count(),0,
+      'Removed quick layouts must not remain on the page');
+    assert.equal(await p.getByText('Restore windows:',{exact:true}).count(),0,
+      'No redundant restore-windows row should remain');
+    assert.equal(await p.getByRole('button',{name:'Auto-arrange'}).count(),0,
+      'No accidental auto-arrange action should remain');
     const canvas=p.locator('[aria-label="Combat freeform canvas"]');
+    assert.ok(await canvas.evaluate(el=>el.getBoundingClientRect().width>1000),
+      'Canvas should occupy the whole GM content width, not a sidebar grid');
+    await drawerToggle.click();
+    const tools=p.getByRole('complementary',{name:'Combat Command Centre tools'});
+    await tools.waitFor({state:'visible'});
+    await tools.getByRole('button',{name:'Encounter Builder',exact:true}).click();
+    await tools.getByRole('button',{name:/Encounter Setup/}).click();
+    assert.equal(await p.locator('[data-combat-panel="setup"]').count(),0,
+      'Panel Library must hide a window without deleting its data');
+    await tools.getByRole('button',{name:/Encounter Setup/}).click();
+    assert.equal(await p.locator('[data-combat-panel="setup"]').count(),1,
+      'Panel Library must restore a hidden window');
+    await tools.getByRole('button',{name:'Prepared Encounters',exact:true}).click();
+    assert.equal(await p.locator('[data-combat-panel="prepared"]').count(),1,
+      'Prepared encounters must remain mounted');
+    await p.getByRole('button',{name:'Close Combat Tools menu'}).click();
+    assert.equal(await drawerToggle.getAttribute('aria-expanded'),'false');
+    const lock=p.getByTestId('site-combat-canvas-lock');
+    await lock.click();
+    assert.equal(await lock.getAttribute('aria-pressed'),'true',
+      'Lock Canvas must be reachable as a top-left icon');
+    const lockedHeader=p.getByTestId('combat-drag-header-controls');
+    await lockedHeader.scrollIntoViewIfNeeded();
+    const initialLocked=await p.locator('[data-combat-panel="controls"]').evaluate(el=>
+      el.style.getPropertyValue('--combat-x'));
+    const lockedDrag=await lockedHeader.boundingBox();
+    await p.mouse.move(lockedDrag.x+35,lockedDrag.y+20);
+    await p.mouse.down();
+    await p.mouse.move(lockedDrag.x+85,lockedDrag.y+20,{steps:5});
+    await p.mouse.up();
+    assert.equal(await p.locator('[data-combat-panel="controls"]').evaluate(el=>
+      el.style.getPropertyValue('--combat-x')),initialLocked,
+      'Locked canvas must block panel moves');
+    await lock.click();
+    assert.equal(await lock.getAttribute('aria-pressed'),'false');
     assert.equal(await canvas.getAttribute('data-layout-mode'),'freeform');
     assert.ok(await p.getByTestId('site-combat-fit-all').isEnabled());
     const before=await p.locator('[data-combat-panel="controls"]').evaluate(panel=>({
       x:panel.style.getPropertyValue('--combat-x'),
       y:panel.style.getPropertyValue('--combat-y')
     }));
-    await p.getByRole('button',{name:'Unlock Canvas'}).count().then(count=>
-      assert.equal(count,0,'Canvas must start unlocked'));
-    await modes.getByRole('button',{name:'Encounter Preparation'}).click();
+    assert.equal(await lock.getAttribute('aria-pressed'),'false');
     const header=p.getByTestId('combat-drag-header-controls');
     await header.scrollIntoViewIfNeeded();
     const drag=await header.boundingBox();

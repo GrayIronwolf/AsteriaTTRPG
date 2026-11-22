@@ -1,13 +1,12 @@
 import React,{useEffect,useRef,useState} from 'react';
 import {freeformPercent} from '../../../src/state/workspaceFreeformModel.mjs';
 import {
-  COMBAT_PANEL_IDS,COMBAT_PANEL_LABELS,COMBAT_TOOL_CATEGORIES,COMBAT_WORKSPACE_PRESET_LIMIT,
-  COMBAT_WORKSPACE_MODES,applyCombatWorkspaceMode,resetCombatWorkspace,
+  COMBAT_PANEL_IDS,COMBAT_PANEL_LABELS,COMBAT_TOOL_CATEGORIES,
   normalizeCombatCamera,zoomCombatCamera,fitCombatCamera,
-  applyCombatPreset,arrangeCombatWorkspace,combatWorkspaceStorageKey,
-  defaultCombatWorkspaceLayout,dockCombatWindow,editCombatWindow,
-  normalizeCombatWorkspace,removeCombatPreset,saveCombatPreset,setCombatGroup
+  combatWorkspaceStorageKey,defaultCombatWorkspaceLayout,dockCombatWindow,
+  editCombatWindow,normalizeCombatWorkspace,setCombatGroup
 } from './combatWorkspaceLayoutModel.mjs';
+import {AsteriaIcon} from '../../components/AsteriaIcons.jsx';
 import styles from './CombatCommandCentre.module.css';
 
 /** The descriptor leaves the actual combat controls mounted under their original service. */
@@ -53,16 +52,14 @@ export function CombatCommandCentre({uid,campaignId,children}){
     cameraRef.current=next;
     setCameraState({scope:storageKey,view:next});
   };
-  const [presetName,setPresetName]=useState('');
   const [maximised,setMaximised]=useState('');
   const [message,setMessage]=useState('');
-  const [confirmReset,setConfirmReset]=useState(false);
   const [frontWindow,setFrontWindow]=useState('');
   const [wide,setWide]=useState(false);
-  const [sidebarExpanded,setSidebarExpanded]=useState(()=>
-    typeof window!=='undefined'&&window.innerWidth>=800);
+  const [sidebarExpanded,setSidebarExpanded]=useState(false);
   const [selectedTools,setSelectedTools]=useState('overview');
   const root=useRef(null),canvas=useRef(null),stage=useRef(null),gesture=useRef(null);
+  const toolToggleRef=useRef(null);
   const cameraRef=useRef(camera),wheelTimer=useRef(null),wheelFrame=useRef(0);
   const zoomReadout=useRef(null);
   const layout=saved;
@@ -74,7 +71,8 @@ export function CombatCommandCentre({uid,campaignId,children}){
     setUndoStack([]);setRedoStack([]);
     const freshCamera=readCamera(storageKey);
     cameraRef.current=freshCamera;setCameraState({scope:storageKey,view:freshCamera});
-    setMaximised('');setFrontWindow('');setMessage('');setPresetName('');setConfirmReset(false);
+    setMaximised('');setFrontWindow('');setMessage('');
+    setSidebarExpanded(false);
   },[storageKey]);
   useEffect(()=>{
     const host=root.current,viewport=canvas.current;
@@ -93,6 +91,17 @@ export function CombatCommandCentre({uid,campaignId,children}){
     },180);
     return ()=>clearTimeout(timeout);
   },[cameraState,storageKey]);
+  useEffect(()=>{
+    if(!sidebarExpanded)return undefined;
+    const onKeyDown=event=>{
+      if(event.key==='Escape'){
+        setSidebarExpanded(false);
+        toolToggleRef.current?.focus();
+      }
+    };
+    document.addEventListener('keydown',onKeyDown);
+    return ()=>document.removeEventListener('keydown',onKeyDown);
+  },[sidebarExpanded]);
   // Apply only compositor-friendly transforms during pan and wheel movement.
   // Persist camera state once at the end, not once per pointer/wheel event.
   const drawCamera=value=>{
@@ -281,182 +290,27 @@ export function CombatCommandCentre({uid,campaignId,children}){
     const viewport=canvas.current;
     if(!viewport||!wide)return;
     updateCamera(fitCombatCamera(layout,visible.map(panel=>panel.props.id),
-      viewport.clientWidth,viewport.clientHeight));
+      viewport.clientWidth,Math.max(200,viewport.clientHeight-64)));
   };
   const minimize=id=>setPreference(previous=>({...previous,
     minimized:previous.minimized.includes(id)?
       previous.minimized.filter(other=>other!==id):[...previous.minimized,id]
   }));
   const hidden=layout.hidden;
-  const restore=id=>setPreference(previous=>({...previous,
-    hidden:previous.hidden.filter(other=>other!==id)
+  const togglePanel=id=>setPreference(previous=>({
+    ...previous,
+    hidden:previous.hidden.includes(id)?
+      previous.hidden.filter(other=>other!==id):
+      [...previous.hidden,id]
   }));
-  const savePreset=()=>{
-    if(!presetName.trim())return;
-    const id='layout-'+crypto.randomUUID();
-    const next=saveCombatPreset(layout,presetName,id);
-    if(next===layout){setMessage('A layout with that name exists, or the preset limit was reached.');return;}
-    change(previous=>saveCombatPreset(previous,presetName,id));
-    setPresetName('');
-  };
   return <section className={styles.centre} ref={root}
     aria-label="GM Combat Command Centre" data-testid="site-gm-combat-command-centre">
-
-    <div className={styles.workArea}>
-      <aside className={styles.toolSidebar} aria-label="Combat Command Centre tools">
-        <button type="button" className={styles.sidebarToggle}
-          aria-expanded={sidebarExpanded} aria-controls="asteria-combat-tool-list"
-          onClick={()=>setSidebarExpanded(value=>!value)}>
-          {sidebarExpanded?'Collapse Combat Tools':'Show Combat Tools'}
-        </button>
-        {sidebarExpanded?<div id="asteria-combat-tool-list" className={styles.toolList}>
-          {COMBAT_TOOL_CATEGORIES.map(group=><section key={group.id}>
-            <button type="button" className={styles.toolGroup}
-              aria-expanded={selectedTools===group.id}
-              onClick={()=>setSelectedTools(current=>current===group.id?'':group.id)}>
-              {group.label}<span aria-hidden="true">{selectedTools===group.id?'−':'+'}</span>
-            </button>
-            {selectedTools===group.id?<div className={styles.toolItems}>
-              {group.panels.map(id=>{
-                const active=!hidden.includes(id);
-                return <button type="button" key={id} className={styles.toolItem}
-                  aria-pressed={active} disabled={active&&visible.length<=1}
-                  onClick={()=>setPreference(previous=>({
-                    ...previous,hidden:active?
-                      [...previous.hidden,id]:
-                      previous.hidden.filter(other=>other!==id)
-                  }))}>
-                  <span aria-hidden="true">{active?'☑':'☐'}</span>{COMBAT_PANEL_LABELS[id]}
-                </button>;
-              })}
-            </div>:null}
-          </section>)}
-          <div className={styles.quickActions}>
-            <button type="button" disabled={!hidden.length||!storageKey}
-              onClick={()=>setPreference(previous=>({...previous,hidden:[]}))}>
-              Show all panels ({visible.length}/{panels.length})
-            </button>
-          </div>
-          <button type="button" className={styles.toolGroup}
-            onClick={()=>{
-              const settings=document.getElementById('combat-canvas-preferences');
-              if(settings){settings.open=true;
-                settings.scrollIntoView({behavior:'smooth',block:'nearest'});}
-            }}>
-            Saved Layouts
-          </button>
-          <p className={styles.sidebarHint}>Drag any window header to move it. Resize using its edges. Drag empty canvas space to pan; layout changes save automatically.</p>
-        </div>:null}
-      </aside>
-      <div className={styles.mainWorkspace}>
-    <header className={styles.toolbar}>
-      <div>
-        <h3>Combat Command Centre</h3>
-        <p>Adjust window positions without changing combat state or your saved dashboard.</p>
-      </div>
-      <div className={styles.actions}>
-        <button type="button" disabled={!undoStack.length} onClick={undo}
-          aria-label="Undo canvas change">Undo</button>
-        <button type="button" disabled={!redoStack.length} onClick={redo}
-          aria-label="Redo canvas change">Redo</button>
-        <button type="button" disabled={layout.canvasLocked}
-          onClick={()=>change(arrangeCombatWorkspace)}>Auto-arrange</button>
-        <button type="button" aria-pressed={layout.canvasLocked}
-          onClick={()=>setPreference(previous=>({...previous,canvasLocked:!previous.canvasLocked}))}>
-          {layout.canvasLocked?'Unlock Canvas':'Lock Canvas'}
-        </button>
-      </div>
-    </header>
-    <div className={styles.modeBar} role="group" aria-label="Combat workspace quick layouts">
-      <strong>Quick layouts</strong>
-      {COMBAT_WORKSPACE_MODES.map(mode=>
-        <button type="button" key={mode.id} disabled={!storageKey}
-          onClick={()=>setPreference(previous=>applyCombatWorkspaceMode(previous,mode.id))}>
-          {mode.label}
-        </button>)}
-      <button type="button" disabled={!hidden.length||!storageKey}
-        onClick={()=>setPreference(previous=>({...previous,hidden:[]}))}>
-        Show all {panels.length} panels
-      </button>
-      <button type="button" onClick={fitAll} disabled={!wide}
-        data-testid="site-combat-fit-all">Fit all</button>
-      <button type="button" onClick={()=>updateCamera(current=>zoomCombatCamera(current,
-        current.scale/1.2,{x:(canvas.current?.clientWidth||0)/2,
-          y:(canvas.current?.clientHeight||0)/2}))} disabled={!wide}
-        aria-label="Zoom out of canvas">−</button>
-      <output ref={zoomReadout} aria-label="Canvas zoom" className={styles.zoomValue}>
-        {Math.round(camera.scale*100)}%
-      </output>
-      <button type="button" onClick={()=>updateCamera(current=>zoomCombatCamera(current,
-        current.scale*1.2,{x:(canvas.current?.clientWidth||0)/2,
-          y:(canvas.current?.clientHeight||0)/2}))} disabled={!wide}
-        aria-label="Zoom into canvas">+</button>
-      <button type="button" onClick={()=>updateCamera(normalizeCombatCamera({}))}
-        disabled={!wide}>Reset view</button>
-      <button type="button" disabled={!storageKey} onClick={()=>setConfirmReset(true)}>
-        Reset layout
-      </button>
-    </div>
-    {confirmReset?<div className={styles.confirmReset}
-      role="group" aria-label="Confirm combat layout reset">
-      <p>Reset positions, sizes, locks and visibility to the default arrangement?
-        Named saved layouts are kept. This does not change combat or encounter data.</p>
-      <button type="button" onClick={()=>{
-        setPreference(previous=>resetCombatWorkspace(previous));setConfirmReset(false);
-      }}>Confirm reset</button>
-      <button type="button" onClick={()=>setConfirmReset(false)}>Cancel</button>
-    </div>:null}
-    <details id="combat-canvas-preferences" className={styles.canvasSettings}>
-      <summary>Canvas options &amp; saved layouts</summary>
-      <div className={styles.editor} role="group" aria-label="Combat canvas preferences">
-        <label><input type="checkbox" checked={layout.freeform.snap}
-          onChange={event=>setPreference(previous=>({...previous,freeform:{
-            ...previous.freeform,snap:event.target.checked}}))}/> Snap panel edges</label>
-        <label><input type="checkbox" checked={layout.freeform.allowOverlap}
-          onChange={event=>setPreference(previous=>({...previous,freeform:{
-            ...previous.freeform,allowOverlap:event.target.checked}}))}/> Allow panel overlap</label>
-        <label>Layout name
-          <input type="text" maxLength={48} placeholder="e.g. Boss Battle"
-            value={presetName} onChange={event=>setPresetName(event.target.value)}/></label>
-        <button type="button" onClick={savePreset}
-          disabled={!presetName.trim()||
-            layout.savedWorkspaces.length>=COMBAT_WORKSPACE_PRESET_LIMIT}>Save layout preset</button>
-        <p>Drag panel headers directly to move, and edges or corners to resize.
-          Alt+arrow moves a focused panel; Alt+Shift+arrow resizes.
-          Pan the empty canvas by dragging it, or use the zoom buttons.</p>
-      </div>
-    </details>
-    {layout.savedWorkspaces.length?<div id="combat-canvas-presets" className={styles.presets} aria-label="Combat layout presets">
-      <strong>Combat layouts</strong>
-      {layout.savedWorkspaces.map(item=><span key={item.id}>
-        <span>{item.name}</span>
-        <button type="button" onClick={()=>change(previous=>applyCombatPreset(previous,item.id))}>Apply</button>
-        <button type="button" aria-label={'Delete layout '+item.name}
-          onClick={()=>change(previous=>removeCombatPreset(previous,item.id))}>Delete</button>
-      </span>)}
-    </div>:null}
-    {hidden.length?<div className={styles.hidden} aria-label="Hidden combat windows">
-      <strong>Restore windows:</strong> {hidden.map(id=>
-        <button type="button" key={id} onClick={()=>restore(id)}>
-          {COMBAT_PANEL_LABELS[id]}</button>)}
-    </div>:null}
-    {visible.length===0?<div className={styles.empty} role="status">
-      <p>All combat windows are hidden. Restore the systems without changing combat data.</p>
-      <button type="button" onClick={()=>setPreference(previous=>({...previous,hidden:[]}))}>
-        Show all panels
-      </button>
-    </div>:null}
-    {!wide?<p className={styles.note}>On narrow screens combat tools stack vertically for
-      readable controls. The freeform canvas and pan/zoom controls are available on wider screens.</p>:null}
     <div className={styles.canvas} ref={canvas}
       data-editing={wide&&!layout.canvasLocked}
       data-layout-mode={wide?'freeform':'stacked'}
       aria-label="Combat freeform canvas"
       onPointerDown={startPan}
       onPointerMove={move} onPointerUp={end} onPointerCancel={end}>
-      {/* Pointer capture is released explicitly at the end of each gesture.
-          A delayed lostpointercapture from a previous mouse drag can share the
-          next drag's pointerId; treating it as an end event cancels that drag. */}
       <div ref={stage} className={styles.stage+(maximised?' '+styles.stageMaximised:'')}
         data-stage="combat-canvas-stage"
         style={{'--combat-canvas-height':boundsHeight(layout.freeform,
@@ -542,9 +396,115 @@ export function CombatCommandCentre({uid,campaignId,children}){
         </article>;
       })}
       </div>
-    </div>
-    {message?<p className={styles.note} role="status">{message}</p>:null}
+      <div className={styles.canvasActions} role="toolbar" aria-label="Combat canvas lock and history">
+        <button type="button" className={styles.iconButton}
+          data-testid="site-combat-canvas-lock"
+          aria-label={layout.canvasLocked?'Unlock Canvas':'Lock Canvas'}
+          title={layout.canvasLocked?'Unlock Canvas':'Lock Canvas'}
+          aria-pressed={layout.canvasLocked}
+          onClick={()=>setPreference(previous=>({...previous,canvasLocked:!previous.canvasLocked}))}>
+          <AsteriaIcon name={layout.canvasLocked?'lock':'unlock'} size={19}/>
+        </button>
+        <button type="button" className={styles.iconButton}
+          aria-label="Undo canvas change" title="Undo canvas change"
+          disabled={!undoStack.length} onClick={undo}>
+          <AsteriaIcon name="undo" size={19}/>
+        </button>
+        <button type="button" className={styles.iconButton}
+          aria-label="Redo canvas change" title="Redo canvas change"
+          disabled={!redoStack.length} onClick={redo}>
+          <AsteriaIcon name="redo" size={19}/>
+        </button>
       </div>
+      <h3 className={styles.canvasTitle}>Combat Command Centre</h3>
+      <button type="button" ref={toolToggleRef}
+        className={styles.iconButton+' '+styles.toolsToggle}
+        data-testid="site-combat-tools-toggle"
+        aria-label={sidebarExpanded?'Close Combat Tools':'Open Combat Tools'}
+        title="Combat Tools and Canvas Settings"
+        aria-expanded={sidebarExpanded} aria-controls="asteria-combat-tool-list"
+        onClick={()=>setSidebarExpanded(value=>!value)}>
+        <AsteriaIcon name="settings" size={22}/>
+      </button>
+      {wide?<div className={styles.zoomTools} role="group" aria-label="Canvas zoom controls">
+        <button type="button" className={styles.iconButton}
+          aria-label="Zoom into canvas" title="Zoom in"
+          onClick={()=>updateCamera(current=>zoomCombatCamera(current,
+            current.scale*1.2,{x:(canvas.current?.clientWidth||0)/2,
+              y:(canvas.current?.clientHeight||0)/2}))}>
+          <AsteriaIcon name="zoomIn" size={20}/>
+        </button>
+        <button type="button" className={styles.iconButton}
+          aria-label="Fit Canvas" title="Fit all panels"
+          data-testid="site-combat-fit-all" onClick={fitAll}>
+          <AsteriaIcon name="fitCanvas" size={20}/>
+        </button>
+        <button type="button" className={styles.iconButton}
+          aria-label="Zoom out of canvas" title="Zoom out"
+          onClick={()=>updateCamera(current=>zoomCombatCamera(current,
+            current.scale/1.2,{x:(canvas.current?.clientWidth||0)/2,
+              y:(canvas.current?.clientHeight||0)/2}))}>
+          <AsteriaIcon name="zoomOut" size={20}/>
+        </button>
+        <output ref={zoomReadout} aria-label="Canvas zoom" className={styles.zoomValue}>
+          {Math.round(camera.scale*100)}%
+        </output>
+      </div>:null}
+      {sidebarExpanded?<button type="button" className={styles.drawerBackdrop}
+        aria-label="Dismiss Combat Tools" onClick={()=>setSidebarExpanded(false)}/>:null}
+      <aside id="asteria-combat-tool-list" hidden={!sidebarExpanded}
+        className={styles.toolSidebar} aria-label="Combat Command Centre tools">
+        <header className={styles.drawerHeader}>
+          <div><h4>Combat Tools</h4><span>{visible.length} of {panels.length} windows visible</span></div>
+          <button type="button" className={styles.iconButton}
+            aria-label="Close Combat Tools menu"
+            onClick={()=>{setSidebarExpanded(false);toolToggleRef.current?.focus();}}>
+            <AsteriaIcon name="close" size={19}/>
+          </button>
+        </header>
+        <div className={styles.toolList}>
+          {COMBAT_TOOL_CATEGORIES.map(group=><section key={group.id}>
+            <button type="button" className={styles.toolGroup}
+              aria-expanded={selectedTools===group.id}
+              onClick={()=>setSelectedTools(current=>current===group.id?'':group.id)}>
+              {group.label}<span aria-hidden="true">{selectedTools===group.id?'−':'+'}</span>
+            </button>
+            {selectedTools===group.id?<div className={styles.toolItems}>
+              {group.panels.map(id=>{
+                const active=!hidden.includes(id);
+                return <button type="button" key={id} className={styles.toolItem}
+                  aria-pressed={active} disabled={active&&visible.length<=1}
+                  onClick={()=>togglePanel(id)}>
+                  <span aria-hidden="true">{active?'☑':'☐'}</span>{COMBAT_PANEL_LABELS[id]}
+                </button>;
+              })}
+            </div>:null}
+          </section>)}
+          <button type="button" className={styles.showAll}
+            disabled={!hidden.length||!storageKey}
+            onClick={()=>setPreference(previous=>({...previous,hidden:[]}))}>
+            Show all panels ({visible.length}/{panels.length})
+          </button>
+          <details className={styles.drawerSettings}>
+            <summary>Canvas Preferences</summary>
+            <label><input type="checkbox" checked={layout.freeform.snap}
+              onChange={event=>setPreference(previous=>({...previous,freeform:{
+                ...previous.freeform,snap:event.target.checked}}))}/> Snap windows to grid</label>
+            <label><input type="checkbox" checked={layout.freeform.allowOverlap}
+              onChange={event=>setPreference(previous=>({...previous,freeform:{
+                ...previous.freeform,allowOverlap:event.target.checked}}))}/> Allow window overlap</label>
+            <p className={styles.sidebarHint}>
+              Drag window headers to move, use edges to resize, and drag empty space to pan.
+              Changes save automatically. The canvas lock does not disable combat controls.
+            </p>
+          </details>
+        </div>
+      </aside>
+      {visible.length===0?<div className={styles.empty} role="status">
+        <p>No combat windows are showing. Open Combat Tools to restore them.</p>
+        <button type="button" onClick={()=>setSidebarExpanded(true)}>Open Combat Tools</button>
+      </div>:null}
+      {message?<p className={styles.note} role="status">{message}</p>:null}
     </div>
   </section>;
 }
