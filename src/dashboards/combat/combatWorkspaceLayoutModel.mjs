@@ -16,8 +16,18 @@ export const COMBAT_TOOL_CATEGORIES=Object.freeze([
   {id:'maps',label:'Battle Maps',panels:['map']},
   {id:'rewards',label:'Rewards & History',panels:['history']}
 ]);
-const DEFAULT_HIDDEN=Object.freeze(['setup','history','advanced','waves','events','log']);
+const DEFAULT_HIDDEN=Object.freeze([]); // Show all available systems on a new workspace.
 const MIGRATED_NEW_HIDDEN=Object.freeze(['advanced','waves','events','log']);
+/** One-click views reuse the same panels and Firebase listeners; only visibility changes. */
+export const COMBAT_WORKSPACE_MODES=Object.freeze([
+  {id:'preparation',label:'Encounter Preparation',panels:Object.freeze([
+    'controls','initiative','setup','map','prepared','waves','events'])},
+  {id:'live',label:'Live Combat',panels:Object.freeze([
+    'controls','initiative','actor','map','queue','timer','waves','events','log','advanced'])},
+  {id:'completion',label:'Encounter Completion',panels:Object.freeze([
+    'controls','initiative','actor','history','log','prepared'])}
+]);
+
 export const COMBAT_PANEL_LABELS=Object.freeze({
   controls:'Encounter Controls',
   initiative:'Initiative & Turn Order',
@@ -179,4 +189,18 @@ export function arrangeCombatWorkspace(layout){
   return {...layout,freeform:{...layout.freeform,
     positions:Object.fromEntries(COMBAT_PANEL_IDS.map(id=>[id,{...DEFAULT_POSITIONS[id]}]))
   },hidden:layout.hidden,minimized:[],groups:[]};
+}
+
+/** Preserve named saved layouts while resetting only the active workspace view. */
+export function resetCombatWorkspace(layout){
+  return {...defaultCombatWorkspaceLayout(),savedWorkspaces:layout?.savedWorkspaces||[]};
+}
+/** Quick layouts are reversible layout-only changes, never combat commands. */
+export function applyCombatWorkspaceMode(layout,modeId){
+  const mode=COMBAT_WORKSPACE_MODES.find(row=>row.id===modeId);
+  if(!mode)return layout;
+  const arranged=arrangeCombatWorkspace(layout);
+  return {...arranged,
+    hidden:COMBAT_PANEL_IDS.filter(id=>!mode.panels.includes(id)),
+    locked:[],minimized:[],groups:[]};
 }

@@ -2,6 +2,7 @@ import React,{useEffect,useMemo,useRef,useState} from 'react';
 import {freeformCanvasHeight,freeformPercent} from '../../../src/state/workspaceFreeformModel.mjs';
 import {
   COMBAT_PANEL_IDS,COMBAT_PANEL_LABELS,COMBAT_TOOL_CATEGORIES,COMBAT_WORKSPACE_PRESET_LIMIT,
+  COMBAT_WORKSPACE_MODES,applyCombatWorkspaceMode,resetCombatWorkspace,
   applyCombatPreset,arrangeCombatWorkspace,combatWorkspaceStorageKey,
   defaultCombatWorkspaceLayout,dockCombatWindow,editCombatWindow,
   normalizeCombatWorkspace,removeCombatPreset,saveCombatPreset,setCombatGroup
@@ -11,6 +12,12 @@ import styles from './CombatCommandCentre.module.css';
 /** The descriptor leaves the actual combat controls mounted under their original service. */
 export function CombatCommandPanel({children}){return children;}
 const fingerprint=value=>JSON.stringify(value);
+/** React fragments are grouping only; window descriptors stay independent. */
+function collectCombatPanels(children){
+  return React.Children.toArray(children).flatMap(child=>
+    React.isValidElement(child)&&child.type===React.Fragment
+      ?collectCombatPanels(child.props.children):[child]);
+}
 function readLayout(key){
   if(!key||typeof localStorage==='undefined')return defaultCombatWorkspaceLayout();
   try{
@@ -37,19 +44,20 @@ export function CombatCommandCentre({uid,campaignId,children}){
   const [presetName,setPresetName]=useState('');
   const [maximised,setMaximised]=useState('');
   const [message,setMessage]=useState('');
+  const [confirmReset,setConfirmReset]=useState(false);
   const [preview,setPreview]=useState(null);
   const [wide,setWide]=useState(false);
   const [sidebarExpanded,setSidebarExpanded]=useState(()=>
     typeof window!=='undefined'&&window.innerWidth>=800);
-  const [selectedTools,setSelectedTools]=useState('live');
+  const [selectedTools,setSelectedTools]=useState('overview');
   const root=useRef(null),canvas=useRef(null),gesture=useRef(null);
   const layout=history?.present||saved,editing=Boolean(history);
-  const panels=React.Children.toArray(children).filter(child=>
+  const panels=collectCombatPanels(children).filter(child=>
     React.isValidElement(child)&&COMBAT_PANEL_IDS.includes(child.props.id));
   const visible=panels.filter(panel=>!layout.hidden.includes(panel.props.id));
   useEffect(()=>{
     setSaved(readLayout(storageKey));setHistory(null);setPreview(null);
-    setMaximised('');setMessage('');setPresetName('');
+    setMaximised('');setMessage('');setPresetName('');setConfirmReset(false);
   },[storageKey]);
   useEffect(()=>{
     const host=root.current;
@@ -164,7 +172,8 @@ export function CombatCommandCentre({uid,campaignId,children}){
               {group.panels.map(id=>{
                 const active=!hidden.includes(id);
                 return <button type="button" key={id} className={styles.toolItem}
-                  aria-pressed={active} onClick={()=>setPreference(previous=>({
+                  aria-pressed={active} disabled={active&&visible.length<=1}
+                  onClick={()=>setPreference(previous=>({
                     ...previous,hidden:active?
                       [...previous.hidden,id]:
                       previous.hidden.filter(other=>other!==id)
@@ -174,6 +183,12 @@ export function CombatCommandCentre({uid,campaignId,children}){
               })}
             </div>:null}
           </section>)}
+          <div className={styles.quickActions}>
+            <button type="button" disabled={!hidden.length||!storageKey}
+              onClick={()=>setPreference(previous=>({...previous,hidden:[]}))}>
+              Show all panels ({visible.length}/{panels.length})
+            </button>
+          </div>
           <button type="button" className={styles.toolGroup}
             disabled={!wide||!storageKey}
             onClick={()=>{setHistory({present:saved,past:[],future:[]});setMessage('');}}>
@@ -208,6 +223,30 @@ export function CombatCommandCentre({uid,campaignId,children}){
         </>}
       </div>
     </header>
+    <div className={styles.modeBar} role="group" aria-label="Combat workspace quick layouts">
+      <strong>Quick layouts</strong>
+      {COMBAT_WORKSPACE_MODES.map(mode=>
+        <button type="button" key={mode.id} disabled={!storageKey}
+          onClick={()=>setPreference(previous=>applyCombatWorkspaceMode(previous,mode.id))}>
+          {mode.label}
+        </button>)}
+      <button type="button" disabled={!hidden.length||!storageKey}
+        onClick={()=>setPreference(previous=>({...previous,hidden:[]}))}>
+        Show all {panels.length} panels
+      </button>
+      <button type="button" disabled={!storageKey} onClick={()=>setConfirmReset(true)}>
+        Reset layout
+      </button>
+    </div>
+    {confirmReset?<div className={styles.confirmReset}
+      role="group" aria-label="Confirm combat layout reset">
+      <p>Reset positions, sizes, locks and visibility to the default arrangement?
+        Named saved layouts are kept. This does not change combat or encounter data.</p>
+      <button type="button" onClick={()=>{
+        setPreference(previous=>resetCombatWorkspace(previous));setConfirmReset(false);
+      }}>Confirm reset</button>
+      <button type="button" onClick={()=>setConfirmReset(false)}>Cancel</button>
+    </div>:null}
     {editing?<div className={styles.editor} role="group" aria-label="Combat window preferences">
       <label><input type="checkbox" checked={layout.freeform.snap}
         onChange={event=>change(previous=>({...previous,freeform:{
@@ -240,6 +279,12 @@ export function CombatCommandCentre({uid,campaignId,children}){
       <strong>Restore windows:</strong> {hidden.map(id=>
         <button type="button" key={id} onClick={()=>restore(id)}>
           {COMBAT_PANEL_LABELS[id]}</button>)}
+    </div>:null}
+    {visible.length===0?<div className={styles.empty} role="status">
+      <p>All combat windows are hidden. Restore the systems without changing combat data.</p>
+      <button type="button" onClick={()=>setPreference(previous=>({...previous,hidden:[]}))}>
+        Show all panels
+      </button>
     </div>:null}
     {!wide?<p className={styles.note}>On narrow screens, windows use a readable stacked layout.
       Open this workspace on a wide screen to move or resize them.</p>:null}

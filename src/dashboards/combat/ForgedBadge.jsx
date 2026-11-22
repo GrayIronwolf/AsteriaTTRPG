@@ -34,16 +34,16 @@ export function ForgedBadge({kind,label,value,active=false,warning=false,compact
         preserveAspectRatio="xMidYMid meet" focusable="false">
         <defs>
           <linearGradient id={steel} x1="0" y1="0" x2=".8" y2="1">
-            <stop offset="0" stopColor="var(--ast-badge-metal-light)"/>
-            <stop offset=".27" stopColor="var(--ast-badge-metal-mid)"/>
-            <stop offset=".5" stopColor="var(--ast-badge-metal-light)"/>
-            <stop offset=".81" stopColor="var(--ast-badge-metal-dark)"/>
-            <stop offset="1" stopColor="var(--ast-badge-metal-mid)"/>
+            <stop offset="0" stopColor="var(--combat-badge-metal-light)"/>
+            <stop offset=".27" stopColor="var(--combat-badge-metal-mid)"/>
+            <stop offset=".5" stopColor="var(--combat-badge-metal-light)"/>
+            <stop offset=".81" stopColor="var(--combat-badge-metal-dark)"/>
+            <stop offset="1" stopColor="var(--combat-badge-metal-mid)"/>
           </linearGradient>
           <linearGradient id={inset} x1="0" y1="0" x2=".8" y2="1">
-            <stop offset="0" stopColor="var(--ast-badge-face-raised)"/>
-            <stop offset=".47" stopColor="var(--ast-badge-face-deep)"/>
-            <stop offset="1" stopColor="var(--ast-badge-face-low)"/>
+            <stop offset="0" stopColor="var(--combat-badge-face-raised)"/>
+            <stop offset=".47" stopColor="var(--combat-badge-face-deep)"/>
+            <stop offset="1" stopColor="var(--combat-badge-face-low)"/>
           </linearGradient>
           <linearGradient id={highlight} x1=".1" y1="0" x2=".8" y2="1">
             <stop offset="0" stopColor="var(--badge-accent)" stopOpacity=".34"/>
@@ -51,11 +51,11 @@ export function ForgedBadge({kind,label,value,active=false,warning=false,compact
             <stop offset="1" stopColor="var(--badge-accent)" stopOpacity="0"/>
           </linearGradient>
         </defs>
-        <path d={shape} transform="translate(0 1.5)" fill="var(--ast-badge-face-deep)" opacity=".65"/>
+        <path d={shape} transform="translate(0 1.5)" fill="var(--combat-badge-face-deep)" opacity=".65"/>
         <path d={shape} fill={`url(#${steel})`}
-          stroke="var(--ast-badge-metal-light)" strokeWidth="1.25" strokeLinejoin="round"/>
+          stroke="var(--combat-badge-metal-light)" strokeWidth="1.25" strokeLinejoin="round"/>
         <path d={shape} transform={inner} fill={`url(#${inset})`}
-          stroke="var(--ast-badge-metal-dark)" strokeWidth="1.5" strokeLinejoin="round"/>
+          stroke="var(--combat-badge-metal-dark)" strokeWidth="1.5" strokeLinejoin="round"/>
         <path d={shape} transform={facets} fill={`url(#${highlight})`}/>
       </svg>
       <strong className={styles.value}>{text}</strong>

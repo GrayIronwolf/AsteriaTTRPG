@@ -1,6 +1,7 @@
 import React,{useEffect,useState} from 'react';
 import {COMBAT_AP_ACTIONS,COMBAT_BASIC_DECLARATIONS,customEnemy,libraryEnemy} from './combatModel.mjs';
 import {CombatCommandCentre,CombatCommandPanel} from './CombatCommandCentre.jsx';
+import {COMBAT_PANEL_IDS} from './combatWorkspaceLayoutModel.mjs';
 import {PreparedEncounterLibrary} from './PreparedEncounterLibrary.jsx';
 import {CombatBattleMapPanel} from './CombatBattleMapPanel.jsx';
 import {GMLiveCombatPanel} from './GMLiveCombatPanel.jsx';
@@ -17,6 +18,10 @@ function useCombatStream(api,method,args){
   useEffect(()=>{
     let alive=true,stop=()=>{};
     setState({loading:true,data:null,error:''});
+    if(!api||typeof api[method]!=='function'){
+      setState({loading:false,data:null,error:'The authenticated combat service is unavailable.'});
+      return ()=>{alive=false;};
+    }
     try{
       stop=api[method](...args,result=>{
         if(alive)setState({loading:false,data:result,error:''});
@@ -169,7 +174,8 @@ export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigat
     <h2>Combat, Initiative &amp; Encounters</h2>
     {stream.loading?<p role="status">Verifying live combat access…</p>:null}
     {stream.error?<p role="alert">{stream.error}</p>:null}
-    {combat?<CombatCommandCentre key={uid+':'+campaignId} uid={uid} campaignId={campaignId}>
+    <CombatCommandCentre key={uid+':'+campaignId} uid={uid} campaignId={campaignId}>
+    {combat?<React.Fragment>
       <CombatCommandPanel id="controls">
       <p role="status">{combat.status.toUpperCase()} · Round {combat.round} · Revision {combat.revision}
         {' · '}Session {stream.data.session.status}</p>
@@ -326,7 +332,14 @@ export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigat
           maps={stream.data.maps||[]} mediaApi={mediaApi}
           library={stream.data.library||[]}/>
       </CombatCommandPanel>
-    </CombatCommandCentre>:null}
+    </React.Fragment>:COMBAT_PANEL_IDS.map(id=><CombatCommandPanel id={id} key={id}>
+      <div className={styles.connectionPlaceholder}>
+        <p>{stream.loading?'Connecting to the authenticated combat service…':
+          stream.error?'This tool is unavailable until combat access is restored.':
+          'Waiting for a verified campaign combat record.'}</p>
+      </div>
+    </CombatCommandPanel>)}
+    </CombatCommandCentre>
     {notice?<p role="status">{notice}</p>:null}
     {error?<p role="alert">{error}</p>:null}
   </section>;
