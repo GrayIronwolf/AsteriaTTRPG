@@ -2,7 +2,7 @@ import React,{useEffect,useRef,useState} from 'react';
 import {freeformPercent} from '../../../src/state/workspaceFreeformModel.mjs';
 import {
   COMBAT_PANEL_IDS,COMBAT_PANEL_LABELS,COMBAT_TOOL_CATEGORIES,
-  normalizeCombatCamera,zoomCombatCamera,fitCombatCamera,
+  normalizeCombatCamera,zoomCombatCamera,fitCombatCamera,openingCombatCamera,
   focusCombatCamera,clampCombatCamera,orderedCombatPartyIds,moveCombatPartyCard,
   combatWorkspaceStorageKey,defaultCombatWorkspaceLayout,dockCombatWindow,
   editCombatWindow,normalizeCombatWorkspace,setCombatGroup
@@ -28,9 +28,13 @@ function readLayout(key){
 }
 const cameraStorageKey=key=>key?key+':camera':null;
 function readCamera(key){
- try{return normalizeCombatCamera(JSON.parse(localStorage.getItem(cameraStorageKey(key))||'null'));}
- catch{return normalizeCombatCamera({});}
+ try{
+   if(!key||typeof localStorage==='undefined')return null;
+   const stored=localStorage.getItem(cameraStorageKey(key));
+   return stored?normalizeCombatCamera(JSON.parse(stored)):null;
+ }catch{return null;}
 }
+const DEFAULT_CAMERA=normalizeCombatCamera({scale:.9});
 const boundsHeight=(freeform,visibleIds)=>Math.max(700,...visibleIds.map(id=>{
  const rect=freeform.positions[id];return rect?rect.y+rect.h+80:700;
 }));
@@ -60,8 +64,8 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
     gmCanvas?normalizeLayout(layoutValue):readLayout(storageKey));
   const [undoStack,setUndoStack]=useState([]);
   const [redoStack,setRedoStack]=useState([]);
-  const [cameraState,setCameraState]=useState(()=>({scope:storageKey,view:readCamera(storageKey)}));
-  const camera=cameraState.scope===storageKey?cameraState.view:normalizeCombatCamera({});
+  const [cameraState,setCameraState]=useState(()=>({scope:storageKey,view:readCamera(storageKey)||DEFAULT_CAMERA}));
+  const camera=cameraState.scope===storageKey?cameraState.view:DEFAULT_CAMERA;
   const updateCamera=update=>{
     const current=cameraRef.current;
     const candidate=normalizeCombatCamera(typeof update==='function'?update(current):update);
@@ -83,7 +87,8 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
     playerCanvas?canvasConfig.categories[0]?.id||'character':gmCanvas?'core':'overview');
   const root=useRef(null),canvas=useRef(null),stage=useRef(null),gesture=useRef(null);
   const toolToggleRef=useRef(null);
-  const cameraRef=useRef(camera),wheelTimer=useRef(null),wheelFrame=useRef(0);
+  const cameraRef=useRef(camera),openingCameraPending=useRef(!readCamera(storageKey));
+  const wheelTimer=useRef(null),wheelFrame=useRef(0);
   const zoomReadout=useRef(null),spaceHeld=useRef(false),focusTimer=useRef(null);
   const lastTitlePress=useRef(null);
   const layout=saved;
@@ -96,7 +101,9 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
   useEffect(()=>{
     setSaved(gmCanvas?normalizeLayout(layoutValue):readLayout(storageKey));
     setUndoStack([]);setRedoStack([]);
-    const freshCamera=readCamera(storageKey);
+    const storedCamera=readCamera(storageKey);
+    openingCameraPending.current=!storedCamera;
+    const freshCamera=storedCamera||DEFAULT_CAMERA;
     cameraRef.current=freshCamera;setCameraState({scope:storageKey,view:freshCamera});
     setFocused(null);setFrontWindow('');setMessage('');
     setSidebarExpanded(false);
@@ -119,6 +126,12 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
     if(!wide)return;
     const viewport=canvas.current;
     if(!viewport)return;
+    if(openingCameraPending.current){
+      openingCameraPending.current=false;
+      updateCamera(openingCombatCamera(layout,
+        visible.map(panel=>panel.props.id),viewport.clientWidth));
+      return;
+    }
     const next=clampCombatCamera(cameraRef.current,layout,
       visible.map(panel=>panel.props.id),viewport.clientWidth,
       Math.max(200,viewport.clientHeight-64));
@@ -139,7 +152,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
       window.removeEventListener('keyup',onUp);window.removeEventListener('blur',clear);};
   },[]);
   useEffect(()=>{
-    if(cameraState.scope!==storageKey||!storageKey)return;
+    if(openingCameraPending.current||cameraState.scope!==storageKey||!storageKey)return;
     const timeout=setTimeout(()=>{
       try{localStorage.setItem(cameraStorageKey(storageKey),JSON.stringify(cameraState.view));}
       catch{/* The canvas remains usable without browser persistence. */}
@@ -443,6 +456,14 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
     updateCamera(fitCombatCamera(layout,visible.map(panel=>panel.props.id),
       viewport.clientWidth,Math.max(200,viewport.clientHeight-64)));
   };
+  const openingView=()=>{
+    const viewport=canvas.current;
+    if(!viewport||!wide)return;
+    setFocused(null);
+    animateCamera();
+    updateCamera(openingCombatCamera(layout,
+      visible.map(panel=>panel.props.id),viewport.clientWidth));
+  };
   const minimize=id=>setPreference(previous=>({...previous,
     minimized:previous.minimized.includes(id)?
       previous.minimized.filter(other=>other!==id):[...previous.minimized,id]
@@ -705,6 +726,9 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
           </button>
           <details className={styles.drawerSettings}>
             <summary>Canvas Preferences</summary>
+            {wide?<button type="button" className={styles.openingView}
+              aria-label="Show readable opening view at 90 percent"
+              onClick={openingView}>Opening view (90%)</button>:null}
             <label><input type="checkbox" checked={layout.freeform.snap}
                disabled={!canEditCanvas}
               onChange={event=>setPreference(previous=>({...previous,freeform:{

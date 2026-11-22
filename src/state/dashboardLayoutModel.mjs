@@ -77,14 +77,15 @@ const GM_CANVAS_NEW_OPTIONALS=Object.freeze([
   'diceQuick','npcQuick','soundboardQuick','worldQuick','playerDisplayQuick','focusModes'
 ]);
 const GM_CORE_POSITIONS=Object.freeze({
-  gmResources:{x:0,y:0,w:480,h:800},
-  combatOverview:{x:500,y:0,w:500,h:310},
-  requestsOverview:{x:500,y:330,w:500,h:320},
-  preparedOverview:{x:500,y:670,w:500,h:340},
-  quickNotes:{x:0,y:820,w:480,h:460},
-  questTracker:{x:500,y:1030,w:500,h:420},
-  calendarWeather:{x:0,y:1300,w:480,h:370},
-  sessionOverview:{x:500,y:1470,w:500,h:360}
+  // Balanced columns, readable overview heights, 20-unit gutters.
+  gmResources:{x:0,y:0,w:490,h:620},
+  combatOverview:{x:510,y:0,w:490,h:300},
+  requestsOverview:{x:510,y:320,w:490,h:300},
+  preparedOverview:{x:510,y:640,w:490,h:350},
+  quickNotes:{x:0,y:640,w:490,h:420},
+  questTracker:{x:510,y:1010,w:490,h:420},
+  calendarWeather:{x:0,y:1080,w:490,h:350},
+  sessionOverview:{x:510,y:1450,w:490,h:350}
 });
 const GM_CANVAS_LABEL_EXTRAS=Object.freeze({
   gmResources:'GM Player Resources',

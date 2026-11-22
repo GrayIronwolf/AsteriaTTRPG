@@ -49,6 +49,27 @@ export function zoomCombatCamera(camera,scale,pivot={x:0,y:0}){
    x:pivot.x-(pivot.x-prev.x)*next/prev.scale,
    y:pivot.y-(pivot.y-prev.y)*next/prev.scale});
 }
+/** Frame the first visible row at a readable scale, without changing layout. */
+export const COMBAT_CANVAS_OPENING_ZOOM=.9;
+export function openingCombatCamera(layout,visibleIds=[],viewportWidth=0){
+ const width=Number(viewportWidth);
+ if(!Number.isFinite(width)||width<=0)
+   return normalizeCombatCamera({scale:COMBAT_CANVAS_OPENING_ZOOM});
+ const rectangles=visibleIds.map(id=>layout?.freeform?.positions?.[id]).filter(Boolean);
+ if(!rectangles.length)
+   return normalizeCombatCamera({scale:COMBAT_CANVAS_OPENING_ZOOM,x:24,y:24});
+ const sorted=[...rectangles].sort((a,b)=>a.y-b.y||a.x-b.x),first=sorted[0];
+ const row=sorted.filter(rect=>Math.abs(rect.y-first.y)<=30);
+ let left=Math.min(...row.map(rect=>rect.x));
+ let right=Math.max(...row.map(rect=>rect.x+rect.w));
+ if(right-left>1350){left=first.x;right=first.x+first.w;}
+ const widthFit=(width-64)/(Math.max(1,right-left)*width/1000);
+ const scale=bounded(Math.min(COMBAT_CANVAS_OPENING_ZOOM,widthFit),.72,COMBAT_CANVAS_OPENING_ZOOM);
+ const unit=width/1000*scale;
+ return normalizeCombatCamera({scale,
+   x:width/2-(left+right)/2*unit,
+   y:20-first.y*unit});
+}
 /** Fit and focus change only the camera; window geometry never changes. */
 export function combatWindowBounds(layout,visibleIds){
  const rects=visibleIds.map(id=>layout.freeform.positions[id]).filter(Boolean);
