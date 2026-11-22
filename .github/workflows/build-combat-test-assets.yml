@@ -53,7 +53,7 @@ jobs:
         run: |
           npm run lint
           node --test scripts/combat-command-centre-replacement.test.mjs
-      - name: Build website without publishing it
+      - name: Build current Combat and Share & Present React/Vite assets without publishing
         run: npm run build
       - name: Commit only compiled website artifacts on test branch
         run: |
