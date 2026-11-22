@@ -325,10 +325,11 @@ export function CombatCommandCentre({uid,campaignId,children}){
     }
   };
   const move=event=>{
+    const press=lastTitlePress.current;
+    if(press&&(Math.abs(event.clientX-press.x)>6||
+      Math.abs(event.clientY-press.y)>6))lastTitlePress.current=null;
     const g=gesture.current;
     if(!g||g.pointer!==event.pointerId)return;
-    if(g.kind==='move'&&(Math.abs(event.clientX-g.x)>6||
-      Math.abs(event.clientY-g.y)>6))lastTitlePress.current=null;
     g.pending=g.kind==='pan'?{x:event.clientX,y:event.clientY}:
       proposal(g,event.clientX,event.clientY);
     if(!g.frame)g.frame=requestAnimationFrame(()=>{
