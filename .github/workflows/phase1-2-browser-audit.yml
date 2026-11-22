@@ -6,6 +6,8 @@ on:
     paths:
       - 'scripts/phase1-2-browser-audit.cjs'
       - 'src/devFixtures.js'
+      - 'src/dashboards/combat/**'
+      - 'react-dist/asteria-react-content-v2.js'
       - 'scripts/react-migration-parity-contract.test.cjs'
       - '.github/workflows/phase1-2-browser-audit.yml'
   workflow_dispatch:
