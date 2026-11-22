@@ -1,0 +1,48 @@
+name: Phase 1.2 - Interactive Browser Baseline (test branch only)
+
+on:
+  push:
+    branches: [Website-Build-Test]
+    paths:
+      - 'scripts/phase1-2-browser-audit.cjs'
+      - '.github/workflows/phase1-2-browser-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: asteria-browser-audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  recovered-site-browser-audit:
+    if: github.ref == 'refs/heads/Website-Build-Test'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Check out test branch only
+        uses: actions/checkout@v4
+      - name: Prepare Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install existing application dependencies
+        run: npm ci
+      - name: Install temporary browser test runtime without changing the lockfile
+        run: npm install --no-save --package-lock=false --ignore-scripts playwright@1.56.1
+      - name: Install Chromium and Linux browser dependencies
+        run: npx playwright install --with-deps chromium
+      - name: Test recovered website against isolated local fixtures
+        run: node scripts/phase1-2-browser-audit.cjs
+        env:
+          CI: 'true'
+      - name: Upload browser screenshots and structured audit results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asteria-phase-1-2-browser-evidence
+          path: artifacts/phase-1-2-browser/
+          retention-days: 30
+          if-no-files-found: warn
