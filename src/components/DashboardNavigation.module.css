@@ -3,8 +3,7 @@
    aaa-nav-card without reusing static/header JS or duplicating its selectors. */
 .root{position:relative;z-index:150;min-width:0;color:var(--asteria-text,#eaf2f8)}
 .bar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr)) auto;gap:5px;
-  padding:6px;background:#162839;border:1px solid #607b90;border-radius:4px;
-  box-shadow:0 6px 22px #0007}
+  padding:6px 0;background:transparent;border:0;box-shadow:none}
 /* Main menu triggers reuse the EXACT global header metal-frame + crystal
    image classes, button-standard size, focus and press states. This module
    owns positioning only; never paint a second rectangular button skin here. */
