@@ -1,0 +1,18 @@
+.library{display:grid;gap:var(--ast-space-4);min-width:0;padding:var(--ast-space-5);border:1px solid var(--ast-color-outline-soft);background:var(--ast-color-panel);border-radius:var(--ast-radius-panel)}
+.library h2,.library p{margin:0}.stats,.actions{display:flex;gap:var(--ast-space-3);flex-wrap:wrap;align-items:center}.stats span{padding:var(--ast-space-2);border:1px solid var(--ast-color-outline-soft);border-radius:var(--ast-radius-sm)}
+.filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:var(--ast-space-3)}
+.filters label{display:grid;gap:var(--ast-space-2)}
+.library input,.library select,.library button{font:inherit;background:var(--ast-color-panel-raised);color:var(--ast-color-text);border:1px solid var(--ast-color-outline-soft);border-radius:var(--ast-radius-sm);min-height:40px;padding:var(--ast-space-2)}
+.library button{cursor:pointer}.library button:disabled{opacity:.55;cursor:not-allowed}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:var(--ast-space-4)}
+.asset{display:grid;align-content:start;gap:var(--ast-space-3);padding:var(--ast-space-4);border:1px solid var(--ast-color-outline-soft);border-radius:var(--ast-radius-sm);min-width:0}
+.assetHead{display:flex;gap:var(--ast-space-2);align-items:start;justify-content:space-between;flex-wrap:wrap}
+.assetHead strong{overflow-wrap:anywhere}.asset dl{display:grid;gap:var(--ast-space-2);margin:0}
+.asset dl div{display:flex;flex-wrap:wrap;justify-content:space-between;gap:var(--ast-space-3)}
+.asset dt{opacity:.75}.asset dd{margin:0;overflow-wrap:anywhere}
+.preview{display:grid;gap:var(--ast-space-2);max-width:100%;min-width:0;overflow:auto}
+.preview img,.preview video{max-width:100%;max-height:350px;object-fit:contain}
+.preview audio{width:100%;max-width:100%}
+.footnote{opacity:.85}
+.library button:focus-visible,.library input:focus-visible,.library select:focus-visible{outline:3px solid var(--ast-color-focus);outline-offset:2px}
+@media(max-width:660px){.library{padding:var(--ast-space-3)}.grid{grid-template-columns:1fr}}
