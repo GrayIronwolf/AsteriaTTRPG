@@ -6,7 +6,7 @@ import {doc,setDoc,getDoc,getDocs,collection,updateDoc}
   from 'firebase/firestore';
 import {ref,getBytes,uploadBytes,deleteObject} from 'firebase/storage';
 
-const projectId='demo-asteria-share-present-phase77',campaign='phase77-security';
+const projectId=process.env.GCLOUD_PROJECT||process.env.FIREBASE_PROJECT_ID||'demo-asteria',campaign='phase77-security';
 const prefix='campaigns/'+campaign;
 const originalMap=prefix+'/battleMaps/map77';
 const publicMap=prefix+'/battleMapsPublic/map77';
