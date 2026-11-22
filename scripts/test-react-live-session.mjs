@@ -481,7 +481,9 @@ test('40. Player navigation uses one SVG icon system and preserves every dashboa
   const dashboard = read('src/dashboards/CharacterDashboard.jsx');
   const icons = read('src/components/AsteriaIcons.jsx');
   const ui = read('src/components/WorkspaceUI.jsx');
-  ['dashboard','character','talents','skills','spells','inventory','quest','journal','party','gallery','settings'].forEach(route => assert.match(dashboard, new RegExp(`id: '${route}'`)));
+  const menu = read('src/state/dashboardMenuModel.mjs');
+  ['dashboard','character','talents','skills','spells','inventory','quest','journal','party','gallery','settings'].forEach(route => assert.match(menu, new RegExp(`page\\('${route}'`)));
+  assert.match(dashboard,/dashboardTabs\\('player'\\)/);
   assert.match(icons, /viewBox="0 0 24 24"/);
   assert.match(ui, /<AsteriaIcon name=\{tab\.icon/);
   assert.doesNotMatch(dashboard, /icon: '\\u/);
