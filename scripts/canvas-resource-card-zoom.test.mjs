@@ -4,6 +4,45 @@ import {readFileSync} from 'node:fs';
 import {orderedCombatPartyIds} from '../src/dashboards/combat/combatWorkspaceLayoutModel.mjs';
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 
+test('New canvas sessions open around 90 percent on the top row without changing saved geometry',async()=>{
+ const {openingCombatCamera,COMBAT_CANVAS_OPENING_ZOOM,defaultCombatWorkspaceLayout,
+  fitCombatCamera}=await import('../src/dashboards/combat/combatWorkspaceLayoutModel.mjs');
+ const {defaultPlayerCanvasLayout,defaultGMCanvasLayout,GM_CANVAS_DEFAULT_IDS,
+  PLAYER_CANVAS_DEFAULT_IDS}=await import('../src/state/dashboardLayoutModel.mjs');
+ assert.equal(COMBAT_CANVAS_OPENING_ZOOM,.9);
+ for(const [layout,ids] of [
+   [defaultGMCanvasLayout(),GM_CANVAS_DEFAULT_IDS],
+   [defaultPlayerCanvasLayout(),PLAYER_CANVAS_DEFAULT_IDS],
+   [defaultCombatWorkspaceLayout(),Object.keys(defaultCombatWorkspaceLayout().freeform.positions)]
+ ]){
+   const before=JSON.stringify(layout);
+   const opening=openingCombatCamera(layout,ids,1440);
+   const fit=fitCombatCamera(layout,ids,1440,680);
+   assert.ok(opening.scale>=.72&&opening.scale<=.9);
+   assert.ok(fit.scale<opening.scale);
+   assert.ok(opening.y>=0&&opening.y<=30);
+   assert.equal(JSON.stringify(layout),before);
+ }
+ const jsx=read('src/dashboards/combat/CombatCommandCentre.jsx');
+ assert.match(jsx,/openingCameraPending\.current=!storedCamera/);
+ assert.match(jsx,/onClick=\{openingView\}>Opening view \(90%\)/);
+ assert.match(jsx,/stored\?normalizeCombatCamera\(JSON\.parse\(stored\)\):null/);
+});
+test('Larger resize handles and balanced default GM windows keep custom layouts intact',async()=>{
+ const css=read('src/dashboards/combat/CombatCommandCentre.module.css');
+ const {defaultGMCanvasLayout,normalizeGMCanvasLayout}=await import('../src/state/dashboardLayoutModel.mjs');
+ assert.match(css,/width:16px;height:16px;min-height:16px!important/);
+ assert.match(css,/background-color:#091623/);
+ assert.match(css,/\.focused\{border-color:/);
+ const base=defaultGMCanvasLayout();
+ assert.deepEqual(base.freeform.positions.gmResources,{x:0,y:0,w:490,h:620});
+ assert.equal(base.freeform.positions.requestsOverview.y,320);
+ const old=normalizeGMCanvasLayout({...base,freeform:{...base.freeform,positions:{
+  ...base.freeform.positions,gmResources:{x:70,y:80,w:650,h:780}
+ }}});
+ assert.deepEqual(old.freeform.positions.gmResources,{x:70,y:80,w:650,h:780});
+});
+
 test('All zoom levels preserve window content and controls in GM, Player, and Combat canvases',()=>{
  const css=read('src/dashboards/combat/CombatCommandCentre.module.css');
  const canvas=read('src/dashboards/combat/CombatCommandCentre.jsx');
