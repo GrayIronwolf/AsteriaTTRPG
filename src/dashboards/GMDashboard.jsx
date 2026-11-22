@@ -607,15 +607,6 @@ export function GMDashboard({ campaignId }) {
   },[campaignId,accountUid,live.campaign,live.gmWorkspaceLoaded,rawLive.characters]);
   const workspace=useMemo(()=>normalizeGMWorkspace(live.gmWorkspace||{},live.campaign||{}),[live.gmWorkspace,live.campaign]);
   const saveSection=(section,value)=>firebaseService.saveGMWorkspace(campaignId,{[section]:value});
-  const saveDashboardLayout=async layout=>{
-    const saveScope=campaignId+':'+accountUid;
-    const result=await firebaseService.saveUserDashboardLayout(campaignId,'gm',layout);
-    // A response for an old account or campaign must never mutate the new view.
-    if(dashboardSaveScope.current!==saveScope)return result;
-    if(result?.ok){setSavedDashboardLayout(layout);setDashboardLayoutError('');}
-    else setDashboardLayoutError(result?.error||'Could not save GM dashboard layout.');
-    return result;
-  };
   const commitGMFocus=async layout=>{
     if(!accountUid||!dashboardLayoutReady)return {ok:false,error:'Connect your GM dashboard before changing Focus.'};
     if(focusSavePending.current||savingDashboardSettings)return {ok:false,error:'A dashboard save is already in progress.'};

@@ -1,5 +1,4 @@
 import React,{useEffect,useState} from 'react';
-import {Panel,StatusPill} from '../components/WorkspaceUI.jsx';
 import {RestRequestsPanel} from './CharacterSystemsPanels.jsx';
 import {firebaseService} from '../firebase/asteriaFirebaseService.js';
 import {previewPreparedEncounterLoad} from '../state/preparedEncounterLoadModel.mjs';

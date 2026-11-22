@@ -212,7 +212,7 @@ test('Combat canvas replaces old layout bars with a full-width icon HUD and over
  assert.match(renderer,/className=\{styles\.drawerBackdrop\}/);
  assert.match(renderer,/className=\{styles\.toolSidebar\}/);
  assert.doesNotMatch(renderer,/className=\{styles\.zoomTools\}|styles\.toolsToggle/);
- assert.match(renderer,/aria-label="Combat canvas controls"/);
+ assert.match(renderer,/gmCanvas\?'GM dashboard canvas controls':'Combat canvas controls'/);
  assert.doesNotMatch(renderer,/<h3 className=\{styles\.canvasTitle\}/);
  assert.match(file('src/dashboards/combat/CombatWorkspace.jsx'),/<h2>Combat Command Centre<\/h2>/);
  const toolbar=renderer.match(/<div className=\{styles\.canvasActions\}[\s\S]*?<\/div>/)?.[0];
@@ -318,7 +318,7 @@ test('GM Resources window reuses live character resources and existing dashboard
  assert.match(gm,/onDrop=\{reorderable\?/);
  assert.match(gm,/data-testid="gm-combat-party-resources"/);
  assert.match(gm,/data-testid="gm-player-resources-strip"/);
- assert.match(gm,/\{tab!=='combat'\?/);
+ assert.match(gm,/tab!=='combat'&&tab!=='main'/);
  assert.match(gm,/window\.AsteriaCharacterAccess\?\.canGMView/);
  assert.match(gm,/<CharacterDashboard campaignId=\{campaignId\} characterId=\{canvasCharacterId\}/);
  assert.match(gm,/react-canvas-character-dashboard/);
