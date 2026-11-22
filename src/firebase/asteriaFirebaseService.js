@@ -48,7 +48,7 @@ export const firebaseService = {
   subscribePresence: (campaignId, sessionId, onChange) => requireMethod('subscribeSessionPresence')(campaignId, sessionId, onChange),
   fetchEventHistory: (...args) => requireMethod('fetchCampaignEventHistory')(...args),
   subscribeEvents: (campaignId, onChange, options) => requireMethod('subscribeCampaignEvents')(campaignId, onChange, options),
-  subscribeEncounter: (campaignId, onChange) => requireMethod('subscribeCampaignEncounter')(campaignId, onChange),
+  subscribeEncounter: (campaignId,onChange,mode='player') => requireMethod('subscribeCampaignEncounter')(campaignId,onChange,mode),
   subscribeGMWorkspace: (campaignId, onChange) => requireMethod('subscribeGMWorkspace')(campaignId, onChange),
   subscribePartyWorkspace: (campaignId, onChange) => requireMethod('subscribePartyWorkspace')(campaignId, onChange),
   subscribePartyChat: (campaignId, onChange) => requireMethod('subscribePartyChat')(campaignId, onChange),

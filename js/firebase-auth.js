@@ -1310,12 +1310,17 @@ const firebasePublicApi = {
   },
   subscribeBattleMaps: function(campaignId,onChange,{gm=false}={}){
     if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
-    const ref=collection(db,'campaigns',campaignId,'battleMaps');
-    const q=gm?query(ref,limit(BATTLE_MAP_MAX_RECORDS)):
-      query(ref,where('visibility','==','players'),limit(BATTLE_MAP_MAX_RECORDS));
+    // The GM edits the canonical map; players see only server-produced,
+    // allowlisted public projections, never raw GM token or hazard records.
+    const source=gm?'battleMaps':'battleMapsPublic';
+    const q=query(collection(db,'campaigns',campaignId,source),limit(BATTLE_MAP_MAX_RECORDS));
     return onSnapshot(q,snapshot=>{
-      onChange(snapshot.docs.map(entry=>({id:entry.id,...entry.data()}))
-        .sort((a,b)=>String(a.name).localeCompare(String(b.name))));
+      onChange(snapshot.docs.map(entry=>{
+        const record=entry.data();
+        return {id:entry.id,...record,...(!gm?{
+          storagePath:battleMapAssetPath(campaignId,entry.id,record.contentType)
+        }:{})};
+      }).sort((a,b)=>String(a.name).localeCompare(String(b.name))));
     },error=>{
       onChange([]);reportSyncError('battle-map-listener',error,{campaignId});
     });
@@ -1475,10 +1480,13 @@ const firebasePublicApi = {
     const snapshot=await getDocs(query(collection(db,'campaigns',campaignId,'events'),...constraints,limit(200)));
     return {events:snapshot.docs.map(d=>({id:d.id,...d.data()})).filter(e=>e.targetCharacterId===characterId),cursor:snapshot.docs.at(-1)?.id || '',more:snapshot.size===200};
   },
-  subscribeCampaignEncounter: function(campaignId, onChange){
+  subscribeCampaignEncounter: function(campaignId, onChange, mode='player'){
     if(!db || !currentUser || !campaignId || typeof onChange !== 'function') return ()=>{};
-    return onSnapshot(
-      doc(db, 'campaigns', campaignId, 'systems', 'encounter'),
+    // Combat safety mirrors the canonical React combat adapter.
+    const ref=mode==='gm'
+      ?doc(db,'campaigns',campaignId,'systems','encounter')
+      :doc(db,'campaigns',campaignId,'combatPublic','current');
+    return onSnapshot(ref,
       snapshot=>onChange(snapshot.exists() ? Object.assign({ status:'ready', round:1, turnIndex:0, combatants:[], enemies:[] }, snapshot.data()) : { status:'ready', round:1, turnIndex:0, combatants:[], enemies:[] }),
       error=>reportSyncError('campaign-encounter-listener', error, { campaignId })
     );
