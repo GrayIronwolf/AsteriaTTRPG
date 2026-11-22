@@ -25,6 +25,7 @@ import {GMSessionRecordingWorkspace,GMRecordingParticipationNotice} from './Sess
 import {GMPlayerPresentationWorkspace} from './PlayerPresentationWorkspace.jsx';
 import { GMLayoutBackup } from './GMLayoutBackup.jsx';
 import { defaultDashboardLayout, normalizeDashboardLayout, visibleDashboardPanels } from '../state/dashboardLayoutModel.mjs';
+import {dashboardTabs} from '../state/dashboardMenuModel.mjs';
 import { talentCatalog } from './characterWorkspaceData.js';
 import { resourceDefinitions, storedResource } from '../state/resourceEngine.mjs';
 import { ManualNumberInput } from '../components/ManualNumberInput.jsx';
@@ -47,33 +48,7 @@ import { GMPartyLootPanel } from './PartyLootWorkspace.jsx';
 import { GMInventoryAuditWorkspace } from './GMInventoryAuditWorkspace.jsx';
 import { gmTradeLootOverview } from '../state/gmTradeLootHubModel.mjs';
 
-const GM_TABS = [
-  {id:'combat',label:'Combat Command Centre',icon:'weapons'},
-  { id: 'main', label: 'GM Main', icon: '\u25c8' },
-  { id: 'toolkit', label: 'GM Toolkit', icon: 'settings' },
-  { id: 'bestiary', label: 'NPC & Creature Library', icon: 'journal' },
-  { id: 'settings', label: 'Dashboard Settings', icon: 'settings' },
-  { id: 'inventory', label: 'PC Inventory', icon: 'inventory' },
-  { id:'information', label:'News & Events', icon:'journal' },
-  { id: 'quests', label: 'Quests', icon: '\u2691' },
-  { id: 'notes', label: 'GM Notes', icon: '\u270e' },
-  { id: 'session-library', label: 'Session Library', icon: 'journal' },
-  { id: 'soundboard', label: 'Soundboard & Ambience', icon: 'journal' },
-  { id: 'session-recordings', label: 'Session Recordings', icon: 'journal' },
-  { id: 'presentation', label: 'Player Display', icon: 'gallery' },
-  { id: 'economy', label: 'Economy', icon: '\u25ce' },
-  { id: 'crafting', label: 'Crafting', icon: '\u2692' },
-  { id: 'tools', label: 'GM Tools', icon: '\u2699' },
-  { id: 'gameplay', label: 'Gameplay Systems', icon: '\u25a3' },
-  { id: 'world', label: 'World Systems', icon: '\u2318' },
-  { id: 'battle-maps', label: 'Battle Maps', icon: 'journal' },
-  { id: 'advanced-dice', label: 'Advanced Dice', icon: 'settings' },
-  { id: 'random-tables', label: 'Random Tables', icon: 'journal' },
-  { id: 'encounter-rewards', label: 'Encounter Generator', icon: 'journal' },
-  { id: 'asteria-calendar', label: 'Asteria Calendar', icon: 'journal' },
-  { id: 'weather-environment', label: 'Weather Generator', icon: 'journal' },
-  { id: 'world-atlas', label: 'World Atlas', icon: 'journal' }
-];
+const GM_TABS = dashboardTabs('gm');
 
 function progression(character = {}) {
   const fallback = { xp: Number(character.xp || 0), xpMax: Number(character.xpMax || 1000), percent: 0 };
@@ -703,7 +678,7 @@ export function GMDashboard({ campaignId }) {
     <GMRecordingParticipationNotice key={campaignId} campaignId={campaignId}/>
     <GMUnifiedSearch campaignId={campaignId} workspace={workspace}
       characters={rawLive.characters} itemEcosystem={live.itemEcosystem} onNavigate={openGMSearchResult}/>
-    <DashboardNavigation tabs={GM_TABS} active={tab} onChange={next=>{setGMSearchTarget(null);setGMHubDestination(null);setTab(next);}} ariaLabel="GM Dashboard menu" />
+    <DashboardNavigation role="gm" storageScope={campaignId+":"+accountUid} tabs={GM_TABS} active={tab} onChange={next=>{setGMSearchTarget(null);setGMHubDestination(null);setTab(next);}} ariaLabel="GM Dashboard menu" />
     {tab === 'bestiary' ? <GMNpcCreatureLibrary key={campaignId+':'+accountUid+':bestiary'}
       workspace={workspace} saveSection={saveSection} campaignId={campaignId} characters={live.characters} searchTarget={gmSearchTarget}
       onOpenEncounter={()=>setTab('combat')} onOpenWorld={()=>setTab('world')} /> : null}

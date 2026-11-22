@@ -10,6 +10,7 @@ import {PlayerWeatherEnvironment} from './WeatherEnvironmentWorkspace.jsx';
 import {PlayerWorldAtlas} from './WorldAtlasWorkspace.jsx';
 import { reconcileCharacterSystems } from '../state/characterSystems.mjs';
 import { resolveDashboardTab } from '../state/dashboardNavigation.mjs';
+import {dashboardTabs} from '../state/dashboardMenuModel.mjs';
 import { useCharacterSystemsSync } from '../sessions/useCharacterSystemsSync.js';
 import { talentCatalog } from './characterWorkspaceData.js';
 import { gmReturnContext, returnToGM } from '../app/gmCharacterNavigation.mjs';
@@ -43,29 +44,7 @@ import {
   TalentsTab
 } from './CharacterWorkspaceTabs.jsx';
 
-const CHARACTER_TABS = [
-  { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
-  { id: 'character', label: 'Character', icon: 'character' },
-  { id: 'talents', label: 'Class/Talent Tree', icon: 'talents' },
-  { id: 'skills', label: 'Skills', icon: 'skills' },
-  { id: 'spells', label: 'Spells', icon: 'spells' },
-  { id: 'inventory', label: 'Inventory', icon: 'inventory' },
-  { id: 'crafting', label: 'Crafting', icon: 'inventory' },
-  { id: 'quest', label: 'Quests', icon: 'quest' },
-  { id: 'information', label: 'News / Events / History', icon: 'journal' },
-  { id: 'journal', label: 'Journal', icon: 'journal' },
-  { id: 'party', label: 'Party', icon: 'party' },
-  { id: 'gallery', label: 'Gallery', icon: 'gallery' },
-  { id: 'battle-maps', label: 'Battle Maps', icon: 'gallery' },
-  { id: 'advanced-dice', label: 'Advanced Dice', icon: 'skills' },
-  { id: 'asteria-calendar', label: 'Calendar', icon: 'journal' },
-  { id: 'weather-environment', label: 'Weather', icon: 'journal' },
-  { id: 'world-atlas', label: 'World Map', icon: 'gallery' },
-  { id: 'session-library', label: 'Campaign Library', icon: 'journal' },
-  { id: 'soundboard', label: 'Campaign Audio', icon: 'journal' },
-  { id: 'session-recordings', label: 'Recording & Archives', icon: 'journal' },
-  { id: 'settings', label: 'Dashboard Settings', icon: 'settings' }
-];
+const CHARACTER_TABS = dashboardTabs('player');
 
 function values(value) { return Array.isArray(value) ? value : []; }
 
@@ -223,7 +202,7 @@ function CharacterDashboardContent({campaignId,characterId,live}) {
     {campaignId?<SessionGate session={live.session} />:<div className="react-unassigned-dashboard" role="status"><b>Unassigned character</b><p>You can inspect this character now. Link a campaign and join an active session to use gameplay actions.</p><div className="react-action-row"><button onClick={()=>openLegacyView('workspace',()=>window.AsteriaWorkspace?.openDashboard?.('campaigns'))}>Link a campaign</button><button onClick={()=>openLegacyView('workspace',()=>window.AsteriaGameplay?.openCharacterForgeHub?.())}>Back to Character Forge</button></div></div>}
     <DashboardInformationRow campaign={live.campaign || {}} session={live.session} character={character} partyWorkspace={live.partyWorkspace} editable={editable} onResourceChange={updateResource} online={live.online} connectionState={live.connectionState} error={live.error || coreSyncError} loading={live.loading} />
     {campaignId?<PlayerRecordingNotice key={campaignId} campaignId={campaignId}/>:null}
-    <DashboardNavigation tabs={tabs} active={activeTab} onChange={navigate} ariaLabel="Character Dashboard menu" />
+    <DashboardNavigation role="player" storageScope={characterId+":"+uid} tabs={tabs} active={activeTab} onChange={navigate} ariaLabel="Character Dashboard menu" />
     <CombatDashboardLayout combat={combat}>
     {activeTab === 'dashboard' ? <><PlayerDashboardOverview combat={combat} isGM={window.AsteriaCharacterAccess.isGM(live.campaign,uid)} sessionEditable={live.session?.editable} clock={{encounter:live.encounter,now:live.clock}} campaignId={campaignId} campaign={live.campaign || {}} character={character} characters={live.characters} partyWorkspace={live.partyWorkspace} editable={editable} canEditLayout={isOwner} onNavigate={navigate} /><ActivityLog character={character} /></> : null}
     {activeTab === 'character' ? <CharacterTab campaignId={campaignId} character={character} editable={editable} /> : null}
