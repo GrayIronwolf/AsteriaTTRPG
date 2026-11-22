@@ -6,6 +6,13 @@ on:
     paths:
       - 'src/dashboards/combat/**'
       - 'src/dashboards/GMDashboard.jsx'
+      - 'src/dashboards/CharacterDashboard.jsx'
+      - 'src/components/DashboardNavigation.jsx'
+      - 'src/components/DashboardNavigation.module.css'
+      - 'src/components/WorkspaceUI.jsx'
+      - 'src/state/dashboardMenuModel.mjs'
+      - 'src/state/gmToolkitModel.mjs'
+      - 'src/styles/asteria-react.css'
       - 'src/dashboards/CombatPanel.jsx'
       - 'src/devFixtures.js'
       - 'src/styles/combat.css'
