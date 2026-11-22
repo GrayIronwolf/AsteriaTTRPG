@@ -289,16 +289,21 @@ async function metrics(page) {
     await modes.getByRole('button',{name:'Encounter Preparation'}).click();
     const header=p.getByTestId('combat-drag-header-controls');
     const drag=await header.boundingBox();
+    const hit=await p.evaluate(({x,y})=>{
+      const el=document.elementFromPoint(x,y);
+      return {tag:el?.tagName,classes:String(el?.className||''),text:el?.textContent?.slice(0,100)};
+    },{x:drag.x+35,y:drag.y+20});
     await p.mouse.move(drag.x+35,drag.y+20);
     await p.mouse.down();
     await p.mouse.move(drag.x+85,drag.y+20,{steps:5});
     await p.mouse.up();
+    console.log('COMBAT CANVAS DRAG HIT',JSON.stringify(hit));
     await p.locator('[data-combat-panel="controls"]').waitFor();
     const changed=await p.locator('[data-combat-panel="controls"]').evaluate(panel=>({
       x:panel.style.getPropertyValue('--combat-x'),
       y:panel.style.getPropertyValue('--combat-y')
     }));
-    assert.notDeepEqual(changed,before,'Dragging title bar must move a panel without customisation mode');
+    assert.notDeepEqual(changed,before,'Dragging title bar must move a panel without customisation mode: '+JSON.stringify({hit,before,changed}));
     await p.getByRole('button',{name:'Zoom into canvas'}).click();
     assert.notEqual((await p.getByLabel('Canvas zoom').innerText()).trim(),'100%',
       'Zoom must change directly on the canvas');

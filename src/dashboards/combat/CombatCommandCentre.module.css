@@ -33,7 +33,7 @@
 .canvas:active{cursor:grabbing}
 .stage{position:absolute;left:0;top:0;width:100%;height:calc(var(--combat-canvas-height) * .1cqw);
  transform-origin:0 0;transform:translate(var(--combat-pan-x),var(--combat-pan-y)) scale(var(--combat-scale));
- pointer-events:none}
+ pointer-events:auto}
 .stage .window{pointer-events:auto}
 .window{position:absolute;display:flex;flex-direction:column;box-sizing:border-box;
  min-width:0;min-height:0;left:var(--combat-x);top:var(--combat-y);
