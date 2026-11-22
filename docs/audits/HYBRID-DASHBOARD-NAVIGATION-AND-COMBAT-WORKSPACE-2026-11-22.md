@@ -23,3 +23,10 @@
 - Building/test branch code does **not** mean it is available on the live website.
 - No modifications to `main`, production Firestore rules or Cloud Functions deployment were approved in this batch.
 - Header dropdown remains in its original implementation; the React dashboard reuses the approved *visual language*, not the old static menu code or a new static layer.
+
+## Button-style parity correction (22 November 2026)
+- Dashboard category and Find buttons now use the exact shared `asteria-menu-button` and `data-asteria-button-size="standard"` family from the header.
+- Their metal frame, crystal artwork, accent colour, focus glow, active and pressed states are resolved by the existing `css/asteria-menu-buttons.css`, `css/asteria-button-images.css` and `css/asteria-button-sizes.css`; the React module owns only grid positioning.
+- Obsolete rectangular category backgrounds and rectangular row framing were removed, not stacked beneath the original material.
+- The browser audit compiles the current Vite source before testing real Chromium pseudo-element image styles, rather than relying on potentially stale committed `react-dist` assets.
+- The test branch's existing asset builder committed the updated `react-dist` bundle. No other branch was modified, and no Firebase production deployment was performed.
