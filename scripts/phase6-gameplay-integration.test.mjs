@@ -93,7 +93,7 @@ test('Core gameplay commands remain existing Firebase transactions, not new clie
  assert.match(gm,/firebaseService\.grantXP/);
  const combat=source('src/dashboards/combat/CombatWorkspace.jsx');
  const service=source('src/dashboards/combat/firebaseCombatService.mjs');
- assert.match(gm,/<GMCombatWorkspace\\b/);
+ assert.match(gm,/<GMCombatWorkspace\b/);
  assert.match(combat,/api\.commandGM/);
  assert.match(service,/action:'combatCommand'/);
 });
