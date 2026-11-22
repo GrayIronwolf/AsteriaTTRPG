@@ -7,7 +7,7 @@ import {GMLiveCombatPanel} from './GMLiveCombatPanel.jsx';
 import {GMEncounterWavesPanel} from './GMEncounterWavesPanel.jsx';
 import {GMEncounterHistoryPanel} from './GMEncounterHistoryPanel.jsx';
 import styles from './CombatWorkspace.module.css';
-import {GMAdvancedCombatControls} from './GMAdvancedCombatControls.jsx';
+import {GMAdvancedCombatControls,GMAdvancedActionQueue} from './GMAdvancedCombatControls.jsx';
 import {CombatInitiativeInput} from './CombatInitiativeInput.jsx';
 import {ForgedBadge} from './ForgedBadge.jsx';
 
@@ -293,8 +293,10 @@ export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigat
         </section>
       </CombatCommandPanel>
       <CombatCommandPanel id="queue">
-        <GMLiveCombatPanel combat={combat} pending={stream.data.pending}
-          log={stream.data.combatLog||[]} busy={busy} onCommand={submit} view="queue"/>
+        {legacyEncounter?<GMAdvancedActionQueue api={api}
+          campaignId={campaignId} encounter={legacyEncounter}
+          characters={legacyCharacters} combatState={legacyCombatState||{pending:null}}/>:
+          <p>Waiting for the authenticated encounter action queue.</p>}
       </CombatCommandPanel>
       <CombatCommandPanel id="timer">
         <GMLiveCombatPanel combat={combat} pending={stream.data.pending}
@@ -313,9 +315,10 @@ export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigat
           log={stream.data.combatLog||[]} busy={busy} onCommand={submit} view="log"/>
       </CombatCommandPanel>
       <CombatCommandPanel id="advanced">
-        {legacyEncounter?<GMAdvancedCombatControls campaignId={campaignId}
-          encounter={legacyEncounter} characters={legacyCharacters}
-          combatState={legacyCombatState}/>:<p>Advanced encounter state is unavailable.</p>}
+        {legacyEncounter?<GMAdvancedCombatControls api={api}
+          campaignId={campaignId} encounter={legacyEncounter}
+          characters={legacyCharacters}/>:
+          <p>Advanced encounter state is unavailable.</p>}
       </CombatCommandPanel>
       <CombatCommandPanel id="prepared">
         <PreparedEncounterLibrary api={api} campaignId={campaignId}

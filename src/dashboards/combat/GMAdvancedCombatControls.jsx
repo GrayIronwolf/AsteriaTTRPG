@@ -1,6 +1,5 @@
 import React,{useEffect,useState} from 'react';
 import {ManualNumberInput} from '../../components/ManualNumberInput.jsx';
-import {firebaseService} from '../../firebase/asteriaFirebaseService.js';
 import {useAsyncAction} from '../../components/useAsyncAction.js';
 import {combatOptions,currentCombatant,rows} from '../../state/combatRules.mjs';
 import {activeConditions} from '../../state/conditionModel.mjs';
@@ -10,13 +9,13 @@ function ReactionApproval({character,value={},onChange}) {
   const options=combatOptions(character,window.ASTERIA_UNIVERSAL_COMPENDIUM_INDEX?.entries||[]).filter(row=>['spell','talent','technique'].includes(row.kind));
   return <div className="react-form-grid" style={{gridColumn:'1 / -1'}}><label>Owned reaction source<select value={value.optionId||''} onChange={e=>change('optionId',e.target.value)}><option value="">Choose actual ability / rank</option>{options.map(option=><option key={option.id} value={option.id}>{option.name} · {option.rank||''}</option>)}</select></label><label>Casting method<select value={value.castingMethod||''} onChange={e=>change('castingMethod',e.target.value)}><option value="">Not a spell / choose method</option>{['mancer','wizard','occultist','sorcerer','summoner','warlock','witch-doctor','source-defined'].map(row=><option key={row}>{row}</option>)}</select></label><label>Elemental skill<input value={value.elementalSkill||''} onChange={e=>change('elementalSkill',e.target.value)}/></label><label>Element relationship<select value={value.elementRelation||''} onChange={e=>change('elementRelation',e.target.value)}><option value="">Choose approved relationship</option><option value="same">Same (−2)</option><option value="opposite">Opposite (0)</option></select></label><label>Source / cost / eligibility approval<input value={value.sourceReason||''} onChange={e=>change('sourceReason',e.target.value)}/></label><label className="combat-check"><input type="checkbox" checked={Boolean(value.feasible)} onChange={e=>onChange({...value,feasible:e.target.checked,rankEligible:e.target.checked,triggerConfirmed:e.target.checked})}/>Confirmed actual reaction permission, rank access, prerequisites and range</label></div>;
 }
-function GMActionReview({campaignId,encounter,characters,combatState,run,busy}) {
+function GMActionReview({api,campaignId,encounter,characters,combatState,run,busy}) {
   const p=combatState?.pending;
   const [form,setForm]=useState({checkType:'none',skill:'',dc:'',opposedSkill:'',castingMethod:'',personalMP:'',sourceReason:'',feasible:false,rankEligible:false,sizeEligible:false}),[reason,setReason]=useState(''),[target,setTarget]=useState(''),[amount,setAmount]=useState(''),[healing,setHealing]=useState(false),[damageType,setDamageType]=useState(''),[sharedArea,setSharedArea]=useState(false),[outcome,setOutcome]=useState('manifested'),[reactors,setReactors]=useState({});
   useEffect(()=>{setForm({checkType:p?.kind==='spell'?'none':'fixed',skill:'',dc:'',opposedSkill:'',castingMethod:'',personalMP:'',sourceReason:'',feasible:false,rankEligible:false,sizeEligible:false});setReason('');setTarget(p?.targetIds?.[0]||'');setAmount('');setReactors({});},[p?.id]);
   if(!p)return null;
   const change=(key,value)=>setForm(previous=>({...previous,[key]:value}));
-  const send=input=>run(()=>firebaseService.combatCommand(campaignId,p.actorId,{...input,revision:encounter.combat?.revision||0}));
+  const send=input=>run(()=>api.commandGM(campaignId,p.actorId,{...input,revision:encounter.combat?.revision||0}));
   const approve=()=>{const approval={...form};for(const key of ['dc','personalMP','channelDC','distance','modifier','apOverride'])if(approval[key]===''||approval[key]===undefined)delete approval[key];else approval[key]=Number(approval[key]);if(form.costText)approval.resourceCosts=form.costText;approval.consume=(form.consume||[]).filter(row=>row.itemId).map(row=>({...row,quantity:Number(row.quantity)}));return send({operation:'approve',approval});};
   const actorEntry=encounter.combatants.find(row=>row.id===p.actorId),character=characters[actorEntry?.characterId]||actorEntry||{};
   const source=combatOptions(character,window.ASTERIA_UNIVERSAL_COMPENDIUM_INDEX?.entries||[]).find(row=>row.id===p.optionId);
@@ -48,21 +47,31 @@ function GMCombatConditions({character,encounter,command,busy}) {
 /** Advanced GM adjudication migrated from the previous GM combat panel.
  * Combat state and all writes still come from the ONE established server command.
  */
-export function GMAdvancedCombatControls({campaignId,encounter={},characters={},combatState={}}){
+/** Single advanced GM action queue backed by the existing authenticated combat service. */
+export function GMAdvancedActionQueue({api,campaignId,encounter={},characters={},combatState={}}){
+  const action=useAsyncAction();
+  return <section aria-label="GM Action Queue" data-testid="site-gm-live-pending">
+    {combatState?.pending?<GMActionReview key={combatState.pending.id}
+      api={api} campaignId={campaignId} encounter={encounter}
+      characters={characters} combatState={combatState} {...action}/>:
+      <p>No GM adjudication is waiting.</p>}
+    {action.message?<p role="status">{action.message}</p>:null}
+  </section>;
+}
+export function GMAdvancedCombatControls({api,campaignId,encounter={},characters={}}){
  const action=useAsyncAction();
  const [actorId,setActorId]=useState('');
  const current=currentCombatant(encounter);
  const selected=(encounter.combatants||[]).find(row=>row.id===actorId)||current;
  const character=selected?.characterId?characters[selected.characterId]:selected;
  const command=(input,id=selected?.id||'encounter')=>action.run(()=>
-  firebaseService.combatCommand(campaignId,id,{...input,revision:encounter.combat?.revision||0}));
+  api.commandGM(campaignId,id,{...input,revision:encounter.combat?.revision||0}));
  return <section aria-label="Advanced GM combat adjudication" data-testid="site-combat-gm-advanced">
   <details><summary>Advanced adjudication, reactions and conditions</summary>
    {selected?<label>Select combatant<select value={selected.id} onChange={e=>setActorId(e.target.value)}>
      {(encounter.combatants||[]).map(row=><option key={row.id} value={row.id}>{row.name}</option>)}
     </select></label>:null}
-   <GMActionReview key={combatState?.pending?.id||'none'} campaignId={campaignId}
-    encounter={encounter} characters={characters} combatState={combatState} {...action}/>
+   
    {selected&&character?<GMCombatConditions character={character} encounter={encounter}
     command={command} busy={action.busy}/>:null}
    {encounter.status==='ready'&&selected&&character?
