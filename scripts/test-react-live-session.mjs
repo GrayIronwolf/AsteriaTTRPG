@@ -587,12 +587,20 @@ test('50. The player HUD is connected, modular, and backed by existing state act
   assert.doesNotMatch(overview, /Kaelen|Lyra|Thorne|Isera|Borin|12,845|Elden Reach|Western Cliffs/);
 });
 
-test('51. The redesigned player dashboard responds by reflowing panels and scrolling navigation', () => {
+test('51. The player HUD remains responsive and main windows use the freeform canvas', () => {
   const styles = read('src/styles/asteria-react.css');
   assert.match(styles, /react-player-topbar[\s\S]*repeat\(24, minmax\(0, 1fr\)\)/);
   assert.match(styles, /react-player-resources \{ grid-column: span 8/);
   assert.match(styles, /react-player-topbar-heading[\s\S]*border-bottom/);
-  assert.match(styles, /react-player-overview-grid/);
+  const canvasCss = read('src/dashboards/combat/CombatCommandCentre.module.css');
+  const player = read('src/dashboards/PlayerDashboardOverview.jsx');
+  assert.doesNotMatch(styles, /react-player-overview-grid/,
+    'Retired Player overview grid styles must not return');
+  assert.match(player, /<CanvasWorkspace/);
+  assert.match(canvasCss, /@container \(max-width:699px\)/,
+    'The shared canvas must stack windows on narrow screens');
+  assert.match(canvasCss, /\.stage\{position:relative/,
+    'Responsive canvas windows must return to document flow');
   assert.match(styles, /react-armour-layout/);
   assert.match(styles, /react-ability-grid/);
   assert.match(styles, /@container \(max-width: 900px\)/);
