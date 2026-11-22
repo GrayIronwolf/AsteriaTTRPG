@@ -5,6 +5,8 @@ on:
     branches: [Website-Build-Test]
     paths:
       - 'src/dashboards/combat/**'
+      - 'scripts/combat-command-centre-replacement.test.mjs'
+      - 'scripts/canvas-resource-card-zoom.test.mjs'
       - 'src/dashboards/presentation/**'
       - 'src/dashboards/PlayerPresentationWorkspace.jsx'
       - 'src/state/*Presentation*.mjs'
