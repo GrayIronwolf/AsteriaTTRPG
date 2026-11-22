@@ -211,20 +211,79 @@ async function metrics(page) {
     await p.getByText('Prepared Encounters',{exact:true}).first().waitFor();
     await p.screenshot({path:path.join(root,'08-gm-combat-command-centre.png'),fullPage:true});
     const panels=await p.locator('[data-combat-panel]').count();
-    assert.ok(panels>=7,'Combat Command Centre tool windows missing: '+panels);
+    assert.equal(panels,13,'All 13 combat systems should appear in a new workspace');
+    const appearance=await p.locator('[data-combat-panel="controls"]').evaluate(panel=>{
+      const shell=getComputedStyle(panel),bar=getComputedStyle(panel.querySelector('header'));
+      const colour=value=>value.replaceAll(' ','');
+      return {
+        display:shell.display,visibility:shell.visibility,
+        width:Math.round(panel.getBoundingClientRect().width),
+        height:Math.round(panel.getBoundingClientRect().height),
+        background:colour(shell.backgroundColor),border:colour(shell.borderTopColor),
+        borderWidth:shell.borderTopWidth,
+        headerBackground:colour(bar.backgroundColor),
+        headerBorderWidth:bar.borderBottomWidth
+      };
+    });
+    assert.ok(appearance.width>=150&&appearance.height>=100,
+      'Combat panel has no physical window bounds: '+JSON.stringify(appearance));
+    assert.notEqual(appearance.background,'rgba(0,0,0,0)',
+      'Combat window background is invisible: '+JSON.stringify(appearance));
+    assert.notEqual(appearance.headerBackground,'rgba(0,0,0,0)',
+      'Combat window header is invisible: '+JSON.stringify(appearance));
+    assert.equal(appearance.borderWidth,'1px',
+      'Combat window border is missing: '+JSON.stringify(appearance));
+    assert.equal(appearance.headerBorderWidth,'1px',
+      'Combat window header divider is missing: '+JSON.stringify(appearance));
     await p.getByRole('button',{name:'Encounter Builder',exact:true}).click();
     await p.getByRole('complementary',{name:'Combat Command Centre tools'}).getByRole('button',{name:/Encounter Setup/}).click();
+    assert.equal(await p.locator('[data-combat-panel="setup"]').count(),0,
+      'Panel library must hide the selected window without deleting gameplay');
+    await p.getByRole('complementary',{name:'Combat Command Centre tools'}).getByRole('button',{name:/Encounter Setup/}).click();
     assert.equal(await p.locator('[data-combat-panel="setup"]').count(),1,
-      'Encounter setup must remain mounted in the original freeform canvas');
+      'Panel library must restore the same original freeform window');
     await p.getByRole('button',{name:'Prepared Encounters',exact:true}).click();
     assert.equal(await p.locator('[data-combat-panel="prepared"]').count(),1,
       'Prepared encounter library must be inside the original freeform canvas');
+    const modes=p.getByRole('group',{name:'Combat workspace quick layouts'});
+    await modes.getByRole('button',{name:'Encounter Preparation'}).click();
+    assert.equal(await p.locator('[data-combat-panel]').count(),7,
+      'Preparation quick layout should show seven relevant systems');
+    await modes.getByRole('button',{name:'Show all 13 panels'}).click();
+    assert.equal(await p.locator('[data-combat-panel]').count(),13,
+      'Show all panels must restore every combat system');
+    await modes.getByRole('button',{name:'Reset layout'}).click();
+    await p.getByRole('group',{name:'Confirm combat layout reset'})
+      .getByRole('button',{name:'Cancel'}).click();
+    assert.equal(await p.locator('[data-combat-panel]').count(),13,
+      'Cancelling layout reset must preserve combat windows');
     const edit=p.locator('[data-testid="site-combat-layout-edit"]');
     await edit.waitFor();
     assert.ok(await edit.isEnabled(),'Desktop combat workspace edit not enabled');
     await edit.click();
     await p.locator('[data-testid="site-combat-layout-save"]').click();
     await edit.waitFor();
+  });
+  await scenario('09-gm-combat-mobile',{width:390,height:844},async p=>{
+    await gm(p);
+    await p.getByTestId('asteria-gm-hybrid-menu').getByRole('button',{name:'Combat',exact:true}).click();
+    await p.getByTestId('asteria-dashboard-card-dropdown').getByRole('button',{name:'Open Combat Command Centre',exact:true}).click();
+    const windows=p.locator('[data-combat-panel]');
+    await windows.first().waitFor();
+    assert.equal(await windows.count(),13,'Mobile combat windows disappeared');
+    const layout=await p.locator('[data-testid="site-gm-combat-command-centre"]').evaluate(el=>({
+      mode:el.querySelector('[data-layout-mode]')?.dataset.layoutMode,
+      panels:[...el.querySelectorAll('[data-combat-panel]')].slice(0,3).map(w=>({
+        position:getComputedStyle(w).position,width:Math.round(w.getBoundingClientRect().width)
+      })),
+      viewport:innerWidth,scrollWidth:document.documentElement.scrollWidth
+    }));
+    assert.equal(layout.mode,'stacked','Mobile needs stacked windows');
+    assert.ok(layout.panels.every(w=>w.position==='relative'&&w.width>140),
+      'Mobile combat windows cannot be read: '+JSON.stringify(layout));
+    assert.ok(layout.scrollWidth<=layout.viewport,
+      'Combat workspace causes horizontal overflow: '+JSON.stringify(layout));
+    await p.screenshot({path:path.join(root,'09-gm-combat-mobile.png'),fullPage:true});
   });
   console.log('PHASE 1.2 RESULT:',results.filter(r=>r.status==='pass').length,'passed,',failures.length,'failed.');
   save();
