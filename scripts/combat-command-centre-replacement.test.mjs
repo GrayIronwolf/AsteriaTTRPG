@@ -298,11 +298,15 @@ test('GM Combat Phase 1 uses one canvas camera, bounded placements and recoverab
  assert.match(renderer,/doublePress=previous\?\.id===id/);
  assert.match(renderer,/event\.button===1/);
  assert.match(renderer,/spaceHeld\.current/);
- assert.match(renderer,/data-overview=/);
+ assert.doesNotMatch(renderer,/data-overview=/,
+   'Canvas content remains rendered at every zoom level');
  assert.match(renderer,/renderPartyResources|onReorder:/);
  assert.doesNotMatch(renderer,/setMaximised|stageMaximised|styles\.maximised/);
  assert.match(css,/\.cameraFocus\{/);
- assert.match(css,/\.canvas\[data-overview='true'\]/);
+ assert.doesNotMatch(css,/\.canvas\[data-overview/,
+   'Low-zoom overview must not grey out canvas window contents');
+ assert.match(css,/\.minimised \.windowContent\{visibility:hidden/,
+   'Explicitly minimised windows must continue to hide their contents');
 });
 test('GM Resources window reuses live character resources and existing dashboard permission checks',()=>{
  const gm=file('src/dashboards/GMDashboard.jsx');
@@ -314,8 +318,19 @@ test('GM Resources window reuses live character resources and existing dashboard
  assert.match(gm,/character\.image\|\|character\.portrait/);
  assert.match(gm,/react-party-reorder/);
  assert.match(gm,/orderedCombatPartyIds\(present,order\)/);
- assert.match(gm,/onDragStart=\{event=>/);
- assert.match(gm,/onDrop=\{reorderable\?/);
+ assert.match(gm,/onPointerDown=\{event=>onBeginDrag\?\.\(event,character\.id\)\}/);
+ assert.match(gm,/onPointerMove=\{onMoveDrag\}/);
+ assert.match(gm,/onPointerUp=\{onEndDrag\}/);
+ assert.match(gm,/source\.cloneNode\(true\)/,
+   'The lifted drag preview must contain the complete actual card');
+ assert.match(gm,/setPointerCapture\(event\.pointerId\)/);
+ assert.match(gm,/document\.elementFromPoint\(gesture\.x,gesture\.y\)/);
+ assert.match(gm,/card\.animate\?\.\(/,
+   'Cards should animate to their re-ordered positions');
+ assert.match(gm,/if\(event\.type==='pointerup'&&gesture\.moved&&to\)reorder\(/);
+ assert.match(gm,/event\.altKey/,'Keyboard reordering must remain available');
+ assert.doesNotMatch(gm,/onDragStart=\{event=>|onDrop=\{reorderable\?/,
+   'The superseded HTML5 drag/drop must not coexist with pointer reordering');
  assert.match(gm,/data-testid="gm-combat-party-resources"/);
  assert.match(gm,/data-testid="gm-player-resources-strip"/);
  assert.match(gm,/tab!=='combat'&&tab!=='main'/);
