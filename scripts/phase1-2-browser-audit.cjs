@@ -162,12 +162,14 @@ async function metrics(page) {
   console.log('PHASE 1.2 RESULT:',results.filter(r=>r.status==='pass').length,'passed,',failures.length,'failed.');
   save();
   await browser.close();
-  process.exitCode=failures.length?1:0;
+  // local-static-server.js opens a persistent HTTP listener; terminate once
+  // the screenshots and structured results have been flushed to disk.
+  process.exit(failures.length?1:0);
 })().catch(async err=>{
   console.error('PHASE 1.2 FATAL:',err);
   failures.push('harness');
   results.push({name:'harness',status:'fail',detail:String(err.stack||err)});
   save();
   try {await browser?.close();}catch(_){}
-  process.exitCode=1;
+  process.exit(1);
 });
