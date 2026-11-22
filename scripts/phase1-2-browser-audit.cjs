@@ -113,11 +113,11 @@ async function metrics(page) {
   });
   await scenario('03-player-dashboard',{width:1440},async p=>{
     await player(p);
-    const nav=p.getByRole('tab',{name:'Inventory',exact:true});
-    await nav.click();
+    await p.getByRole('button',{name:'Inventory',exact:true}).click();
+    await p.getByRole('button',{name:'Open Inventory & Equipment',exact:true}).click();
     await p.locator('.react-inventory-workspace').waitFor();
     await p.screenshot({path:path.join(root,'03-player-inventory.png'),fullPage:true});
-    await p.getByRole('tab',{name:'Dashboard',exact:true}).click();
+    await p.getByRole('button',{name:'Dashboard',exact:true}).click();
     await p.locator('.react-dashboard-freeform-grid [data-panel-id]').first().waitFor();
     const m=await metrics(p);
     assert.ok(m.panels>=5,'Missing player dashboard panels: '+JSON.stringify(m));
@@ -143,7 +143,7 @@ async function metrics(page) {
   });
   await scenario('06-gm-layout-editor',{width:1440},async p=>{
     await gm(p);
-    await p.getByRole('tab',{name:'Dashboard Settings',exact:true}).click();
+    await p.getByRole('button',{name:'Settings',exact:true}).click();
     const open=p.getByRole('button',{name:'Customise Dashboard Layout',exact:true});
     await open.waitFor();
     await open.click();
@@ -175,13 +175,21 @@ async function metrics(page) {
   });
   await scenario('08-gm-combat-command-centre',{width:1440},async p=>{
     await gm(p);
-    await p.getByRole('tab',{name:'Combat Command Centre',exact:true}).click();
+    await p.getByRole('button',{name:'Combat',exact:true}).click();
+    await p.getByRole('button',{name:'Open Combat Command Centre',exact:true}).click();
     await p.locator('[data-testid="site-gm-combat"]').waitFor();
     await p.locator('[data-testid="site-gm-combat-command-centre"]').waitFor();
     await p.getByText('Prepared Encounters',{exact:true}).first().waitFor();
     await p.screenshot({path:path.join(root,'08-gm-combat-command-centre.png'),fullPage:true});
     const panels=await p.locator('[data-combat-panel]').count();
-    assert.ok(panels>=4,'Combat Command Centre windows missing: '+panels);
+    assert.ok(panels>=7,'Combat Command Centre tool windows missing: '+panels);
+    await p.getByRole('button',{name:'Encounter Builder',exact:true}).click();
+    await p.getByRole('button',{name:/Encounter Setup/}).click();
+    assert.equal(await p.locator('[data-combat-panel="setup"]').count(),1,
+      'Encounter setup must remain mounted in the original freeform canvas');
+    await p.getByRole('button',{name:'Prepared Encounters',exact:true}).click();
+    assert.equal(await p.locator('[data-combat-panel="prepared"]').count(),1,
+      'Prepared encounter library must be inside the original freeform canvas');
     const edit=p.locator('[data-testid="site-combat-layout-edit"]');
     await edit.waitFor();
     assert.ok(await edit.isEnabled(),'Desktop combat workspace edit not enabled');
