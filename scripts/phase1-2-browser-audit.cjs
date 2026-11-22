@@ -100,9 +100,9 @@ async function checkMenuButtonSkin(page,role) {
         width:Math.round(button.getBoundingClientRect().width)
       };
     });
-  assert.match(values.frame,/button-standard-frame\\.webp/,
+  assert.match(values.frame,/button-standard-frame\.webp/,
     role+' menu has lost the approved metal frame: '+JSON.stringify(values));
-  assert.match(values.crystal,/button-standard-crystal\\.webp/,
+  assert.match(values.crystal,/button-standard-crystal\.webp/,
     role+' menu has lost the approved crystal layer');
   assert.ok(values.height>=44&&values.width>60,
     role+' menu must retain an accessible button target: '+JSON.stringify(values));
