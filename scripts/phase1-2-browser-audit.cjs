@@ -377,6 +377,10 @@ async function metrics(page) {
       'Pointer movements must not persist panel geometry before release');
     assert.ok(Number(preview.zIndex)>1,'Active dragged window must rise above other panels');
     await p.mouse.up();
+    // React commits the final layout on release. Read painted geometry only
+    // after the browser has processed layout and one complete paint cycle.
+    await p.evaluate(()=>new Promise(resolve=>
+      requestAnimationFrame(()=>requestAnimationFrame(resolve))));
     assert.equal(await canvas.getAttribute('data-dragging-window'),null,
       'Released drag must not leave a captured canvas gesture');
     const freeOverlap=await p.locator('[data-combat-panel="controls"]').evaluate(panel=>{
@@ -386,6 +390,8 @@ async function metrics(page) {
         y:panel.style.getPropertyValue('--combat-y'),
         dragged:{x:a.x,y:a.y,w:a.width,h:a.height},
         target:{x:b.x,y:b.y,w:b.width,h:b.height},
+        computed:{left:getComputedStyle(panel).left,top:getComputedStyle(panel).top,
+          transform:getComputedStyle(panel).transform,inlineTransform:panel.style.transform},
         overlapped:a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top};
     });
     console.log('FREE OVERLAP GEOMETRY',JSON.stringify({current,target,dx,dy,freeOverlap}));
