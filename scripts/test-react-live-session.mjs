@@ -135,7 +135,8 @@ test('14. React owns encounter and additional-magic workflows without raw Firest
   const gm = read('src/dashboards/GMDashboard.jsx');
   const character = read('src/dashboards/CharacterDashboard.jsx');
   const service = read('src/firebase/asteriaFirebaseService.js');
-  assert.match(gm, /CampaignEncounter/);
+  assert.match(gm, /GMCombatWorkspace/);
+  assert.doesNotMatch(gm, /function CampaignEncounter\(/);
   assert.match(gm, /MagicElementRewards/);
   assert.match(character, /MagicRewardModal/);
   ['subscribeEncounter','saveEncounter','createMagicReward','respondMagicReward'].forEach(name => assert.match(service, new RegExp(name)));
