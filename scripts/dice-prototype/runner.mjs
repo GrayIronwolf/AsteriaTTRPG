@@ -59,9 +59,17 @@ try{
       const observed=await page.evaluate(value=>window.diceProbe.roll(value),config);
       const expected=item.dice.reduce((sum,row)=>sum+row[1],0);
       const values=observed.result?.results?.map(x=>x.value)||[];
+      // d100 is represented by two percentile dice (units + tens); verify
+      // its two displayed components rather than assuming one rendered mesh.
+      const expectedVisible=[];
+      for(const [type,face] of item.dice){
+        if(type==='d100')expectedVisible.push(face%10,Math.floor(face/10)*10);
+        else expectedVisible.push(face);
+      }
       const ok=observed.total===expected && observed.result?.total===expected &&
-        values.length===item.dice.length &&
-        values.every((v,i)=>v===item.dice[i][1]);
+        values.length===expectedVisible.length &&
+        values.every((v,i)=>v===expectedVisible[i]) &&
+        (observed.result?.variances?.length??0)===0;
       log(item.name,ok,{expected,total:observed.total,values,
         elapsedMs:observed.elapsedMs,frameCount:observed.frameCount,
         slowFrames:observed.slowFrames,maxFrameGapMs:observed.maxFrameGapMs,
