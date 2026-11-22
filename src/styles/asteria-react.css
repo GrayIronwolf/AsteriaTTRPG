@@ -1832,13 +1832,6 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 .react-character-dashboard .react-workspace-main > .react-session-gate span { font-size: .62rem; }
 
 
-.react-player-overview-grid {
-  display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 9px;
-  align-items: stretch;
-}
-.react-player-overview-grid > .react-dashboard-panel { padding: 11px; }
 .react-overview-armour { grid-column: span 5; min-height: 286px; }
 .react-overview-weapons { grid-column: span 4; min-height: 286px; }
 .react-overview-quick { grid-column: span 3; min-height: 286px; }
@@ -1971,8 +1964,6 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
   .react-player-topbar { grid-template-columns: 1fr; }
   .react-player-topbar > .react-player-topbar-section { grid-column: 1; border-top: 1px solid var(--dashboard-line-soft); border-left: 0 !important; }
   .react-player-topbar > .react-player-identity-level { border-top: 0; }
-  .react-player-overview-grid { grid-template-columns: 1fr; }
-  .react-player-overview-grid > .react-dashboard-panel { grid-column: 1; min-height: 0; }
   .react-armour-layout { min-height: 240px; }
   .react-ability-grid,
   .react-dashboard-skill-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -2267,10 +2258,8 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 .react-core-table table { width:100%; border-collapse:collapse; font-size:.85rem; }
 .react-core-table caption { text-align:left; padding:6px 0; }
 .react-core-table th, .react-core-table td { text-align:left; padding:8px; border-bottom:1px solid rgba(255,255,255,.12); }
-.react-player-overview-grid > .react-core-effects { grid-column:span 6; }
 .react-gm-tools-grid > .react-core-conditions { grid-column:auto; }
 .react-core-rest-request { display:grid; gap:10px; }
-@container (max-width:900px) { .react-player-overview-grid > .react-core-effects { grid-column:1 / -1; } }
 @media (max-width:640px) { .react-core-form { grid-template-columns:1fr; } .react-core-effect-row { grid-template-columns:1fr 1fr; } .react-core-condition summary { display:grid; } }
 
 /* Canonical talents presented as connected class / tier / talent / rank bubbles. */

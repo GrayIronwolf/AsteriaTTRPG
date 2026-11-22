@@ -91,6 +91,17 @@ test('Owned-character settings use the current authenticated preferences, not a 
  assert.match(canvas,/asteria:player-main-canvas:v1:/);
 });
 
+
+test('Player add-window control opens its own first category and removes the old overview grid',()=>{
+ const canvas=read('src/dashboards/combat/CombatCommandCentre.jsx');
+ const css=read('src/styles/asteria-react.css');
+ assert.equal(PLAYER_DASHBOARD_CANVAS_CONFIG.categories[0].id,'character');
+ assert.equal(GM_DASHBOARD_CANVAS_CONFIG.categories[0].id,'core');
+ assert.match(canvas,/setSelectedTools\(toolCategories\[0\]\?\.id\|\|'overview'\)/);
+ assert.doesNotMatch(canvas,/setSelectedTools\('core'\);setSidebarExpanded\(true\)/);
+ assert.doesNotMatch(css,/\.react-player-overview-grid\b/);
+});
+
 test('New Player layout serialises without injecting player fields into GM layouts',()=>{
  const player=normalizeDashboardLayout(defaultDashboardLayout('player'),'player');
  const gm=normalizeDashboardLayout(defaultDashboardLayout('gm'),'gm');

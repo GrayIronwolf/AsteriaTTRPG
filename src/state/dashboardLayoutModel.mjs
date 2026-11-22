@@ -66,9 +66,9 @@ export const DASHBOARD_PANEL_REGISTRY = {
   ]
 };
 
-/** The GM Main Dashboard is a freeform canvas. Player grid logic stays active until Phase 3.
- * The existing GM panel registry is still the sole allowlist for legacy panel types.
- * No GM grid renderer/editor is mounted after Phase 2. */
+/** GM and Player Main dashboards use the shared freeform canvas. Each dashboard
+ * retains its own allowlisted panel registry and per-scope saved layout.
+ * Superseded main-dashboard grid renderers/editors are no longer mounted. */
 export const GM_CANVAS_DEFAULT_IDS=Object.freeze([
   'gmResources','combatOverview','requestsOverview','preparedOverview',
   'quickNotes','questTracker','calendarWeather','sessionOverview'

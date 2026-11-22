@@ -658,7 +658,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
           aria-label={'Add or remove '+canvasRole+' dashboard windows'}
           disabled={!canEditCanvas}
           aria-expanded={sidebarExpanded}
-          onClick={()=>{setSelectedTools('core');setSidebarExpanded(true);}}>
+          onClick={()=>{setSelectedTools(toolCategories[0]?.id||'overview');setSidebarExpanded(true);}}>
           <AsteriaIcon name="plus" size={20}/>
         </button>
       </div>:null}
