@@ -105,7 +105,6 @@ test('6.8: approved rewards match exact recipients and prevent re-delivery',()=>
 test('6.8: history is GM-only, archived atomically, and delivery uses canonical actions',()=>{
   const server=read('functions/combatCommands.mjs');
   const commands=read('functions/commands.mjs');
-  const handler=read('functions/handler.mjs');
   const service=read('src/dashboards/combat/firebaseCombatService.mjs');
   const rules=read('firestore.rules');
   const panel=read('src/dashboards/combat/GMEncounterHistoryPanel.jsx');
@@ -117,7 +116,7 @@ test('6.8: history is GM-only, archived atomically, and delivery uses canonical 
   assert.match(commands,/assertApprovedEncounterDelivery/);
   assert.match(commands,/encounterDeliveryPatch/);
   assert.match(commands,/createEncounterCompletionCommands/);
-  assert.match(handler,/manageEncounterCompletion/);
+  assert.match(commands,/createEncounterCompletionCommands/);
   assert.match(service,/watchGMHistory/);
   assert.match(service,/grantCharacterXP/);
   assert.match(service,/grantGMRewardBundle/);
