@@ -342,13 +342,18 @@ async function metrics(page) {
         }),true);
       }
     });
+    const target=await p.locator('[data-combat-panel="initiative"]').boundingBox();
+    const current=await p.locator('[data-combat-panel="controls"]').boundingBox();
+    const dx=Math.round(target.x-current.x);
+    const dy=Math.round(target.y-current.y);
     await p.mouse.move(second.x+35,second.y+20);
     await p.mouse.down();
     console.log('SECOND DRAG EVENTS',JSON.stringify(await p.evaluate(()=>
       window.__combatDragEvents)));
     assert.equal(await canvas.getAttribute('data-dragging-window'),'controls',
       'Direct header pointer must start a combat drag');
-    await p.mouse.move(second.x+75,second.y+220,{steps:20});
+    // Aim directly at the initiative panel, rather than assuming its position.
+    await p.mouse.move(second.x+35+dx,second.y+20+dy,{steps:20});
     await p.waitForFunction(()=>document.querySelector('[data-combat-panel="controls"]')
       ?.style.transform.includes('translate3d('),null,{timeout:2500});
     const preview=await p.locator('[data-combat-panel="controls"]').evaluate(panel=>({
@@ -367,6 +372,8 @@ async function metrics(page) {
       const a=panel.getBoundingClientRect(),b=other.getBoundingClientRect();
       return {x:panel.style.getPropertyValue('--combat-x'),
         y:panel.style.getPropertyValue('--combat-y'),
+        dragged:{x:a.x,y:a.y,w:a.width,h:a.height},
+        target:{x:b.x,y:b.y,w:b.width,h:b.height},
         overlapped:a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top};
     });
     assert.notEqual(freeOverlap.y,changed.y,'Panel must save its crossing movement on release');
