@@ -103,9 +103,10 @@ export function orderedCombatPartyIds(ids=[],saved=[]){
 }
 export function moveCombatPartyCard(ids=[],from='',to=''){
  const ordered=[...ids];
- if(from===to||!ordered.includes(from)||!ordered.includes(to))return ordered;
- ordered.splice(ordered.indexOf(from),1);
- ordered.splice(ordered.indexOf(to),0,from);
+ const originalIndex=ordered.indexOf(from),targetIndex=ordered.indexOf(to);
+ if(from===to||originalIndex<0||targetIndex<0)return ordered;
+ ordered.splice(originalIndex,1);
+ ordered.splice(targetIndex,0,from);
  return ordered;
 }
 
@@ -144,14 +145,14 @@ const DEFAULT_POSITIONS=Object.freeze({
   actor:{x:510,y:620,w:490,h:480},
   setup:{x:0,y:1250,w:490,h:430},
   map:{x:0,y:680,w:490,h:300},
-  history:{x:510,y:2680,w:490,h:450},
-  queue:{x:510,y:490,w:490,h:430},
+  history:{x:510,y:3110,w:490,h:450},
+  queue:{x:510,y:1110,w:490,h:430},
   timer:{x:0,y:990,w:490,h:250},
-  waves:{x:510,y:1730,w:490,h:430},
+  waves:{x:510,y:2160,w:490,h:430},
   events:{x:0,y:1690,w:490,h:430},
   log:{x:0,y:2130,w:490,h:280},
-  advanced:{x:510,y:2170,w:490,h:500},
-  prepared:{x:510,y:1120,w:490,h:600}
+  advanced:{x:510,y:2600,w:490,h:500},
+  prepared:{x:510,y:1550,w:490,h:600}
 });
 const isRecord=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 const allowed=id=>COMBAT_PANEL_IDS.includes(id);
