@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { DashboardPanel, ResourceBar, StatusPill } from '../components/WorkspaceUI.jsx';
-import { ManualNumberInput } from '../components/ManualNumberInput.jsx';
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
 import { useAsyncAction } from '../components/useAsyncAction.js';
 import { activeConditions, conditionDurationLabel } from '../state/conditionModel.mjs';

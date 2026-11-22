@@ -3,6 +3,7 @@ import {ManualNumberInput} from '../../components/ManualNumberInput.jsx';
 import {firebaseService} from '../../firebase/asteriaFirebaseService.js';
 import {useAsyncAction} from '../../components/useAsyncAction.js';
 import {combatOptions,currentCombatant,rows} from '../../state/combatRules.mjs';
+import {activeConditions} from '../../state/conditionModel.mjs';
 const costsText=costs=>Object.entries(costs||{}).filter(([,n])=>n>0).map(([key,n])=>String(n)+' '+key.toUpperCase()).join(' · ')||'No resource cost';
 function ReactionApproval({character,value={},onChange}) {
   const change=(key,next)=>onChange({...value,[key]:next});

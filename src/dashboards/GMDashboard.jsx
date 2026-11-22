@@ -38,7 +38,6 @@ import { useArmourClass } from '../systems/armour/useArmourClass.js';
 import { validateMarketPricing } from '../systems/items/marketPricing.mjs';
 import {GMCombatWorkspace} from './combat/CombatWorkspace.jsx';
 import {createSiteCombatApi,createSiteCombatMediaApi} from './combat/siteCombatApi.js';
-import { useAsyncAction } from '../components/useAsyncAction.js';
 import { migrateLegacyGMWorkspace, normalizeGMWorkspace } from '../state/gmWorkspaceModel.mjs';
 import { resourcePair, soulDamageValue, soulHealingCap } from '../state/specialDamageModel.mjs';
 import { buildSpellbookItem, normalizeSpellCompendiumEntries } from '../state/spellbookModel.mjs';
@@ -127,7 +126,6 @@ function SessionActions({ campaignId, session, busy, run }) {
   </div>;
 }
 
-function slug(value) { return String(value || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''); }
 
 const EMPTY_CUSTOM_REWARD = {
   name:'',

@@ -58,7 +58,8 @@ test('existing player and GM dashboards are not deleted or replaced with stubs',
  assert.match(player,/<CombatDashboardLayout\b/);
  assert.match(gm,/export function GMDashboard\(/);
  assert.match(gm,/<DashboardLayoutWorkspace\b/);
- assert.match(gm,/<GMCombatPanel\b/);
+ assert.match(gm,/<GMCombatWorkspace\b/);
+ assert.doesNotMatch(gm,/function CampaignEncounter\(/);
  assert.match(layout,/export function DashboardLayoutEditor/);
 });
 test('React remains compiled into the hybrid site rather than replacing its HTML document',()=>{
