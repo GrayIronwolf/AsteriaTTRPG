@@ -1,6 +1,6 @@
 const CAMPAIGN_ID=/^[A-Za-z0-9_-]{1,160}$/;
 import { effectiveSession } from '../../../src/state/liveWorkspaceModel.mjs';
-import {safeDashboardArtwork} from '../../../src/state/playerHudMedia.mjs';
+import {hudImageSource as safeDashboardArtwork} from '../../../src/state/playerHudMedia.mjs';
 import {activeConditions} from '../../../src/state/conditionModel.mjs';
 import {soulDamageValue} from '../../../src/state/specialDamageModel.mjs';
 
