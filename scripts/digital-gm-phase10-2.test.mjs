@@ -117,7 +117,7 @@ test('Index preserves unique results when region and settlement use the same ID'
  assert.ok(records.some(r=>r.title==='Vaelgard'));
  assert.equal(new Set(index.map(x=>x.key)).size,index.length);
 });
-test('Search UI and GM-only data access integrate with existing dashboard navigation',()=>{
+test('Private search helpers remain safe while global GM search launcher is retired',()=>{
  const ui=read('src/dashboards/GMUnifiedSearch.jsx');
  const dashboard=read('src/dashboards/GMDashboard.jsx');
  const all=[ui,dashboard,read('src/dashboards/GMWorkspacePanels.jsx'),
@@ -125,13 +125,15 @@ test('Search UI and GM-only data access integrate with existing dashboard naviga
   read('src/dashboards/BattleMapWorkspace.jsx'),
   read('src/dashboards/WorldAtlasWorkspace.jsx'),
   read('src/dashboards/SessionLibraryWorkspace.jsx')].join('\n');
- for(const value of ['GMUnifiedSearch','searchResultDestination','openGMSearchResult',
+ for(const value of ['GMUnifiedSearch','searchResultDestination',
   'subscribeBattleMaps','subscribeWorldAtlas','subscribeRandomTables',
   'subscribeLootTables','subscribeSessionNotes','subscribeSessionPdfs',
   'searchTarget={gmSearchTarget}','searchTarget={searchTarget}'])
   assert.ok(all.includes(value),'Missing '+value);
  assert.ok(ui.includes('Ctrl+K')||ui.includes('⌘K'));
  assert.match(dashboard,/if\(!window\.AsteriaCharacterAccess\.isGM/);
+ assert.doesNotMatch(dashboard,/<GMUnifiedSearch/);
+ assert.match(dashboard,/<DashboardNavigation/);
  assert.ok(!ui.includes('localStorage.setItem'));
  assert.ok(!ui.includes('getDownloadURL'));
 });
