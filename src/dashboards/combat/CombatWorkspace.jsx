@@ -8,6 +8,7 @@ import {GMEncounterWavesPanel} from './GMEncounterWavesPanel.jsx';
 import {GMEncounterHistoryPanel} from './GMEncounterHistoryPanel.jsx';
 import styles from './CombatWorkspace.module.css';
 import {GMAdvancedCombatControls} from './GMAdvancedCombatControls.jsx';
+import {CombatInitiativeInput} from './CombatInitiativeInput.jsx';
 import {ForgedBadge} from './ForgedBadge.jsx';
 
 const emptyEnemy={name:'',type:'Creature',hp:'20',sp:'',mp:'',xpReward:'0',ac:'',initiative:''};
@@ -121,7 +122,7 @@ export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigat
     [notice,setNotice]=useState(''),[error,setError]=useState('');
   const [enemy,setEnemy]=useState(emptyEnemy),[library,setLibrary]=useState('');
   const [selectedBattleMap,setSelectedBattleMap]=useState(null);
-  const [revisionInitiative,setRevisionInitiative]=useState('');
+
   const [resource,setResource]=useState('hp'),[amount,setAmount]=useState(''),
     [maximum,setMaximum]=useState(''),[reason,setReason]=useState('');
   const combat=stream.data?.combat;
@@ -230,13 +231,11 @@ export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigat
               })})}>Apply GM Correction</button>
         </details>
         {canSetup?<div className={styles.fields}>
-          <label>Set initiative<input type="number" value={revisionInitiative}
-            onChange={e=>setRevisionInitiative(e.target.value)}/></label>
-          <button type="button" disabled={busy||!Number.isFinite(Number(revisionInitiative))||
-            revisionInitiative===''||Number(revisionInitiative)<-100||
-            Number(revisionInitiative)>1000}
-            onClick={()=>changeRoster(current.id,{initiative:Number(revisionInitiative),initiativeSet:true})}>
-            Save Initiative</button>
+          <label>Set initiative
+            <CombatInitiativeInput key={current.id} entry={current}
+              disabled={busy||!combat.sessionEditable}
+              onCommit={value=>changeRoster(current.id,{initiative:value,initiativeSet:true})}/>
+          </label>
           <button type="button" disabled={busy} onClick={()=>remove(current.id)}>
             Remove Participant</button>
         </div>:null}

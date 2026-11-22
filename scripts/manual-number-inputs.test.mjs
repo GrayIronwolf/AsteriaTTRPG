@@ -12,11 +12,11 @@ before(async () => {
     name:'expose-input-controls-for-tests',
     transform(code,id) {
       if(id.endsWith('/DashboardInformation.jsx')) return code+'\nexport { ResourceControl, CurrencyControl };';
-      if(id.endsWith('/GMDashboard.jsx')) return code+'\nexport { EncounterInitiativeInput, EncounterResourceControl, XPDistribution, ACInspectionPanel, PlayerManagementTools };';
+      if(id.endsWith('/GMDashboard.jsx')) return code+'\nexport { XPDistribution, ACInspectionPanel, PlayerManagementTools };';
       if(id.endsWith('/GMWorkspacePanels.jsx')) return code+'\nexport { ShopManager };';
     }
   }]});
-  for(const path of ['components/ManualNumberInput','components/DashboardInformation','dashboards/GMWorkspacePanels','dashboards/GMDashboard','dashboards/PlayerItemExchange']) {
+  for(const path of ['components/ManualNumberInput','components/DashboardInformation','dashboards/GMWorkspacePanels','dashboards/GMDashboard','dashboards/PlayerItemExchange','dashboards/combat/CombatInitiativeInput']) {
     Object.assign(modules,await server.ssrLoadModule(`/src/${path}.jsx`));
   }
 });
@@ -112,15 +112,15 @@ test('HP adjustments cannot apply an implicit 1; clearing then entering 20 appli
   await button(view,'-').props.onClick();assert.equal(writes.length,1);
 });
 test('saved initiative stays visible; clearing does not write zero, negative initiative commits correctly',()=>{
-  const writes=[];const view=mount(modules.EncounterInitiativeInput,{entry:{id:'e',name:'Enemy',initiative:12},onCommit:value=>writes.push(value)});
+  const writes=[];const view=mount(modules.CombatInitiativeInput,{entry:{id:'e',name:'Enemy',initiative:12},onCommit:value=>writes.push(value)});
   assert.equal(view.tree.props.value,'12');view.tree.props.onChange({target:{value:''}});view.render();assert.equal(view.tree.props.value,'');
   view.tree.props.onBlur();view.render();assert.equal(view.tree.props.value,'12');assert.equal(writes.length,0);
   view.tree.props.onChange({target:{value:'-2'}});view.render();view.tree.props.onBlur();assert.deepEqual(writes,[-2]);
 });
 test('saved zero initiative remains visible while an explicitly unrolled participant starts blank',()=>{
   const writes=[];
-  assert.equal(mount(modules.EncounterInitiativeInput,{entry:{id:'old',initiative:0},onCommit:value=>writes.push(value)}).tree.props.value,'0');
-  const view=mount(modules.EncounterInitiativeInput,{entry:{id:'new',initiative:0,initiativeSet:false},onCommit:value=>writes.push(value)});
+  assert.equal(mount(modules.CombatInitiativeInput,{entry:{id:'old',initiative:0},onCommit:value=>writes.push(value)}).tree.props.value,'0');
+  const view=mount(modules.CombatInitiativeInput,{entry:{id:'new',initiative:0,initiativeSet:false},onCommit:value=>writes.push(value)});
   assert.equal(view.tree.props.value,'');view.tree.props.onBlur();assert.equal(writes.length,0);
   view.tree.props.onChange({target:{value:'0'}});view.render();view.tree.props.onBlur();assert.deepEqual(writes,[0]);
 });
