@@ -232,6 +232,32 @@ export function installDevFixtures() {
     subscribePartyChat: (_campaignId, callback) => subscribe('partyChat', callback),
     subscribeCampaignItemEcosystem: (_campaignId, callback) => subscribe('itemEcosystem', callback),
     subscribePartyLoot: (_campaignId,callback) => subscribe('partyLoot',callback),
+    // Read-only defaults for dashboard notifications in isolated browser tests.
+    // These mock subscriptions never contact Firebase or change production data.
+    subscribeUniversalChecks: (_campaignId,callback) => {
+      queueMicrotask(()=>callback([]));
+      return ()=>{};
+    },
+    subscribeRecordingNotice: (_campaignId,callback) => {
+      queueMicrotask(()=>callback({status:'idle',revision:0,requestId:'',sessionId:'',participants:[]}));
+      return ()=>{};
+    },
+    subscribeRecordingArchives: (_campaignId,callback) => {
+      queueMicrotask(()=>callback([]));
+      return ()=>{};
+    },
+    subscribeRecordingControl: (_campaignId,callback) => {
+      queueMicrotask(()=>callback({status:'idle',revision:0,requestId:'',sessionId:'',participants:[]}));
+      return ()=>{};
+    },
+    subscribeRecordingConsents: (_campaignId,callback) => {
+      queueMicrotask(()=>callback([]));
+      return ()=>{};
+    },
+    subscribeOwnRecordingConsent: (_campaignId,callback) => {
+      queueMicrotask(()=>callback(null));
+      return ()=>{};
+    },
     syncCampaignItemPrivacy: async () => ({ok:true,migrated:0,remaining:0}),
     subscribeCustomItems: callback => subscribe('customItems', callback),
     saveCampaignEncounter: async (_campaignId, next) => { encounter = { ...encounter, ...clone(next) }; notify('encounter'); return { ok:true }; },
