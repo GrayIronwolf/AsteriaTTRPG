@@ -1831,24 +1831,6 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 }
 .react-character-dashboard .react-workspace-main > .react-session-gate span { font-size: .62rem; }
 
-.react-character-dashboard .react-workspace-main > .react-tabs {
-  display: flex;
-  min-height: 43px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scrollbar-width: none;
-}
-.react-character-dashboard .react-workspace-main > .react-tabs::-webkit-scrollbar { display: none; }
-.react-character-dashboard .react-workspace-main > .react-tabs button {
-  flex: 1 0 auto;
-  min-width: 82px;
-  min-height: 42px;
-  padding: 6px 8px;
-  white-space: nowrap;
-  transition: color 180ms ease, background 180ms ease, box-shadow 180ms ease;
-}
-.react-character-dashboard .react-workspace-main > .react-tabs button .asteria-icon { width: 16px; height: 16px; }
-.react-character-dashboard .react-workspace-main > .react-tabs button.active { color: var(--asteria-text-primary); background: color-mix(in srgb, var(--asteria-accent, #1f7dff) 15%, rgba(0, 0, 0, .7)); }
 
 .react-player-overview-grid {
   display: grid;
@@ -2208,8 +2190,6 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 .react-segmented-actions button { text-transform:capitalize; }
 .react-world-tabs button.active,
 .react-segmented-actions button.active { border-color:var(--asteria-accent,#1f7dff); background:var(--asteria-button-active-bg,rgba(31,125,255,.18)); }
-.react-gm-dashboard .react-workspace-main > .react-tabs { display:flex; overflow-x:auto; overflow-y:hidden; scrollbar-width:thin; }
-.react-gm-dashboard .react-workspace-main > .react-tabs button { flex:1 0 132px; min-width:132px; }
 
 @media (max-width:1100px) {
   .react-gm-workspace-grid,
@@ -2401,24 +2381,6 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 .react-unassigned-dashboard p { margin:8px 0; }
 
 
-/* Shared dashboard menu and roster interaction refinements. */
-.react-character-dashboard .react-workspace-main > .react-tabs,
-.react-gm-dashboard .react-workspace-main > .react-tabs {
-  scroll-padding-inline: 12px;
-  overscroll-behavior-inline: contain;
-  -webkit-overflow-scrolling: touch;
-}
-.react-character-dashboard .react-workspace-main > .react-tabs {
-  scrollbar-width: thin;
-  scrollbar-color: var(--asteria-border-active) transparent;
-}
-.react-character-dashboard .react-workspace-main > .react-tabs::-webkit-scrollbar {
-  display: block;
-  height: 5px;
-}
-.react-character-dashboard .react-workspace-main > .react-tabs::-webkit-scrollbar-thumb {
-  background: var(--asteria-border-active);
-}
 .react-gm-dashboard .react-party-card {
   cursor: default;
 }
@@ -2442,10 +2404,6 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
   border-color: var(--asteria-border-active);
 }
 @media (max-width: 560px) {
-  .react-character-dashboard .react-workspace-main > .react-tabs button,
-  .react-gm-dashboard .react-workspace-main > .react-tabs button {
-    min-height: 48px;
-  }
   .react-gm-dashboard .react-party-list {
     grid-template-columns: minmax(0, 1fr);
   }
