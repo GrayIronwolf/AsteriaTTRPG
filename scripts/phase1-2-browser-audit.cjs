@@ -305,6 +305,31 @@ async function metrics(page) {
       y:panel.style.getPropertyValue('--combat-y')
     }));
     assert.notDeepEqual(changed,before,'Dragging title bar must move a panel without customisation mode: '+JSON.stringify({hit,before,changed}));
+    const second=await header.boundingBox();
+    await p.mouse.move(second.x+35,second.y+20);
+    await p.mouse.down();
+    await p.mouse.move(second.x+75,second.y+220,{steps:20});
+    const preview=await p.locator('[data-combat-panel="controls"]').evaluate(panel=>({
+      transform:panel.style.transform,
+      y:panel.style.getPropertyValue('--combat-y'),
+      zIndex:getComputedStyle(panel).zIndex
+    }));
+    assert.ok(preview.transform.includes('translate3d('),
+      'Free movement must use compositor transform instead of rerendering geometry');
+    assert.equal(preview.y,changed.y,
+      'Pointer movements must not persist panel geometry before release');
+    assert.ok(Number(preview.zIndex)>1,'Active dragged window must rise above other panels');
+    await p.mouse.up();
+    const freeOverlap=await p.locator('[data-combat-panel="controls"]').evaluate(panel=>{
+      const other=panel.parentElement.querySelector('[data-combat-panel="initiative"]');
+      const a=panel.getBoundingClientRect(),b=other.getBoundingClientRect();
+      return {x:panel.style.getPropertyValue('--combat-x'),
+        y:panel.style.getPropertyValue('--combat-y'),
+        overlapped:a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top};
+    });
+    assert.notEqual(freeOverlap.y,changed.y,'Panel must save its crossing movement on release');
+    assert.equal(freeOverlap.overlapped,true,
+      'Default canvas must allow moving across and overlapping another window');
     await p.getByRole('button',{name:'Zoom into canvas'}).click();
     assert.notEqual((await p.getByLabel('Canvas zoom').innerText()).trim(),'100%',
       'Zoom must change directly on the canvas');
@@ -319,7 +344,8 @@ async function metrics(page) {
       x:panel.style.getPropertyValue('--combat-x'),
       y:panel.style.getPropertyValue('--combat-y')
     }));
-    assert.deepEqual(restored,changed,'Canvas positions must persist across reload');
+    assert.deepEqual(restored,{x:freeOverlap.x,y:freeOverlap.y},
+      'The last overlapped canvas position must persist across reload');
     await p.screenshot({path:path.join(root,'08-gm-combat-command-centre.png'),fullPage:true});
   });
   await scenario('09-gm-combat-mobile',{width:390,height:844},async p=>{

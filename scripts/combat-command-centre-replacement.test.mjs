@@ -85,6 +85,8 @@ test('Combat layout reset and quick modes preserve custom layouts and combat pri
  }=await import('../src/dashboards/combat/combatWorkspaceLayoutModel.mjs');
  const state=defaultCombatWorkspaceLayout();
  assert.equal(state.hidden.length,0);
+ assert.equal(state.freeform.allowOverlap,true);
+ assert.equal(state.freeform.snap,false);
  assert.equal(COMBAT_WORKSPACE_MODES.length,3);
  for(const mode of COMBAT_WORKSPACE_MODES){
    const view=applyCombatWorkspaceMode(state,mode.id);
@@ -126,11 +128,18 @@ test('Canvas geometry supports offscreen positions, zoom, persistence and collis
  assert.equal(moved.freeform.positions.controls.y,3600);
  assert.deepEqual(normalizeCombatWorkspace(JSON.parse(JSON.stringify(moved))).freeform.positions.controls,
    moved.freeform.positions.controls);
- const blocked=editCombatWindow(first,'controls','move',{x:0,y:200});
- assert.equal(blocked,first,'Overlapping a visible window is blocked by default');
- const unlocked={...first,freeform:{...first.freeform,allowOverlap:true}};
- const overlapped=editCombatWindow(unlocked,'controls','move',{x:0,y:200});
- assert.notEqual(overlapped,unlocked);
+ const overlapped=editCombatWindow(first,'controls','move',{x:0,y:200});
+ assert.notEqual(overlapped,first,'Overlapping visible windows must work by default');
+ assert.equal(overlapped.freeform.positions.controls.y,200);
+ const collisionRestricted={...first,freeform:{...first.freeform,allowOverlap:false}};
+ const blocked=editCombatWindow(collisionRestricted,'controls','move',{x:0,y:200});
+ assert.equal(blocked,collisionRestricted,'Opt-in collision protection still works');
+ const fine=editCombatWindow(first,'controls','move',{x:37,y:83});
+ assert.equal(fine.freeform.positions.controls.x,37,'Default must not snap');
+ assert.equal(fine.freeform.positions.controls.y,83);
+ const snapRestricted={...first,freeform:{...first.freeform,snap:true}};
+ assert.equal(editCombatWindow(snapRestricted,'controls','move',{x:37,y:83})
+   .freeform.positions.controls.x,40,'Optional snapping must remain available');
  const locked={...first,canvasLocked:true};
  assert.equal(editCombatWindow(locked,'controls','move',{x:3500,y:3600}),locked);
  const camera=normalizeCombatCamera({});
@@ -143,4 +152,38 @@ test('Canvas geometry supports offscreen positions, zoom, persistence and collis
  const resized=editCombatWindow(moved,'controls','resize',{w:700,h:500});
  assert.equal(resized.freeform.positions.controls.w,700);
  assert.equal(resized.freeform.positions.controls.h,500);
+});
+
+test('Combat canvas migrates v1 layouts to free movement while preserving saved geometry',async()=>{
+ const {normalizeCombatWorkspace,defaultCombatWorkspaceLayout,editCombatWindow}=await import(
+   '../src/dashboards/combat/combatWorkspaceLayoutModel.mjs');
+ const legacy=defaultCombatWorkspaceLayout();
+ const before=legacy.freeform.positions.controls;
+ const prior={...legacy,freeform:{...legacy.freeform,
+    interactionVersion:undefined,snap:true,allowOverlap:false}};
+ const next=normalizeCombatWorkspace(prior);
+ assert.equal(next.freeform.snap,false);
+ assert.equal(next.freeform.allowOverlap,true);
+ assert.equal(next.freeform.interactionVersion,2);
+ assert.deepEqual(next.freeform.positions.controls,before);
+ const strict=normalizeCombatWorkspace({...next,freeform:{...next.freeform,
+    snap:true,allowOverlap:false}});
+ assert.equal(strict.freeform.snap,true);
+ assert.equal(strict.freeform.allowOverlap,false);
+ assert.notEqual(editCombatWindow(next,'controls','move',{x:-260,y:-120}),next,
+    'Canvas should allow dragging left/up beyond the initial origin');
+});
+test('Freeform pointer interaction uses frame updates, one commit and active-window stacking',()=>{
+ const renderer=file('src/dashboards/combat/CombatCommandCentre.jsx');
+ const css=file('src/dashboards/combat/CombatCommandCentre.module.css');
+ assert.match(renderer,/requestAnimationFrame\(/);
+ assert.match(renderer,/paintGesture\(g\)/);
+ assert.match(renderer,/node\.style\.transform='translate3d/);
+ assert.match(renderer,/if\(selected!==g\.layout\)change\(/);
+ assert.match(renderer,/frontWindow===id\?50:1/);
+ assert.match(renderer,/wheelTimer/);
+ assert.doesNotMatch(renderer,/setPreview\(/);
+ assert.doesNotMatch(renderer,/const previewLayout=/);
+ assert.match(css,/\.window\.dragging\{/);
+ assert.match(css,/will-change:transform/);
 });

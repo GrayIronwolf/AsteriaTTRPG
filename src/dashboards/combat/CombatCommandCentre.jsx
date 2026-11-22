@@ -1,4 +1,4 @@
-import React,{useEffect,useMemo,useRef,useState} from 'react';
+import React,{useEffect,useRef,useState} from 'react';
 import {freeformPercent} from '../../../src/state/workspaceFreeformModel.mjs';
 import {
   COMBAT_PANEL_IDS,COMBAT_PANEL_LABELS,COMBAT_TOOL_CATEGORIES,COMBAT_WORKSPACE_PRESET_LIMIT,
@@ -47,29 +47,34 @@ export function CombatCommandCentre({uid,campaignId,children}){
   const [redoStack,setRedoStack]=useState([]);
   const [cameraState,setCameraState]=useState(()=>({scope:storageKey,view:readCamera(storageKey)}));
   const camera=cameraState.scope===storageKey?cameraState.view:normalizeCombatCamera({});
-  const updateCamera=update=>setCameraState(previous=>{
-    const current=previous.scope===storageKey?previous.view:readCamera(storageKey);
-    return {scope:storageKey,view:normalizeCombatCamera(
-      typeof update==='function'?update(current):update)};
-  });
+  const updateCamera=update=>{
+    const current=cameraRef.current;
+    const next=normalizeCombatCamera(typeof update==='function'?update(current):update);
+    cameraRef.current=next;
+    setCameraState({scope:storageKey,view:next});
+  };
   const [presetName,setPresetName]=useState('');
   const [maximised,setMaximised]=useState('');
   const [message,setMessage]=useState('');
   const [confirmReset,setConfirmReset]=useState(false);
-  const [preview,setPreview]=useState(null);
+  const [frontWindow,setFrontWindow]=useState('');
   const [wide,setWide]=useState(false);
   const [sidebarExpanded,setSidebarExpanded]=useState(()=>
     typeof window!=='undefined'&&window.innerWidth>=800);
   const [selectedTools,setSelectedTools]=useState('overview');
   const root=useRef(null),canvas=useRef(null),stage=useRef(null),gesture=useRef(null);
+  const cameraRef=useRef(camera),wheelTimer=useRef(null),wheelFrame=useRef(0);
+  const zoomReadout=useRef(null);
   const layout=saved;
   const panels=collectCombatPanels(children).filter(child=>
     React.isValidElement(child)&&COMBAT_PANEL_IDS.includes(child.props.id));
   const visible=panels.filter(panel=>!layout.hidden.includes(panel.props.id));
   useEffect(()=>{
-    setSaved(readLayout(storageKey));setPreview(null);
-    setUndoStack([]);setRedoStack([]);setCameraState({scope:storageKey,view:readCamera(storageKey)});
-    setMaximised('');setMessage('');setPresetName('');setConfirmReset(false);
+    setSaved(readLayout(storageKey));
+    setUndoStack([]);setRedoStack([]);
+    const freshCamera=readCamera(storageKey);
+    cameraRef.current=freshCamera;setCameraState({scope:storageKey,view:freshCamera});
+    setMaximised('');setFrontWindow('');setMessage('');setPresetName('');setConfirmReset(false);
   },[storageKey]);
   useEffect(()=>{
     const host=root.current,viewport=canvas.current;
@@ -88,23 +93,42 @@ export function CombatCommandCentre({uid,campaignId,children}){
     },180);
     return ()=>clearTimeout(timeout);
   },[cameraState,storageKey]);
+  // Apply only compositor-friendly transforms during pan and wheel movement.
+  // Persist camera state once at the end, not once per pointer/wheel event.
+  const drawCamera=value=>{
+    if(stage.current)stage.current.style.transform=
+      'translate3d('+value.x+'px,'+value.y+'px,0) scale('+value.scale+')';
+    if(zoomReadout.current)zoomReadout.current.textContent=Math.round(value.scale*100)+'%';
+  };
   useEffect(()=>{
     const viewport=canvas.current;
     if(!viewport||!wide)return;
     const wheel=event=>{
+      // Wheel events inside a combat tool should continue to scroll its controls.
       if(event.target.closest?.('[data-combat-panel]'))return;
       event.preventDefault();
       const rect=viewport.getBoundingClientRect();
-      updateCamera(current=>zoomCombatCamera(current,
-        current.scale*(event.deltaY<0?1.12:1/1.12),
-        {x:event.clientX-rect.left,y:event.clientY-rect.top}));
+      cameraRef.current=zoomCombatCamera(cameraRef.current,
+        cameraRef.current.scale*(event.deltaY<0?1.08:1/1.08),
+        {x:event.clientX-rect.left,y:event.clientY-rect.top});
+      if(!wheelFrame.current)wheelFrame.current=requestAnimationFrame(()=>{
+        wheelFrame.current=0;drawCamera(cameraRef.current);
+      });
+      clearTimeout(wheelTimer.current);
+      wheelTimer.current=setTimeout(()=>{
+        setCameraState({scope:storageKey,view:cameraRef.current});
+      },140);
     };
     viewport.addEventListener('wheel',wheel,{passive:false});
-    return ()=>viewport.removeEventListener('wheel',wheel);
+    return ()=>{
+      viewport.removeEventListener('wheel',wheel);
+      clearTimeout(wheelTimer.current);
+      if(wheelFrame.current)cancelAnimationFrame(wheelFrame.current);
+      wheelFrame.current=0;
+    };
   },[wide,storageKey]);
-  const previewLayout=useMemo(()=>preview&&wide?
-    editCombatWindow(layout,preview.id,preview.kind,preview.values):layout,
-    [layout,preview,wide]);
+  useEffect(()=>()=>{if(gesture.current?.frame)
+    cancelAnimationFrame(gesture.current.frame);},[]);
   /** Gameplay state never enters the local geometry/history store. */
   const commit=(next,announce=false)=>{
     if(!storageKey){setMessage('GM account or campaign context is unavailable.');return false;}
@@ -138,7 +162,7 @@ export function CombatCommandCentre({uid,campaignId,children}){
     if(!wide||gesture.current||event.button!==0||event.isPrimary===false||
        (event.target!==canvas.current&&event.target!==stage.current))return;
     gesture.current={kind:'pan',pointer:event.pointerId,x:event.clientX,y:event.clientY,
-      origin:camera};
+      origin:{...cameraRef.current},latestCamera:{...cameraRef.current},frame:0};
     event.preventDefault();canvas.current?.setPointerCapture?.(event.pointerId);
   };
   const begin=(event,id,kind,edge='se')=>{
@@ -146,15 +170,21 @@ export function CombatCommandCentre({uid,campaignId,children}){
       layout.canvasLocked||layout.locked.includes(id)||layout.hidden.includes(id))return;
     const width=canvas.current?.clientWidth||0,initial=layout.freeform.positions[id];
     if(!width||!initial)return;
-    gesture.current={id,kind,edge,initial,width,scale:camera.scale,
-      pointer:event.pointerId,x:event.clientX,y:event.clientY};
-    setPreview(null);setMessage('');
+    const ids=kind==='move'?layout.groups.find(row=>row.includes(id))||[id]:[id];
+    const nodes=Object.fromEntries(ids.map(panelId=>
+      [panelId,canvas.current?.querySelector('[data-combat-panel="'+panelId+'"]')]));
+    gesture.current={id,kind,edge,initial,width,scale:cameraRef.current.scale,
+      pointer:event.pointerId,x:event.clientX,y:event.clientY,layout,ids,nodes,
+      lastValid:layout,pending:null,frame:0};
+    setFrontWindow(current=>current===id?current:id);
+    for(const node of Object.values(nodes))node?.classList.add(styles.dragging);
+    setMessage('');
     event.preventDefault();event.stopPropagation();
     canvas.current?.setPointerCapture?.(event.pointerId);
   };
-  const proposal=(g,event)=>{
-    const dx=Math.round((event.clientX-g.x)*1000/(g.width*g.scale));
-    const dy=Math.round((event.clientY-g.y)*1000/(g.width*g.scale));
+  const proposal=(g,x,y)=>{
+    const dx=Math.round((x-g.x)*1000/(g.width*g.scale));
+    const dy=Math.round((y-g.y)*1000/(g.width*g.scale));
     if(g.kind==='move')return {x:g.initial.x+dx,y:g.initial.y+dy};
     const values={...g.initial};
     if(g.edge.includes('e'))values.w+=dx;
@@ -163,25 +193,74 @@ export function CombatCommandCentre({uid,campaignId,children}){
     if(g.edge.includes('n')){values.y+=dy;values.h-=dy;}
     return values;
   };
+  const writeRect=(node,rect)=>{
+    if(!node||!rect)return;
+    node.style.setProperty('--combat-x',freeformPercent(rect.x));
+    node.style.setProperty('--combat-y',rect.y/10+'cqw');
+    node.style.setProperty('--combat-w',freeformPercent(rect.w));
+    node.style.setProperty('--combat-h',rect.h/10+'cqw');
+  };
+  const paintGesture=g=>{
+    if(gesture.current!==g||!g.pending)return;
+    if(g.kind==='pan'){
+      const candidate=normalizeCombatCamera({...g.origin,
+        x:g.origin.x+g.pending.x-g.x,y:g.origin.y+g.pending.y-g.y});
+      g.latestCamera=candidate;
+      cameraRef.current=candidate;
+      drawCamera(candidate);
+      return;
+    }
+    const candidate=editCombatWindow(g.layout,g.id,g.kind,g.pending);
+    // A rejected strict-collision proposal retains the last valid frame.
+    // Normal freeform mode accepts overlapping positions immediately.
+    const atOrigin=Object.entries(g.pending).every(([key,value])=>
+      !Number.isFinite(value)||g.initial[key]===value);
+    if(candidate!==g.layout||atOrigin||g.layout.freeform.allowOverlap)
+      g.lastValid=candidate;
+    const positions=g.lastValid.freeform.positions;
+    for(const panelId of g.ids){
+      const node=g.nodes[panelId],before=g.layout.freeform.positions[panelId];
+      const next=positions[panelId];
+      if(!node||!before||!next)continue;
+      if(g.kind==='move'){
+        const dx=(next.x-before.x)*g.width/1000;
+        const dy=(next.y-before.y)*g.width/1000;
+        node.style.transform='translate3d('+dx+'px,'+dy+'px,0)';
+      }else writeRect(node,next);
+    }
+  };
   const move=event=>{
     const g=gesture.current;
     if(!g||g.pointer!==event.pointerId)return;
-    if(g.kind==='pan'){
-      updateCamera({...g.origin,x:g.origin.x+event.clientX-g.x,
-        y:g.origin.y+event.clientY-g.y});
-    }else setPreview({id:g.id,kind:g.kind,values:proposal(g,event)});
+    g.pending=g.kind==='pan'?{x:event.clientX,y:event.clientY}:
+      proposal(g,event.clientX,event.clientY);
+    if(!g.frame)g.frame=requestAnimationFrame(()=>{
+      g.frame=0;paintGesture(g);
+    });
   };
   const end=event=>{
     const g=gesture.current;
     if(!g||g.pointer!==event.pointerId)return;
+    if(g.frame)cancelAnimationFrame(g.frame);
+    g.frame=0;
+    g.pending=g.kind==='pan'?{x:event.clientX,y:event.clientY}:
+      proposal(g,event.clientX,event.clientY);
+    if(event.type==='pointerup')paintGesture(g);
     gesture.current=null;
-    if(g.kind!=='pan'&&event.type==='pointerup'){
-      const values=proposal(g,event);
-      if(editCombatWindow(layout,g.id,g.kind,values)===layout)
-        setMessage('That move or resize is blocked by a lock, boundary or another panel.');
-      else change(previous=>editCombatWindow(previous,g.id,g.kind,values));
+    if(g.kind==='pan'){
+      if(event.type==='pointerup')updateCamera(g.latestCamera);
+      else{cameraRef.current=g.origin;drawCamera(g.origin);}
+    }else{
+      const selected=event.type==='pointerup'?g.lastValid:g.layout;
+      for(const panelId of g.ids){
+        const node=g.nodes[panelId];
+        writeRect(node,selected.freeform.positions[panelId]);
+        if(node){node.style.transform='';node.classList.remove(styles.dragging);}
+      }
+      if(selected!==g.layout)change(()=>selected);
+      else if(event.type==='pointerup'&&!g.layout.freeform.allowOverlap)
+        setMessage('Move blocked by the optional no-overlap setting. Enable panel overlap in Canvas options.');
     }
-    setPreview(null);
     try{canvas.current?.releasePointerCapture?.(event.pointerId);}catch{/* released */}
   };
   const keyboard=(event,id)=>{
@@ -303,7 +382,7 @@ export function CombatCommandCentre({uid,campaignId,children}){
         current.scale/1.2,{x:(canvas.current?.clientWidth||0)/2,
           y:(canvas.current?.clientHeight||0)/2}))} disabled={!wide}
         aria-label="Zoom out of canvas">−</button>
-      <output aria-label="Canvas zoom" className={styles.zoomValue}>
+      <output ref={zoomReadout} aria-label="Canvas zoom" className={styles.zoomValue}>
         {Math.round(camera.scale*100)}%
       </output>
       <button type="button" onClick={()=>updateCamera(current=>zoomCombatCamera(current,
@@ -376,12 +455,12 @@ export function CombatCommandCentre({uid,campaignId,children}){
       onLostPointerCapture={end}>
       <div ref={stage} className={styles.stage+(maximised?' '+styles.stageMaximised:'')}
         data-stage="combat-canvas-stage"
-        style={{'--combat-canvas-height':boundsHeight(previewLayout.freeform,
+        style={{'--combat-canvas-height':boundsHeight(layout.freeform,
           visible.map(panel=>panel.props.id)),
           '--combat-pan-x':camera.x+'px','--combat-pan-y':camera.y+'px',
           '--combat-scale':camera.scale}}>
       {visible.map(panel=>{
-        const id=panel.props.id,rect=previewLayout.freeform.positions[id];
+        const id=panel.props.id,rect=layout.freeform.positions[id];
         const isMinimised=layout.minimized.includes(id),isMaximised=maximised===id;
         const isLocked=layout.locked.includes(id);
         const grouped=layout.groups.some(row=>row.includes(id));
@@ -390,7 +469,9 @@ export function CombatCommandCentre({uid,campaignId,children}){
           (isMinimised?' '+styles.minimised:'')+
           (isMaximised?' '+styles.maximised:'')}
           data-combat-panel={id}
-          style={{'--combat-x':freeformPercent(rect.x),'--combat-y':rect.y/10+'cqw',
+          onPointerDownCapture={()=>setFrontWindow(current=>current===id?current:id)}
+          style={{zIndex:isMaximised?3000:frontWindow===id?50:1,
+            '--combat-x':freeformPercent(rect.x),'--combat-y':rect.y/10+'cqw',
             '--combat-w':freeformPercent(rect.w),'--combat-h':rect.h/10+'cqw'}}>
           <header className={styles.windowBar}
             data-testid={'combat-drag-header-'+id}

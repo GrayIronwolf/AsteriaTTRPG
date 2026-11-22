@@ -35,6 +35,10 @@
  transform-origin:0 0;transform:translate(var(--combat-pan-x),var(--combat-pan-y)) scale(var(--combat-scale));
  pointer-events:auto}
 .stage .window{pointer-events:auto}
+.window.dragging{will-change:transform;box-shadow:0 18px 48px rgb(0 0 0 / .55);
+ border-color:var(--asteria-border-active);cursor:grabbing}
+.window.dragging .windowBar{cursor:grabbing}
+.stage{will-change:transform}
 .window{position:absolute;display:flex;flex-direction:column;box-sizing:border-box;
  min-width:0;min-height:0;left:var(--combat-x);top:var(--combat-y);
  width:var(--combat-w);height:var(--combat-h);background:var(--asteria-surface);

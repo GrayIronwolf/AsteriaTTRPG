@@ -18,6 +18,7 @@ export const COMBAT_TOOL_CATEGORIES=Object.freeze([
 ]);
 const DEFAULT_HIDDEN=Object.freeze([]); // All tools on new GM canvases.
 const MAX_CANVAS_COORD=12000;
+const CANVAS_INTERACTION_VERSION=2;
 const MIN_CANVAS_SIZE=140;
 const MAX_CANVAS_SIZE=1800;
 const bounded=(n,min,max)=>Math.min(max,Math.max(min,n));
@@ -28,8 +29,8 @@ export function normalizeCombatCanvasRect(value={},fallback={x:0,y:0,w:490,h:300
  const candidate=value&&typeof value==='object'?value:{};
  const w=bounded(whole(candidate.w,fallback.w),MIN_CANVAS_SIZE,MAX_CANVAS_SIZE);
  const h=bounded(whole(candidate.h,fallback.h),120,2000);
- return {x:bounded(whole(candidate.x,fallback.x),0,MAX_CANVAS_COORD-w),
-  y:bounded(whole(candidate.y,fallback.y),0,MAX_CANVAS_COORD-h),w,h};
+ return {x:bounded(whole(candidate.x,fallback.x),-MAX_CANVAS_COORD,MAX_CANVAS_COORD),
+  y:bounded(whole(candidate.y,fallback.y),-MAX_CANVAS_COORD,MAX_CANVAS_COORD),w,h};
 }
 export const COMBAT_CANVAS_ZOOM_MIN=.25;
 export const COMBAT_CANVAS_ZOOM_MAX=2.5;
@@ -110,6 +111,9 @@ const nameOf=value=>typeof value==='string'?value.trim().replace(/\s+/g,' ').sli
 function normaliseBase(raw){
   const source=isRecord(raw)?raw:{},input=isRecord(source.freeform)?source.freeform:{};
   const entries=isRecord(input.positions)?input.positions:{};
+  // v1 stored collision protection and snapping as implicit defaults, even when
+  // the GM had not selected them. Migrate those layouts to true freeform once.
+  const configured=Number(input.interactionVersion)>=CANVAS_INTERACTION_VERSION;
   const isLegacy=Object.keys(entries).length>0&&!Object.hasOwn(entries,'queue');
   const priorBottom=isLegacy?Math.max(...Object.values(entries).map(
     rect=>Number(rect?.y||0)+Number(rect?.h||0)),0):0;
@@ -133,7 +137,9 @@ function normaliseBase(raw){
     if(groups.length===2)break;
   }
   return {
-    freeform:{enabled:true,snap:input.snap!==false,allowOverlap:input.allowOverlap===true,positions},
+    freeform:{enabled:true,snap:configured&&input.snap===true,
+      allowOverlap:configured?input.allowOverlap!==false:true,
+      interactionVersion:CANVAS_INTERACTION_VERSION,positions},
     hidden:unique(source.hidden??DEFAULT_HIDDEN).concat(
       isLegacy?MIGRATED_NEW_HIDDEN.filter(id=>!unique(source.hidden).includes(id)):[]
     ),
@@ -191,11 +197,19 @@ export function editCombatWindow(layout,id,operation,values={}){
      positions[member]=candidate;
    }
  }else positions[id]=next;
- if(!state.allowOverlap&&Object.entries(positions).some(([panel,rect])=>
-   !layout.hidden.includes(panel)&&Object.entries(positions).some(([other,comparison])=>
-     other!==panel&&!layout.hidden.includes(other)&&
-     (panel===id||other===id||(group?.includes(panel)&&!group.includes(other)))&&
-     freeformOverlaps(rect,comparison))))return layout;
+ // Only compare moved rectangles with stationary visible windows.
+ // Previously this scanned all pairs on every pointer update and needlessly
+ // blocked movement when unrelated saved windows already intersected.
+ if(!state.allowOverlap){
+   const affected=group||[id];
+   for(const panel of affected){
+     if(layout.hidden.includes(panel))continue;
+     for(const [other,rect] of Object.entries(positions)){
+       if(affected.includes(other)||layout.hidden.includes(other))continue;
+       if(freeformOverlaps(positions[panel],rect))return layout;
+     }
+   }
+ }
  return {...layout,freeform:{...state,positions}};
 }
 
