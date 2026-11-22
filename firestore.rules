@@ -81,6 +81,26 @@ service cloud.firestore {
       return isCampaignMember(sharedCampaign(campaignId), campaignId);
     }
 
+    // Phase 7.2: a restricted viewer is NOT a campaign member. Their
+    // authority is limited to one sanitized presentation document only.
+    function hasHybridViewerGrant(campaignId) {
+      let path = /databases/$(database)/documents/campaigns/$(campaignId)/hybridViewerGrants/$(request.auth.uid);
+      return signedIn() && exists(path) &&
+        get(path).data.get('uid','') == request.auth.uid;
+    }
+
+    function activeHybridViewer(campaignId) {
+      let grant = get(/databases/$(database)/documents/campaigns/$(campaignId)/hybridViewerGrants/$(request.auth.uid)).data;
+      let session = get(/databases/$(database)/documents/campaigns/$(campaignId)/hybridSessionControl/current).data;
+      return hasHybridViewerGrant(campaignId) &&
+        grant.get('status','') == 'active' &&
+        grant.get('expiresAt',request.time) > request.time &&
+        session.get('status','') == 'open' &&
+        session.get('expiresAt',request.time) > request.time &&
+        session.get('epoch','') != '' &&
+        grant.get('epoch','') == session.get('epoch','');
+    }
+
     function activeSession(campaignId) {
       let session = get(/databases/$(database)/documents/campaigns/$(campaignId)/liveSession/current).data;
       return session.status == 'active' && session.expiresAt is timestamp && request.time < session.expiresAt;
@@ -345,8 +365,8 @@ service cloud.firestore {
       match /battleMaps/{mapId} {
         // The only player-visible map records are explicitly published scenes.
         // Players must query with visibility == 'players'; no GM-only details are published.
-        allow get, list: if isCampaignGM(campaignId) ||
-          (canUseCampaignSystems(campaignId) && resource.data.visibility == 'players');
+        // Only the GM reads raw maps; players get safe server projections.
+        allow get, list: if isCampaignGM(campaignId);
         allow create: if isCampaignGM(campaignId) &&
           request.resource.data.keys().hasOnly([
             'id','campaignId','name','description','visibility','kind','contentType',
@@ -544,6 +564,41 @@ service cloud.firestore {
       // Phase 10.1: a restricted screen is controlled only by a GM callable.
       // Viewers can read the safe projection with active campaign membership;
       // they cannot read the private controller or write either document.
+      // GM sessions / per-user grants are written only by trusted callables.
+      // A grant does not confer general campaign or map access.
+      match /hybridSessionControl/{documentId} {
+        allow get: if documentId == 'current' &&
+          (isCampaignGM(campaignId) || hasHybridViewerGrant(campaignId));
+        allow list: if isCampaignGM(campaignId);
+        allow create, update, delete: if false;
+      }
+      match /hybridViewerGrants/{viewerUid} {
+        allow get: if isCampaignGM(campaignId) ||
+          (signedIn() && viewerUid == request.auth.uid &&
+           resource.data.get('uid','') == request.auth.uid);
+        allow list: if isCampaignGM(campaignId);
+        allow create, update, delete: if false;
+      }
+      match /presentationRestricted/{documentId} {
+        allow get: if documentId == 'current' &&
+          (isCampaignGM(campaignId) || activeHybridViewer(campaignId));
+        allow list: if isCampaignGM(campaignId);
+        allow create, update, delete: if false;
+      }
+      // Phase 7.3 private media library. Publication and scene access are
+      // written only by the server; remote viewer access is enforced in Storage.
+      match /presentationAssets/{assetId} {
+        allow get, list: if isCampaignGM(campaignId);
+        allow create, update, delete: if false;
+      }
+      match /presentationAssetConfig/{documentId} {
+        allow get, list: if isCampaignGM(campaignId);
+        allow create, update, delete: if false;
+      }
+      match /presentationAssetAccess/{documentId} {
+        allow get, list: if isCampaignGM(campaignId);
+        allow create, update, delete: if false;
+      }
       match /presentationControl/{documentId} {
         allow get, list: if isCampaignGM(campaignId);
         allow create, update, delete: if false;
@@ -719,9 +774,33 @@ service cloud.firestore {
         allow create, update, delete: if false;
       }
 
+      // Phase 7.4: never expose raw encounter state to campaign members.
+      // All public combat and map projections are server-maintained allowlists.
+      match /combatPublic/{documentId} {
+        allow get: if documentId == 'current' &&
+          canUseCampaignSystems(campaignId);
+        allow list, create, update, delete: if false;
+      }
+      match /presentationCombat/{documentId} {
+        allow get: if documentId == 'current' &&
+          (isCampaignGM(campaignId) ||
+            (activeHybridViewer(campaignId) &&
+              get(/databases/$(database)/documents/campaigns/$(campaignId)/presentationRestricted/current).data.get('scene','') == 'combat'));
+        allow list, create, update, delete: if false;
+      }
+      match /battleMapsPublic/{mapId} {
+        allow get: if canUseCampaignSystems(campaignId) ||
+          (activeHybridViewer(campaignId) &&
+            get(/databases/$(database)/documents/campaigns/$(campaignId)/presentationRestricted/current).data.get('scene','') == 'battle-map' &&
+            get(/databases/$(database)/documents/campaigns/$(campaignId)/presentationRestricted/current).data.get('mapId','') == mapId &&
+            resource.data.get('visibility','gm') == 'players');
+        allow list: if isCampaignGM(campaignId) ||
+          canUseCampaignSystems(campaignId);
+        allow create, update, delete: if false;
+      }
       match /systems/{systemId} {
         allow read: if canUseCampaignSystems(campaignId) && (
-          (systemId == 'itemEcosystem' || systemId == 'gmWorkspace')
+          (systemId == 'itemEcosystem' || systemId == 'gmWorkspace' || systemId == 'encounter')
             ? isCampaignGM(campaignId) : true
         );
         // The public shop view may also be maintained by the existing
