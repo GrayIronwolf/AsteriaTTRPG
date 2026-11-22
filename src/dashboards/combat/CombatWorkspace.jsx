@@ -171,7 +171,7 @@ export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigat
   };
   const canSetup=combat&&combat.status!=='active';
   return <section className={styles.workspace} data-testid="site-gm-combat">
-    <h2>Combat, Initiative &amp; Encounters</h2>
+    <h2>Combat Command Centre</h2>
     {stream.loading?<p role="status">Verifying live combat access…</p>:null}
     {stream.error?<p role="alert">{stream.error}</p>:null}
     <CombatCommandCentre key={uid+':'+campaignId} uid={uid} campaignId={campaignId}>

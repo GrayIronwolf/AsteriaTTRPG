@@ -16,36 +16,36 @@
   transform:translate3d(var(--combat-pan-x),var(--combat-pan-y),0) scale(var(--combat-scale));
   will-change:transform;pointer-events:auto}
 .stageMaximised{transform:none!important}
-.window[data-combat-panel]{position:absolute;display:flex;flex-direction:column;
-  box-sizing:border-box;min-width:0;min-height:0;
-  left:var(--combat-x);top:var(--combat-y);width:var(--combat-w);height:var(--combat-h);
-  background:var(--asteria-surface);border:1px solid var(--asteria-border);
-  border-radius:var(--asteria-radius);color:var(--asteria-text);
-  box-shadow:var(--asteria-shadow-panel);isolation:isolate;pointer-events:auto}
+.window[data-combat-panel]{position:absolute;display:flex;flex-direction:column;box-sizing:border-box;min-width:0;min-height:0;
+ left:var(--combat-x);top:var(--combat-y);width:var(--combat-w);height:var(--combat-h);container-type:inline-size;container-name:combatWindow;
+ background:linear-gradient(160deg,rgba(182,202,211,.065),transparent 35%,rgba(0,0,0,.16) 78%),#090e14;
+ border:2px solid #7a8893;border-radius:5px;color:var(--asteria-text);
+ box-shadow:0 0 0 1px #111920,0 8px 20px rgb(0 0 0 / .48),inset 0 1px 0 rgba(244,248,249,.48),inset 1px 0 0 rgba(194,209,218,.2),inset -1px 0 0 rgba(10,19,25,.85),inset 0 -2px 0 rgba(0,0,0,.8);
+ isolation:isolate;pointer-events:auto}
+.window[data-combat-panel]::before{content:"";pointer-events:none;position:absolute;inset:2px;border:1px solid rgba(166,186,197,.22);border-radius:2px;z-index:0}
 .window.dragging{will-change:transform;cursor:grabbing;
   border-color:var(--asteria-border-active);box-shadow:0 18px 48px rgb(0 0 0 / .55)}
-.windowBar{display:flex;align-items:center;gap:var(--asteria-space-2);min-height:43px;
-  padding:var(--asteria-space-2);border-bottom:1px solid var(--asteria-border);
-  background:var(--asteria-surface-raised);
-  border-radius:var(--asteria-radius) var(--asteria-radius) 0 0;
-  cursor:grab;touch-action:none;user-select:none}
+.windowBar{position:relative;z-index:2;display:flex;align-items:center;gap:var(--asteria-space-2);
+ min-height:41px;padding:5px 7px 5px 11px;border-bottom:1px solid #7b8d99;
+ background:linear-gradient(180deg,#a4b0b7 0%,#4d5b67 5%,#1d2832 14%,#0b131c 55%,#364651 92%,#7d8e98 100%);
+ box-shadow:inset 0 1px 0 rgba(250,252,255,.4),0 2px 4px rgb(0 0 0 / .4);
+ border-radius:3px 3px 0 0;cursor:grab;touch-action:none;user-select:none}
 .window.dragging .windowBar{cursor:grabbing}
-.windowBar strong{flex:1;min-width:0;font-size:var(--asteria-type-sm);overflow-wrap:anywhere}
+.windowBar strong{flex:1;min-width:0;display:flex;align-items:center;gap:10px;font-size:var(--asteria-type-sm);overflow-wrap:anywhere;text-shadow:0 1px 2px #000}
+.windowBar strong::before{content:"";display:inline-block;flex:none;width:9px;height:9px;transform:rotate(45deg);border:1px solid #9db4c1;background:var(--asteria-accent);box-shadow:inset 0 1px 1px rgba(255,255,255,.6),0 0 7px var(--asteria-accent-soft)}
 .windowBar strong:focus-visible{outline:2px solid var(--asteria-accent);outline-offset:2px}
-.windowActions{display:flex;align-items:center;gap:3px;flex-wrap:wrap;cursor:auto}
-.windowActions button,.options summary,.resizeHandle{font:inherit;color:var(--asteria-text);
-  cursor:pointer;border:1px solid var(--asteria-border-subtle);
-  border-radius:var(--asteria-radius-sm);
-  background:var(--asteria-surface-raised);padding:var(--asteria-space-1) var(--asteria-space-2);
-  min-height:32px}
-.windowActions button{min-width:30px}
-.windowContent{flex:1;min-width:0;min-height:0;overflow:auto;overscroll-behavior:contain;
-  padding:var(--asteria-space-3);scrollbar-width:thin}
-.windowContent>section{padding:0;border:0;background:transparent}
-.windowContent :where(h3,p){margin-top:0}
-.windowContent :where(input,select,textarea){max-width:100%}
-.windowContent :where(button){max-width:100%;white-space:normal}
+.windowActions{position:relative;display:flex;align-items:center;gap:3px;flex-wrap:nowrap;cursor:auto}
+.windowActions button,.options summary,.resizeHandle{font:inherit;color:var(--asteria-text);cursor:pointer;border:1px solid #627482;border-radius:3px;background:linear-gradient(180deg,#394b58,#111e2b 54%,#1b2a36);box-shadow:inset 0 1px 0 rgb(224 240 246 / .18);padding:var(--asteria-space-1) var(--asteria-space-2);min-height:29px}
+.windowActions button{min-width:29px;min-height:29px;padding:3px 6px}
+.windowContent{position:relative;z-index:1;flex:1;min-width:0;min-height:0;overflow:auto;overscroll-behavior:contain;padding:var(--asteria-space-3);background:rgba(5,11,18,.43);scrollbar-width:thin}
+.windowBody{min-width:0;display:flow-root;zoom:var(--combat-content-scale,1)}
+.windowBody>section{padding:0;border:0;background:transparent}
+.windowBody :where(h3,p){margin-top:0}
+.windowBody :where(input,select,textarea){max-width:100%}
+.windowBody :where(button){max-width:100%;white-space:normal}
 .windowContent:focus-within{outline-offset:-2px}
+@container combatWindow (min-width:640px){.windowBody{zoom:calc(var(--combat-content-scale,1) * 1.12)}}
+@container combatWindow (min-width:980px){.windowBody{zoom:calc(var(--combat-content-scale,1) * 1.24)}}
 .canvas[data-editing='true'] .window:hover{border-color:var(--asteria-border-active)}
 .minimised{height:min(var(--combat-h),5rem)}
 .minimised .windowContent{visibility:hidden;height:0;min-height:0;padding:0;
@@ -75,31 +75,14 @@
 .options label{display:grid;gap:var(--asteria-space-1);font-size:var(--asteria-type-sm)}
 .options select{width:100%;background:var(--asteria-surface-raised);color:var(--asteria-text);
   border:1px solid var(--asteria-border-subtle);padding:var(--asteria-space-1)}
-/* Small, persistent controls float inside the canvas; they do not consume layout rows. */
-.canvasActions{position:absolute;top:12px;left:12px;z-index:110;display:flex;align-items:center;
-  gap:5px;padding:5px;background:var(--asteria-surface-raised);
-  border:1px solid var(--asteria-border);border-radius:var(--asteria-radius);
-  box-shadow:0 6px 18px rgb(0 0 0 / .35)}
-.iconButton{display:inline-flex;justify-content:center;align-items:center;
-  width:40px;height:40px;min-height:40px;padding:0;color:var(--asteria-text);
-  background:var(--asteria-surface-raised);border:1px solid var(--asteria-border-subtle);
-  border-radius:var(--asteria-radius-sm);cursor:pointer;touch-action:manipulation}
-.iconButton:hover:not(:disabled){border-color:var(--asteria-border-active);
-  background:var(--asteria-accent-soft)}
-.iconButton[aria-pressed='true']{color:var(--asteria-text);
-  border-color:var(--asteria-border-active);background:var(--asteria-accent-soft)}
-.canvasTitle{position:absolute;top:22px;left:50%;transform:translateX(-50%);
-  margin:0;z-index:90;pointer-events:none;white-space:nowrap;
-  color:var(--asteria-text-muted);font-size:var(--asteria-type-sm);font-weight:600}
-.toolsToggle{position:absolute;right:12px;top:12px;z-index:130;
-  box-shadow:0 6px 18px rgb(0 0 0 / .35)}
-.zoomTools{position:absolute;right:14px;bottom:14px;z-index:95;
-  display:flex;flex-direction:column;align-items:center;gap:5px;
-  padding:5px;background:var(--asteria-surface-raised);
-  border:1px solid var(--asteria-border);border-radius:var(--asteria-radius);
-  box-shadow:0 6px 18px rgb(0 0 0 / .35)}
-.zoomValue{font-size:.72rem;text-align:center;min-width:44px;
-  color:var(--asteria-text-muted);font-variant-numeric:tabular-nums}
+/* One anchored toolbar, with approved order and no separate control groups. */
+.canvasActions{position:absolute;top:12px;right:12px;z-index:130;display:flex;align-items:center;gap:5px;padding:5px;
+ background:linear-gradient(180deg,#3e4c58,#17222d 48%,#0b141f);border:1px solid #8795a0;border-radius:5px;
+ box-shadow:inset 0 1px 0 rgb(245 250 255 / .28),0 6px 18px rgb(0 0 0 / .48)}
+.iconButton{display:inline-flex;justify-content:center;align-items:center;width:38px;height:38px;min-width:38px;min-height:38px;padding:0;color:var(--asteria-text);background:linear-gradient(180deg,#344656,#101c29 55%,#182734);border:1px solid #657887;border-radius:3px;cursor:pointer;touch-action:manipulation}
+.iconButton:hover:not(:disabled){border-color:var(--asteria-border-active);background:var(--asteria-accent-soft)}
+.iconButton[aria-pressed='true']{color:var(--asteria-text);border-color:var(--asteria-border-active);background:var(--asteria-accent-soft)}
+.zoomValue{position:absolute;right:6px;top:calc(100% + 3px);pointer-events:none;padding:1px 5px;border-radius:3px;font-size:.72rem;text-align:center;min-width:39px;color:var(--asteria-text-muted);background:rgba(10,20,30,.94);border:1px solid #576979;font-variant-numeric:tabular-nums}
 /* The former fixed 210px sidebar is replaced by a non-layout-affecting drawer. */
 .drawerBackdrop{position:absolute;inset:0;z-index:112;
   border:0;background:rgba(0,0,0,.36);cursor:default}
@@ -110,7 +93,7 @@
   box-shadow:-14px 0 40px rgb(0 0 0 / .55)}
 .toolSidebar[hidden]{display:none}
 .drawerHeader{display:flex;align-items:center;justify-content:space-between;gap:12px;
-  padding:13px 66px 13px 14px;border-bottom:1px solid var(--asteria-border)}
+  padding:13px 14px;border-bottom:1px solid var(--asteria-border)}
 .drawerHeader h4{font-size:1rem;margin:0}
 .drawerHeader span{display:block;font-size:.72rem;color:var(--asteria-text-muted)}
 .drawerHeader .iconButton{width:32px;height:32px;min-height:32px;flex-shrink:0}
@@ -147,7 +130,6 @@
   margin:0;padding:9px 12px;font-size:var(--asteria-type-sm);
   color:var(--asteria-text);border:1px solid var(--asteria-border-subtle);
   border-radius:var(--asteria-radius-sm);background:var(--asteria-surface-raised)}
-@container (max-width:980px){.canvasTitle{display:none}}
 @container (max-width:699px){
  .canvas{height:auto;min-height:380px;overflow:visible;touch-action:auto}
  .stage{position:relative;top:auto;left:auto;display:flex;flex-direction:column;
@@ -161,13 +143,11 @@
  .minimised .windowContent{display:none}
  .canvas .maximised{position:fixed;inset:4vh 3vw;width:94vw;height:92vh}
  .maximised .windowContent{overflow:auto}
- .zoomTools{display:none}
  .toolSidebar{position:fixed;top:12px;bottom:12px;right:12px;
    width:min(380px,calc(100vw - 24px));border:1px solid var(--asteria-border-active);
    border-radius:var(--asteria-radius)}
  .drawerBackdrop{position:fixed;inset:0}
- .canvasActions{top:10px;left:10px}
- .toolsToggle{top:10px;right:10px}
+ .canvasActions{top:10px;right:10px;gap:3px;padding:3px}
  .note{position:relative;left:auto;bottom:auto;max-width:none;margin:8px}
 }
 @media(max-width:600px){.windowContent{padding:var(--asteria-space-2)}

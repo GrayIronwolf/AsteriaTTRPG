@@ -130,6 +130,11 @@ function normaliseBase(raw){
     id,normalizeCombatCanvasRect(entries[id],isLegacy&&appended[id]?
       appended[id]:DEFAULT_POSITIONS[id])
   ]));
+  const contentScale=Object.fromEntries(
+    Object.entries(isRecord(source.contentScale)?source.contentScale:{})
+      .filter(([id,value])=>allowed(id)&&Number.isFinite(value))
+      .map(([id,value])=>[id,bounded(Math.round(value*100)/100,.85,1.6)])
+  );
   const groups=[];
   for(const group of Array.isArray(source.groups)?source.groups:[]){
     const ids=unique(group).filter(id=>!groups.some(row=>row.includes(id)));
@@ -145,6 +150,7 @@ function normaliseBase(raw){
     ),
     locked:unique(source.locked),
     minimized:unique(source.minimized),
+    contentScale,
     groups,
     canvasLocked:source.canvasLocked===true
   };

@@ -113,9 +113,26 @@ export function CombatCommandCentre({uid,campaignId,children}){
     const viewport=canvas.current;
     if(!viewport||!wide)return;
     const wheel=event=>{
-      // Wheel events inside a combat tool should continue to scroll its controls.
-      if(event.target.closest?.('[data-combat-panel]'))return;
+      const overWindow=Boolean(event.target.closest?.('[data-combat-panel]'));
+      const zoomRequested=!overWindow||event.ctrlKey||event.metaKey;
+      if(!zoomRequested){
+        // Preserve scrolling inside long combat windows, but never scroll the
+        // website when the internal content reaches its scroll boundary.
+        for(let element=event.target;element&&element!==viewport;element=element.parentElement){
+          const style=window.getComputedStyle(element);
+          const canScrollY=/(auto|scroll)/.test(style.overflowY)&&
+            ((event.deltaY<0&&element.scrollTop>0)||
+              (event.deltaY>0&&element.scrollTop+element.clientHeight<element.scrollHeight-1));
+          const canScrollX=/(auto|scroll)/.test(style.overflowX)&&
+            ((event.deltaX<0&&element.scrollLeft>0)||
+              (event.deltaX>0&&element.scrollLeft+element.clientWidth<element.scrollWidth-1));
+          if(canScrollY||canScrollX)return;
+        }
+        event.preventDefault();
+        return;
+      }
       event.preventDefault();
+      if(!event.deltaY)return;
       const rect=viewport.getBoundingClientRect();
       cameraRef.current=zoomCombatCamera(cameraRef.current,
         cameraRef.current.scale*(event.deltaY<0?1.08:1/1.08),
@@ -175,7 +192,7 @@ export function CombatCommandCentre({uid,campaignId,children}){
     event.preventDefault();canvas.current?.setPointerCapture?.(event.pointerId);
   };
   const begin=(event,id,kind,edge='se')=>{
-    if(!wide||gesture.current||event.isPrimary===false||event.button!==0||
+    if(!wide||maximised||gesture.current||event.isPrimary===false||event.button!==0||
       layout.canvasLocked||layout.locked.includes(id)||layout.hidden.includes(id))return;
     const width=canvas.current?.clientWidth||0,initial=layout.freeform.positions[id];
     if(!width||!initial)return;
@@ -344,6 +361,11 @@ export function CombatCommandCentre({uid,campaignId,children}){
             '--combat-w':freeformPercent(rect.w),'--combat-h':rect.h/10+'cqw'}}>
           <header className={styles.windowBar}
             data-testid={'combat-drag-header-'+id}
+            title="Drag to move; double-click to focus or restore"
+            onDoubleClick={event=>{
+              if(event.target.closest('button,input,select,textarea,a,summary,details,label'))return;
+              setMaximised(current=>current===id?'':id);
+            }}
             onPointerDown={event=>{
               if(event.target.closest('button,input,select,textarea,a,summary,details,label'))return;
               begin(event,id,'move');
@@ -361,8 +383,21 @@ export function CombatCommandCentre({uid,campaignId,children}){
                 onClick={()=>setMaximised(isMaximised?'':id)}>
                 {isMaximised?'Restore':'□'}</button>
               <details className={styles.options}>
-                <summary aria-label={'Window options for '+label}>Options</summary>
+                <summary aria-label={'Window options for '+label} title="Window options"><AsteriaIcon name="settings" size={17}/></summary>
                 <div>
+                  <label>Content size
+                    <select aria-label={'Content size for '+label}
+                      value={layout.contentScale[id]??1}
+                      onChange={event=>setPreference(previous=>({...previous,
+                        contentScale:{...previous.contentScale,[id]:Number(event.target.value)}
+                      }))}>
+                      <option value={0.9}>Compact (90%)</option>
+                      <option value={1}>Standard (100%)</option>
+                      <option value={1.15}>Comfortable (115%)</option>
+                      <option value={1.3}>Large (130%)</option>
+                      <option value={1.5}>Extra large (150%)</option>
+                    </select>
+                  </label>
                   <button type="button" onClick={()=>change(previous=>({...previous,
                     locked:isLocked?previous.locked.filter(other=>other!==id):
                       [...previous.locked,id]
@@ -392,8 +427,13 @@ export function CombatCommandCentre({uid,campaignId,children}){
               </details>
             </div>
           </header>
-          <div className={styles.windowContent} aria-hidden={isMinimised}
-            inert={isMinimised?true:undefined}>{panel.props.children}</div>
+          <div className={styles.windowContent} data-combat-scroll
+            aria-hidden={isMinimised} inert={isMinimised?true:undefined}>
+            <div className={styles.windowBody}
+              style={{'--combat-content-scale':layout.contentScale[id]??1}}>
+              {panel.props.children}
+            </div>
+          </div>
           {wide&&!layout.canvasLocked&&!isLocked&&!isMinimised&&!isMaximised?
             ['n','e','s','w','ne','nw','se','sw'].map(edge=>
               <button type="button" key={edge}
@@ -407,7 +447,21 @@ export function CombatCommandCentre({uid,campaignId,children}){
         </article>;
       })}
       </div>
-      <div className={styles.canvasActions} role="toolbar" aria-label="Combat canvas lock and history">
+      <div className={styles.canvasActions} role="toolbar"
+        aria-label="Combat canvas controls">
+        <button type="button" ref={toolToggleRef} className={styles.iconButton}
+          data-testid="site-combat-tools-toggle"
+          aria-label={sidebarExpanded?'Close Combat Tools':'Open Combat Tools'}
+          title="Combat Tools and Canvas Settings"
+          aria-expanded={sidebarExpanded} aria-controls="asteria-combat-tool-list"
+          onClick={()=>setSidebarExpanded(value=>!value)}>
+          <AsteriaIcon name="settings" size={19}/>
+        </button>
+        <button type="button" className={styles.iconButton}
+          aria-label="Undo canvas change" title="Undo canvas change"
+          disabled={!undoStack.length} onClick={undo}>
+          <AsteriaIcon name="undo" size={19}/>
+        </button>
         <button type="button" className={styles.iconButton}
           data-testid="site-combat-canvas-lock"
           aria-label={layout.canvasLocked?'Unlock Canvas':'Lock Canvas'}
@@ -417,50 +471,34 @@ export function CombatCommandCentre({uid,campaignId,children}){
           <AsteriaIcon name={layout.canvasLocked?'lock':'unlock'} size={19}/>
         </button>
         <button type="button" className={styles.iconButton}
-          aria-label="Undo canvas change" title="Undo canvas change"
-          disabled={!undoStack.length} onClick={undo}>
-          <AsteriaIcon name="undo" size={19}/>
-        </button>
-        <button type="button" className={styles.iconButton}
           aria-label="Redo canvas change" title="Redo canvas change"
           disabled={!redoStack.length} onClick={redo}>
           <AsteriaIcon name="redo" size={19}/>
         </button>
+        {wide?<>
+          <button type="button" className={styles.iconButton}
+            aria-label="Zoom into canvas" title="Zoom in"
+            onClick={()=>updateCamera(current=>zoomCombatCamera(current,
+              current.scale*1.2,{x:(canvas.current?.clientWidth||0)/2,
+                y:(canvas.current?.clientHeight||0)/2}))}>
+            <AsteriaIcon name="zoomIn" size={19}/>
+          </button>
+          <button type="button" className={styles.iconButton}
+            aria-label="Fit Canvas" title="Fit all panels"
+            data-testid="site-combat-fit-all" onClick={fitAll}>
+            <AsteriaIcon name="fitCanvas" size={19}/>
+          </button>
+          <button type="button" className={styles.iconButton}
+            aria-label="Zoom out of canvas" title="Zoom out"
+            onClick={()=>updateCamera(current=>zoomCombatCamera(current,
+              current.scale/1.2,{x:(canvas.current?.clientWidth||0)/2,
+                y:(canvas.current?.clientHeight||0)/2}))}>
+            <AsteriaIcon name="zoomOut" size={19}/>
+          </button>
+          <output ref={zoomReadout} aria-label="Canvas zoom"
+            className={styles.zoomValue}>{Math.round(camera.scale*100)}%</output>
+        </>:null}
       </div>
-      <h3 className={styles.canvasTitle}>Combat Command Centre</h3>
-      <button type="button" ref={toolToggleRef}
-        className={styles.iconButton+' '+styles.toolsToggle}
-        data-testid="site-combat-tools-toggle"
-        aria-label={sidebarExpanded?'Close Combat Tools':'Open Combat Tools'}
-        title="Combat Tools and Canvas Settings"
-        aria-expanded={sidebarExpanded} aria-controls="asteria-combat-tool-list"
-        onClick={()=>setSidebarExpanded(value=>!value)}>
-        <AsteriaIcon name="settings" size={22}/>
-      </button>
-      {wide?<div className={styles.zoomTools} role="group" aria-label="Canvas zoom controls">
-        <button type="button" className={styles.iconButton}
-          aria-label="Zoom into canvas" title="Zoom in"
-          onClick={()=>updateCamera(current=>zoomCombatCamera(current,
-            current.scale*1.2,{x:(canvas.current?.clientWidth||0)/2,
-              y:(canvas.current?.clientHeight||0)/2}))}>
-          <AsteriaIcon name="zoomIn" size={20}/>
-        </button>
-        <button type="button" className={styles.iconButton}
-          aria-label="Fit Canvas" title="Fit all panels"
-          data-testid="site-combat-fit-all" onClick={fitAll}>
-          <AsteriaIcon name="fitCanvas" size={20}/>
-        </button>
-        <button type="button" className={styles.iconButton}
-          aria-label="Zoom out of canvas" title="Zoom out"
-          onClick={()=>updateCamera(current=>zoomCombatCamera(current,
-            current.scale/1.2,{x:(canvas.current?.clientWidth||0)/2,
-              y:(canvas.current?.clientHeight||0)/2}))}>
-          <AsteriaIcon name="zoomOut" size={20}/>
-        </button>
-        <output ref={zoomReadout} aria-label="Canvas zoom" className={styles.zoomValue}>
-          {Math.round(camera.scale*100)}%
-        </output>
-      </div>:null}
       {sidebarExpanded?<button type="button" className={styles.drawerBackdrop}
         aria-label="Dismiss Combat Tools" onClick={()=>setSidebarExpanded(false)}/>:null}
       <aside id="asteria-combat-tool-list" hidden={!sidebarExpanded}
@@ -505,8 +543,11 @@ export function CombatCommandCentre({uid,campaignId,children}){
               onChange={event=>setPreference(previous=>({...previous,freeform:{
                 ...previous.freeform,allowOverlap:event.target.checked}}))}/> Allow window overlap</label>
             <p className={styles.sidebarHint}>
-              Drag window headers to move, use edges to resize, and drag empty space to pan.
-              Changes save automatically. The canvas lock does not disable combat controls.
+              Drag window headers to move (double-click to focus), resize from edges,
+              and drag empty space to pan. Scroll over empty canvas to zoom; use Ctrl/Command
+              + wheel over a window to zoom the canvas instead of its contents.
+              Content size is adjustable per window. Changes save automatically.
+              Canvas lock does not disable combat controls.
             </p>
           </details>
         </div>

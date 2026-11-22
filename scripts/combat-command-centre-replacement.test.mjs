@@ -152,6 +152,15 @@ test('Canvas geometry supports offscreen positions, zoom, persistence and collis
  const resized=editCombatWindow(moved,'controls','resize',{w:700,h:500});
  assert.equal(resized.freeform.positions.controls.w,700);
  assert.equal(resized.freeform.positions.controls.h,500);
+ const sizes=normalizeCombatWorkspace({...first,contentScale:{
+   controls:1.3,initiative:50,invalid:1.5,map:NaN
+ }});
+ assert.equal(sizes.contentScale.controls,1.3);
+ assert.equal(sizes.contentScale.initiative,1.6);
+ assert.equal('invalid' in sizes.contentScale,false);
+ assert.equal('map' in sizes.contentScale,false);
+ assert.equal(normalizeCombatWorkspace(JSON.parse(JSON.stringify(sizes)))
+   .contentScale.controls,1.3,'Window content size must persist with existing layout');
 });
 
 test('Combat canvas migrates v1 layouts to free movement while preserving saved geometry',async()=>{
@@ -201,8 +210,28 @@ test('Combat canvas replaces old layout bars with a full-width icon HUD and over
  assert.match(renderer,/data-testid="site-combat-tools-toggle"/);
  assert.match(renderer,/className=\{styles\.drawerBackdrop\}/);
  assert.match(renderer,/className=\{styles\.toolSidebar\}/);
- assert.match(renderer,/className=\{styles\.zoomTools\}/);
- assert.match(renderer,/aria-label="Canvas zoom controls"/);
+ assert.doesNotMatch(renderer,/className=\{styles\.zoomTools\}|styles\.toolsToggle/);
+ assert.match(renderer,/aria-label="Combat canvas controls"/);
+ assert.doesNotMatch(renderer,/<h3 className=\{styles\.canvasTitle\}/);
+ assert.match(file('src/dashboards/combat/CombatWorkspace.jsx'),/<h2>Combat Command Centre<\/h2>/);
+ const toolbar=renderer.match(/<div className=\{styles\.canvasActions\}[\s\S]*?<\/div>/)?.[0];
+ assert.ok(toolbar,'Single canvas control toolbar must exist');
+ const approved=[
+   'data-testid="site-combat-tools-toggle"',
+   'aria-label="Undo canvas change"',
+   'data-testid="site-combat-canvas-lock"',
+   'aria-label="Redo canvas change"',
+   'aria-label="Zoom into canvas"',
+   'data-testid="site-combat-fit-all"',
+   'aria-label="Zoom out of canvas"'
+ ];
+ let last=-1;
+ for(const control of approved){
+   const at=toolbar.indexOf(control);
+   assert.ok(at>last,'Toolbar order or missing control: '+control);
+   last=at;
+ }
+ assert.match(css,/\.canvasActions\{[^}]*right:12px/s);
  assert.match(renderer,/togglePanel\(id\)/);
  assert.match(renderer,/Snap windows to grid/);
  assert.match(renderer,/Allow window overlap/);
@@ -211,4 +240,19 @@ test('Combat canvas replaces old layout bars with a full-width icon HUD and over
  assert.doesNotMatch(css,/\.workArea\{|\.modeBar\{|\.quickActions\{/);
  for(const name of ['unlock','undo','redo','zoomIn','zoomOut','fitCanvas'])
    assert.match(icons,new RegExp('  '+name+':'));
+});
+
+test('Canvas wheel is contained and bezel content can focus and scale',()=>{
+ const renderer=file('src/dashboards/combat/CombatCommandCentre.jsx');
+ const css=file('src/dashboards/combat/CombatCommandCentre.module.css');
+ assert.match(renderer,/viewport\.addEventListener\('wheel',wheel,\{passive:false\}\)/);
+ assert.match(renderer,/const zoomRequested=!overWindow\|\|event\.ctrlKey\|\|event\.metaKey/);
+ assert.match(renderer,/event\.preventDefault\(\)/);
+ assert.match(renderer,/data-combat-scroll/);
+ assert.match(renderer,/onDoubleClick=\{event=>/);
+ assert.match(renderer,/aria-label=\{'Content size for '\+label\}/);
+ assert.match(css,/\.windowBody\{/);
+ assert.match(css,/container-name:combatWindow/);
+ assert.match(css,/\.window\[data-combat-panel\]::before/);
+ assert.doesNotMatch(css,/\.zoomTools\{|\.canvasTitle\{|\.toolsToggle\{/);
 });
