@@ -55,5 +55,11 @@ jobs:
             echo "Compiled bundle already matches tracked artifacts."
             exit 0
           fi
+          SOURCE_SHA="$(git rev-parse HEAD)"
           git commit -m "build(combat): synchronize compiled React bundle on Website-Build-Test [skip ci]"
+          git fetch --no-tags origin Website-Build-Test
+          if [ "$(git rev-parse FETCH_HEAD)" != "$SOURCE_SHA" ]; then
+            echo "Test branch advanced during compilation. Skip stale bundle; the later push will build its own assets."
+            exit 0
+          fi
           git push origin HEAD:Website-Build-Test
