@@ -152,6 +152,9 @@ test('saved combat presets retain hidden window choices and drag constraints',()
   assert.equal(after.hidden.includes('setup'),false);
   const restore=arrangeCombatWorkspace(after);
   assert.equal(restore.hidden.includes('setup'),false);
-  const refused=editCombatWindow(restore,'setup','move',{x:0,y:0});
-  assert.equal(refused,restore,'Collision with controls must not be allowed');
+  const free=editCombatWindow(restore,'setup','move',{x:0,y:0});
+  assert.notEqual(free,restore,'Freeform canvas must allow crossing controls by default');
+  const strict={...restore,freeform:{...restore.freeform,allowOverlap:false}};
+  const refused=editCombatWindow(strict,'setup','move',{x:0,y:0});
+  assert.equal(refused,strict,'Optional no-overlap mode must still reject collisions');
 });

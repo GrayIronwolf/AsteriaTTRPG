@@ -306,9 +306,18 @@ async function metrics(page) {
     }));
     assert.notDeepEqual(changed,before,'Dragging title bar must move a panel without customisation mode: '+JSON.stringify({hit,before,changed}));
     const second=await header.boundingBox();
+    const nextHit=await p.evaluate(({x,y})=>({
+      tag:document.elementFromPoint(x,y)?.tagName,
+      panel:document.elementFromPoint(x,y)?.closest('[data-combat-panel]')?.dataset.combatPanel
+    }),{x:second.x+35,y:second.y+20});
+    console.log('SECOND DRAG HIT',JSON.stringify(nextHit));
     await p.mouse.move(second.x+35,second.y+20);
     await p.mouse.down();
+    assert.equal(await canvas.getAttribute('data-dragging-window'),'controls',
+      'Direct header pointer must start a combat drag');
     await p.mouse.move(second.x+75,second.y+220,{steps:20});
+    await p.waitForFunction(()=>document.querySelector('[data-combat-panel="controls"]')
+      ?.style.transform.includes('translate3d('),null,{timeout:2500});
     const preview=await p.locator('[data-combat-panel="controls"]').evaluate(panel=>({
       transform:panel.style.transform,
       y:panel.style.getPropertyValue('--combat-y'),

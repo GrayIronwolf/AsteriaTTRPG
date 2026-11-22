@@ -173,6 +173,7 @@ export function CombatCommandCentre({uid,campaignId,children}){
     const ids=kind==='move'?layout.groups.find(row=>row.includes(id))||[id]:[id];
     const nodes=Object.fromEntries(ids.map(panelId=>
       [panelId,canvas.current?.querySelector('[data-combat-panel="'+panelId+'"]')]));
+    if(canvas.current)canvas.current.dataset.draggingWindow=id;
     gesture.current={id,kind,edge,initial,width,scale:cameraRef.current.scale,
       pointer:event.pointerId,x:event.clientX,y:event.clientY,layout,ids,nodes,
       lastValid:layout,pending:null,frame:0};
@@ -247,6 +248,7 @@ export function CombatCommandCentre({uid,campaignId,children}){
       proposal(g,event.clientX,event.clientY);
     if(event.type==='pointerup')paintGesture(g);
     gesture.current=null;
+    if(canvas.current)delete canvas.current.dataset.draggingWindow;
     if(g.kind==='pan'){
       if(event.type==='pointerup')updateCamera(g.latestCamera);
       else{cameraRef.current=g.origin;drawCamera(g.origin);}
