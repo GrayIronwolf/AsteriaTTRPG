@@ -124,6 +124,51 @@ test('private GM notes are inaccessible to players',async()=>{
   await assertSucceeds(getDoc(doc(user('gm'),'campaigns/c/systems/gmWorkspace')));
   await assertFails(getDoc(doc(user('alice'),'campaigns/c/systems/gmWorkspace')));
 });
+
+test('Combat Command Centre prepared plans and completed history are GM-only, and revocation takes effect immediately',async()=>{
+  const history='campaigns/c/encounterHistory/combat-1';
+  const workspace='campaigns/c/systems/gmWorkspace';
+  await db.doc(history).set({
+    id:'combat-1',status:'pending-review',revision:1,
+    name:'Fixture encounter',participants:[{characterId:'a',kind:'player'}],
+    notes:'Secret GM encounter outcome',rewards:[],deliveries:{}
+  });
+  await db.doc(workspace).set({
+    preparedEncounters:[{id:'plan-1',name:'Unrevealed enemy reinforcements'}]
+  },{merge:true});
+
+  const gmHistory=doc(user('gm'),history);
+  assert.equal((await assertSucceeds(getDoc(gmHistory))).data().name,'Fixture encounter');
+  await assertSucceeds(getDocs(collection(user('gm'),'campaigns/c/encounterHistory')));
+  await assertSucceeds(getDoc(doc(user('gm'),workspace)));
+  for(const uid of ['alice','bob','eve']){
+    await assertFails(getDoc(doc(user(uid),history)));
+    await assertFails(getDocs(collection(user(uid),'campaigns/c/encounterHistory')));
+    await assertFails(getDoc(doc(user(uid),workspace)));
+  }
+  await assertFails(getDoc(doc(env.unauthenticatedContext().firestore(),history)));
+  await assertFails(getDocs(collection(env.unauthenticatedContext().firestore(),'campaigns/c/encounterHistory')));
+  // History is a server-owned receipt: even GMs cannot forge or edit it directly.
+  for(const uid of ['gm','alice']){
+    await assertFails(setDoc(doc(user(uid),'campaigns/c/encounterHistory/forged'),{status:'approved'}));
+  }
+  await assertFails(updateDoc(gmHistory,{status:'approved'}));
+  await assertFails(deleteDoc(gmHistory));
+
+  await db.doc('campaigns/c').update({
+    gmUids:['gm','alice'],roles:{gm:'gm',alice:'gm',bob:'player'}
+  });
+  await assertSucceeds(getDoc(doc(user('alice'),history)));
+  await assertSucceeds(getDoc(doc(user('alice'),workspace)));
+
+  await db.doc('campaigns/c').update({
+    gmUids:['gm'],roles:{gm:'gm',alice:'player',bob:'player'}
+  });
+  await assertFails(getDoc(doc(user('alice'),history)));
+  await assertFails(getDoc(doc(user('alice'),workspace)));
+  assert.equal((await assertSucceeds(getDoc(gmHistory))).data().status,'pending-review');
+});
+
 test('public username email enumeration is denied',async()=>{
   await db.doc('usernames/alice').set({uid:'alice',email:'private@example.test'});
   await assertFails(getDoc(doc(user('bob'),'usernames/alice')));
