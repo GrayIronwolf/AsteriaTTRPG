@@ -2,7 +2,7 @@ import React from 'react';
 import styles from './GMEncounterWavesPanel.module.css';
 
 export function GMEncounterWavesPanel({
-  combat,schedule=null,pending=null,busy=false,onCommand
+  combat,schedule=null,pending=null,busy=false,onCommand,view='all'
 }){
   const canTrigger=Boolean(combat?.isActive&&combat.sessionEditable&&!pending&&!busy);
   const waveRows=schedule?.waves||[];
@@ -22,7 +22,7 @@ export function GMEncounterWavesPanel({
     });
   };
   return <section className={styles.panel} data-testid="site-gm-encounter-waves">
-    <h3>Encounter Waves &amp; Events</h3>
+    <h3>{view==='waves'?'Reinforcement Waves':view==='events'?'Planned Events':'Encounter Waves & Events'}</h3>
     <p>Prepared encounter schedules remain GM-only. Round markers are reminders,
       not automatic triggers. Releasing a wave cannot interrupt an unresolved action.</p>
     {schedule?<p>Loaded template: {schedule.preparedId} · Revision
@@ -30,7 +30,7 @@ export function GMEncounterWavesPanel({
       <p>No prepared encounter schedule is loaded. Load a saved encounter
         with planned waves or events first.</p>}
     {schedule?<div className={styles.groups}>
-      <section>
+      {(view==='all'||view==='waves')?<section>
         <h4>Reinforcement Waves</h4>
         {waveRows.length?waveRows.map(wave=><article key={wave.id}>
           <strong>{wave.name}</strong>
@@ -47,8 +47,8 @@ export function GMEncounterWavesPanel({
           <button type="button" disabled={!canTrigger||wave.status!=='ready'}
             onClick={()=>activate('wave',wave)}>Release Wave</button>
         </article>):<p>No reinforcement waves prepared.</p>}
-      </section>
-      <section>
+      </section>:null}
+      {(view==='all'||view==='events')?<section>
         <h4>Planned Events</h4>
         {eventRows.length?eventRows.map(event=><article key={event.id}>
           <strong>{event.name}</strong>
@@ -61,7 +61,7 @@ export function GMEncounterWavesPanel({
           <button type="button" disabled={!canTrigger||event.status!=='ready'}
             onClick={()=>activate('event',event)}>Trigger Event</button>
         </article>):<p>No encounter events prepared.</p>}
-      </section>
+      </section>:null}
     </div>:null}
     {pending?<p role="status">Resolve the pending combat action before
       releasing a wave or triggering an event.</p>:null}

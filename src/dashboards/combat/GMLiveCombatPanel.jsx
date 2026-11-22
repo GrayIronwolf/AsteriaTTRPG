@@ -182,12 +182,12 @@ function PendingActionReview({pending,combat,busy,onCommand}){
     </div>:null}
   </section>;
 }
-export function GMLiveCombatPanel({combat,pending=null,log=[],busy,onCommand}){
+export function GMLiveCombatPanel({combat,pending=null,log=[],busy,onCommand,view='all'}){
   const [seconds,setSeconds]=useState(60);
   const [autoStart,setAutoStart]=useState(true);
   const [now,setNow]=useState(()=>Date.now());
   useEffect(()=>{
-    if(!combat?.turnTimer?.enabled)return undefined;
+    if((view!=='timer'&&view!=='all')||!combat?.turnTimer?.enabled)return undefined;
     const tick=window.setInterval(()=>setNow(Date.now()),1000);
     return()=>window.clearInterval(tick);
   },[combat?.turnTimer?.enabled,combat?.turnTimer?.endsAt]);
@@ -207,7 +207,7 @@ export function GMLiveCombatPanel({combat,pending=null,log=[],busy,onCommand}){
     onCommand('encounter',{operation:'next'});
   };
   return <div className={styles.live} data-testid="site-gm-live-combat">
-    <div className={styles.card}>
+    {(view==='all'||view==='status')?<div className={styles.card}>
       <h4>Live Combat Control</h4>
       <p>{active?'Round '+combat.round+' · '+(combat.current?.name||'Current combatant'):
         'Combat not active'}</p>
@@ -221,8 +221,8 @@ export function GMLiveCombatPanel({combat,pending=null,log=[],busy,onCommand}){
           onClick={next}>Advance Turn</button>
       </div>
       {!advance.allowed&&advance.reason?<p role="status">{advance.reason}</p>:null}
-    </div>
-    <div className={styles.card}>
+    </div>:null}
+    {(view==='all'||view==='timer')?<div className={styles.card}>
       <h4>Turn Timer (GM controlled)</h4>
       <p aria-live="off">Remaining: <strong>{timer.configured?elapsed+' seconds':'Off'}</strong>
         {timer.paused?' · Paused':''}</p>
@@ -246,10 +246,10 @@ export function GMLiveCombatPanel({combat,pending=null,log=[],busy,onCommand}){
         <button type="button" disabled={busy||!editable||!timer.configured}
           onClick={()=>setTimer('disable')}>Disable</button>
       </div>
-    </div>
-    <PendingActionReview pending={pending} combat={combat}
-      busy={busy||!editable} onCommand={onCommand}/>
-    <section className={styles.card} data-testid="site-gm-live-history">
+    </div>:null}
+    {(view==='all'||view==='queue')?<PendingActionReview pending={pending} combat={combat}
+      busy={busy||!editable} onCommand={onCommand}/>:null}
+    {(view==='all'||view==='log')?<section className={styles.card} data-testid="site-gm-live-history">
       <h4>Combat Event History</h4>
       {log.length?<ol className={styles.history}>
         {log.map((item,index)=><li key={item.id+'-'+index}>
@@ -258,6 +258,6 @@ export function GMLiveCombatPanel({combat,pending=null,log=[],busy,onCommand}){
             {new Date(item.at).toLocaleTimeString()}</time>:null}
         </li>)}
       </ol>:<p>No combat events recorded yet.</p>}
-    </section>
+    </section>:null}
   </div>;
 }

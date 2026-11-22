@@ -3,14 +3,34 @@ import {
 } from '../../../src/state/workspaceFreeformModel.mjs';
 
 /** Layout-only state: never includes encounter data, permissions or combat commands. */
-export const COMBAT_PANEL_IDS=Object.freeze(['controls','initiative','actor','setup','map','history']);
+export const COMBAT_PANEL_IDS=Object.freeze([
+  'controls','initiative','actor','setup','map','history',
+  'queue','timer','waves','events','log','advanced','prepared'
+]);
+/** Sidebar categories are launchers; they do not create duplicate combat state. */
+export const COMBAT_TOOL_CATEGORIES=Object.freeze([
+  {id:'overview',label:'Combat Overview',panels:['controls','initiative']},
+  {id:'builder',label:'Encounter Builder',panels:['setup']},
+  {id:'prepared',label:'Prepared Encounters',panels:['prepared']},
+  {id:'live',label:'Live Combat',panels:['actor','queue','timer','waves','events','log','advanced']},
+  {id:'maps',label:'Battle Maps',panels:['map']},
+  {id:'rewards',label:'Rewards & History',panels:['history']}
+]);
+const DEFAULT_HIDDEN=Object.freeze(['setup','history','advanced','waves','events','log']);
 export const COMBAT_PANEL_LABELS=Object.freeze({
   controls:'Encounter Controls',
   initiative:'Initiative & Turn Order',
   actor:'Combatant Actions & Resources',
   setup:'Encounter Setup',
   map:'Battle Map & Player Display',
-  history:'Encounter Completion & History'
+  history:'Encounter Completion & History',
+  queue:'GM Action Queue',
+  timer:'Turn Timer',
+  waves:'Reinforcement Waves',
+  events:'Planned Events',
+  log:'Combat Event History',
+  advanced:'Advanced Adjudication & Conditions',
+  prepared:'Prepared Encounter Library & Builder'
 });
 export const COMBAT_WORKSPACE_PRESET_LIMIT=8;
 const DEFAULT_POSITIONS=Object.freeze({
@@ -19,7 +39,14 @@ const DEFAULT_POSITIONS=Object.freeze({
   actor:{x:510,y:0,w:490,h:480},
   setup:{x:510,y:490,w:490,h:400},
   map:{x:0,y:580,w:490,h:260},
-  history:{x:510,y:900,w:490,h:400}
+  history:{x:510,y:900,w:490,h:400},
+  queue:{x:510,y:490,w:490,h:480},
+  timer:{x:0,y:850,w:490,h:260},
+  waves:{x:0,y:1140,w:490,h:400},
+  events:{x:0,y:1550,w:490,h:400},
+  log:{x:0,y:1960,w:490,h:280},
+  advanced:{x:510,y:1530,w:490,h:500},
+  prepared:{x:510,y:990,w:490,h:520}
 });
 const isRecord=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 const allowed=id=>COMBAT_PANEL_IDS.includes(id);
@@ -40,7 +67,10 @@ function normaliseBase(raw){
   }
   return {
     freeform:{enabled:true,snap:input.snap!==false,allowOverlap:input.allowOverlap===true,positions},
-    hidden:unique(source.hidden),
+    hidden:unique(source.hidden??DEFAULT_HIDDEN).concat(
+      isRecord(input.positions)&&!Object.hasOwn(input.positions,'queue')
+        ?DEFAULT_HIDDEN.filter(id=>!unique(source.hidden).includes(id)):[]
+    ),
     locked:unique(source.locked),
     minimized:unique(source.minimized),
     groups
@@ -135,5 +165,5 @@ export function removeCombatPreset(layout,id){
 export function arrangeCombatWorkspace(layout){
   return {...layout,freeform:{...layout.freeform,
     positions:Object.fromEntries(COMBAT_PANEL_IDS.map(id=>[id,{...DEFAULT_POSITIONS[id]}]))
-  },hidden:[],minimized:[],groups:[]};
+  },hidden:layout.hidden,minimized:[],groups:[]};
 }

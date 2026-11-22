@@ -177,8 +177,8 @@ export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigat
         <button type="button" disabled={busy||!combat.sessionEditable||!canSetup||
           !combat.combatants.length}
           onClick={()=>submit('encounter',{operation:'start'})}>Start Combat</button>
-        <button type="button" disabled={busy||!combat.sessionEditable||!combat.isActive}
-          onClick={()=>submit('encounter',{operation:'next'})}>Next Turn</button>
+        <GMLiveCombatPanel combat={combat} pending={stream.data.pending}
+          log={stream.data.combatLog||[]} busy={busy} onCommand={submit} view="status"/>
         <button type="button" disabled={busy||!combat.sessionEditable||!combat.isActive}
           onClick={()=>{if(window.confirm('End combat and archive the final roster for GM reward review? Spent resources remain spent.'))
             submit('encounter',{operation:'end'});}}>End Combat</button>
@@ -186,11 +186,7 @@ export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigat
           onClick={()=>{if(window.confirm('Clear the encounter roster?'))
             submit('encounter',{operation:'clear'});}}>Clear Encounter</button>
       </div>
-      {legacyEncounter?<GMAdvancedCombatControls campaignId={campaignId} encounter={legacyEncounter} characters={legacyCharacters} combatState={legacyCombatState}/>:null}
-      <GMLiveCombatPanel combat={combat} pending={stream.data.pending}
-        log={stream.data.combatLog||[]} busy={busy} onCommand={submit}/>
-      <GMEncounterWavesPanel combat={combat} schedule={stream.data.encounterSchedule}
-        pending={stream.data.pending} busy={busy} onCommand={submit}/>
+
       </CombatCommandPanel>
       <CombatCommandPanel id="history">
         <GMEncounterHistoryPanel api={api} campaignId={campaignId} busy={busy}/>
@@ -296,11 +292,38 @@ export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigat
           </div>
         </section>
       </CombatCommandPanel>
+      <CombatCommandPanel id="queue">
+        <GMLiveCombatPanel combat={combat} pending={stream.data.pending}
+          log={stream.data.combatLog||[]} busy={busy} onCommand={submit} view="queue"/>
+      </CombatCommandPanel>
+      <CombatCommandPanel id="timer">
+        <GMLiveCombatPanel combat={combat} pending={stream.data.pending}
+          log={stream.data.combatLog||[]} busy={busy} onCommand={submit} view="timer"/>
+      </CombatCommandPanel>
+      <CombatCommandPanel id="waves">
+        <GMEncounterWavesPanel combat={combat} schedule={stream.data.encounterSchedule}
+          pending={stream.data.pending} busy={busy} onCommand={submit} view="waves"/>
+      </CombatCommandPanel>
+      <CombatCommandPanel id="events">
+        <GMEncounterWavesPanel combat={combat} schedule={stream.data.encounterSchedule}
+          pending={stream.data.pending} busy={busy} onCommand={submit} view="events"/>
+      </CombatCommandPanel>
+      <CombatCommandPanel id="log">
+        <GMLiveCombatPanel combat={combat} pending={stream.data.pending}
+          log={stream.data.combatLog||[]} busy={busy} onCommand={submit} view="log"/>
+      </CombatCommandPanel>
+      <CombatCommandPanel id="advanced">
+        {legacyEncounter?<GMAdvancedCombatControls campaignId={campaignId}
+          encounter={legacyEncounter} characters={legacyCharacters}
+          combatState={legacyCombatState}/>:<p>Advanced encounter state is unavailable.</p>}
+      </CombatCommandPanel>
+      <CombatCommandPanel id="prepared">
+        <PreparedEncounterLibrary api={api} campaignId={campaignId}
+          combat={combat} plans={stream.data.preparedEncounters||[]}
+          maps={stream.data.maps||[]} mediaApi={mediaApi}
+          library={stream.data.library||[]}/>
+      </CombatCommandPanel>
     </CombatCommandCentre>:null}
-    {combat?<PreparedEncounterLibrary api={api} campaignId={campaignId}
-      combat={combat} plans={stream.data.preparedEncounters||[]}
-      maps={stream.data.maps||[]} mediaApi={mediaApi}
-      library={stream.data.library||[]}/>:null}
     {notice?<p role="status">{notice}</p>:null}
     {error?<p role="alert">{error}</p>:null}
   </section>;
