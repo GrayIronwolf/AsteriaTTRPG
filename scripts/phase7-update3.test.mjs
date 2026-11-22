@@ -55,7 +55,7 @@ test('Player and GM settings preserve unsaved edits until a successful current-s
  assert.match(player,/scopeRef\.current===savedScope&&revision\.current===savedRevision/);
  assert.match(player,/Discard Unsaved Changes/);
  const gm=read('src/dashboards/GMDashboard.jsx');
- assert.match(gm,/dashboardDraftRevision\.current===saveRevision/);
- assert.match(gm,/dashboardSaveScope\.current!==saveScope/);
- assert.match(gm,/if\(dashboardSaveScope\.current!==saveScope\)return result/);
+ assert.match(gm,/canvasSaveChain\.current=write\.catch/);
+ assert.match(gm,/dashboardSaveScope\.current!==scope/);
+ assert.match(gm,/setSavedDashboardLayout\(current=>/);
 });
