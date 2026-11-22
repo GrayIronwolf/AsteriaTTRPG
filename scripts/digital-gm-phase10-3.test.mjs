@@ -109,7 +109,8 @@ test('Projector uses safe campaign media projections, never raw GM encounter or 
   assert.match(view,/toggleFullscreen/);
   assert.match(runtime,/visibilitychange/);
   assert.match(read('src/dashboards/presentation/CampaignPresentationWorkspace.module.css'),/@media\(max-width:660px\)/);
-});test('Blackout and strict schema prevent stale GM material reaching the shared screen',()=>{
+});
+test('Blackout and strict schema prevent stale GM material reaching the shared screen',()=>{
  const draft={scene:'party',title:'The Heroes',subtitle:'',mapId:'',
   characterIds:['hero'],showRound:false,showPartyHP:false,theme:'obsidian'};
  const scene=publicPresentation(draft,1);
@@ -123,7 +124,7 @@ test('Projector uses safe campaign media projections, never raw GM encounter or 
  assert.equal(safeCombatPresentation({status:'active',round:2,turnIndex:0,
   combatants:[{kind:'enemy',name:'SECRET NPC',hp:2000}]},sources.characters).current,'GM turn');
  assert.equal(PRESENTATION_DEFAULT.scene,'blank');
- assert.match(presentation,/type:'blackout'/);
+ assert.match(read('src/dashboards/presentation/CampaignPresentationWorkspace.jsx'),/type:'blackout'/);
 });
 test('Backend and Firestore still restrict read/write control to authenticated campaign members',()=>{
  const rules=read('firestore.rules');
