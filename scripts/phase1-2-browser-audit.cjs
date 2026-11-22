@@ -376,6 +376,7 @@ async function metrics(page) {
         target:{x:b.x,y:b.y,w:b.width,h:b.height},
         overlapped:a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top};
     });
+    console.log('FREE OVERLAP GEOMETRY',JSON.stringify({current,target,dx,dy,freeOverlap}));
     assert.notEqual(freeOverlap.y,changed.y,'Panel must save its crossing movement on release');
     assert.equal(freeOverlap.overlapped,true,
       'Default canvas must allow moving across and overlapping another window');
