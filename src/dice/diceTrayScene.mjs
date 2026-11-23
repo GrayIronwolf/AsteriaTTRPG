@@ -4,7 +4,7 @@
  */
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
-import {validateDiceTrayAppearance,getDiceTrayFamily} from './diceTrayCatalogue.mjs';
+import {validateDiceTrayAppearance} from './diceTrayCatalogue.mjs';
 import {trayOutline,trayThrowOrigin} from './diceTrayGeometry.mjs';
 import {createTrayImpactAudio} from './diceTrayImpact.mjs';
 
