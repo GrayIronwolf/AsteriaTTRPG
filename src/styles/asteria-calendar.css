@@ -57,3 +57,13 @@
  .asteria-calendar-day{min-height:63px;padding:6px!important}
  .asteria-calendar-row{grid-template-columns:repeat(auto-fit,minmax(105px,1fr))}
 }
+
+
+/* Calendar Milestone 2 - clock, event categories and celestial dates */
+.asteria-calendar-clock-controls{display:grid;gap:10px;padding:12px;border:1px solid #4f6679;border-radius:7px;background:#1c2c3d}
+.asteria-calendar-clock-controls h4{margin:0}
+.asteria-calendar-browser .asteria-calendar-event-mark{font-size:.7rem}
+.asteria-calendar-browser .asteria-calendar-selected{display:grid;gap:6px}
+.asteria-calendar-browser .asteria-calendar-selected p{margin:0;padding:5px 8px;border-left:2px solid #769aba;background:#223044}
+.asteria-calendar-editor-list .asteria-calendar-row input[type="color"]{height:42px;padding:4px}
+@media(max-width:600px){.asteria-calendar-clock-controls{padding:9px}.asteria-calendar-browser .asteria-calendar-selected{min-width:0}}
