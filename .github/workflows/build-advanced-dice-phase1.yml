@@ -17,6 +17,8 @@ on:
       - 'scripts/dice-engine-phase3-7.test.mjs'
       - 'scripts/dice-engine-phase3-8.test.mjs'
       - 'scripts/dice-engine-phase3-9.test.mjs'
+      - 'scripts/dice-engine-phase3-10.test.mjs'
+      - 'scripts/dice-prototype/phase3-10*'
       - 'scripts/dice-prototype/phase3-9*'
       - 'scripts/dice-prototype/phase3-8*'
       - 'scripts/dice-prototype/phase3-7*'
@@ -76,6 +78,15 @@ jobs:
         run: node scripts/dice-prototype/phase3-8-runner.mjs
       - name: Verify five additional physical tower families in Chromium
         run: node scripts/dice-prototype/phase3-9-runner.mjs
+      - name: Verify Phase 3.10 effects, audio and mobile controls in Chromium
+        run: node scripts/dice-prototype/phase3-10-runner.mjs
+      - name: Store Phase 3.10 visual and audio acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asteria-dice-phase3-10-fx
+          path: dice-phase3-10-evidence/
+          if-no-files-found: warn
       - name: Store Phase 3.9 five-tower physical evidence
         if: always()
         uses: actions/upload-artifact@v4
