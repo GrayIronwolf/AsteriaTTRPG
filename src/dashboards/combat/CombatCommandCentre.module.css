@@ -1,13 +1,17 @@
 /* Combat Command Centre: one canvas surface. No legacy sidebar grid or layout toolbar. */
 .centre{width:calc(100% + var(--combat-edge-left,0px) + var(--combat-edge-right,0px));
-  min-width:0;margin-left:calc(-1 * var(--combat-edge-left,0px));container-type:inline-size}
+  min-width:0;margin-left:calc(-1 * var(--combat-edge-left,0px));container-type:inline-size;
+  border:0;border-radius:0;box-shadow:none}
 .canvas{position:relative;container-type:inline-size;min-width:0;width:100%;
   height:var(--combat-viewport-height,max(580px,calc(100dvh - 190px)));
-  min-height:420px;overflow:hidden;touch-action:none;cursor:grab;
+  min-height:380px;overflow:hidden;touch-action:none;cursor:grab;
+  border:0!important;border-radius:0;box-shadow:none;outline:0;
   background-color:#091623;
   background-image:radial-gradient(ellipse at 50% 0%,rgba(42,86,117,.20),transparent 68%),
-    radial-gradient(circle,rgba(130,174,194,.22) .8px,transparent 1px);
-  background-size:100% 100%,26px 26px;overscroll-behavior:contain}
+    radial-gradient(circle,rgba(130,174,194,var(--combat-grid-opacity,.22)) .8px,transparent 1px);
+  background-size:100% 100%,var(--combat-grid-spacing,26px) var(--combat-grid-spacing,26px);
+  background-position:center top,var(--combat-grid-x,0px) var(--combat-grid-y,60px);
+  overscroll-behavior:contain}
 .canvas:active{cursor:grabbing}
 .canvas button:disabled{opacity:.42;cursor:not-allowed}
 .canvas button:focus-visible,.canvas input:focus-visible,.canvas select:focus-visible,
@@ -18,22 +22,28 @@
   transform:translate3d(var(--combat-pan-x),var(--combat-pan-y),0) scale(var(--combat-scale));
   pointer-events:auto}
 .cameraFocus{transition:transform 240ms cubic-bezier(.22,1,.36,1);will-change:transform}
+.canvas.cameraFocus{transition:background-size 240ms cubic-bezier(.22,1,.36,1),
+ background-position 240ms cubic-bezier(.22,1,.36,1)}
 @media(prefers-reduced-motion:reduce){.cameraFocus{transition:none}}
 .window[data-combat-panel]{position:absolute;display:flex;flex-direction:column;box-sizing:border-box;min-width:0;min-height:0;
  left:var(--combat-x);top:var(--combat-y);width:var(--combat-w);height:var(--combat-h);container-type:inline-size;container-name:combatWindow;
- background:linear-gradient(155deg,rgba(71,105,128,.16),transparent 48%),#0b1723;
- border:2px solid #637c8e;border-radius:5px;color:var(--asteria-text);
- box-shadow:0 0 0 1px #08131e,0 10px 26px rgb(0 0 0 / .52),
-  inset 0 1px 0 rgba(230,240,247,.34),inset 1px 0 0 rgba(170,196,211,.16),
-  inset -1px 0 0 rgba(7,16,26,.85),inset 0 -2px 0 rgba(0,0,0,.65);
+ background-color:var(--asteria-panel-background,#090e14);
+ background-image:linear-gradient(160deg,rgba(182,202,211,.065),transparent 35%,rgba(0,0,0,.16) 78%),
+  var(--asteria-panel-backdrop,url("../../../assets/ui/royal-relic-obsidian.svg"));
+ background-size:cover,512px 512px;background-position:center;background-repeat:no-repeat,repeat;
+ border:1px solid #87939e;border-radius:4px;color:var(--asteria-text);
+ box-shadow:0 0 0 1px #111920,0 6px 17px rgba(0,0,0,.48),
+  inset 0 1px 0 rgba(244,248,249,.45),inset 1px 0 0 rgba(194,209,218,.2),
+  inset -1px 0 0 rgba(10,19,25,.9),inset 0 -2px 0 rgba(0,0,0,.8);
  isolation:isolate;pointer-events:auto;text-rendering:optimizeLegibility}
-.window[data-combat-panel]::before{content:"";pointer-events:none;position:absolute;inset:2px;border:1px solid rgba(166,186,197,.22);border-radius:2px;z-index:0}
+.window[data-combat-panel]::before{content:"";pointer-events:none;position:absolute;inset:1px;
+ border:1px solid rgba(169,186,195,.29);border-radius:2px;z-index:0}
 .window.dragging{will-change:transform;cursor:grabbing;
   border-color:var(--asteria-border-active);box-shadow:0 18px 48px rgb(0 0 0 / .55)}
 .windowBar{position:relative;z-index:2;display:flex;align-items:center;gap:var(--asteria-space-2);
- min-height:44px;padding:6px 8px 6px 13px;border-bottom:1px solid #456b85;
- background:linear-gradient(180deg,#304d62 0%,#172d40 40%,#10202e 100%);
- box-shadow:inset 0 1px 0 rgba(224,241,252,.22),0 2px 6px rgb(0 0 0 / .32);
+ min-height:40px;padding:5px 8px 5px 12px;border-bottom:1px solid rgba(162,174,179,.46);
+ background:linear-gradient(180deg,#394b58 0%,#253442 48%,#101d2a 100%);
+ box-shadow:inset 0 1px 0 rgba(224,241,252,.23),0 1px 0 rgba(0,0,0,.68);
  border-radius:3px 3px 0 0;cursor:grab;touch-action:none;user-select:none}
 .window.dragging .windowBar{cursor:grabbing}
 .windowBar strong{flex:1;min-width:0;display:flex;align-items:center;gap:10px;font-size:.91rem;font-weight:650;letter-spacing:.01em;overflow-wrap:anywhere;text-shadow:0 1px 2px #000}
@@ -42,14 +52,30 @@
 .windowActions{position:relative;display:flex;align-items:center;gap:3px;flex-wrap:nowrap;cursor:auto}
 .windowActions button,.options summary,.resizeHandle{font:inherit;color:var(--asteria-text);cursor:pointer;border:1px solid #627482;border-radius:3px;background:linear-gradient(180deg,#394b58,#111e2b 54%,#1b2a36);box-shadow:inset 0 1px 0 rgb(224 240 246 / .18);padding:var(--asteria-space-1) var(--asteria-space-2);min-height:29px}
 .windowActions button{min-width:29px;min-height:29px;padding:3px 6px}
-.windowContent{position:relative;z-index:1;flex:1;min-width:0;min-height:0;overflow:auto;overscroll-behavior:contain;padding:var(--asteria-space-3);background:rgba(5,13,22,.38);scrollbar-width:thin}
+.windowContent{position:relative;z-index:1;flex:1;min-width:0;min-height:0;overflow:auto;
+ overscroll-behavior:contain;padding:var(--asteria-space-3);background:transparent;scrollbar-width:thin}
 .windowBody{min-width:0;display:flow-root;zoom:var(--combat-content-scale,1)}
-.windowBody>section{padding:0;border:0;background:transparent}
+.windowBody>section{padding:0;border:0;background:transparent;box-shadow:none}
 .windowBody :where(h3,p){margin-top:0}
 .windowBody :where(input,select,textarea){max-width:100%}
 .windowBody :where(button){max-width:100%;white-space:normal}
 .windowContent:focus-within{outline-offset:-2px}
 .windowBody :where(img,svg){max-width:100%;height:auto}
+.canvas[data-detail-level='compact'] .windowBody{zoom:calc(var(--combat-content-scale,1) * 1.12)}
+.canvas[data-detail-level='preview'] .windowBar{
+ min-height:calc(36px / var(--combat-scale));padding:0 calc(12px / var(--combat-scale))}
+.canvas[data-detail-level='preview'] .windowBar strong{
+ font-size:calc(13px / var(--combat-scale));overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.canvas[data-detail-level='preview'] .windowBar strong::before{
+ width:calc(7px / var(--combat-scale));height:calc(7px / var(--combat-scale))}
+.canvas[data-detail-level='preview'] .windowActions,
+.canvas[data-detail-level='preview'] .resizeHandle{display:none}
+.canvas[data-detail-level='preview'] .windowContent{opacity:0;pointer-events:none}
+.canvas[data-detail-level='preview'] .window:not(.minimised)::after{
+ content:'Zoom in to interact';position:absolute;z-index:3;
+ top:calc(43px / var(--combat-scale));left:calc(12px / var(--combat-scale));
+ color:var(--asteria-text-muted);font-size:calc(11px / var(--combat-scale));pointer-events:none}
+.canvas[data-detail-mode='proportional'] .windowContent{opacity:1;pointer-events:auto}
 @container combatWindow (min-width:520px){
   .windowBody :where(.react-form-grid,.react-gm-resources-grid){
     grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr))
@@ -136,6 +162,9 @@
 .openingView:hover{border-color:var(--asteria-border-active);background:var(--asteria-accent-soft)}
 .drawerSettings label{display:flex;gap:9px;align-items:center;margin-top:12px;font-size:.82rem}
 .drawerSettings input{accent-color:var(--asteria-accent)}
+.drawerSettings select{min-width:0;max-width:100%;padding:7px;
+ border:1px solid var(--asteria-border-active);
+ background:var(--asteria-surface-raised);color:var(--asteria-text)}
 .sidebarHint{color:var(--asteria-text-muted);font-size:.75rem;line-height:1.45;margin:12px 0 0}
 .empty{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:20;
   display:grid;justify-items:center;gap:10px;padding:18px;text-align:center;

@@ -3,6 +3,7 @@ import {freeformPercent} from '../../../src/state/workspaceFreeformModel.mjs';
 import {
   COMBAT_PANEL_IDS,COMBAT_PANEL_LABELS,COMBAT_TOOL_CATEGORIES,
   normalizeCombatCamera,zoomCombatCamera,fitCombatCamera,openingCombatCamera,
+  combatCanvasGridStyle,combatCanvasDetailLevel,
   focusCombatCamera,clampCombatCamera,orderedCombatPartyIds,moveCombatPartyCard,
   combatWorkspaceStorageKey,defaultCombatWorkspaceLayout,dockCombatWindow,
   editCombatWindow,normalizeCombatWorkspace,setCombatGroup
@@ -34,7 +35,7 @@ function readCamera(key){
    return stored?normalizeCombatCamera(JSON.parse(stored)):null;
  }catch{return null;}
 }
-const DEFAULT_CAMERA=normalizeCombatCamera({scale:.9});
+const DEFAULT_CAMERA=normalizeCombatCamera({scale:.5});
 const boundsHeight=(freeform,visibleIds)=>Math.max(700,...visibleIds.map(id=>{
  const rect=freeform.positions[id];return rect?rect.y+rect.h+80:700;
 }));
@@ -134,24 +135,20 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
     let frame=0;
     const fit=()=>{
       frame=0;
-      const pageStyle=window.getComputedStyle(page);
-      const scrollStyle=window.getComputedStyle(scrollArea);
-      const screenBottom=window.visualViewport
-        ?window.visualViewport.height+window.visualViewport.offsetTop
-        :window.innerHeight;
-      const bottom=Math.min(screenBottom,scrollArea.getBoundingClientRect().bottom);
-      // The parent scroller can retain its scroll position between dashboard
-      // tabs. Add scrollTop so height never grows as the user scrolls.
-      const top=viewport.getBoundingClientRect().top+scrollArea.scrollTop;
-      const height=Math.max(420,Math.floor(bottom-top-8));
+      const scrollRect=scrollArea.getBoundingClientRect();
+      const viewportRect=viewport.getBoundingClientRect();
+      // Measure in one coordinate space. The former viewport-top + scrollTop
+      // mix left an unintended gap below the GM/Player/Combat canvases.
+      const contentTop=viewportRect.top-scrollRect.top+scrollArea.scrollTop;
+      const height=Math.max(380,Math.floor(scrollArea.clientHeight-contentTop-2));
+      const parentRect=host.parentElement?.getBoundingClientRect();
       const expandHorizontally=window.innerWidth>=900&&
         (host.parentElement?.clientWidth||0)>=700;
-      const left=expandHorizontally?Math.max(0,
-        (parseFloat(pageStyle.paddingLeft)||0)+
-        (parseFloat(scrollStyle.paddingLeft)||0)-8):0;
-      const right=expandHorizontally?Math.max(0,
-        (parseFloat(pageStyle.paddingRight)||0)+
-        (parseFloat(scrollStyle.paddingRight)||0)-8):0;
+      // Expand into page gutters, not into player combat sidebars or dialogs.
+      const left=expandHorizontally&&parentRect
+        ?Math.min(36,Math.max(0,parentRect.left-scrollRect.left)):0;
+      const right=expandHorizontally&&parentRect
+        ?Math.min(36,Math.max(0,scrollRect.right-parentRect.right)):0;
       host.style.setProperty('--combat-edge-left',left+'px');
       host.style.setProperty('--combat-edge-right',right+'px');
       viewport.style.setProperty('--combat-viewport-height',height+'px');
@@ -229,14 +226,25 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
     if(stage.current)stage.current.style.transform=
       'translate3d('+Math.round(value.x*100)/100+'px,'+
         Math.round(value.y*100)/100+'px,0) scale('+value.scale+')';
+    const viewport=canvas.current;
+    if(viewport){
+      const grid=combatCanvasGridStyle(value);
+      for(const [key,entry] of Object.entries(grid))
+        viewport.style.setProperty(key,key==='--combat-grid-opacity'&&!layout.gridVisible?'0':entry);
+      viewport.dataset.detailLevel=combatCanvasDetailLevel(value,layout.detailMode);
+    }
     if(zoomReadout.current)zoomReadout.current.textContent=Math.round(value.scale*100)+'%';
   };
   const animateCamera=()=>{
-    const node=stage.current;
+    const node=stage.current,viewport=canvas.current;
     if(!node||window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;
     clearTimeout(focusTimer.current);
     node.classList.add(styles.cameraFocus);
-    focusTimer.current=setTimeout(()=>node.classList.remove(styles.cameraFocus),280);
+    viewport?.classList.add(styles.cameraFocus);
+    focusTimer.current=setTimeout(()=>{
+      node.classList.remove(styles.cameraFocus);
+      viewport?.classList.remove(styles.cameraFocus);
+    },280);
   };
   const focusWindow=id=>{
     const viewport=canvas.current;
@@ -259,6 +267,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
     const wheel=event=>{
       const overWindow=Boolean(event.target.closest?.('[data-combat-panel]'));
       stage.current?.classList.remove(styles.cameraFocus);
+      canvas.current?.classList.remove(styles.cameraFocus);
       const zoomRequested=!overWindow||event.ctrlKey||event.metaKey;
       if(!zoomRequested){
         // Preserve scrolling inside long combat windows, but never scroll the
@@ -361,6 +370,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
        (!middle&&!space&&(event.button!==0||
          (event.target!==canvas.current&&event.target!==stage.current))))return;
     stage.current?.classList.remove(styles.cameraFocus);
+    canvas.current?.classList.remove(styles.cameraFocus);
     if(middle||space)setFocused(null);
     gesture.current={kind:'pan',pointer:event.pointerId,x:event.clientX,y:event.clientY,
       origin:{...cameraRef.current},latestCamera:{...cameraRef.current},frame:0};
@@ -531,12 +541,17 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
       [...previous.hidden,id]
     }));
   };
+  const gridStyle=combatCanvasGridStyle(camera);
+  const detailLevel=combatCanvasDetailLevel(camera,layout.detailMode);
   return <section className={styles.centre} ref={root}
     aria-label={playerCanvas?'Player Main Dashboard Canvas':
       gmCanvas?'GM Main Dashboard Canvas':'GM Combat Command Centre'}
     data-testid={playerCanvas?'site-player-main-canvas':
       gmCanvas?'site-gm-main-canvas':'site-gm-combat-command-centre'}>
     <div className={styles.canvas} ref={canvas}
+      style={{...gridStyle,'--combat-grid-opacity':layout.gridVisible?gridStyle['--combat-grid-opacity']:'0'}}
+      data-detail-level={detailLevel}
+      data-detail-mode={layout.detailMode}
       data-editing={wide&&canEditCanvas&&!layout.canvasLocked}
       data-layout-mode={wide?'freeform':'stacked'}
       aria-label={playerCanvas?'Player dashboard freeform canvas':
@@ -560,6 +575,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
           (isMinimised?' '+styles.minimised:'')+
           (isFocused?' '+styles.focused:'')}
           data-combat-panel={id} data-canvas-window={id}
+          data-window-label={label}
           onPointerDownCapture={()=>setFrontWindow(current=>current===id?current:id)}
           style={{zIndex:frontWindow===id?50:1,
             '--combat-x':freeformPercent(rect.x),'--combat-y':rect.y/10+'cqw',
@@ -641,7 +657,8 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
             </div>
           </header>
           <div className={styles.windowContent} data-combat-scroll
-            aria-hidden={isMinimised} inert={isMinimised?true:undefined}>
+            aria-hidden={isMinimised||(layout.detailMode==='adaptive'&&camera.scale<.26)}
+            inert={isMinimised||(layout.detailMode==='adaptive'&&camera.scale<.26)?true:undefined}>
             <div className={styles.windowBody}
               style={{'--combat-content-scale':layout.contentScale[id]??1}}>
               {typeof panel.props.children==='function'?
@@ -704,7 +721,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
             aria-label="Zoom into canvas" title="Zoom in"
             onClick={()=>updateCamera(current=>zoomCombatCamera(current,
               current.scale*1.2,{x:(canvas.current?.clientWidth||0)/2,
-                y:(canvas.current?.clientHeight||0)/2}))}>
+                y:((canvas.current?.clientHeight||0)-60)/2}))}>
             <AsteriaIcon name="zoomIn" size={19}/>
           </button>
           <button type="button" className={styles.iconButton}
@@ -716,7 +733,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
             aria-label="Zoom out of canvas" title="Zoom out"
             onClick={()=>updateCamera(current=>zoomCombatCamera(current,
               current.scale/1.2,{x:(canvas.current?.clientWidth||0)/2,
-                y:(canvas.current?.clientHeight||0)/2}))}>
+                y:((canvas.current?.clientHeight||0)-60)/2}))}>
             <AsteriaIcon name="zoomOut" size={19}/>
           </button>
           <output ref={zoomReadout} aria-label="Canvas zoom"
@@ -780,8 +797,23 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
           <details className={styles.drawerSettings}>
             <summary>Canvas Preferences</summary>
             {wide?<button type="button" className={styles.openingView}
-              aria-label="Show readable opening view at 90 percent"
-              onClick={openingView}>Opening view (90%)</button>:null}
+              aria-label="Show readable opening view at 50 percent"
+              onClick={openingView}>Opening view (50%)</button>:null}
+            <label><input type="checkbox" checked={layout.gridVisible}
+               disabled={!canEditCanvas}
+              onChange={event=>setPreference(previous=>({...previous,
+                gridVisible:event.target.checked}))}/> Show infinite dot grid</label>
+            <label>Window zoom display
+              <select aria-label="Canvas window zoom display"
+                disabled={!canEditCanvas} value={layout.detailMode}
+                onChange={event=>setPreference(previous=>({...previous,detailMode:event.target.value}))}>
+                <option value="adaptive">Adaptive previews</option>
+                <option value="proportional">Proportional at every zoom</option>
+              </select>
+            </label>
+            <p className={styles.sidebarHint}>Initial guide: 100 columns by 60 rows.
+              The dot grid continues as you pan. At 50% zoom, approximately
+              40 dot rows are visible on a typical desktop viewport.</p>
             <label><input type="checkbox" checked={layout.freeform.snap}
                disabled={!canEditCanvas}
               onChange={event=>setPreference(previous=>({...previous,freeform:{

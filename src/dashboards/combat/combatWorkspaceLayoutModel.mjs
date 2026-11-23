@@ -17,7 +17,7 @@ export const COMBAT_TOOL_CATEGORIES=Object.freeze([
   {id:'rewards',label:'Rewards & History',panels:['history']}
 ]);
 const DEFAULT_HIDDEN=Object.freeze([]); // All tools on new GM canvases.
-const MAX_CANVAS_COORD=4500;
+const MAX_CANVAS_COORD=250000;
 const CANVAS_INTERACTION_VERSION=2;
 const MIN_CANVAS_SIZE=140;
 const MAX_CANVAS_SIZE=1800;
@@ -32,14 +32,18 @@ export function normalizeCombatCanvasRect(value={},fallback={x:0,y:0,w:490,h:300
  return {x:bounded(whole(candidate.x,fallback.x),-MAX_CANVAS_COORD,MAX_CANVAS_COORD),
   y:bounded(whole(candidate.y,fallback.y),-MAX_CANVAS_COORD,MAX_CANVAS_COORD),w,h};
 }
+export const COMBAT_CANVAS_GRID_DOT_SPACING=26;
+export const COMBAT_CANVAS_INITIAL_COLUMNS=100;
+export const COMBAT_CANVAS_INITIAL_ROWS=60;
+export const COMBAT_CANVAS_REFERENCE_VISIBLE_ROWS=40;
 export const COMBAT_CANVAS_ZOOM_MIN=.04;
 export const COMBAT_CANVAS_ZOOM_MAX=2.5;
 export function normalizeCombatCamera(raw){
  const camera=raw&&typeof raw==='object'?raw:{};
  return {scale:bounded(Number.isFinite(camera.scale)?camera.scale:1,
    COMBAT_CANVAS_ZOOM_MIN,COMBAT_CANVAS_ZOOM_MAX),
-   x:bounded(Number.isFinite(camera.x)?camera.x:12,-16000,16000),
-   y:bounded(Number.isFinite(camera.y)?camera.y:12,-16000,16000)};
+   x:bounded(Number.isFinite(camera.x)?camera.x:12,-1000000,1000000),
+   y:bounded(Number.isFinite(camera.y)?camera.y:12,-1000000,1000000)};
 }
 export function zoomCombatCamera(camera,scale,pivot={x:0,y:0}){
  const prev=normalizeCombatCamera(camera);
@@ -49,8 +53,29 @@ export function zoomCombatCamera(camera,scale,pivot={x:0,y:0}){
    x:pivot.x-(pivot.x-prev.x)*next/prev.scale,
    y:pivot.y-(pivot.y-prev.y)*next/prev.scale});
 }
-/** Frame the first visible row at a readable scale, without changing layout. */
-export const COMBAT_CANVAS_OPENING_ZOOM=.9;
+/**
+ * One repeated CSS texture provides an infinite dot grid, in the same world
+ * coordinates as the windows. Level-of-detail avoids aliasing at small zoom.
+ * The 100 x 60 initial guide is not a hard movement boundary.
+ */
+export function combatCanvasGridStyle(camera){
+ const view=normalizeCombatCamera(camera);
+ const stride=view.scale<.18?8:view.scale<.3?4:view.scale<.45?2:1;
+ const spacing=Math.round(COMBAT_CANVAS_GRID_DOT_SPACING*view.scale*stride*100)/100;
+ return {
+  '--combat-grid-spacing':spacing+'px',
+  '--combat-grid-x':view.x+'px',
+  '--combat-grid-y':view.y+60+'px',
+  '--combat-grid-opacity':view.scale<.3?'.17':'.22'
+ };
+}
+export function combatCanvasDetailLevel(camera,mode='adaptive'){
+ const scale=normalizeCombatCamera(camera).scale;
+ if(mode!=='adaptive')return 'full';
+ return scale<.26?'preview':scale<.5?'compact':'full';
+}
+/** Frame the first row at 50%; persisted cameras remain untouched. */
+export const COMBAT_CANVAS_OPENING_ZOOM=.5;
 export function openingCombatCamera(layout,visibleIds=[],viewportWidth=0){
  const width=Number(viewportWidth);
  if(!Number.isFinite(width)||width<=0)
@@ -63,8 +88,7 @@ export function openingCombatCamera(layout,visibleIds=[],viewportWidth=0){
  let left=Math.min(...row.map(rect=>rect.x));
  let right=Math.max(...row.map(rect=>rect.x+rect.w));
  if(right-left>1350){left=first.x;right=first.x+first.w;}
- const widthFit=(width-64)/(Math.max(1,right-left)*width/1000);
- const scale=bounded(Math.min(COMBAT_CANVAS_OPENING_ZOOM,widthFit),.72,COMBAT_CANVAS_OPENING_ZOOM);
+ const scale=COMBAT_CANVAS_OPENING_ZOOM;
  const unit=width/1000*scale;
  return normalizeCombatCamera({scale,
    x:width/2-(left+right)/2*unit,
@@ -101,20 +125,9 @@ export function focusCombatCamera(layout,id,viewportWidth,viewportHeight){
   x:viewportWidth/2-(rect.x+rect.w/2)*pixels*scale,
   y:viewportHeight/2-(rect.y+rect.h/2)*pixels*scale});
 }
-/** Bound blank-space panning while preserving free movement and overlapping windows. */
-export function clampCombatCamera(camera,layout,visibleIds,viewportWidth,viewportHeight){
- const view=normalizeCombatCamera(camera),bounds=combatWindowBounds(layout,visibleIds);
- if(!bounds||!viewportWidth||!viewportHeight)return view;
- const unit=viewportWidth/1000*view.scale,padding=60;
- const clampAxis=(start,end,viewport,offset)=>{
-   const minimum=viewport-padding-end*unit;
-   const maximum=padding-start*unit;
-   return minimum>maximum?(viewport-(start+end)*unit)/2:
-     bounded(offset,minimum,maximum);
- };
- return normalizeCombatCamera({...view,
-  x:clampAxis(bounds.left,bounds.right,viewportWidth,view.x),
-  y:clampAxis(bounds.top,bounds.bottom,viewportHeight,view.y)});
+/** Free panning; Fit All remains the explicit recovery control. */
+export function clampCombatCamera(camera){
+ return normalizeCombatCamera(camera);
 }
 /** Party card order is presentation-only; keep current campaign roster authoritative. */
 export function orderedCombatPartyIds(ids=[],saved=[]){
@@ -237,6 +250,8 @@ function normaliseBase(raw,config=COMBAT_CANVAS_CONFIG){
     partyCardOrder:[...new Set((Array.isArray(source.partyCardOrder)?source.partyCardOrder:[])
       .filter(id=>typeof id==='string'&&id.length>0&&id.length<=180))].slice(0,200),
     groups,
+    gridVisible:source.gridVisible!==false,
+    detailMode:source.detailMode==='proportional'?'proportional':'adaptive',
     canvasLocked:source.canvasLocked===true
   };
 }

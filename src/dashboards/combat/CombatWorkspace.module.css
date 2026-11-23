@@ -39,3 +39,7 @@
   padding:var(--asteria-space-3);color:var(--asteria-text-muted);
   background:var(--asteria-surface-raised);border:1px dashed var(--asteria-border-subtle);
   border-radius:var(--asteria-radius-sm)}
+
+/* GM combat uses one full-width canvas, not a panel nested inside a panel. */
+.workspace[data-testid="site-gm-combat"]{padding:0;border:0;border-radius:0;background:transparent;box-shadow:none}
+.workspace[data-testid="site-gm-combat"]>h2{padding:0 10px}

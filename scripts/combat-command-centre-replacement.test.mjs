@@ -242,8 +242,8 @@ test('Combat canvas replaces old layout bars with a full-width icon HUD and over
  assert.match(renderer,/viewport\.getBoundingClientRect\(\)\.top\+scrollArea\.scrollTop/);
  assert.match(css,/\.centre\{[^}]*--combat-edge-left/s);
  const canvasStyles=css.match(/\.canvas\{[^}]*\}/s)?.[0]||'';
- assert.doesNotMatch(canvasStyles,/\bborder(?:-radius)?:/,'Canvas surface must be borderless on GM, Player and Combat workspaces');
- assert.match(canvasStyles,/background-size:100% 100%,26px 26px/,'Keep the 26px dotted canvas grid');
+ assert.match(canvasStyles,/border:0!important;border-radius:0/,'Canvas surface must be borderless');
+ assert.match(canvasStyles,/var\(--combat-grid-spacing,26px\)/,'Dot grid must scale with camera');
  assert.doesNotMatch(css,/\.workArea\{|\.modeBar\{|\.quickActions\{/);
  for(const name of ['unlock','undo','redo','zoomIn','zoomOut','fitCanvas'])
    assert.match(icons,new RegExp('  '+name+':'));
@@ -283,15 +283,16 @@ test('GM Combat Phase 1 uses one canvas camera, bounded placements and recoverab
  assert.equal(legacy.freeform.positions.resources.x,1020,
    'Existing GM combat placements must not be overwritten by the Resources window');
  const moved=editCombatWindow(layout,'resources','move',{x:99999,y:99999});
- assert.ok(moved.freeform.positions.resources.x<=4500);
- assert.ok(moved.freeform.positions.resources.y<=4500);
+ assert.equal(moved.freeform.positions.resources.x,99999);
+ assert.equal(moved.freeform.positions.resources.y,99999);
  const far=editCombatWindow(layout,'resources','move',{x:3600,y:3800});
  const visible=COMBAT_PANEL_IDS.filter(id=>!far.hidden.includes(id));
  const fit=fitCombatCamera(far,visible,1440,680);
  assert.ok(fit.scale>=.04&&fit.scale<=2.5);
  const clamped=clampCombatCamera({scale:1,x:-12000,y:-12000},far,visible,1440,680);
- assert.ok(clamped.x>-12000&&clamped.y>-12000,
-   'Panning should not strand the canvas in empty space');
+ assert.equal(clamped.x,-12000);
+ assert.equal(clamped.y,-12000,
+   'Infinite canvas panning should not be clamped to window bounds');
  const focus=focusCombatCamera(far,'resources',1440,680);
  assert.ok(focus.scale>0);
  assert.notDeepEqual(focus,fit,'Focus must target selected window, not Fit All');

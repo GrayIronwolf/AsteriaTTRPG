@@ -4302,3 +4302,15 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
     grid-template-columns:minmax(0,1fr);
   }
 }
+
+/* Canvas windows own the shared Royal Relic material and bevel. Avoid nested
+   frames on their immediate React panels; standalone panels are unchanged. */
+body #asteriaReactRoot [data-canvas-window] [data-combat-scroll]>div>
+  .asteria-react-panel.asteria-royal-relic{
+  padding:0!important;border:0!important;border-radius:0!important;
+  background:transparent!important;box-shadow:none!important;backdrop-filter:none!important
+}
+body #asteriaReactRoot [data-canvas-window] [data-combat-scroll]>div>
+  .asteria-react-panel.asteria-royal-relic::before,
+body #asteriaReactRoot [data-canvas-window] [data-combat-scroll]>div>
+  .asteria-react-panel.asteria-royal-relic::after{content:none!important}

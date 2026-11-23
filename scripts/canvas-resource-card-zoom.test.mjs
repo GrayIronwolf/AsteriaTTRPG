@@ -4,12 +4,12 @@ import {readFileSync} from 'node:fs';
 import {orderedCombatPartyIds} from '../src/dashboards/combat/combatWorkspaceLayoutModel.mjs';
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 
-test('New canvas sessions open around 90 percent on the top row without changing saved geometry',async()=>{
+test('New canvas sessions open at 50 percent on the top row without changing saved geometry',async()=>{
  const {openingCombatCamera,COMBAT_CANVAS_OPENING_ZOOM,defaultCombatWorkspaceLayout,
   fitCombatCamera}=await import('../src/dashboards/combat/combatWorkspaceLayoutModel.mjs');
  const {defaultPlayerCanvasLayout,defaultGMCanvasLayout,GM_CANVAS_DEFAULT_IDS,
   PLAYER_CANVAS_DEFAULT_IDS}=await import('../src/state/dashboardLayoutModel.mjs');
- assert.equal(COMBAT_CANVAS_OPENING_ZOOM,.9);
+ assert.equal(COMBAT_CANVAS_OPENING_ZOOM,.5);
  for(const [layout,ids] of [
    [defaultGMCanvasLayout(),GM_CANVAS_DEFAULT_IDS],
    [defaultPlayerCanvasLayout(),PLAYER_CANVAS_DEFAULT_IDS],
@@ -18,14 +18,14 @@ test('New canvas sessions open around 90 percent on the top row without changing
    const before=JSON.stringify(layout);
    const opening=openingCombatCamera(layout,ids,1440);
    const fit=fitCombatCamera(layout,ids,1440,680);
-   assert.ok(opening.scale>=.72&&opening.scale<=.9);
+   assert.equal(opening.scale,.5);
    assert.ok(fit.scale<opening.scale);
    assert.ok(opening.y>=0&&opening.y<=30);
    assert.equal(JSON.stringify(layout),before);
  }
  const jsx=read('src/dashboards/combat/CombatCommandCentre.jsx');
  assert.match(jsx,/openingCameraPending\.current=!storedCamera/);
- assert.match(jsx,/onClick=\{openingView\}>Opening view \(90%\)/);
+ assert.match(jsx,/onClick=\{openingView\}>Opening view \(50%\)/);
  assert.match(jsx,/stored\?normalizeCombatCamera\(JSON\.parse\(stored\)\):null/);
 });
 test('Larger resize handles and balanced default GM windows keep custom layouts intact',async()=>{
