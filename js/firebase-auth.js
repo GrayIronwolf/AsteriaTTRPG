@@ -3240,6 +3240,27 @@ const firebasePublicApi = {
       err=>reportSyncError('campaign-listener', err, { campaignId })
     );
   },
+  // Read-only membership streams. Canonical roles remain server-managed.
+  subscribeCampaignMembership: function(campaignId,onChange,onError){
+    const uid=currentUser?.uid;
+    if(!db || !uid || !campaignId || typeof onChange!=='function')return ()=>{};
+    return onSnapshot(doc(db,'campaigns',campaignId,'members',uid),
+      {includeMetadataChanges:true},snapshot=>{
+        if(currentUser?.uid!==uid)return;
+        onChange(snapshot.exists()?Object.assign({},snapshot.data(),{id:snapshot.id}):null,snapshot.metadata);
+      },error=>{if(currentUser?.uid===uid)onError?.(error);});
+  },
+  subscribeCampaignMembers: function(campaignId,onChange,onError){
+    const uid=currentUser?.uid;
+    if(!db || !uid || !campaignId || typeof onChange!=='function')return ()=>{};
+    return onSnapshot(collection(db,'campaigns',campaignId,'members'),
+      {includeMetadataChanges:true},snapshot=>{
+        if(currentUser?.uid!==uid)return;
+        const members=[];
+        snapshot.forEach(item=>members.push(Object.assign({},item.data(),{id:item.id})));
+        onChange(members,snapshot.metadata);
+      },error=>{if(currentUser?.uid===uid)onError?.(error);});
+  },
   saveCampaignItemEcosystem: async function(campaignId, ecosystem){
     // Live campaign economy, shops, trades and rewards are server-owned.
     // Keep a fail-closed legacy API so old scripts cannot overwrite canonical state.
