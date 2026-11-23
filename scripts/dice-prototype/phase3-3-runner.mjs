@@ -30,8 +30,8 @@ try{
     await canvas.count()===1&&
     await page.locator('.asteria-core-dice-preview-canvas[data-art-ready=true]').count()===1&&
     await page.locator('.asteria-core-dice-preview p[role=status]').count()===0);
-  check('Twelve core designs and Familiar coexist in one selector',
-    await page.getByRole('combobox',{name:'Core dice design'}).locator('option').count()===13);
+  check('All fourteen designs coexist in one selector',
+    await page.getByRole('combobox',{name:'Core dice design'}).locator('option').count()===14);
   check('Eight coat patterns and eight cat poses selectable',
     await page.getByRole('combobox',{name:'Cat coat pattern'}).locator('option').count()===8&&
     await page.getByRole('combobox',{name:'Cat pose'}).locator('option').count()===8);
