@@ -28,6 +28,8 @@ jobs:
       - run: npm run content:check
       - run: npm run lint
       - run: npm test
+      - name: Verify GM membership and roster foundations
+        run: node --test scripts/gm-player-foundations.test.mjs
       - run: node scripts/test-xp-realtime-sync.js
       - run: node --test scripts/data-sync-regression.test.mjs
       - run: npm run test:firebase
