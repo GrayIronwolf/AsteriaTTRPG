@@ -14,6 +14,7 @@ export const GM_DASHBOARD_CATEGORIES=Object.freeze([
     page('battle-maps','Battle Maps','Manage animated scenes, grids and tokens')
   ]),
   category('campaign','Campaign','party',[
+    page('player-manager','Player Manager','Players, requests, linked characters, roles and access','Characters & Party'),
     page('bestiary','NPC & Creature Library','NPC records, generators and creature cards','Characters & Party'),
     page('inventory','PC Inventory','Character equipment and party loot','Characters & Party'),
     page('quests','Quests','Objectives, assignments and progress','Story & Notes'),
