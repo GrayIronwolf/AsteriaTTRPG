@@ -18,6 +18,9 @@ on:
       - 'scripts/dice-engine-phase3-8.test.mjs'
       - 'scripts/dice-engine-phase3-9.test.mjs'
       - 'scripts/dice-engine-phase3-10.test.mjs'
+      - 'scripts/dice-engine-phase4.test.mjs'
+      - 'scripts/dice-prototype/phase4*'
+      - 'docs/audits/ADVANCED-DICE-PHASE4-TEST-ACCEPTANCE.md'
       - 'docs/audits/ADVANCED-DICE-3D-PHASE3-10-IMPLEMENTATION.md'
       - 'scripts/dice-prototype/phase3-10*'
       - 'scripts/dice-prototype/phase3-9*'
@@ -81,6 +84,15 @@ jobs:
         run: node scripts/dice-prototype/phase3-9-runner.mjs
       - name: Verify Phase 3.10 effects, audio and mobile controls in Chromium
         run: node scripts/dice-prototype/phase3-10-runner.mjs
+      - name: Verify Phase 4 immersive Dice Window and drawer controls in Chromium
+        run: node scripts/dice-prototype/phase4-runner.mjs
+      - name: Store Phase 4 UI acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asteria-dice-phase4-window
+          path: dice-phase4-evidence/
+          if-no-files-found: warn
       - name: Store Phase 3.10 visual and audio acceptance evidence
         if: always()
         uses: actions/upload-artifact@v4
