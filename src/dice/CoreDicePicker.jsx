@@ -3,6 +3,8 @@ import {CORE_DICE_FAMILIES,CORE_DICE_TYPES,coreNumeralContrast} from './coreDice
 import {MATERIALS,FINISHES,TRIMS,NUMBER_STYLES,defaultDiceAppearance,
   validateDiceAppearance} from './diceAppearanceCatalogue.mjs';
 import {prepareCoreDesigns,releaseCoreDesigns} from './coreDiceRegistry.mjs';
+import {FamiliarDiceControls} from './FamiliarDiceControls.jsx';
+import {familiarVisualAnimationAllowed} from './familiarDiceDesign.mjs';
 
 /** Live Three.js preview of the actual Open Dice PBR die mesh, not a CSS imitation.
  * The preview has no physics world and never requests or records gameplay dice.
@@ -113,7 +115,7 @@ export function CoreDicePreview({appearance,dieType='d20'}){
     viewRef.current.tilt=Math.max(-1,Math.min(1,viewRef.current.tilt+dy*.01));
   };
   const pointerUp=()=>{pointer.current=null;};
-  return <div className="asteria-core-dice-preview">
+  return <div className="asteria-core-dice-preview" data-familiar-shimmer={familiarVisualAnimationAllowed(appearance)}>
     <div className="asteria-core-dice-preview-canvas" ref={node}
       role="img" aria-label={'Rotating 3D '+dieType+' preview'}
       onPointerDown={pointerDown} onPointerMove={pointerMove}
@@ -132,13 +134,14 @@ export function CoreDicePreview({appearance,dieType='d20'}){
 export function CoreDicePicker({value,onChange}){
   const [dieType,setDieType]=useState('d20');
   const selected=CORE_DICE_FAMILIES.find(x=>x.id===value.familyId);
+  const familiar=value.familyId==='dice-familiar';
   const patch=part=>{
     try{onChange(validateDiceAppearance({...value,...part}));}catch{/* ignore unsupported edits */}
   };
   return <section className="asteria-core-dice-picker" aria-label="Core dice appearances">
     <div className="asteria-core-dice-picker-heading">
-      <h3>Core Dice Appearance</h3>
-      <small>12 realistic 3D sets · personal to this workspace until saved collections arrive</small>
+      <h3>Dice Appearance</h3>
+      <small>12 core 3D designs + Familiar Dice · saved collections arrive in Phase 3.7</small>
     </div>
     <div className="asteria-core-dice-picker-layout">
       <div className="asteria-core-dice-selection">
@@ -146,8 +149,9 @@ export function CoreDicePicker({value,onChange}){
           onChange={event=>onChange(defaultDiceAppearance(event.target.value))}>
           {CORE_DICE_FAMILIES.map(family=>
             <option key={family.id} value={family.id}>{family.name}</option>)}
+          <option value="dice-familiar">Familiar Dice — Cats</option>
         </select></label>
-        <div className="asteria-core-dice-swatches" role="group" aria-label="Twelve core dice designs">
+        <div className="asteria-core-dice-swatches" role="group" aria-label="Thirteen available dice designs">
           {CORE_DICE_FAMILIES.map(family=><button key={family.id} type="button"
             className={value.familyId===family.id?'is-selected':''}
             style={{'--dice-swatch':family.primaryColor}}
@@ -156,8 +160,15 @@ export function CoreDicePicker({value,onChange}){
             title={family.name} aria-label={family.name}>
             <span aria-hidden="true"/>
           </button>)}
+          <button type="button" className={familiar?'is-selected':''}
+            style={{'--dice-swatch':'#F2F3EE'}}
+            aria-pressed={familiar} aria-label="Familiar Dice"
+            title="Familiar Dice"
+            onClick={()=>onChange(defaultDiceAppearance('dice-familiar'))}>
+            <span aria-hidden="true"/></button>
         </div>
-        <div className="asteria-core-dice-controls">
+        {familiar?<FamiliarDiceControls value={value} onChange={onChange}/>:null}
+        {!familiar?<div className="asteria-core-dice-controls">
           {[
             ['primaryColor','Dice body'],
             ['secondaryColor','Texture/accent'],
@@ -192,9 +203,12 @@ export function CoreDicePicker({value,onChange}){
             onChange={event=>setDieType(event.target.value)}>
             {CORE_DICE_TYPES.map(x=><option key={x}>{x}</option>)}
           </select></label>
-        </div>
+        </div>:<label>Preview die<select value={dieType} aria-label="Preview dice type"
+          onChange={event=>setDieType(event.target.value)}>
+          {CORE_DICE_TYPES.map(x=><option key={x}>{x}</option>)}
+        </select></label>}
         <button type="button" onClick={()=>onChange(defaultDiceAppearance(value.familyId))}>
-          Restore {selected?.name||'dice'} defaults
+          Restore {familiar?'Familiar Dice':selected?.name||'dice'} defaults
         </button>
         {coreNumeralContrast(value)<3?
           <p className="asteria-core-dice-contrast" role="status">
@@ -203,6 +217,6 @@ export function CoreDicePicker({value,onChange}){
       </div>
       <CoreDicePreview appearance={value} dieType={dieType}/>
     </div>
-    <p className="asteria-advanced-dice-help">Appearance changes apply to future 3D rolls and never alter a Firebase result. The special Watcher and Familiar dice are scheduled for later phases.</p>
+    <p className="asteria-advanced-dice-help">Dice appearance changes affect future 3D rolls only. Familiar Dice are available now; the independently animated Watcher Dice are planned for Phase 3.4. Saved appearance collections are planned for Phase 3.7.</p>
   </section>;
 }
