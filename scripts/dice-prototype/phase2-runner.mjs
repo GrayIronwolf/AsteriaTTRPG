@@ -62,7 +62,7 @@ try{
   }));
   check('Clear tray removes only visible roll',!clearing.official && clearing.savedActions===1,clearing);
   await page.getByRole('button',{name:'Replay last roll'}).click();
-  await page.waitForFunction(()=>document.querySelector('[data-roll-state=settled]'),{timeout:120000});
+  await page.waitForFunction(()=>document.querySelector('[data-roll-state=settled]'),null,{timeout:120000});
   check('Replay after clear restores the existing result',
     await page.locator('.asteria-advanced-dice-official strong').textContent()==='22');
   await page.getByRole('checkbox',{name:'Animate in 3D'}).uncheck();
