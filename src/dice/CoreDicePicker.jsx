@@ -201,12 +201,12 @@ export function CoreDicePicker({value,onChange}){
             title="Familiar Dice"
             onClick={()=>onChange(defaultDiceAppearance('dice-familiar'))}>
             <span aria-hidden="true"/></button>
-        </div>
           <button type="button" className={watcher?'is-selected':''}
             style={{'--dice-swatch':'#7947B2'}}
             aria-pressed={watcher} aria-label="Watcher Dice" title="Watcher Dice"
             onClick={()=>onChange(defaultDiceAppearance('dice-watcher'))}>
             <span aria-hidden="true"/></button>
+        </div>
         {familiar?<FamiliarDiceControls value={value} onChange={onChange}/>:null}
         {watcher?<WatcherDiceControls value={value} onChange={onChange}/>:null}
         {!special?<div className="asteria-core-dice-controls">
