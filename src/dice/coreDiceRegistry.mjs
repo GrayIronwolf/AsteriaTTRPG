@@ -5,6 +5,7 @@
  */
 import {defaultDiceAppearance,validateDiceAppearance} from './diceAppearanceCatalogue.mjs';
 import {buildAsteriaCoreDiceSet,CORE_DICE_TYPES} from './coreDiceDesigns.mjs';
+import {buildFamiliarDiceSet} from './familiarDiceDesign.mjs';
 
 export function coreSetIds(instanceId){
   if(typeof instanceId!=='string'||!/^[a-z0-9-]{1,48}$/.test(instanceId))
@@ -17,13 +18,15 @@ export function prepareCoreDesigns(api,appearance,instanceId){
   if(!api||typeof api.registerDiceSet!=='function'||typeof api.unregisterDiceSet!=='function')
     throw Error('Open Dice register/unregister API is required.');
   const checked=validateDiceAppearance(appearance);
-  if(!checked.familyId||checked.special!==null)
-    throw Error('Phase 3.2 registers core dice designs only.');
+  if(!checked.familyId||checked.familyId==='dice-watcher')
+    throw Error('Watcher Dice are reserved for Phase 3.4.');
   const ids=coreSetIds(instanceId);
   const completed=[];
   try{
     for(const [type,id] of Object.entries(ids)){
-      const design=buildAsteriaCoreDiceSet(checked,{id,dieType:type});
+      const design=checked.familyId==='dice-familiar'?
+        buildFamiliarDiceSet(checked,{id,dieType:type}):
+        buildAsteriaCoreDiceSet(checked,{id,dieType:type});
       api.registerDiceSet(design,{replace:true});
       completed.push(id);
     }
@@ -33,6 +36,7 @@ export function prepareCoreDesigns(api,appearance,instanceId){
   }
   return ids;
 }
+export const prepareAsteriaDiceDesigns=prepareCoreDesigns;
 export function releaseCoreDesigns(api,ids){
   if(!api||typeof api.unregisterDiceSet!=='function'||!ids)return;
   for(const id of Object.values(ids))api.unregisterDiceSet(id);
