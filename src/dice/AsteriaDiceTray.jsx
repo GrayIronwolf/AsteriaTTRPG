@@ -151,8 +151,7 @@ export function AsteriaDiceTray({
     try{
       // Register a private, replaceable PBR set per mounted workspace and die
       // type. Only the current display uses it. Server values are unchanged.
-      const current=appearanceRef.current?
-        validateDiceAppearance(appearanceRef.current):defaultDiceAppearance();
+      validateDiceAppearance(appearanceRef.current||defaultDiceAppearance());
       // The public registration API is lazily imported in the render effect.
       // This avoids putting Open Dice into the main application bundle.
       // Phase 3.4 allows Watcher alongside core and Familiar appearances.
