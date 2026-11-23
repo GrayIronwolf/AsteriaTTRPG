@@ -240,6 +240,11 @@ export function AdvancedDiceWorkspace({role='player',ownedCharacterId=''}){
     }catch{setShareStatus('Clipboard permission denied. Your roll remains private.');}
   };
   const currentResult=animatedRoll||latest;
+  useEffect(()=>{
+    if(!showResult||!currentResult||!windowSettings.autoHideResult)return undefined;
+    const timer=window.setTimeout(()=>setShowResult(false),7000);
+    return ()=>window.clearTimeout(timer);
+  },[showResult,currentResult?.id,windowSettings.autoHideResult]);
   const graphics=diceGraphicsProfile(presentation,{
     viewportWidth:typeof window!=='undefined'?window.innerWidth:1000,
     systemReducedMotion:typeof window!=='undefined'&&

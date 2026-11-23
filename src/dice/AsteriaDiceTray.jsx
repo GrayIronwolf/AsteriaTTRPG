@@ -110,6 +110,9 @@ export function AsteriaDiceTray({
   const [cameraZoom,setCameraZoom]=useState(1);
   const [cameraPan,setCameraPan]=useState({x:0,z:0});
   const [cameraDragging,setCameraDragging]=useState(false);
+  const touchPointsRef=useRef(new Map());
+  const pinchRef=useRef(null);
+  const lastPointerRef=useRef(null);
   const cameraPointerRef=useRef(null);
   const dicePointerRef=useRef(null);
   const gestureRef=useRef(null);
@@ -128,10 +131,14 @@ export function AsteriaDiceTray({
       drag.die.body.collisionResponse=true;
       drag.die.body.velocity.set(0,0,0);
       drag.die.body.angularVelocity.set(0,0,0);
-      drag.die.body.wakeUp?.();
+      if(drag.dragged){
+        drag.die.body.sleep?.();
+        drag.die.mesh.position.copy(drag.die.body.position);
+      }
     }
     dicePointerRef.current=null;
     cameraPointerRef.current=null;
+    touchPointsRef.current.clear();pinchRef.current=null;
     setCameraDragging(false);
     interactionLockRef.current=false;
   };
@@ -504,6 +511,16 @@ export function AsteriaDiceTray({
     },trayRef.current?.outline);
   };
   const pointerDown=event=>{
+    if(event.pointerType==='touch'){
+      touchPointsRef.current.set(event.pointerId,{x:event.clientX,y:event.clientY});
+      if(touchPointsRef.current.size===2){
+        const [a,b]=[...touchPointsRef.current.values()];
+        pinchRef.current=Math.hypot(a.x-b.x,a.y-b.y);
+        cameraPointerRef.current=null;
+        dicePointerRef.current=null;
+        return;
+      }
+    }
     if(!windowMode||!effectiveEnabled||!ready||rollingRef.current)return;
     if(event.pointerType==='mouse'&&event.button!==0&&event.button!==1&&event.button!==2)return;
     gestureTimeRef.current=performance.now();
@@ -529,6 +546,17 @@ export function AsteriaDiceTray({
   };
   const pointerMove=event=>{
     if(!windowMode)return;
+    if(event.pointerType==='touch'&&touchPointsRef.current.has(event.pointerId))
+      touchPointsRef.current.set(event.pointerId,{x:event.clientX,y:event.clientY});
+    if(touchPointsRef.current.size===2){
+      const [a,b]=[...touchPointsRef.current.values()];
+      const next=Math.hypot(a.x-b.x,a.y-b.y);
+      if(pinchRef.current){
+        setCameraZoom(v=>Math.max(.65,Math.min(1.9,v*next/pinchRef.current)));
+      }
+      pinchRef.current=next;
+      return;
+    }
     const drag=dicePointerRef.current;
     if(drag&&canInteract){
       const delta=Math.hypot(event.clientX-drag.x,event.clientY-drag.y);
@@ -536,7 +564,7 @@ export function AsteriaDiceTray({
       if(drag.dragged){
         const point=trayPoint(event,drag.die);
         if(point){
-          drag.die.body.type=2; // CANNON.Body.KINEMATIC; presentation-only while held
+          drag.die.body.type=4; // CANNON.Body.KINEMATIC; presentation-only while held
           drag.die.body.velocity.set(0,0,0);
           drag.die.body.angularVelocity.set(0,0,0);
           drag.die.body.position.x=point.x;
@@ -561,6 +589,11 @@ export function AsteriaDiceTray({
     camera.x=event.clientX;camera.y=event.clientY;
   };
   const pointerUp=event=>{
+    const wasPinching=touchPointsRef.current.size>1;
+    touchPointsRef.current.delete(event.pointerId);
+    if(wasPinching){
+      pinchRef.current=null;clearInteraction();gestureRef.current=null;return;
+    }
     const drag=dicePointerRef.current;
     const start=gestureRef.current;
     const elapsed=performance.now()-gestureTimeRef.current;
