@@ -115,10 +115,6 @@ export function attachCastleDiceTower(engine,outline){
     if(!die?.body?.world)continue;
     die.body.velocity.setZero();die.body.angularVelocity.setZero();
     die.body.sleep();
-    // The last worker step is authoritative for both body and visible mesh;
-    // synchronise before the engine's idle renderer can skip an update.
-    die.mesh?.position?.copy(die.body.position);
-    die.mesh?.quaternion?.copy(die.body.quaternion);
    }
   }
   return result;
