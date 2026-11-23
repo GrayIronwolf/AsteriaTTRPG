@@ -70,6 +70,15 @@ jobs:
         run: node scripts/dice-prototype/phase3-6-runner.mjs
       - name: Verify Phase 3.7 saved collections in Chromium
         run: node scripts/dice-prototype/phase3-7-runner.mjs
+      - name: Verify Castle Tower physical feasibility in Chromium
+        run: node scripts/dice-prototype/phase3-8-runner.mjs
+      - name: Store Phase 3.8 Castle physics evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asteria-dice-phase3-8-castle
+          path: dice-phase3-8-evidence/
+          if-no-files-found: warn
       - name: Store Phase 3.7 collection browser evidence
         if: always()
         uses: actions/upload-artifact@v4
