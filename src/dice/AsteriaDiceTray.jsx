@@ -214,7 +214,16 @@ export function AsteriaDiceTray({
     if(rollingRef.current){
       deferredTrayRef.current=config;return;
     }
-    if(!trayRef.current||JSON.stringify(trayRef.current.config)===JSON.stringify(config))return;
+    if(!trayRef.current)return;
+    const previous=trayRef.current.config;
+    if(JSON.stringify(previous)===JSON.stringify(config))return;
+    // Sound/volume are audio-only settings and must not rebuild Cannon bodies.
+    if(Object.keys(config).every(key=>key==='sound'||key==='soundVolume'||
+      config[key]===previous[key])){
+      trayRef.current.updateSound(config);
+      trayRef.current.config=config;
+      return;
+    }
     try{
       towerRef.current?.dispose();towerRef.current=null;
       trayRef.current.dispose();
@@ -324,13 +333,13 @@ export function AsteriaDiceTray({
         if(watcherFrameRef.current)cancelAnimationFrame(watcherFrameRef.current);
         for(const rig of watcherRigsRef.current.values())rig.dispose();
         watcherRigsRef.current.clear();
-        const q=watcherVisualQuality({
+        const measured=watcherVisualQuality({
           reducedMotion:graphics.reducedMotion,
           mobile:graphics.tier!=='high',
           deviceMemory:navigator.deviceMemory||null,
           visibleDice:prepared.dice.length
         });
-        q.eyeLimit=Math.min(q.eyeLimit,graphics.watcherLimit);
+        const q={...measured,eyeLimit:Math.min(measured.eyeLimit,graphics.watcherLimit)};
         const reaction=watcherReactionForRecord(record);
         const initial=performance.now();
         const tick=()=>{
