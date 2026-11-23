@@ -22,7 +22,7 @@ try{
   const preview=page.locator('.asteria-core-dice-preview-canvas canvas');
   await preview.waitFor({state:'visible',timeout:90000});
   const styles=await page.locator('select[aria-label="Core dice design"] option').count();
-  log('Twelve core plus Familiar Dice are selectable',styles===13,{styles});
+  log('All fourteen Asteria dice designs are selectable',styles===14,{styles});
   await page.waitForTimeout(1500);
   log('Real Three.js die preview mounts',
     await preview.count()===1 && await page.locator('.asteria-core-dice-preview p[role=status]').count()===0);
