@@ -31,3 +31,10 @@ trajectory, then keeps dice asleep at their recorded settled pose so unrecorded 
 gravity cannot change the visible face after the official prediction.
 If no real physical exit is possible, it fails visibly and preserves the official numeric result.
 This is not a claim that all types are production ready until the browser gate passes.
+
+## Verified integration and release status (23 November 2026)
+- Targeted Castle physics [run 45123824164](https://github.com/GrayIronwolf/AsteriaTTRPG/actions/runs/45123824164): successful 5 unit and 14 Chromium acceptance checks. Each tested die type d4, d6, d8, d10, d12, d20 and d100 reached the tray and matched its confirmed face in those runs.
+- Full Phase 2-3.8 regression [run 45124237620](https://github.com/GrayIronwolf/AsteriaTTRPG/actions/runs/45124237620): successful after the legacy Phase 2 Playwright timeout fix.
+- React/Vite generated assets synchronized in commit `d6cdbae5b49d76bc1e0b70ce713daa8b001e88e3`.
+- Safety: no Firebase production deploy; Castle mode is opt-in experimental only. No selection in the normal dice studio and no additional tower families.
+- Remaining acceptance: the 112 predetermined **server-result unit fixtures** are not 112 real physical Cannon simulations. A separate 100+ physically simulated roll matrix with all seven die types, criticals, face agreement, full d100 mesh-count, memory/disposal, mobile/reduced-motion and meaningful statistical reliability is still required before production enablement. Owner feasibility review is required before Phase 3.9.
