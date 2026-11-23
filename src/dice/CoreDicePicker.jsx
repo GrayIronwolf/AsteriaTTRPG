@@ -5,6 +5,9 @@ import {MATERIALS,FINISHES,TRIMS,NUMBER_STYLES,defaultDiceAppearance,
 import {prepareCoreDesigns,releaseCoreDesigns} from './coreDiceRegistry.mjs';
 import {FamiliarDiceControls} from './FamiliarDiceControls.jsx';
 import {familiarVisualAnimationAllowed} from './familiarDiceDesign.mjs';
+import {WatcherDiceControls} from './WatcherDiceControls.jsx';
+import {createWatcherEyeRig,applyWatcherGelShell} from './watcherEyeRig.mjs';
+import {watcherVisualQuality} from './watcherDiceDesign.mjs';
 
 /** Live Three.js preview of the actual Open Dice PBR die mesh, not a CSS imitation.
  * The preview has no physics world and never requests or records gameplay dice.
@@ -13,11 +16,12 @@ export function CoreDicePreview({appearance,dieType='d20'}){
   const node=useRef(null),id=useId().replace(/[^a-z0-9]/gi,'').toLowerCase()||'preview';
   const [error,setError]=useState('');
   const [zoom,setZoom]=useState(1);
+  const pointerEyeRef=useRef(null);
   const viewRef=useRef(null);
   const zoomRef=useRef(zoom);
   useEffect(()=>{zoomRef.current=zoom;},[zoom]);
   useEffect(()=>{
-    let cancelled=false,frame=0,view,registry,api,imageRegistry,scene,renderer,resizeObserver,mesh;
+    let cancelled=false,frame=0,view,registry,api,imageRegistry,scene,renderer,resizeObserver,mesh,eyeRig;
     const container=node.current;
     if(!container)return undefined;
     setError('');
@@ -62,6 +66,17 @@ export function CoreDicePreview({appearance,dieType='d20'}){
       const die=openDice.createDie(dieType,true,true,undefined,undefined,null,
         scene,null,null,null,null,false,null,imageRegistry,{set:setId});
       mesh=die.mesh;
+      if(appearance.familyId==='dice-watcher'){
+        const quality=watcherVisualQuality({
+          mobile:window.matchMedia?.('(max-width: 650px)').matches,
+          reducedMotion:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches,
+          deviceMemory:navigator.deviceMemory||null
+        });
+        applyWatcherGelShell(mesh,appearance,quality);
+        eyeRig=createWatcherEyeRig(THREE,appearance,quality);
+        mesh.add(eyeRig.group);
+        container.dataset.eyeReady='true';
+      }else delete container.dataset.eyeReady;
       const size=()=>{
         if(!renderer||!container)return;
         const width=Math.max(1,container.clientWidth),height=Math.max(1,container.clientHeight);
@@ -80,6 +95,10 @@ export function CoreDicePreview({appearance,dieType='d20'}){
         if(!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)
           view.angle+=seconds*.22;
         mesh.rotation.set(view.tilt,view.angle,.12);
+        if(eyeRig)eyeRig.update(clock.elapsedTime,{
+          reducedMotion:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches,
+          pointer:pointerEyeRef.current
+        });
         camera.position.set(3.15*zoomRef.current,2.65*zoomRef.current,
           4.2*zoomRef.current);
         camera.lookAt(0,0,0);
@@ -92,6 +111,7 @@ export function CoreDicePreview({appearance,dieType='d20'}){
       cancelled=true;
       if(frame)cancelAnimationFrame(frame);
       resizeObserver?.disconnect();
+      eyeRig?.dispose();
       if(mesh?.parent)mesh.parent.remove(mesh);
       if(scene)scene.traverse(obj=>{
         if(obj.isMesh&&!obj.geometry?.userData?.shared)obj.geometry?.dispose();
@@ -104,7 +124,7 @@ export function CoreDicePreview({appearance,dieType='d20'}){
       if(api&&registry)releaseCoreDesigns(api,registry);
       imageRegistry?.cache?.clear?.();
       imageRegistry?.loading?.clear?.();
-      if(container)delete container.dataset.artReady;
+      if(container){delete container.dataset.artReady;delete container.dataset.eyeReady;}
       viewRef.current=null;
       renderer?.dispose();
       if(renderer?.domElement?.parentNode)renderer.domElement.remove();
@@ -122,8 +142,11 @@ export function CoreDicePreview({appearance,dieType='d20'}){
     pointer.current={x:event.clientX,y:event.clientY};
     viewRef.current.angle+=dx*.012;
     viewRef.current.tilt=Math.max(-1,Math.min(1,viewRef.current.tilt+dy*.01));
+    const bounds=event.currentTarget.getBoundingClientRect();
+    pointerEyeRef.current={x:(event.clientX-bounds.left)/bounds.width*2-1,
+      y:(event.clientY-bounds.top)/bounds.height*2-1};
   };
-  const pointerUp=()=>{pointer.current=null;};
+  const pointerUp=()=>{pointer.current=null;pointerEyeRef.current=null;};
   return <div className="asteria-core-dice-preview" data-familiar-shimmer={familiarVisualAnimationAllowed(appearance)}>
     <div className="asteria-core-dice-preview-canvas" ref={node}
       role="img" aria-label={'Rotating 3D '+dieType+' preview'}
@@ -144,13 +167,15 @@ export function CoreDicePicker({value,onChange}){
   const [dieType,setDieType]=useState('d20');
   const selected=CORE_DICE_FAMILIES.find(x=>x.id===value.familyId);
   const familiar=value.familyId==='dice-familiar';
+  const watcher=value.familyId==='dice-watcher';
+  const special=familiar||watcher;
   const patch=part=>{
     try{onChange(validateDiceAppearance({...value,...part}));}catch{/* ignore unsupported edits */}
   };
   return <section className="asteria-core-dice-picker" aria-label="Core dice appearances">
     <div className="asteria-core-dice-picker-heading">
       <h3>Dice Appearance</h3>
-      <small>12 core 3D designs + Familiar Dice · saved collections arrive in Phase 3.7</small>
+      <small>12 core 3D designs + Familiar and Watcher · saved collections arrive in Phase 3.7</small>
     </div>
     <div className="asteria-core-dice-picker-layout">
       <div className="asteria-core-dice-selection">
@@ -159,8 +184,9 @@ export function CoreDicePicker({value,onChange}){
           {CORE_DICE_FAMILIES.map(family=>
             <option key={family.id} value={family.id}>{family.name}</option>)}
           <option value="dice-familiar">Familiar Dice — Cats</option>
+          <option value="dice-watcher">Watcher Dice — Living Eye</option>
         </select></label>
-        <div className="asteria-core-dice-swatches" role="group" aria-label="Thirteen available dice designs">
+        <div className="asteria-core-dice-swatches" role="group" aria-label="Fourteen available dice designs">
           {CORE_DICE_FAMILIES.map(family=><button key={family.id} type="button"
             className={value.familyId===family.id?'is-selected':''}
             style={{'--dice-swatch':family.primaryColor}}
@@ -176,8 +202,14 @@ export function CoreDicePicker({value,onChange}){
             onClick={()=>onChange(defaultDiceAppearance('dice-familiar'))}>
             <span aria-hidden="true"/></button>
         </div>
+          <button type="button" className={watcher?'is-selected':''}
+            style={{'--dice-swatch':'#7947B2'}}
+            aria-pressed={watcher} aria-label="Watcher Dice" title="Watcher Dice"
+            onClick={()=>onChange(defaultDiceAppearance('dice-watcher'))}>
+            <span aria-hidden="true"/></button>
         {familiar?<FamiliarDiceControls value={value} onChange={onChange}/>:null}
-        {!familiar?<div className="asteria-core-dice-controls">
+        {watcher?<WatcherDiceControls value={value} onChange={onChange}/>:null}
+        {!special?<div className="asteria-core-dice-controls">
           {[
             ['primaryColor','Dice body'],
             ['secondaryColor','Texture/accent'],
@@ -217,7 +249,7 @@ export function CoreDicePicker({value,onChange}){
           {CORE_DICE_TYPES.map(x=><option key={x}>{x}</option>)}
         </select></label>}
         <button type="button" onClick={()=>onChange(defaultDiceAppearance(value.familyId))}>
-          Restore {familiar?'Familiar Dice':selected?.name||'dice'} defaults
+          Restore {familiar?'Familiar Dice':watcher?'Watcher Dice':selected?.name||'dice'} defaults
         </button>
         {coreNumeralContrast(value)<3?
           <p className="asteria-core-dice-contrast" role="status">
@@ -226,6 +258,6 @@ export function CoreDicePicker({value,onChange}){
       </div>
       <CoreDicePreview appearance={value} dieType={dieType}/>
     </div>
-    <p className="asteria-advanced-dice-help">Dice appearance changes affect future 3D rolls only. Familiar Dice are available now; the independently animated Watcher Dice are planned for Phase 3.4. Saved appearance collections are planned for Phase 3.7.</p>
+    <p className="asteria-advanced-dice-help">All fourteen dice designs are available. Watcher animation is visual only and follows reduced-motion preferences. Appearance collections are saved to accounts in Phase 3.7; roll results remain Firebase-authoritative.</p>
   </section>;
 }
