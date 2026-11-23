@@ -6,6 +6,8 @@ import {createWatcherEyeRig,applyWatcherGelShell} from './watcherEyeRig.mjs';
 import {watcherVisualQuality,watcherReactionForRecord} from './watcherDiceDesign.mjs';
 import {defaultDiceTrayAppearance,validateDiceTrayAppearance,getDiceTrayFamily} from './diceTrayCatalogue.mjs';
 import {attachDiceTray} from './diceTrayScene.mjs';
+import {attachCastleDiceTower} from './castleDiceTowerScene.mjs';
+import {CASTLE_TOWER_MAX_MESHES} from './castleDiceTowerGeometry.mjs';
 import {DiceTrayStudio} from './DiceTrayStudio.jsx';
 
 const messages={
@@ -37,7 +39,8 @@ function webGLAvailable(){
 export function AsteriaDiceTray({
   record,enabled=true,onToggleEnabled,onReplay,onClear,canReplay=false,replayToken=0,
   appearance=null,trayAppearance:controlledTrayAppearance=null,
-  onTrayAppearanceChange=null,studioManaged=false
+  onTrayAppearanceChange=null,studioManaged=false,
+  experimentalCastleTower=false
 }){
   const containerRef=useRef(null),engineRef=useRef(null);
   const [ready,setReady]=useState(false),[status,setStatus]=useState('loading');
@@ -48,7 +51,7 @@ export function AsteriaDiceTray({
   const [cameraTilt,setCameraTilt]=useState(false);
   const [cameraZoom,setCameraZoom]=useState(1);
   const trayAppearanceRef=useRef(trayAppearance);
-  const trayRef=useRef(null);
+  const trayRef=useRef(null),towerRef=useRef(null);
   const rollingRef=useRef(false);
   const deferredTrayRef=useRef(null);
   useEffect(()=>{trayAppearanceRef.current=trayAppearance;},[trayAppearance]);
@@ -97,6 +100,13 @@ export function AsteriaDiceTray({
         engineRef.current=instance;
         const tray=attachDiceTray(instance,trayAppearanceRef.current);
         trayRef.current=tray;
+        if(experimentalCastleTower){
+          try{towerRef.current=attachCastleDiceTower(instance,tray.outline);}
+          catch(error){
+            if(containerRef.current)containerRef.current.dataset.towerError=String(error?.message||error).slice(0,200);
+            throw error;
+          }
+        }
         if(containerRef.current)containerRef.current.dataset.trayShape=tray.outline.shape;
         setReady(true);setStatus('ready');
       }catch{
@@ -112,6 +122,7 @@ export function AsteriaDiceTray({
       for(const rig of watcherRigsRef.current.values())rig.dispose();
       watcherRigsRef.current.clear();
       const instance=engineRef.current;
+      towerRef.current?.dispose();towerRef.current=null;
       trayRef.current?.dispose();
       trayRef.current=null;
       engineRef.current=null;
@@ -122,7 +133,7 @@ export function AsteriaDiceTray({
         registryRef.current=null;
       }
     };
-  },[enabled]);
+  },[enabled,experimentalCastleTower]);
 
   // Visual orbit and zoom are camera-only. Die physics and face values do
   // not know these controls exist; wheel and touch do not change rolls.
@@ -149,13 +160,15 @@ export function AsteriaDiceTray({
     }
     if(!trayRef.current||JSON.stringify(trayRef.current.config)===JSON.stringify(config))return;
     try{
+      towerRef.current?.dispose();towerRef.current=null;
       trayRef.current.dispose();
       trayRef.current=attachDiceTray(engine,config);
+      if(experimentalCastleTower)towerRef.current=attachCastleDiceTower(engine,trayRef.current.outline);
       if(containerRef.current)containerRef.current.dataset.trayShape=trayRef.current.outline.shape;
     }catch{
       setStatus('unavailable');
     }
-  },[ready,enabled,trayAppearance]);
+  },[ready,enabled,trayAppearance,experimentalCastleTower]);
   const changeTrayConfig=config=>{
     const checked=validateDiceTrayAppearance(config);
     if(onTrayAppearanceChange)onTrayAppearanceChange(checked);
@@ -200,7 +213,7 @@ export function AsteriaDiceTray({
       Promise.resolve(engine.reset()).catch(()=>{});
       return undefined;
     }
-    if(prepared.mode==='text'){
+    if(prepared.mode==='text'||experimentalCastleTower&&prepared.meshCount>CASTLE_TOWER_MAX_MESHES){
       setStatus('oversized');
       Promise.resolve(engine.reset()).catch(()=>{});
       return undefined;
@@ -287,14 +300,23 @@ export function AsteriaDiceTray({
       rollingRef.current=false;
       const next=deferredTrayRef.current;
       deferredTrayRef.current=null;
+      const towerEvidence=towerRef.current?.getEvidence();
+      if(containerRef.current&&experimentalCastleTower){
+        containerRef.current.dataset.towerExited=String(towerEvidence?.exited??0);
+        containerRef.current.dataset.towerExitComplete=String(towerEvidence?.exitComplete===true);
+        containerRef.current.dataset.towerSteps=String(towerEvidence?.steps??0);
+      }
       if(next&&trayRef.current){
+        towerRef.current?.dispose();towerRef.current=null;
         trayRef.current.dispose();
         trayRef.current=attachDiceTray(engine,next);
+        if(experimentalCastleTower)towerRef.current=attachCastleDiceTower(engine,trayRef.current.outline);
         if(containerRef.current)containerRef.current.dataset.trayShape=trayRef.current.outline.shape;
       }
       const match=matchesAsteriaDicePreview(prepared,engine.getCurrentResults());
-      setStatus(match?'settled':'mismatch');
-      if(!match)Promise.resolve(engine.reset()).catch(()=>{});
+      const physical=!experimentalCastleTower||towerEvidence?.exitComplete===true;
+      setStatus(match&&physical?'settled':'mismatch');
+      if(!match||!physical)Promise.resolve(engine.reset()).catch(()=>{});
     }).catch(error=>{
       if(cancelled)return;
       rollingRef.current=false;
@@ -310,17 +332,17 @@ export function AsteriaDiceTray({
       for(const rig of watcherRigsRef.current.values())rig.dispose();
       watcherRigsRef.current.clear();
     };
-  },[record,ready,enabled,replayToken,stableId]);
+  },[record,ready,enabled,replayToken,stableId,experimentalCastleTower]);
 
   const canControl=enabled&&ready&&status!=='rolling';
   const renderFallback=!enabled||['unavailable','unsupported','oversized','mismatch'].includes(status);
   const selectedTray=getDiceTrayFamily(trayAppearance.designId);
   return <section className="asteria-advanced-dice-tray" data-tray-size={trayAppearance.size}
-    data-roll-state={status} aria-label="3D dice tray">
+    data-roll-state={status} data-tower-mode={experimentalCastleTower?'castle-prototype':'off'} aria-label="3D dice tray">
     <header className="asteria-advanced-dice-tray-heading">
       <div className="asteria-advanced-dice-tray-title">
         <span className="asteria-advanced-dice-crystal" aria-hidden="true"/>
-        <div><h3>{selectedTray?.name||'Dice Table'}</h3><small>Realistic 3D dice tray</small></div>
+        <div><h3>{selectedTray?.name||'Dice Table'}</h3><small>{experimentalCastleTower?'Castle Dice Tower — experimental physical prototype':'Realistic 3D dice tray'}</small></div>
       </div>
       <span className="asteria-advanced-dice-trust">Server-verified results</span>
     </header>
@@ -359,6 +381,10 @@ export function AsteriaDiceTray({
     </div>
     {!studioManaged&&trayStudioOpen?<DiceTrayStudio value={trayAppearance}
       onChange={changeTrayConfig} rolling={status==='rolling'}/>:null}
+    {experimentalCastleTower?<p className="asteria-tower-warning" role="note">
+      Castle Tower physics feasibility prototype. The real chute, baffles and exit must all work
+      before the tower can be released. Failure leaves the official result unchanged.
+    </p>:null}
     <div className="asteria-advanced-dice-stage">
       <div className="asteria-advanced-dice-scene" ref={containerRef} aria-hidden="true"/>
       <div className="asteria-tray-view-controls" role="group" aria-label="3D tray camera controls">
