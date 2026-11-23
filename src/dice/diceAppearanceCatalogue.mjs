@@ -1,5 +1,6 @@
 /** Phase 3.1: versioned visual-only catalogue. No Firebase writes or gameplay effects. */
 import {DICE_SIDES} from '../state/diceRollModel.mjs';
+import {FAMILIAR_DECORATIONS} from './familiarDiceArt.mjs';
 export const APPEARANCE_VERSION=1;
 export const MAX_APPEARANCE_COLLECTIONS=20;
 export const MATERIALS=Object.freeze(['obsidian','steel','bronze','gemstone','crystal','marble','wood','resin']);
@@ -19,7 +20,7 @@ export const CAT_PATTERNS=Object.freeze(['solid','tabby','tuxedo','calico','tort
 export const CAT_POSES=Object.freeze(['sitting','curled','stretching','walking','pouncing','alert','perched','portrait']);
 export const PALETTE=Object.freeze(['#111925','#304557','#D3DDE4','#D5B36A','#9C7047','#F2F3EE','#AE3241','#295EA8','#247858','#7947B2','#43AEC2','#162C53','#B0E7EF','#C27B31','#C982A5','#61412F']);
 const watcher=Object.freeze({kind:'watcher',eyeType:'eldritch',irisColor:'#43AEC2',scleraColor:'#F2F3EE',pupil:'vertical-slit',resinColor:'#7947B2',transparency:'translucent',glow:'subtle',motion:'subtle',blink:'normal',cursorTracking:false});
-const familiar=Object.freeze({kind:'familiar',coatColor:'#111925',coatPattern:'solid',eyeColor:'#D5B36A',pose:'sitting',pawColor:'#111925',resinColor:'#F2F3EE',transparency:'clear',animation:false});
+const familiar=Object.freeze({kind:'familiar',coatColor:'#111925',coatPattern:'solid',eyeColor:'#D5B36A',pose:'sitting',pawColor:'#111925',resinColor:'#F2F3EE',transparency:'clear',decoration:'paw',animation:false});
 const rows=[
 ['dice-obsidian','Obsidian','obsidian','#111925','#304557','#B0E7EF'],
 ['dice-forged-steel','Forged Steel','steel','#304557','#385A76','#E7F3FB'],
@@ -46,7 +47,7 @@ export function defaultDiceAppearance(id='dice-forged-steel'){
   if(!p)throw Error('Unknown dice family.');
   return {version:APPEARANCE_VERSION,familyId:id,materialId:p.materialId,
     primaryColor:p.primaryColor,secondaryColor:p.secondaryColor,numberColor:p.numberColor,
-    trim:'silver',finish:p.materialId==='wood'?'satin':'polished',
+    trim:id==='dice-familiar'?'gold':'silver',finish:p.materialId==='wood'?'satin':'polished',
     numberStyle:'engraved',pattern:'none',specialSymbol:'none',
     glow:'off',wear:'pristine',perDie:{},
     special:id==='dice-watcher'?{...watcher}:id==='dice-familiar'?{...familiar}:null};
@@ -59,14 +60,14 @@ const choose=(x,choices,label)=>{if(!choices.includes(x))throw Error('Invalid '+
 const hex=(x,label)=>{if(typeof x!=='string'||!/^#[0-9a-f]{6}$/i.test(x))throw Error('Invalid '+label+' HEX.');return x.toUpperCase();};
 const specialFields={
  watcher:['kind','eyeType','irisColor','scleraColor','pupil','resinColor','transparency','glow','motion','blink','cursorTracking'],
- familiar:['kind','coatColor','coatPattern','eyeColor','pose','pawColor','resinColor','transparency','animation']
+ familiar:['kind','coatColor','coatPattern','eyeColor','pose','pawColor','resinColor','transparency','animation','decoration']
 };
 function validateSpecial(value,familyId){
   const kind=familyId==='dice-watcher'?'watcher':familyId==='dice-familiar'?'familiar':null;
   if(!kind){if(value!==null)throw Error('Core dice cannot have special settings.');return null;}
   object(value,'Special appearance');
   keys(value,specialFields[kind],'special appearance');
-  if(specialFields[kind].some(k=>!(k in value))||value.kind!==kind)throw Error('Special appearance does not match family.');
+  if(specialFields[kind].filter(k=>k!=='decoration').some(k=>!(k in value))||value.kind!==kind)throw Error('Special appearance does not match family.');
   const v={...value};
   if(kind==='watcher'){
     choose(v.eyeType,EYE_TYPES,'eye type');choose(v.pupil,EYE_PUPILS,'pupil');choose(v.transparency,TRANSPARENCY,'transparency');
@@ -76,6 +77,7 @@ function validateSpecial(value,familyId){
   }else{
     choose(v.coatPattern,CAT_PATTERNS,'cat coat');choose(v.pose,CAT_POSES,'cat pose');choose(v.transparency,TRANSPARENCY,'transparency');
     for(const k of ['coatColor','eyeColor','pawColor','resinColor'])v[k]=hex(v[k],k);
+    v.decoration=choose(v.decoration??'paw',FAMILIAR_DECORATIONS,'cat decoration');
     if(typeof v.animation!=='boolean')throw Error('Invalid cat animation.');
   }
   return v;
