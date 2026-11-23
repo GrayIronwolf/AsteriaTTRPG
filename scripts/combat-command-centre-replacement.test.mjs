@@ -237,7 +237,10 @@ test('Combat canvas replaces old layout bars with a full-width icon HUD and over
  assert.match(renderer,/Snap windows to grid/);
  assert.match(renderer,/Allow window overlap/);
  assert.match(css,/\.toolSidebar\[hidden\]\{display:none\}/);
- assert.match(css,/\.canvas\{[^}]*height:max\(580px,calc\(100dvh - 190px\)\)/s);
+ assert.match(css,/\.canvas\{[^}]*height:var\(--combat-viewport-height,max\(580px,calc\(100dvh - 190px\)\)\)/s);
+ assert.match(renderer,/viewport\.style\.setProperty\('--combat-viewport-height',height\+'px'\)/);
+ assert.match(renderer,/viewport\.getBoundingClientRect\(\)\.top\+scrollArea\.scrollTop/);
+ assert.match(css,/\.centre\{[^}]*--combat-edge-left/s);
  assert.doesNotMatch(css,/\.workArea\{|\.modeBar\{|\.quickActions\{/);
  for(const name of ['unlock','undo','redo','zoomIn','zoomOut','fitCanvas'])
    assert.match(icons,new RegExp('  '+name+':'));
