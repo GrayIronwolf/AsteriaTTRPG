@@ -3,8 +3,9 @@ import {Panel} from '../components/WorkspaceUI.jsx';
 import {firebaseService} from '../firebase/asteriaFirebaseService.js';
 import {
  ASTERIA_MONTHS,ASTERIA_WEEKDAYS,ASTERIA_SEASONS,ASTERIA_ERAS,
- CALENDAR_ENTRY_KINDS,calendarSourceReferences,
- sortedCalendarEntries,formatAsteriaDate,validateCalendarDefinition
+ CALENDAR_ENTRY_KINDS,calendarSourceReferences,DEFAULT_CALENDAR_CATEGORIES,CALENDAR_CLOCK_RATES,
+ sortedCalendarEntries,formatAsteriaDate,validateCalendarDefinition,effectiveCalendarDate,
+ calendarOccurrencesOnDate,calendarMoonPhases,calendarCelestialEventsOnDate
 } from '../state/asteriaCalendarModel.mjs';
 import {CalendarDefinitionEditor,blankCalendarDefinition,cleanCalendarDraft} from './CalendarDefinitionEditor.jsx';
 import {calendarMonthGrid,calendarMonthDays} from '../state/asteriaCalendarModel.mjs';
@@ -12,7 +13,7 @@ import '../styles/asteria-calendar.css';
 
 const blankDefinition=blankCalendarDefinition;
 const blankDate=()=>({era:'EOSR',year:1,month:1,day:1,hour:0,minute:0});
-const blankEvent=()=>({title:'',description:'',kind:'event',visibility:'gm',
+const blankEvent=()=>({title:'',description:'',kind:'event',categoryId:'event',recurrence:null,visibility:'gm',
  date:blankDate(),related:null});
 const numericDate=date=>Object.fromEntries(Object.entries(date).map(([key,value])=>[
  key,key==='era'?value:Number(value)
@@ -24,12 +25,22 @@ export function AsteriaCalendarWorkspace({campaignId,workspace={}}){
  const [definition,setDefinition]=useState(blankDefinition),[date,setDate]=useState(blankDate);
  const [entry,setEntry]=useState(blankEvent),[entryId,setEntryId]=useState('');
  const [unit,setUnit]=useState('day'),[amount,setAmount]=useState(1),[reason,setReason]=useState('');
+ const [clockMode,setClockMode]=useState('manual'),[clockRate,setClockRate]=useState(1);
+ const [clockNow,setClockNow]=useState(()=>Date.now());
+ const [categories,setCategories]=useState(DEFAULT_CALENDAR_CATEGORIES.map(row=>({...row})));
  const [busy,setBusy]=useState(false),[error,setError]=useState(''),[message,setMessage]=useState('');
  const ready=Boolean(calendar?.definition&&calendar?.date);
  const selected=entries.find(row=>row.id===entryId);
  const config=calendar?.definition||null;
  const sources=useMemo(()=>calendarSourceReferences(workspace),[workspace]);
  const ordered=useMemo(()=>sortedCalendarEntries(entries,config),[entries,config]);
+ useEffect(()=>{
+  const tick=()=>setClockNow(Date.now());
+  const timer=window.setInterval(tick,1000);
+  return()=>window.clearInterval(timer);
+ },[]);
+ const displayDate=ready?effectiveCalendarDate(calendar,clockNow):null;
+ const activeCategories=calendar?.categories||DEFAULT_CALENDAR_CATEGORIES;
  useEffect(()=>{
   setCalendar(null);setEntries([]);setDefinition(blankDefinition());setDate(blankDate());
   setEntryId('');setEntry(blankEvent());setMessage('');setError('');
@@ -46,6 +57,9 @@ export function AsteriaCalendarWorkspace({campaignId,workspace={}}){
     seasons:calendar.definition.seasons||[...ASTERIA_SEASONS],eras:calendar.definition.eras||ASTERIA_ERAS.map(x=>({...x})),
     leapDays:calendar.definition.leapDays||[],moons:calendar.definition.moons||[],cycles:calendar.definition.cycles||[]});
    setDate(calendar.date);
+   setClockMode(calendar.clockMode||'manual');
+   setClockRate(calendar.clockRate||1);
+   setCategories((calendar.categories||DEFAULT_CALENDAR_CATEGORIES).map(row=>({...row})));
   }
  },[calendar?.revision]);
  const updateDate=(key,value)=>setDate(old=>({...old,[key]:value}));
@@ -80,6 +94,7 @@ export function AsteriaCalendarWorkspace({campaignId,workspace={}}){
  const editEvent=record=>{
   setEntryId(record?.id||'');
   setEntry(record?{title:record.title,description:record.description||'',kind:record.kind,
+   categoryId:record.categoryId||record.kind,recurrence:record.recurrence||null,
    visibility:record.visibility,date:{...record.date},
    related:record.related||null}:
    {...blankEvent(),date:calendar?.date?{...calendar.date}:blankDate()});
@@ -90,6 +105,14 @@ export function AsteriaCalendarWorkspace({campaignId,workspace={}}){
   entry:{...entry,date:numericDate(entry.date)}},
   result=>result.visibility==='party'?'Calendar event saved and shared with the party.':
     'Calendar event saved for GMs only.');
+ const saveClock=()=>submit({type:'setClock',expectedRevision:calendar?.revision||0,
+  clockMode,clockRate:Number(clockRate),reason},
+  result=>result.clockMode==='realtime'?'Campaign clock is now advancing automatically.':'Campaign clock paused.');
+ const undoTime=()=>submit({type:'undoTime',expectedRevision:calendar?.revision||0,reason},
+  ()=>'The most recent reversible clock change was undone.');
+ const saveCategories=()=>submit({type:'setCategories',expectedRevision:calendar?.revision||0,
+  categories},()=>'Calendar event categories saved and shared.');
+ const updateCategory=(index,key,value)=>setCategories(old=>old.map((row,i)=>i===index?{...row,[key]:value}:row));
  const archiveEvent=()=>{
   if(!selected||!window.confirm('Archive this calendar event? Its public projection will be removed.'))return;
   submit({type:'archiveEntry',expectedRevision:calendar?.revision||0,
@@ -118,7 +141,7 @@ export function AsteriaCalendarWorkspace({campaignId,workspace={}}){
    <p>Your campaign calendar can be customised without changing the official Astria calendar. Review month lengths and eras before saving.</p>
    <section className="asteria-calendar-card">
     <h3>World chronology</h3>
-    {ready?<p className="asteria-calendar-current"><strong>{formatAsteriaDate(calendar.date,config)}</strong>
+    {ready?<p className="asteria-calendar-current"><strong>{formatAsteriaDate(displayDate,config)}</strong>
       <small>Revision {calendar.revision}. Only the GM may change time. Players see the synchronized date.</small></p>:
      <p role="status">Not configured. Complete the calendar rules and save them before using in-world dates.</p>}
     <CalendarDefinitionEditor value={definition} onChange={setDefinition} busy={busy} configured={ready} entryCount={calendar?.entryCount||0}/>
@@ -129,6 +152,24 @@ export function AsteriaCalendarWorkspace({campaignId,workspace={}}){
      <button type="button" className="primary" disabled={busy} onClick={saveCalendar}>{ready?'Update calendar rules':'Configure calendar'}</button>
      <button type="button" disabled={busy||!ready} onClick={setWorldDate}>Set world date</button>
     </div>
+    {ready?<div className="asteria-calendar-clock-controls">
+      <h4>Campaign clock</h4>
+      <p className="react-help">Manual changes remain GM-only. Automatic time uses one server-authorised anchor and advances locally on each viewer's screen without continual Firestore writes.</p>
+      <div className="asteria-calendar-grid">
+       <label>Clock mode<select disabled={busy} value={clockMode} onChange={e=>setClockMode(e.target.value)}>
+        <option value="manual">Manual / paused</option><option value="realtime">Automatic advancement</option>
+       </select></label>
+       <label>Game minutes per real minute<select disabled={busy} value={clockRate}
+        onChange={e=>setClockRate(Number(e.target.value))}>
+        {CALENDAR_CLOCK_RATES.map(rate=><option value={rate} key={rate}>{rate}×</option>)}
+       </select></label>
+      </div>
+      <div className="asteria-calendar-actions">
+       <button type="button" disabled={busy} onClick={saveClock}>Apply clock controls</button>
+       <button type="button" disabled={busy||!['advance','set','setClock'].includes(calendar.history?.[0]?.type)}
+        onClick={undoTime}>Undo most recent clock change</button>
+      </div>
+     </div>:null}
     {ready?<div className="asteria-calendar-actions">
      <label>Advance by<select value={unit} disabled={busy} onChange={e=>setUnit(e.target.value)}>
       {['minute','hour','day','week','month','year'].map(x=><option key={x} value={x}>{x}</option>)}
@@ -138,9 +179,19 @@ export function AsteriaCalendarWorkspace({campaignId,workspace={}}){
      <button type="button" disabled={busy} onClick={advance}>Advance campaign time</button>
     </div>:null}
    </section>
-   {ready?<CalendarBrowser calendar={calendar} entries={ordered}/>:null}
+   {ready?<CalendarBrowser calendar={calendar} entries={ordered} currentDate={displayDate}/>:null}
    {ready?<section className="asteria-calendar-card">
     <h3>Campaign calendar events</h3>
+    <details><summary>Event categories</summary>
+      <div className="asteria-calendar-editor-list">{categories.map((row,index)=><div className="asteria-calendar-row" key={index}>
+       <label>Category ID<input value={row.id} maxLength={40} disabled={busy} onChange={e=>updateCategory(index,'id',e.target.value)}/></label>
+       <label>Display name<input value={row.name} maxLength={40} disabled={busy} onChange={e=>updateCategory(index,'name',e.target.value)}/></label>
+       <label>Colour<input type="color" value={row.color} disabled={busy} onChange={e=>updateCategory(index,'color',e.target.value)}/></label>
+       <button type="button" disabled={busy||categories.length<=1} onClick={()=>setCategories(rows=>rows.filter((_,i)=>i!==index))}>Remove</button>
+      </div>)}</div>
+      <div className="asteria-calendar-actions"><button type="button" disabled={busy||categories.length>=24} onClick={()=>setCategories(rows=>[...rows,{id:'category-'+(rows.length+1),name:'New Category',color:'#8999AA'}])}>+ Category</button>
+       <button type="button" disabled={busy} onClick={saveCategories}>Save categories</button></div>
+    </details>
     <div className="asteria-calendar-actions">
      <button type="button" onClick={()=>editEvent(null)} disabled={busy}>New calendar event</button>
      <label>Existing entries<select value={entryId} disabled={busy}
@@ -156,6 +207,16 @@ export function AsteriaCalendarWorkspace({campaignId,workspace={}}){
       onChange={e=>setEntry(old=>({...old,kind:e.target.value}))}>
       {CALENDAR_ENTRY_KINDS.map(kind=><option key={kind} value={kind}>{kind}</option>)}
      </select></label>
+     <label>Category<select value={entry.categoryId||entry.kind} disabled={busy}
+      onChange={e=>setEntry(old=>({...old,categoryId:e.target.value}))}>
+      {categories.map(row=><option key={row.id} value={row.id}>{row.name}</option>)}
+     </select></label>
+     <label>Repeat<select disabled={busy} value={entry.recurrence?.unit||'none'} onChange={e=>setEntry(old=>({...old,
+      recurrence:e.target.value==='none'?null:{unit:e.target.value,interval:1,untilYear:null}}))}>
+       {['none','day','week','month','year'].map(unit=><option key={unit} value={unit}>{unit==='none'?'Do not repeat':'Every '+unit}</option>)}
+     </select></label>
+     {entry.recurrence?<label>Repeat interval<input type="number" min="1" max="365" disabled={busy}
+      value={entry.recurrence.interval} onChange={e=>setEntry(old=>({...old,recurrence:{...old.recurrence,interval:Number(e.target.value)}}))}/></label>:null}
      <label>Visibility<select value={entry.visibility} disabled={busy}
       onChange={e=>setEntry(old=>({...old,visibility:e.target.value}))}>
       <option value="gm">GM only</option><option value="party">Share with players</option>
@@ -181,6 +242,7 @@ export function AsteriaCalendarWorkspace({campaignId,workspace={}}){
      {ordered.map(row=><li key={row.id}>
       <strong>{row.title}</strong><small>{formatAsteriaDate(row.date,config)} · {row.kind} · {row.visibility==='party'?'Party-visible':'GM private'}</small>
       {row.description?<p>{row.description}</p>:null}
+      {row.recurrence?<small>Repeats every {row.recurrence.interval} {row.recurrence.unit}(s)</small>:null}
       {row.related?<small>Linked {row.related.type} record: {row.related.id}</small>:null}
       <button type="button" disabled={busy} onClick={()=>editEvent(row)}>Edit</button>
      </li>)}
@@ -195,7 +257,7 @@ export function AsteriaCalendarWorkspace({campaignId,workspace={}}){
    </details>:null}
    {error?<p role="alert" className="asteria-calendar-error">{error}</p>:null}
    {message?<p role="status">{message}</p>:null}
-   <p className="react-help">Time advances only when the GM uses these controls. It does not alter cooldowns, rest mechanics, combat rounds, weather, quests or economy state automatically.</p>
+   <p className="react-help">Campaign time advances through the manual GM controls or the optional running clock. It does not alter cooldowns, rest mechanics, combat rounds, weather, quests or economy state automatically.</p>
   </div>
  </Panel>;
 }
@@ -212,14 +274,17 @@ export function PlayerAsteriaCalendar({campaignId}){
   return()=>stops.forEach(stop=>stop?.());
  },[campaignId]);
  const config=calendar?.definition;
+ const [clockNow,setClockNow]=useState(()=>Date.now());
+ useEffect(()=>{const timer=window.setInterval(()=>setClockNow(Date.now()),1000);return()=>window.clearInterval(timer);},[]);
+ const displayDate=config&&calendar?.date?effectiveCalendarDate(calendar,clockNow):null;
  const ordered=useMemo(()=>sortedCalendarEntries(entries,config),[entries,config]);
  return <Panel title="Asteria Calendar" eyebrow="Campaign Time & Events">
   <div className="asteria-calendar">
    {config&&calendar?.date?<p className="asteria-calendar-current">
-    <strong>{formatAsteriaDate(calendar.date,config)}</strong>
-    <small>Live campaign time, managed by your GM.</small>
+    <strong>{formatAsteriaDate(displayDate,config)}</strong>
+    <small>{calendar.clockMode==='realtime'?'Live campaign time (automatic)':'Campaign clock paused'} · managed by your GM.</small>
    </p>:<p>The GM has not configured the campaign calendar yet.</p>}
-   {config&&calendar?.date?<CalendarBrowser calendar={calendar} entries={ordered}/>:null}
+   {config&&calendar?.date?<CalendarBrowser calendar={calendar} entries={ordered} currentDate={displayDate}/>:null}
    <h3>Shared calendar events</h3>
    {config&&ordered.length?<ol className="asteria-calendar-events">
     {ordered.map(row=><li key={row.id}><strong>{row.title}</strong>
@@ -233,11 +298,11 @@ export function PlayerAsteriaCalendar({campaignId}){
 }
 
 /** Shared read-only calendar browser for both GM and player views. */
-export function CalendarBrowser({calendar,entries=[]}){
+export function CalendarBrowser({calendar,entries=[],currentDate=null}){
  const config=calendar?.definition;
  const [mode,setMode]=useState('month'),[offset,setOffset]=useState(0),[selection,setSelection]=useState(null);
  if(!config||!calendar?.date)return null;
- const c=validateCalendarDefinition(config),today=calendar.date;
+ const c=validateCalendarDefinition(config),today=currentDate||calendar.date;
  const count=c.months.length;
  const abs=(today.year-1)*count+today.month-1+offset;
  const year=Math.max(1,Math.min(100000,Math.floor(abs/count)+1));
@@ -245,7 +310,8 @@ export function CalendarBrowser({calendar,entries=[]}){
  const grid=calendarMonthGrid(c,today.era,year,month);
  const chosen=Math.max(1,Math.min(calendarMonthDays(c,year,month),selection??today.day));
  const dayDate={...today,year,month,day:chosen};
- const matches=date=>entries.filter(e=>e.date?.era===date.era&&e.date?.year===date.year&&e.date?.month===date.month&&e.date?.day===date.day);
+ const matches=date=>calendarOccurrencesOnDate(entries,date,c);
+ const celestial=date=>calendarCelestialEventsOnDate(date,c);
  const previous=()=>{setOffset(x=>Math.max(-(today.year-1)*count-today.month+1,x-(mode==='year'?count:1)));setSelection(null);};
  const next=()=>{setOffset(x=>Math.min((100000-today.year)*count+count-today.month,x+(mode==='year'?count:1)));setSelection(null);};
  return <section className="asteria-calendar-card asteria-calendar-browser">
@@ -273,12 +339,15 @@ export function CalendarBrowser({calendar,entries=[]}){
     onClick={()=>setSelection(cell.date.day)}><strong>{cell.date.day}</strong>
     {cell.intercalary?<small>{cell.intercalary}</small>:null}
     {matches(cell.date).slice(0,2).map(event=><small key={event.id} className="asteria-calendar-event-mark">{event.title}</small>)}
+    {celestial(cell.date).slice(0,1).map(event=><small key={event.id} className="asteria-calendar-event-mark">{event.title}</small>)}
    </button>:<span key={index} aria-hidden="true"/>)}
   </div>:<div className="asteria-calendar-actions"><label>Select day<input type="number" min="1"
    max={calendarMonthDays(c,year,month)} value={chosen} onChange={e=>setSelection(Number(e.target.value)||1)}/></label></div>}
   {mode!=='year'?<div className="asteria-calendar-selected">
    <strong>{formatAsteriaDate(dayDate,c,{time:false})}</strong>
    {matches(dayDate).map(e=><p key={e.id}>{e.title}</p>)}
+   {celestial(dayDate).map(e=><p key={e.id}>{e.title}</p>)}
+   {calendarMoonPhases(dayDate,c).map(moon=><p key={moon.name}>{moon.name}: {moon.phase}</p>)}
   </div>:null}
  </section>;
 }
