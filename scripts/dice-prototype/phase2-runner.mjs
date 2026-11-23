@@ -33,7 +33,7 @@ try{
   await fs.mkdir(output,{recursive:true});
   await page.screenshot({path:path.join(output,'desktop.png')});
   await page.getByRole('button',{name:'Replay last roll'}).click();
-  await page.waitForFunction(()=>document.querySelector('[data-roll-state=settled]'),{timeout:120000});
+  await page.waitForFunction(()=>document.querySelector('[data-roll-state=settled]'),null,{timeout:120000});
   const replayed=await page.evaluate(()=>window.phase2Metrics);
   check('Replay never creates another server roll',replayed.serverActions===1&&replayed.replays===1,replayed);
   await page.getByRole('combobox',{name:'Dice tray size'}).selectOption('compact');
