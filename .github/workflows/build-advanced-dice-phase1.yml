@@ -1,4 +1,4 @@
-name: Build Advanced Dice 3D Phase 1 on test branch (no Firebase deploy)
+name: Build Advanced Dice 3D on test branch (no Firebase deploy)
 on:
   push:
     branches: [Website-Build-Test]
@@ -7,6 +7,8 @@ on:
       - 'src/dashboards/AdvancedDiceWorkspace.jsx'
       - 'src/styles/advanced-dice.css'
       - 'scripts/dice-engine-phase1.test.mjs'
+      - 'scripts/dice-engine-phase2.test.mjs'
+      - 'scripts/dice-prototype/phase2*'
       - 'scripts/digital-gm-phase7-1.test.mjs'
       - 'package.json'
       - '.github/workflows/build-advanced-dice-phase1.yml'
@@ -37,6 +39,17 @@ jobs:
           npm run lint
       - name: Build React/Vite site on test branch only
         run: npm run build
+      - name: Install isolated browser test driver
+        run: npm install --no-save --package-lock=false --ignore-scripts --no-audit --no-fund playwright@1.56.1
+      - name: Verify the redesigned dice tray in Chromium
+        run: node scripts/dice-prototype/phase2-runner.mjs
+      - name: Store Phase 2 responsive browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asteria-dice-phase2-ui
+          path: dice-phase2-evidence/
+          if-no-files-found: warn
       - name: Commit generated lockfile and built assets
         run: |
           git config user.name "github-actions[bot]"

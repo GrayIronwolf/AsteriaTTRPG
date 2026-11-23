@@ -1,58 +1,205 @@
-.asteria-advanced-dice{display:grid;gap:16px;min-width:0;padding:16px;border:1px solid #58606c;border-radius:12px;background:linear-gradient(130deg,#141b27,#202c3b);color:#e7eaf0}
-.asteria-advanced-dice-heading{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:10px}
-.asteria-advanced-dice h2,.asteria-advanced-dice h3{margin:0 0 8px}
-.asteria-advanced-dice p{margin:5px 0 10px}
-.asteria-advanced-dice-heading>div{max-width:650px}
-.asteria-advanced-dice-heading>span,.asteria-advanced-dice-help{font-size:.82rem;color:#bac3d1}
-.asteria-advanced-dice-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:18px;min-width:0}
-.asteria-advanced-dice-editor,.asteria-advanced-dice-record{display:grid;align-content:start;gap:12px;min-width:0;padding:13px;border:1px solid #404e60;border-radius:9px;background:#111b2a}
-.asteria-advanced-dice-pools{display:grid;gap:8px}
-.asteria-advanced-dice-pool{display:flex;align-items:end;gap:8px;flex-wrap:wrap}
-.asteria-advanced-dice-pool label{flex:1 1 90px;min-width:0}
+/* Advanced Dice, shared by the GM and Player dashboards.
+   Steel blue, inset obsidian and the existing Asteria crystal accent. */
+.asteria-advanced-dice{
+  box-sizing:border-box;display:grid;gap:15px;min-width:0;padding:14px;
+  container:asteriaDice / inline-size;color:#e7edf4;
+  border:1px solid #657889;border-radius:7px;
+  background:#0c1723;
+  box-shadow:inset 0 0 0 1px rgba(192,211,225,.09),0 12px 26px rgba(0,0,0,.27)
+}
+.asteria-advanced-dice *{box-sizing:border-box}
+.asteria-advanced-dice-heading{
+  display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;
+  padding:5px 5px 4px
+}
+.asteria-advanced-dice-heading h2{margin:0 0 5px;font-size:1.25rem;color:#f2f7fc;letter-spacing:.012em}
+.asteria-advanced-dice-heading p{margin:0;max-width:760px;color:#b3c4d1;font-size:.85rem;line-height:1.45}
+.asteria-advanced-dice-heading>span{font-size:.73rem;color:#cad4dd;border:1px solid #456175;
+  border-radius:4px;padding:5px 8px;background:#182c3d}
+.asteria-advanced-dice :is(h2,h3){line-height:1.3}
+.asteria-advanced-dice-grid{
+  display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);
+  align-items:start;gap:14px;min-width:0
+}
+.asteria-advanced-dice-editor,.asteria-advanced-dice-record{
+  display:grid;align-content:start;gap:11px;min-width:0;padding:14px;
+  border:1px solid #3b5468;border-radius:5px;background:#111f2d
+}
+.asteria-advanced-dice-editor h3,.asteria-advanced-dice-record h3{margin:0;font-size:1rem;color:#e8f0f6}
+.asteria-advanced-dice-editor p,.asteria-advanced-dice-record p{margin:0;line-height:1.45}
+.asteria-advanced-dice-pools{display:grid;gap:9px}
+.asteria-advanced-dice-pool{display:flex;align-items:end;gap:8px;flex-wrap:wrap;padding:9px;
+  border:1px solid #34485b;border-radius:4px;background:#162839}
+.asteria-advanced-dice-pool label{flex:1 1 95px;min-width:0}
 .asteria-advanced-dice-pool button{margin-bottom:1px}
-.asteria-advanced-dice label{display:grid;gap:4px;font-size:.86rem}
-.asteria-advanced-dice input,.asteria-advanced-dice select{width:100%;min-width:0;color:inherit;background:#202c3c;border:1px solid #718094;padding:8px 9px;border-radius:5px;font:inherit}
-.asteria-advanced-dice input:focus-visible,.asteria-advanced-dice button:focus-visible,.asteria-advanced-dice select:focus-visible{outline:2px solid #d8b66e;outline-offset:2px}
-.asteria-advanced-dice button{font:inherit;cursor:pointer;border:1px solid #76889a;color:#e8edf3;background:#29384b;border-radius:5px;padding:8px 11px}
-.asteria-advanced-dice button:hover:not(:disabled){background:#3b4d61}
-.asteria-advanced-dice button:disabled{opacity:.5;cursor:not-allowed}
-.asteria-advanced-dice-fields{display:grid;grid-template-columns:minmax(90px,1fr) minmax(155px,2fr);gap:8px}
-.asteria-advanced-dice-actions{display:flex;flex-wrap:wrap;gap:7px}
-.asteria-advanced-dice-expression{display:flex;flex-direction:column;gap:4px;background:#253043;border-radius:8px;padding:10px 12px}
-.asteria-advanced-dice-expression strong{font-size:1.12rem;word-break:break-word}
-.asteria-advanced-dice-expression span,.asteria-advanced-dice-expression small{color:#becbd8}
-.asteria-advanced-dice button.asteria-advanced-dice-primary{background:linear-gradient(#84724f,#56452d);color:#fff7e5;border-color:#bba06c;font-weight:700;padding:12px}
-.asteria-advanced-dice-presets{display:grid;gap:9px;min-width:0}
+.asteria-advanced-dice label{display:grid;gap:5px;font-size:.82rem;color:#d1dce5}
+.asteria-advanced-dice :is(input,select){
+  width:100%;min-width:0;min-height:35px;padding:7px 9px;font:inherit;color:#f3f6fa;
+  background:#1d3042;border:1px solid #6b8191;border-radius:4px
+}
+.asteria-advanced-dice :is(input,select,button):focus-visible{
+  outline:2px solid var(--asteria-accent,#b6d5e8);outline-offset:2px
+}
+.asteria-advanced-dice button{
+  font:inherit;cursor:pointer;color:#e9f1f7;border:1px solid #627c91;border-radius:4px;
+  background:linear-gradient(180deg,#365166,#17293b 56%,#122334);
+  padding:7px 10px;min-height:35px;
+  box-shadow:inset 0 1px 0 rgba(240,249,255,.13)
+}
+.asteria-advanced-dice button:hover:not(:disabled){border-color:#a9c4d7;background:#29475c}
+.asteria-advanced-dice button:disabled{opacity:.48;cursor:not-allowed}
+.asteria-advanced-dice-actions{display:flex;gap:7px;flex-wrap:wrap}
+.asteria-advanced-dice-fields{display:grid;grid-template-columns:minmax(90px,.8fr) minmax(145px,1.6fr);gap:9px}
+.asteria-advanced-dice-expression{
+  display:grid;gap:4px;padding:10px 12px;border:1px solid #334e65;
+  border-radius:4px;background:#203448
+}
+.asteria-advanced-dice-expression span,.asteria-advanced-dice-expression small{color:#b6c9d8;font-size:.78rem}
+.asteria-advanced-dice-expression strong{font-size:1.12rem;overflow-wrap:anywhere}
+.asteria-advanced-dice button.asteria-advanced-dice-primary{
+  border-color:#84a6be;color:#f0f8ff;font-weight:700;min-height:43px;
+  background:linear-gradient(180deg,#436782,#1f405a 56%,#153349)
+}
+.asteria-advanced-dice-help{font-size:.78rem;color:#a9bdcb;line-height:1.45}
+.asteria-advanced-dice-presets{display:grid;gap:9px;padding-top:10px;border-top:1px solid #334a5e}
 .asteria-advanced-dice-preset-save{display:flex;align-items:end;gap:8px;flex-wrap:wrap}
 .asteria-advanced-dice-preset-save label{flex:1 1 180px}
-.asteria-advanced-dice-presets ul,.asteria-advanced-dice-history ol{margin:0;padding:0;list-style:none;display:grid;gap:6px}
-.asteria-advanced-dice-presets li{display:flex;gap:7px;align-items:center;flex-wrap:wrap;padding:7px;border:1px solid #445367;border-radius:7px}
-.asteria-advanced-dice-presets li>span{flex:1 1 120px;display:grid;min-width:0}
-.asteria-advanced-dice-presets li small{color:#c4cbd5}
-.asteria-advanced-dice-latest{display:grid;gap:5px;padding:14px;border:1px solid #7c6b46;border-radius:8px;background:#2b2930}
-.asteria-advanced-dice-total{font-size:3.3rem;line-height:1.05;color:#f2d18c}
-.asteria-advanced-dice-faces{border-top:1px solid #5a5860;padding-top:8px}
-.asteria-advanced-dice-history{display:grid;gap:10px}
-.asteria-advanced-dice-history-heading{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px;align-items:center}
-.asteria-advanced-dice-history ol{max-height:420px;overflow:auto}
-.asteria-advanced-dice-history li{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:12px;padding:8px;border-bottom:1px solid #405066}
-.asteria-advanced-dice-history li div{display:grid;min-width:0}
-.asteria-advanced-dice-history li div small{color:#aeb9c7}
-.asteria-advanced-dice-history li>span{color:#d3d8e2;font-size:.85rem}
-.asteria-advanced-dice-history li>strong{font-size:1.2rem;color:#f4d290}
-.asteria-advanced-dice-message{padding:8px 10px;border:1px solid #8d9ab1;border-radius:6px}
-@media(max-width:800px){.asteria-advanced-dice-grid{grid-template-columns:1fr}}
-@media(max-width:540px){.asteria-advanced-dice{padding:10px}.asteria-advanced-dice-editor,.asteria-advanced-dice-record{padding:10px}.asteria-advanced-dice-history li{grid-template-columns:minmax(0,1fr) auto}.asteria-advanced-dice-history li>span{grid-column:1}.asteria-advanced-dice-history li>strong{grid-column:2;grid-row:1 / 3}}
-
-/* Phase 1: an engine-neutral scene inside the existing dice workspace. */
-.asteria-advanced-dice-tray{display:grid;gap:8px;min-width:0;overflow:hidden;border:1px solid #3e546c;border-radius:10px;background:#0f1927}
-.asteria-advanced-dice-tray-heading{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px;padding:12px 12px 0}
-.asteria-advanced-dice-tray-heading h3{margin:0}
-.asteria-advanced-dice-tray-heading span,.asteria-advanced-dice-tray-status,.asteria-advanced-dice-tray-note{color:#bcc9d9;font-size:.78rem}
-.asteria-advanced-dice-scene{position:relative;width:100%;height:clamp(210px,27vw,330px);min-height:210px;overflow:hidden;background:radial-gradient(ellipse at center,#25364b 0%,#101826 80%)}
+.asteria-advanced-dice-presets ul,.asteria-advanced-dice-history ol{
+  padding:0;margin:0;list-style:none;display:grid;gap:6px
+}
+.asteria-advanced-dice-presets li{
+  display:flex;align-items:center;gap:7px;flex-wrap:wrap;
+  padding:8px;border:1px solid #3c5367;border-radius:4px;background:#15283a
+}
+.asteria-advanced-dice-presets li>span{flex:1 1 120px;min-width:0;display:grid;gap:3px}
+.asteria-advanced-dice-presets li small{color:#bdccd8}
+.asteria-advanced-dice-latest{
+  display:grid;gap:8px;padding:12px;border:1px solid #53718a;
+  border-radius:5px;background:#1a2d40
+}
+.asteria-advanced-dice-total{font-size:3rem;line-height:1;font-variant-numeric:tabular-nums;
+  color:#e9f6ff}
+.asteria-advanced-dice-faces{padding-top:8px;border-top:1px solid #4b6175}
+.asteria-advanced-dice-faces p{padding:3px 0}
+.asteria-advanced-dice-history{display:grid;gap:9px;padding-top:10px;border-top:1px solid #334a5e}
+.asteria-advanced-dice-history-heading{display:flex;justify-content:space-between;align-items:center;gap:7px;flex-wrap:wrap}
+.asteria-advanced-dice-history ol{max-height:370px;overflow:auto;scrollbar-width:thin}
+.asteria-advanced-dice-history li{display:grid;grid-template-columns:minmax(0,1fr) auto auto;
+  align-items:center;gap:10px;padding:8px;border-bottom:1px solid #354d62}
+.asteria-advanced-dice-history li div{display:grid;min-width:0;gap:2px}
+.asteria-advanced-dice-history li div small,.asteria-advanced-dice-history li>span{color:#b8c8d5;font-size:.8rem}
+.asteria-advanced-dice-history li>strong{color:#e8f6ff;font-size:1.2rem}
+.asteria-advanced-dice-message{padding:9px 11px;border:1px solid #7992a4;border-radius:4px;background:#20384e}
+.asteria-advanced-dice-tray{
+  display:grid;gap:0;min-width:0;overflow:hidden;border:1px solid #688297;
+  border-radius:6px;background:#0a1521;
+  box-shadow:inset 0 1px 0 rgba(235,245,255,.12),0 8px 18px rgba(0,0,0,.27)
+}
+.asteria-advanced-dice-tray-heading{
+  min-height:51px;padding:9px 13px;display:flex;align-items:center;
+  justify-content:space-between;gap:10px;flex-wrap:wrap;
+  background:linear-gradient(180deg,#344e63,#1b3347 48%,#122637);
+  border-bottom:1px solid #536f83
+}
+.asteria-advanced-dice-tray-title{display:flex;align-items:center;gap:11px;min-width:0}
+.asteria-advanced-dice-tray-title>div{display:grid;gap:2px}
+.asteria-advanced-dice-tray-title h3{margin:0;font-size:1rem;font-weight:650}
+.asteria-advanced-dice-tray-title small{font-size:.7rem;color:#b9ccd9}
+.asteria-advanced-dice-crystal{
+  display:block;flex:0 0 12px;width:12px;height:12px;transform:rotate(45deg);
+  border:1px solid #a9c3d4;
+  background:var(--asteria-accent,#8bb9d5);
+  box-shadow:inset 1px 1px 2px rgba(255,255,255,.42),0 0 7px rgba(120,185,221,.32)
+}
+.asteria-advanced-dice-trust{
+  color:#d3e5ee;font-size:.72rem;letter-spacing:.025em;
+  border:1px solid #57798e;padding:5px 8px;border-radius:3px;
+  background:rgba(8,21,32,.45)
+}
+.asteria-advanced-dice-toolbar{
+  display:flex;align-items:center;flex-wrap:wrap;justify-content:space-between;gap:8px 13px;
+  padding:8px 12px;border-bottom:1px solid #385269;background:#122435
+}
+.asteria-advanced-dice .asteria-advanced-dice-motion-control,
+.asteria-advanced-dice .asteria-advanced-dice-size-control{
+  display:flex;align-items:center;gap:7px;white-space:nowrap;font-size:.8rem;color:#d0dfe8
+}
+.asteria-advanced-dice .asteria-advanced-dice-motion-control input{
+  width:16px;min-width:16px;height:16px;min-height:16px;margin:0;
+  accent-color:var(--asteria-accent,#8bb9d5)
+}
+.asteria-advanced-dice .asteria-advanced-dice-size-control select{
+  min-width:110px;width:auto;min-height:31px;padding:4px 6px;font-size:.78rem
+}
+.asteria-advanced-dice-tray-actions{display:flex;gap:7px;flex-wrap:wrap}
+.asteria-advanced-dice .asteria-advanced-dice-tray-actions button{
+  min-height:31px;padding:5px 10px;font-size:.78rem
+}
+.asteria-advanced-dice-stage{
+  position:relative;isolation:isolate;overflow:hidden;min-width:0;
+  height:clamp(260px,26vw,340px);
+  background:#101d2b;
+  border-block:2px solid #273f52;
+}
+.asteria-advanced-dice-tray[data-tray-size=compact] .asteria-advanced-dice-stage{height:215px}
+.asteria-advanced-dice-tray[data-tray-size=expanded] .asteria-advanced-dice-stage{height:440px}
+.asteria-advanced-dice-scene{position:absolute;inset:0;overflow:hidden;width:100%;height:100%;
+  background:radial-gradient(ellipse at 50% 25%,#243c52,#0d1b29 78%)}
 .asteria-advanced-dice-scene canvas{display:block;width:100%;height:100%}
-.asteria-advanced-dice-tray-status{margin:0!important;padding:0 12px 8px}
-.asteria-advanced-dice-tray-note{padding:0 12px 12px}
-.asteria-advanced-dice-motion-control{display:flex!important;align-items:center;gap:7px}
-.asteria-advanced-dice-motion-control input{width:auto!important;min-width:auto!important}
-@media(max-width:540px){.asteria-advanced-dice-scene{height:230px;min-height:230px}}
+.asteria-advanced-dice-stage::after{content:'';position:absolute;z-index:1;inset:5px;
+  border:1px solid rgba(160,191,210,.19);pointer-events:none}
+.asteria-advanced-dice-placeholder,.asteria-advanced-dice-fallback{
+  position:absolute;z-index:2;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:9px;
+  padding:18px;text-align:center;color:#d4e1ea;
+  background:rgba(9,20,31,.77);pointer-events:none
+}
+.asteria-advanced-dice-placeholder-mark{
+  display:grid;place-items:center;width:66px;height:66px;transform:rotate(-7deg);
+  clip-path:polygon(50% 0,93% 22%,97% 74%,51% 100%,6% 74%,7% 22%);
+  background:#203b52;border:1px solid #65899f;color:#dce9f4;font-weight:800;letter-spacing:.03em
+}
+.asteria-advanced-dice-placeholder strong,.asteria-advanced-dice-fallback strong{font-size:1.05rem}
+.asteria-advanced-dice-placeholder small,.asteria-advanced-dice-fallback span{font-size:.8rem;color:#b8ccda}
+.asteria-advanced-dice-stage-label{
+  position:absolute;z-index:2;left:10px;bottom:10px;
+  background:rgba(9,22,34,.9);padding:6px 9px;border:1px solid #5c7890;border-radius:3px;
+  color:#e8f4fb;font-size:.82rem;pointer-events:none
+}
+.asteria-advanced-dice-tray-footer{
+  display:flex;justify-content:space-between;align-items:center;gap:11px;flex-wrap:wrap;
+  padding:10px 13px;background:#13273a;border-top:1px solid #436077
+}
+.asteria-advanced-dice-tray-status{margin:0!important;min-width:0;flex:1;
+  font-size:.79rem;line-height:1.4;color:#c5d6e0}
+.asteria-advanced-dice-official{
+  display:flex;align-items:center;gap:9px;flex:none;color:#c9dce8;font-size:.75rem
+}
+.asteria-advanced-dice-official strong{
+  font-size:1.35rem;line-height:1;font-variant-numeric:tabular-nums;color:#f0f9ff
+}
+.asteria-advanced-dice-tray-empty{color:#9fb5c4;font-size:.75rem}
+.asteria-advanced-dice-tray-note{display:block;padding:8px 13px;color:#b3c7d4;font-size:.76rem}
+@container asteriaDice (max-width:760px){
+  .asteria-advanced-dice-grid{grid-template-columns:minmax(0,1fr)}
+  .asteria-advanced-dice-tray[data-tray-size=expanded] .asteria-advanced-dice-stage{height:340px}
+}
+@container asteriaDice (max-width:470px){
+  .asteria-advanced-dice{padding:9px}
+  .asteria-advanced-dice-toolbar{align-items:flex-start}
+  .asteria-advanced-dice-trust{font-size:.69rem}
+  .asteria-advanced-dice-stage{height:245px}
+  .asteria-advanced-dice-tray[data-tray-size=compact] .asteria-advanced-dice-stage{height:195px}
+  .asteria-advanced-dice-tray[data-tray-size=expanded] .asteria-advanced-dice-stage{height:310px}
+  .asteria-advanced-dice-history li{grid-template-columns:minmax(0,1fr) auto}
+  .asteria-advanced-dice-history li>span{grid-column:1}
+  .asteria-advanced-dice-history li>strong{grid-column:2;grid-row:1 / 3}
+}
+@media(max-width:800px){
+  .asteria-advanced-dice-grid{grid-template-columns:minmax(0,1fr)}
+}
+@media(max-width:540px){
+  .asteria-advanced-dice{padding:9px}
+  .asteria-advanced-dice-editor,.asteria-advanced-dice-record{padding:10px}
+  .asteria-advanced-dice-fields{grid-template-columns:1fr}
+}

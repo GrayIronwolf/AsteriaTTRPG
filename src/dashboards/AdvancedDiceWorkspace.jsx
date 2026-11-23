@@ -18,6 +18,7 @@ export function AdvancedDiceWorkspace({role='player'}){
   const [busy,setBusy]=useState(false),[error,setError]=useState('');
   const [notice,setNotice]=useState(''),[showHistory,setShowHistory]=useState(true);
   const [animatedRoll,setAnimatedRoll]=useState(null);
+  const [replayToken,setReplayToken]=useState(0);
   const [animateDice,setAnimateDice]=useState(()=>{
     if(typeof window==='undefined'||typeof window.matchMedia!=='function')return true;
     return !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -60,7 +61,10 @@ export function AdvancedDiceWorkspace({role='player'}){
       'Digital roll recorded in your private history.');
     if(response?.ok){
       lastRequest.current=null;
-      if(response.roll)setAnimatedRoll(response.roll);
+      if(response.roll){
+        setAnimatedRoll(response.roll);
+        setReplayToken(token=>token+1);
+      }
     }
   };
   const savePreset=async()=>{
@@ -86,12 +90,23 @@ export function AdvancedDiceWorkspace({role='player'}){
   try{expression=diceExpression(config);}catch(err){validation=readFailure(err);}
   const totalDice=config.pool.reduce((total,row)=>total+(Number(row.count)||0),0);
   const latest=workspace.history?.[0];
+  const replayLast=()=>{
+    const saved=latest||animatedRoll;
+    if(!saved)return;
+    setAnimatedRoll(saved);
+    setReplayToken(token=>token+1);
+  };
+  const clearTray=()=>setAnimatedRoll(null);
   return <section className={'asteria-advanced-dice asteria-advanced-dice--'+role} aria-label="Advanced Dice Roller">
     <header className="asteria-advanced-dice-heading">
       <div><h2>Advanced Dice Roller</h2>
         <p>Independent dice rolls for the GM and players. These do not spend AP, replace Universal Check Requests, or change combat results.</p></div>
       <span>Private account history</span>
     </header>
+    <AsteriaDiceTray record={animatedRoll} enabled={animateDice}
+      replayToken={replayToken} canReplay={Boolean(latest||animatedRoll)}
+      onToggleEnabled={setAnimateDice} onReplay={replayLast}
+      onClear={clearTray}/>
     <div className="asteria-advanced-dice-grid">
       <div className="asteria-advanced-dice-editor">
         <h3>Build a roll</h3>
@@ -148,12 +163,6 @@ export function AdvancedDiceWorkspace({role='player'}){
         </section>
       </div>
       <div className="asteria-advanced-dice-record">
-        <label className="asteria-advanced-dice-motion-control">
-          <input type="checkbox" checked={animateDice}
-            onChange={event=>setAnimateDice(event.target.checked)}/>
-          Animate confirmed rolls in 3D
-        </label>
-        <AsteriaDiceTray record={animatedRoll} enabled={animateDice}/>
         <h3>Last roll</h3>
         {latest?<article className="asteria-advanced-dice-latest" aria-live="polite">
           <strong className="asteria-advanced-dice-total">{latest.total}</strong>
