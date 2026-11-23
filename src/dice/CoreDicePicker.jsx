@@ -15,13 +15,14 @@ export function CoreDicePreview({appearance,dieType='d20'}){
   const zoomRef=useRef(zoom);
   useEffect(()=>{zoomRef.current=zoom;},[zoom]);
   useEffect(()=>{
-    let cancelled=false,frame=0,view,registry,scene,renderer,resizeObserver,mesh;
+    let cancelled=false,frame=0,view,registry,api,scene,renderer,resizeObserver,mesh;
     const container=node.current;
     if(!container)return undefined;
     setError('');
     const init=async()=>{
       const [THREE,openDice]=await Promise.all([import('three'),import('open-dice-dnd')]);
       if(cancelled)return;
+      api=openDice;
       registry=prepareCoreDesigns(openDice,appearance,'preview-'+id);
       const setId=registry[dieType];
       scene=new THREE.Scene();
@@ -92,9 +93,7 @@ export function CoreDicePreview({appearance,dieType='d20'}){
         }
       });
       // Package unloads cached face textures when the design is unregistered.
-      if(registry){
-        import('open-dice-dnd').then(api=>releaseCoreDesigns(api,registry)).catch(()=>{});
-      }
+      if(api&&registry)releaseCoreDesigns(api,registry);
       viewRef.current=null;
       renderer?.dispose();
       if(renderer?.domElement?.parentNode)renderer.domElement.remove();
