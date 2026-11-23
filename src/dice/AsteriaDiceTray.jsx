@@ -42,6 +42,9 @@ export function AsteriaDiceTray({
   const [ready,setReady]=useState(false),[status,setStatus]=useState('loading');
   const [trayAppearance,setTrayAppearance]=useState(()=>defaultDiceTrayAppearance());
   const [trayStudioOpen,setTrayStudioOpen]=useState(false);
+  const [cameraAngle,setCameraAngle]=useState(0);
+  const [cameraTilt,setCameraTilt]=useState(false);
+  const [cameraZoom,setCameraZoom]=useState(1);
   const trayAppearanceRef=useRef(trayAppearance);
   const trayRef=useRef(null);
   const rollingRef=useRef(false);
@@ -119,6 +122,20 @@ export function AsteriaDiceTray({
     };
   },[enabled]);
 
+  // Visual orbit and zoom are camera-only. Die physics and face values do
+  // not know these controls exist; wheel and touch do not change rolls.
+  useEffect(()=>{
+    const engine=engineRef.current;
+    if(!ready||!engine?.camera)return;
+    const camera=engine.camera;
+    const radius=cameraTilt?12:0;
+    camera.position.set(Math.sin(cameraAngle)*radius,
+      cameraTilt?32:30,Math.cos(cameraAngle)*radius);
+    camera.up.set(0,0,-1);
+    camera.lookAt(0,0,0);
+    camera.zoom=cameraZoom;camera.updateProjectionMatrix();
+    if(!engine.isAnimating)engine.renderer?.render(engine.scene,camera);
+  },[ready,cameraAngle,cameraTilt,cameraZoom]);
   // Reconfigure the same Open Dice scene and physical boundaries. Changes
   // during active rolls are deferred so physics prediction/replay sees one world.
   useEffect(()=>{
@@ -340,6 +357,14 @@ export function AsteriaDiceTray({
       onChange={changeTrayConfig} rolling={status==='rolling'}/>:null}
     <div className="asteria-advanced-dice-stage">
       <div className="asteria-advanced-dice-scene" ref={containerRef} aria-hidden="true"/>
+      <div className="asteria-tray-view-controls" role="group" aria-label="3D tray camera controls">
+        <button type="button" aria-label="Rotate tray left" onClick={()=>{setCameraTilt(true);setCameraAngle(v=>v-.28);}}>↶</button>
+        <button type="button" aria-label="Rotate tray right" onClick={()=>{setCameraTilt(true);setCameraAngle(v=>v+.28);}}>↷</button>
+        <button type="button" aria-label="Zoom tray in" onClick={()=>setCameraZoom(v=>Math.min(1.65,v+.1))}>+</button>
+        <button type="button" aria-label="Zoom tray out" onClick={()=>setCameraZoom(v=>Math.max(.7,v-.1))}>−</button>
+        <button type="button" aria-label="Reset tray camera" onClick={()=>{
+          setCameraAngle(0);setCameraTilt(false);setCameraZoom(1);}}>Top</button>
+      </div>
       {!record&&enabled&&status==='ready'?<div className="asteria-advanced-dice-placeholder"
         aria-hidden="true">
         <span className="asteria-advanced-dice-placeholder-mark">D20</span>
