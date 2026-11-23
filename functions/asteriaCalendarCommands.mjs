@@ -32,13 +32,15 @@ export function createAsteriaCalendarCommands(context,{requireCampaignGM}){
       const date=validateCalendarDate(action.date,definition);
       if(previous?.definition&&previous?.entryCount>0)
        throw Error('Calendar rules are locked while dated events exist. Archive existing events before changing month lengths.');
-      const updated={id:ASTERIA_CALENDAR_ID,revision:revision+1,definition,date,
+      const updated={id:ASTERIA_CALENDAR_ID,revision:revision+1,
+        definitionVersion:(previous?.definitionVersion||0)+1,definition,date,
        entryCount:previous?.entryCount||0,history:[
         {requestId,revision:revision+1,type:'configure',actorUid:currentUser.uid,reason:text(action.reason),date},
         ...(previous?.history||[])
        ].slice(0,MAX_CALENDAR_HISTORY),updatedBy:currentUser.uid,updatedAt:serverTimestamp()};
       tx.set(privateRef,updated);
-      tx.set(publicRef,{id:ASTERIA_CALENDAR_ID,revision:updated.revision,definition,date,
+      tx.set(publicRef,{id:ASTERIA_CALENDAR_ID,revision:updated.revision,
+        definitionVersion:updated.definitionVersion,definition,date,
        updatedAt:serverTimestamp()});
       return {revision:updated.revision,date,configured:true};
      }
@@ -57,6 +59,7 @@ export function createAsteriaCalendarCommands(context,{requireCampaignGM}){
        updatedBy:currentUser.uid,updatedAt:serverTimestamp()};
       tx.set(privateRef,updated);
       tx.set(publicRef,{id:ASTERIA_CALENDAR_ID,definition,date,revision:updated.revision,
+        definitionVersion:updated.definitionVersion||1,
        updatedAt:serverTimestamp()});
       return {revision:updated.revision,date,configured:true};
      }
