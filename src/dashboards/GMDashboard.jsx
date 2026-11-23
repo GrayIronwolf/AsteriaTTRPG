@@ -14,6 +14,7 @@ import { GMToolkitHub } from './GMToolkitHub.jsx';
 import { GMUniversalCheckManager, GMUniversalCheckNotification } from './UniversalCheckWorkspace.jsx';
 import { GMFocusModes } from './GMFocusModes.jsx';
 import { GMPartyControl } from './GMPartyControl.jsx';
+import {GMPlayerManager} from './GMPlayerManager.jsx';
 import { GMNpcCreatureLibrary } from './GMNpcCreatureLibrary.jsx';
 import {GMBattleMapManager} from './BattleMapWorkspace.jsx';
 import {AdvancedDiceWorkspace} from './AdvancedDiceWorkspace.jsx';
@@ -846,6 +847,12 @@ export function GMDashboard({ campaignId }) {
     </section>:null}
     <GMRecordingParticipationNotice key={campaignId} campaignId={campaignId}/>
     <DashboardNavigation role="gm" storageScope={campaignId+":"+accountUid} tabs={GM_TABS} active={tab} onChange={next=>{setGMSearchTarget(null);setGMHubDestination(null);setTab(next);}} ariaLabel="GM Dashboard menu" />
+    {tab === 'player-manager' ? <GMPlayerManager key={campaignId+':'+accountUid+':player-manager'}
+      campaignId={campaignId} campaign={live.campaign} characters={live.characters}
+      members={live.members} rosterError={live.memberRosterError}
+      membership={live.membership} uid={accountUid} presence={live.presence}
+      onOpenCharacter={character=>openGMCharacter(live.campaign,character,{tab,membership:live.membership})}
+      onSelectCharacter={setSelectedId} onNavigate={openGMHubLink}/> : null}
     {tab === 'bestiary' ? <GMNpcCreatureLibrary key={campaignId+':'+accountUid+':bestiary'}
       workspace={workspace} saveSection={saveSection} campaignId={campaignId} characters={live.characters} searchTarget={gmSearchTarget}
       onOpenEncounter={()=>setTab('combat')} onOpenWorld={()=>setTab('world')} /> : null}
