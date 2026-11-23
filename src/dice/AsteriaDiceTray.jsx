@@ -12,6 +12,7 @@ import {defaultDiceTowerAppearance,getDiceTowerFamily,
 import {DiceTrayStudio} from './DiceTrayStudio.jsx';
 import {DiceEffectsControls} from './DiceEffectsControls.jsx';
 import {DiceOutcomeEffects} from './DiceOutcomeEffects.jsx';
+import {diceGesture,fitDieInsideTray} from './diceTrayInteraction.mjs';
 import {defaultDicePresentation,deviceDicePresentation,validateDicePresentation,
  diceGraphicsProfile,diceSoundAppearance,PRESENTATION_STORAGE_KEY}
  from './dicePresentationModel.mjs';
@@ -47,7 +48,8 @@ export function AsteriaDiceTray({
   appearance=null,trayAppearance:controlledTrayAppearance=null,
   onTrayAppearanceChange=null,studioManaged=false,
   experimentalCastleTower=false,experimentalTowerAppearance=null,
-  presentationPreferences=null,onPresentationPreferencesChange=null
+  presentationPreferences=null,onPresentationPreferencesChange=null,
+  windowMode=false,windowSettings=null,onRollDie=null
 }){
   const containerRef=useRef(null),engineRef=useRef(null);
   const physicalTrayMemoRef=useRef(null);
@@ -106,6 +108,33 @@ export function AsteriaDiceTray({
   const [cameraAngle,setCameraAngle]=useState(0);
   const [cameraTilt,setCameraTilt]=useState(false);
   const [cameraZoom,setCameraZoom]=useState(1);
+  const [cameraPan,setCameraPan]=useState({x:0,z:0});
+  const [cameraDragging,setCameraDragging]=useState(false);
+  const cameraPointerRef=useRef(null);
+  const dicePointerRef=useRef(null);
+  const gestureRef=useRef(null);
+  const gestureTimeRef=useRef(0);
+  const interactionLockRef=useRef(false);
+  const windowPreset=windowSettings?.cameraPreset||'classic';
+  const [sceneInteractionNotice,setSceneInteractionNotice]=useState('');
+  const renderIdle=()=>{
+    const engine=engineRef.current;
+    if(engine&&!engine.isAnimating)engine.renderer?.render(engine.scene,engine.camera);
+  };
+  const clearInteraction=()=>{
+    const drag=dicePointerRef.current;
+    if(drag?.die?.body){
+      drag.die.body.type=drag.oldType;
+      drag.die.body.collisionResponse=true;
+      drag.die.body.velocity.set(0,0,0);
+      drag.die.body.angularVelocity.set(0,0,0);
+      drag.die.body.wakeUp?.();
+    }
+    dicePointerRef.current=null;
+    cameraPointerRef.current=null;
+    setCameraDragging(false);
+    interactionLockRef.current=false;
+  };
   const trayAppearanceRef=useRef(physicalTrayAppearance);
   const trayRef=useRef(null),towerRef=useRef(null);
   const rollingRef=useRef(false);
@@ -117,6 +146,7 @@ export function AsteriaDiceTray({
   const watcherRigsRef=useRef(new Map());
   const watcherFrameRef=useRef(0);
   const watcherPointerRef=useRef(null);
+  useEffect(()=>()=>{clearInteraction();},[]);
   useEffect(()=>{appearanceRef.current=appearance;},[appearance]);
   useEffect(()=>{
     const node=containerRef.current;
@@ -197,14 +227,17 @@ export function AsteriaDiceTray({
     const engine=engineRef.current;
     if(!ready||!engine?.camera)return;
     const camera=engine.camera;
-    const radius=cameraTilt?12:0;
-    camera.position.set(Math.sin(cameraAngle)*radius,
-      cameraTilt?32:30,Math.cos(cameraAngle)*radius);
+    const cinematic=windowMode&&windowPreset==='cinematic';
+    const overhead=windowMode&&windowPreset==='top-down';
+    const radius=overhead?0:cinematic?17:cameraTilt?12:9;
+    camera.position.set(cameraPan.x+Math.sin(cameraAngle)*radius,
+      overhead?31:cinematic?20:cameraTilt?32:28,
+      cameraPan.z+Math.cos(cameraAngle)*radius);
     camera.up.set(0,0,-1);
-    camera.lookAt(0,0,0);
+    camera.lookAt(cameraPan.x,0,cameraPan.z);
     camera.zoom=cameraZoom;camera.updateProjectionMatrix();
     if(!engine.isAnimating)engine.renderer?.render(engine.scene,camera);
-  },[ready,cameraAngle,cameraTilt,cameraZoom]);
+  },[ready,cameraAngle,cameraTilt,cameraZoom,cameraPan,windowMode,windowPreset]);
   // Reconfigure the same Open Dice scene and physical boundaries. Changes
   // during active rolls are deferred so physics prediction/replay sees one world.
   useEffect(()=>{
@@ -428,20 +461,147 @@ export function AsteriaDiceTray({
   },[record,ready,effectiveEnabled,replayToken,stableId,towerId]);
 
   const canControl=effectiveEnabled&&ready&&status!=='rolling';
+  const canInteract=windowMode&&canControl&&status==='settled'&&
+    Boolean(record)&&!engineRef.current?.isAnimating;
+  const pointerAt=event=>{
+    const node=containerRef.current,rect=node?.getBoundingClientRect();
+    if(!rect||!rect.width||!rect.height)return null;
+    return {x:((event.clientX-rect.left)/rect.width)*2-1,
+      y:-((event.clientY-rect.top)/rect.height)*2+1};
+  };
+  const raycastDie=async(event)=>{
+    const engine=engineRef.current,coords=pointerAt(event);
+    if(!engine?.camera||!coords||!canInteract)return null;
+    const THREE=await import('three');
+    const ray=new THREE.Raycaster();
+    ray.setFromCamera(coords,engine.camera);
+    const dice=engine.dice||[];
+    const meshes=dice.map(d=>d.mesh).filter(Boolean);
+    const hit=ray.intersectObjects(meshes,true)[0];
+    if(!hit)return null;
+    return dice.find(d=>d.mesh===hit.object||
+      d.mesh?.getObjectById?.(hit.object.id))||null;
+  };
+  const trayPoint=(event,die)=>{
+    const engine=engineRef.current,coords=pointerAt(event);
+    if(!engine?.camera||!coords||!die)return null;
+    const camera=engine.camera;
+    // Intersect the pointer's world ray with the plane at the current die height.
+    const direction=camera.getWorldDirection?.(new (camera.position.constructor)(0,0,-1));
+    if(!direction)return null;
+    const {x,y}=coords;
+    const fov=camera.fov*Math.PI/180;
+    const h=Math.tan(fov/2)*2;
+    const right=new (camera.position.constructor)(1,0,0).applyQuaternion(camera.quaternion);
+    const up=new (camera.position.constructor)(0,1,0).applyQuaternion(camera.quaternion);
+    const ray=direction.clone().addScaledVector(right,x*h*camera.aspect/2)
+      .addScaledVector(up,y*h/2).normalize();
+    if(Math.abs(ray.y)<.0001)return null;
+    const t=(die.body.position.y-camera.position.y)/ray.y;
+    if(t<=0)return null;
+    return fitDieInsideTray({
+      x:camera.position.x+ray.x*t,z:camera.position.z+ray.z*t
+    },trayRef.current?.outline);
+  };
+  const pointerDown=event=>{
+    if(!windowMode||!effectiveEnabled||!ready||rollingRef.current)return;
+    if(event.pointerType==='mouse'&&event.button!==0&&event.button!==1&&event.button!==2)return;
+    gestureTimeRef.current=performance.now();
+    gestureRef.current={x:event.clientX,y:event.clientY};
+    const begin=async()=>{
+      if(event.button===0&&status==='settled'&&record){
+        const die=await raycastDie(event);
+        if(die&&gestureRef.current){
+          dicePointerRef.current={die,oldType:die.body.type,
+            x:event.clientX,y:event.clientY,
+            lastX:event.clientX,lastY:event.clientY,dragged:false};
+          containerRef.current?.setPointerCapture?.(event.pointerId);
+          return;
+        }
+      }
+      if(!gestureRef.current)return;
+      cameraPointerRef.current={x:event.clientX,y:event.clientY,
+        button:event.button,pointerId:event.pointerId};
+      setCameraDragging(true);
+      containerRef.current?.setPointerCapture?.(event.pointerId);
+    };
+    begin().catch(()=>{});
+  };
+  const pointerMove=event=>{
+    if(!windowMode)return;
+    const drag=dicePointerRef.current;
+    if(drag&&canInteract){
+      const delta=Math.hypot(event.clientX-drag.x,event.clientY-drag.y);
+      if(delta>=9)drag.dragged=true;
+      if(drag.dragged){
+        const point=trayPoint(event,drag.die);
+        if(point){
+          drag.die.body.type=2; // CANNON.Body.KINEMATIC; presentation-only while held
+          drag.die.body.velocity.set(0,0,0);
+          drag.die.body.angularVelocity.set(0,0,0);
+          drag.die.body.position.x=point.x;
+          drag.die.body.position.z=point.z;
+          drag.die.mesh.position.copy(drag.die.body.position);
+          renderIdle();
+        }
+      }
+      drag.lastX=event.clientX;drag.lastY=event.clientY;
+      return;
+    }
+    const camera=cameraPointerRef.current;
+    if(!camera)return;
+    const dx=event.clientX-camera.x,dy=event.clientY-camera.y;
+    if(camera.button===1){
+      setCameraPan(v=>({x:Math.max(-5,Math.min(5,v.x-dx*.012)),
+        z:Math.max(-5,Math.min(5,v.z+dy*.012))}));
+    }else{
+      setCameraAngle(v=>v-dx*.008);
+      setCameraTilt(true);
+    }
+    camera.x=event.clientX;camera.y=event.clientY;
+  };
+  const pointerUp=event=>{
+    const drag=dicePointerRef.current;
+    const start=gestureRef.current;
+    const elapsed=performance.now()-gestureTimeRef.current;
+    const motion=start?diceGesture(start,{x:event.clientX,y:event.clientY},
+      elapsed,windowSettings?.interactionSpeed):null;
+    const canRoll=Boolean(drag&&canInteract&&onRollDie);
+    const sides=drag?.die?.type?.replace?.('d','');
+    clearInteraction();
+    gestureRef.current=null;
+    try{containerRef.current?.releasePointerCapture?.(event.pointerId);}catch{}
+    if(!canRoll||!motion)return;
+    if(motion.click||motion.flick){
+      if(Number(sides)===100||Number(sides)===4||Number(sides)===6||
+        Number(sides)===8||Number(sides)===10||Number(sides)===12||
+        Number(sides)===20){
+        onRollDie(Number(sides));
+        setSceneInteractionNotice(motion.click?'Single die roll requested.':
+          'Flick registered. Server-confirmed die roll requested.');
+      }
+    }else setSceneInteractionNotice('Die repositioned. Official result unchanged.');
+  };
+  const onWheel=event=>{
+    if(!windowMode)return;
+    event.preventDefault();
+    setCameraZoom(v=>Math.max(.65,Math.min(1.9,v+(event.deltaY>0?-.065:.065))));
+  };
+
   const renderFallback=!effectiveEnabled||['unavailable','unsupported','oversized','mismatch'].includes(status);
   const selectedTray=getDiceTrayFamily(trayAppearance.designId);
   return <section className="asteria-advanced-dice-tray" data-tray-size={trayAppearance.size}
     data-roll-state={status} data-tower-mode={towerActive?towerId+'-prototype':'off'}
     data-graphics-tier={graphics.tier} data-reduced-motion={graphics.reducedMotion}
     aria-label="3D dice tray">
-    <header className="asteria-advanced-dice-tray-heading">
+    {!windowMode?<header className="asteria-advanced-dice-tray-heading">
       <div className="asteria-advanced-dice-tray-title">
         <span className="asteria-advanced-dice-crystal" aria-hidden="true"/>
         <div><h3>{selectedTray?.name||'Dice Table'}</h3><small>{towerActive?(getDiceTowerFamily(towerId)?.name||'Dice Tower')+' — experimental physical prototype':'Realistic 3D dice tray'}</small></div>
       </div>
       <span className="asteria-advanced-dice-trust">Server-verified results</span>
-    </header>
-    <div className="asteria-advanced-dice-toolbar">
+    </header>:null}
+    {!windowMode?<div className="asteria-advanced-dice-toolbar">
       <label className="asteria-advanced-dice-motion-control">
         <input type="checkbox" checked={enabled}
           onChange={event=>onToggleEnabled?.(event.target.checked)}/>
@@ -473,21 +633,27 @@ export function AsteriaDiceTray({
           Clear tray
         </button>
       </div>
-    </div>
+    </div>:null}
     {!studioManaged&&trayStudioOpen?<DiceTrayStudio value={trayAppearance}
       onChange={changeTrayConfig} rolling={status==='rolling'}/>:null}
-    <button type="button" className="asteria-dice-fx-toggle"
+    {!windowMode?<button type="button" className="asteria-dice-fx-toggle"
       aria-expanded={effectsOpen} onClick={()=>setEffectsOpen(x=>!x)}>
       {effectsOpen?'Close effects and performance':'Effects & performance'}
-    </button>
-    {effectsOpen?<DiceEffectsControls value={presentation} onChange={setPresentation}
+    </button>:null}
+    {!windowMode&&effectsOpen?<DiceEffectsControls value={presentation} onChange={setPresentation}
       profile={graphics}/>:null}
     {towerActive?<p className="asteria-tower-warning" role="note">
       Experimental 3D tower physics. Visual designs and physical exit paths require
       final stress testing and owner approval before release. The official result is unchanged.
     </p>:null}
     <div className="asteria-advanced-dice-stage">
-      <div className="asteria-advanced-dice-scene" ref={containerRef} aria-hidden="true"/>
+      <div className="asteria-advanced-dice-scene" ref={containerRef} aria-hidden="true"
+        data-interaction-mode={windowMode?'grab-and-camera':'disabled'}
+        onPointerDown={pointerDown} onPointerMove={pointerMove}
+        onPointerUp={pointerUp} onPointerCancel={()=>{clearInteraction();gestureRef.current=null;}}
+        onWheel={onWheel} onContextMenu={event=>windowMode&&event.preventDefault()}
+        style={{cursor:cameraDragging?'grabbing':windowMode?'grab':'default',
+          touchAction:windowMode?'none':'auto'}}/>
       {status==='settled'?<DiceOutcomeEffects record={record} preferences={presentation}
         profile={graphics} replayToken={replayToken}/>:null}
       <div className="asteria-tray-view-controls" role="group" aria-label="3D tray camera controls">
@@ -498,7 +664,7 @@ export function AsteriaDiceTray({
         <button type="button" aria-label="Reset tray camera" onClick={()=>{
           setCameraAngle(0);setCameraTilt(false);setCameraZoom(1);}}>Top</button>
       </div>
-      {!record&&enabled&&status==='ready'?<div className="asteria-advanced-dice-placeholder"
+      {!windowMode&&!record&&enabled&&status==='ready'?<div className="asteria-advanced-dice-placeholder"
         aria-hidden="true">
         <span className="asteria-advanced-dice-placeholder-mark">D20</span>
         <strong>Ready to roll</strong>
@@ -510,12 +676,13 @@ export function AsteriaDiceTray({
       </div>:null}
       {status==='rolling'?<div className="asteria-advanced-dice-stage-label" aria-hidden="true">Rolling…</div>:null}
     </div>
-    <footer className="asteria-advanced-dice-tray-footer">
+    {windowMode&&sceneInteractionNotice?<span className="asteria-dice-window-interaction-status" role="status">{sceneInteractionNotice}</span>:null}
+    {!windowMode?<footer className="asteria-advanced-dice-tray-footer">
       <p className="asteria-advanced-dice-tray-status" role="status">{messages[status]}</p>
       {record?<div className="asteria-advanced-dice-official">
         <span>Official total</span><strong>{record.total}</strong>
       </div>:<small className="asteria-advanced-dice-tray-empty">No dice on the table</small>}
-    </footer>
+    </footer>:null}
     {record?.results?.some(group=>group.sides===10||group.sides===100)?
       <small className="asteria-advanced-dice-tray-note">
         A zero on d10 means 10; double-zero percentile dice mean 100.

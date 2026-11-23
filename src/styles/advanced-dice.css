@@ -491,3 +491,112 @@
 @media(prefers-reduced-motion:reduce){
  .asteria-dice-outcome-ring,.asteria-dice-outcome-spark{animation:none;display:none}
 }
+
+
+/* Phase 4: one immersive dice stage. All panels belong to the existing workspace. */
+.asteria-advanced-dice--workspace{padding:0;display:block;position:relative;isolation:isolate;overflow:hidden;
+  min-height:460px;container:asteriaDice / inline-size;background:#0b1623}
+.asteria-dice-window{height:100%;min-height:460px;position:relative;isolation:isolate}
+.asteria-dice-window-surface{position:relative;height:100%;min-height:460px;overflow:hidden}
+.asteria-advanced-dice--workspace .asteria-advanced-dice-tray{position:absolute;inset:0;border:0;
+  border-radius:0;display:block;height:100%;width:100%;overflow:hidden}
+.asteria-advanced-dice--workspace .asteria-advanced-dice-stage,
+.asteria-advanced-dice--workspace .asteria-advanced-dice-tray[data-tray-size=compact] .asteria-advanced-dice-stage,
+.asteria-advanced-dice--workspace .asteria-advanced-dice-tray[data-tray-size=expanded] .asteria-advanced-dice-stage{
+  position:absolute;inset:0;height:100%;width:100%;border:0}
+.asteria-advanced-dice--workspace .asteria-advanced-dice-scene{touch-action:none}
+.asteria-advanced-dice--workspace .asteria-tray-view-controls{bottom:76px;right:13px;z-index:6}
+.asteria-advanced-dice--workspace .asteria-advanced-dice-tray-note{position:absolute;left:50%;bottom:76px;
+  transform:translateX(-50%);pointer-events:none;z-index:4;background:#0c1925d9;border-radius:4px}
+.asteria-advanced-dice--workspace .asteria-tower-warning{position:absolute;top:65px;right:12px;
+  max-width:min(300px,50%);z-index:5;font-size:.72rem}
+.asteria-dice-window-header{position:absolute;inset:0 0 auto;z-index:7;display:flex;align-items:center;
+  justify-content:space-between;gap:12px;padding:10px 13px;background:linear-gradient(#0a1825ef,#0a1825bf 78%,transparent);
+  pointer-events:none}
+.asteria-dice-window-header>*{pointer-events:auto}
+.asteria-dice-window-brand{display:flex;gap:12px;align-items:center;min-width:0}
+.asteria-dice-window-brand>div{display:grid;gap:3px}
+.asteria-dice-window-brand strong{font-size:1rem;letter-spacing:.025em}
+.asteria-dice-window-brand small{font-size:.7rem;color:#bbd1e0}
+.asteria-dice-window-toolbar{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.asteria-advanced-dice .asteria-dice-window-toolbar button{font-size:.76rem;min-height:32px;padding:5px 10px;
+  background:#183044e8}
+.asteria-dice-window-toolbar button[aria-expanded=true]{border-color:#b3d3e7;background:#2b5069}
+.asteria-dice-window-edge-tab{position:absolute;left:0;top:42%;z-index:8;writing-mode:vertical-rl;
+  border-radius:0 6px 6px 0!important;min-height:85px!important;padding:12px 7px!important}
+.asteria-dice-window-bottom{position:absolute;left:0;right:0;bottom:0;z-index:7;display:flex;
+  justify-content:center;align-items:center;gap:9px;padding:11px 14px;
+  background:linear-gradient(transparent,#091725dd 18%,#091725fa)}
+.asteria-dice-window-bottom .asteria-advanced-dice-primary{min-width:128px}
+.asteria-dice-window-expression{display:grid;gap:2px;margin-right:auto;min-width:0}
+.asteria-dice-window-expression span{font-size:.83rem;font-weight:700;overflow-wrap:anywhere}
+.asteria-dice-window-expression small{font-size:.72rem;color:#bbd1e0}
+.asteria-dice-window-result{position:absolute;top:72px;left:50%;transform:translateX(-50%);
+  z-index:6;min-width:145px;max-width:65%;display:grid;gap:4px;text-align:center;
+  border:1px solid #638aa4;border-radius:8px;padding:11px 26px 12px;
+  background:#0d2236e9;box-shadow:0 9px 30px #0009;pointer-events:auto}
+.asteria-dice-window-result>small{font-size:.72rem;color:#b9d4e5}
+.asteria-dice-window-result>strong{font-size:2.2rem;line-height:1.1;font-variant-numeric:tabular-nums}
+.asteria-dice-window-result>span{font-size:.77rem;overflow-wrap:anywhere}
+.asteria-dice-window-result>b{color:#e5c985;font-size:.76rem}
+.asteria-advanced-dice .asteria-dice-window-result-dismiss{position:absolute;top:1px;right:3px;
+  min-height:26px;padding:0 6px;background:transparent;border:0}
+.asteria-dice-window-drawer{position:absolute;z-index:10;top:60px;bottom:67px;display:flex;
+  flex-direction:column;gap:12px;overflow:auto;overscroll-behavior:contain;
+  width:min(390px,calc(100% - 25px));padding:13px;background:#0d1d2df5;
+  border:1px solid #506f87;box-shadow:0 10px 30px #0009;scrollbar-width:thin}
+.asteria-dice-window-drawer--left{left:0;border-radius:0 8px 8px 0}
+.asteria-dice-window-drawer--right,.asteria-dice-window-drawer--settings{right:0;border-radius:8px 0 0 8px}
+.asteria-dice-window-drawer--settings{width:min(510px,calc(100% - 25px))}
+.asteria-dice-window-drawer-heading{display:flex;align-items:center;justify-content:space-between;
+  gap:8px;padding-bottom:8px;border-bottom:1px solid #496276}
+.asteria-dice-window-drawer-heading h3{margin:0;font-size:1rem}
+.asteria-advanced-dice .asteria-dice-window-drawer-heading button{min-height:29px;padding:2px 9px}
+.asteria-dice-window-dice-list{display:grid;gap:7px}
+.asteria-dice-window-die-row{display:grid;grid-template-columns:minmax(0,1fr) 26px 35px 54px;gap:5px;
+  align-items:center}
+.asteria-dice-window-die-row>strong{text-align:center;font-variant-numeric:tabular-nums}
+.asteria-dice-window-die-row .asteria-dice-window-die-add{display:flex;justify-content:space-between;align-items:center}
+.asteria-dice-window-die-row button{padding:5px!important}
+.asteria-dice-window-builder-fields{grid-template-columns:1fr 1.5fr}
+.asteria-dice-window-settings-tabs{display:flex;flex-wrap:wrap;gap:6px}
+.asteria-advanced-dice .asteria-dice-window-settings-tabs button{font-size:.74rem;min-height:31px}
+.asteria-dice-window-settings-tabs button.is-selected{border-color:#b7d8e9;background:#31526a}
+.asteria-dice-window-options{display:grid;gap:12px}
+.asteria-dice-window-options p,.asteria-dice-window-gm-sharing p{font-size:.78rem;line-height:1.5;color:#b9ccdb}
+.asteria-advanced-dice .asteria-dice-window-check{display:flex;align-items:center;gap:9px}
+.asteria-advanced-dice .asteria-dice-window-check input{width:17px;min-width:17px;height:17px;min-height:17px}
+.asteria-dice-window-history-list{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.asteria-dice-window-history-list li{display:flex;align-items:center;gap:8px;border-bottom:1px solid #3b5367;padding:8px 0}
+.asteria-dice-window-history-list li>span{flex:1;min-width:0;display:grid;gap:4px}
+.asteria-dice-window-history-list small{font-size:.7rem;color:#afc6d7}
+.asteria-dice-window-history-list li>strong{font-size:1.2rem}
+.asteria-dice-window-history-list button{font-size:.73rem;padding:5px}
+.asteria-dice-window-messages{position:absolute;z-index:11;left:12px;bottom:71px;
+  max-width:min(400px,70%);padding:8px 11px;border:1px solid #7898ac;border-radius:4px;
+  background:#10263ce9;font-size:.8rem}
+.asteria-dice-window-interaction-status{position:absolute;bottom:70px;left:10px;
+  z-index:5;font-size:.7rem;padding:4px 8px;border-radius:4px;background:#102337df}
+.asteria-advanced-dice--workspace:fullscreen,
+.asteria-advanced-dice--workspace.asteria-dice-immersive{
+  position:fixed!important;inset:0!important;z-index:2147483000!important;
+  width:100vw!important;height:100dvh!important;max-width:none!important;
+  max-height:none!important;min-height:0!important;border-radius:0!important}
+.asteria-advanced-dice--workspace:fullscreen .asteria-dice-window,
+.asteria-advanced-dice--workspace.asteria-dice-immersive .asteria-dice-window{
+  height:100%;min-height:0}
+@container asteriaDice (max-width:530px){
+ .asteria-dice-window-header{align-items:flex-start;flex-direction:column;gap:6px}
+ .asteria-dice-window-toolbar{width:100%;justify-content:flex-end}
+ .asteria-dice-window-brand small{display:none}
+ .asteria-dice-window-bottom{gap:5px;padding:8px}
+ .asteria-dice-window-bottom button{font-size:.72rem;padding:5px 7px;min-height:33px}
+ .asteria-dice-window-bottom .asteria-advanced-dice-primary{min-width:90px}
+ .asteria-dice-window-expression{max-width:27%;font-size:.72rem}
+ .asteria-dice-window-result{top:115px;min-width:115px}
+ .asteria-dice-window-drawer{top:105px;bottom:57px}
+ .asteria-advanced-dice--workspace .asteria-tray-view-controls{bottom:64px}
+}
+@media(prefers-reduced-motion:reduce){
+ .asteria-dice-window-drawer,.asteria-dice-window-result{transition:none!important}
+}
