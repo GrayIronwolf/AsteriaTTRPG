@@ -3,6 +3,7 @@
  * All totals come from Firebase. Never generate a client-side result here.
  */
 import {DICE_SIDES,MAX_DICE_PER_ROLL} from '../state/diceRollModel.mjs';
+import {openDiceAppearanceOptions} from './diceMaterialEngine.mjs';
 
 export const MAX_3D_DICE_MESHES=24;
 
@@ -30,8 +31,8 @@ export function prepareAsteriaDicePreview(record){
         throw Error('A recorded dice face is outside its permitted range.');
       const engineFace=openDiceFace(group.sides,face);
       dice.push({dice:'d'+group.sides,rolled:engineFace,
-        // Asteria's Phase 2 forged-blue steel palette (Open Dice classic finish).
-        diceColor:0x23374b,textColor:'#e7f3fb',backgroundColor:'#385a76'});
+        // Phase 3.1 continues using the exact verified Phase 2 renderer defaults.
+        ...openDiceAppearanceOptions()});
       if(group.sides===100){
         expectedFaces.push(engineFace%10,Math.floor(engineFace/10)*10);
         meshCount+=2;
