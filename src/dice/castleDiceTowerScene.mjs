@@ -39,6 +39,10 @@ export function attachCastleDiceTower(engine,outline){
  if(!engine?.world||!engine?.scene||!engine?.diceMaterial||!engine?._applyDiePhysics||
     !engine?._startReplay)throw Error('The live dice engine must be ready for a physical tower.');
  const layout=castleTowerLayout(outline);
+ // An inclined chute feeds dice through the gate without scripted teleports.
+ // This gravity vector is shared by prediction and replay and restored on dispose.
+ const previousGravity=engine.world.gravity.clone();
+ engine.world.gravity.x=8;
  const matStone=createMaterial('#ffffff',.13,.83,{map:stoneTexture(),clearcoat:.12});
  const matSteel=createMaterial('#455769',.88,.31,{clearcoat:.28});
  const matGold=createMaterial('#bda06a',.82,.3,{emissive:'#493115',emissiveIntensity:.11});
@@ -106,6 +110,7 @@ export function attachCastleDiceTower(engine,outline){
   dispose(){
    if(cleaned)return;cleaned=true;
    engine._applyDiePhysics=applyBefore;engine._startReplay=replayBefore;
+   engine.world.gravity.copy(previousGravity);
    for(const body of colliders)engine.world.removeBody(body);
    engine.world.removeContactMaterial(contact);
    group.removeFromParent();

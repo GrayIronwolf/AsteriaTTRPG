@@ -24,7 +24,7 @@ try{
   document.querySelector('.asteria-advanced-dice-scene').dataset.trayShape==='hexagon'));
  check('Tower is visibly labelled experimental',await page.getByRole('note').count()===1);
  for(const sides of [4,6,8,10,12,20,100]){
-  await page.getByRole('button',{name:'Test d'+sides}).click();
+  await page.getByRole('button',{name:'Test d'+sides,exact:true}).click();
   await page.waitForFunction(()=>['settled','mismatch','unavailable'].includes(
    document.querySelector('[data-roll-state]')?.getAttribute('data-roll-state')),
    null,{timeout:115000});
@@ -33,7 +33,8 @@ try{
    return {state:document.querySelector('[data-roll-state]').getAttribute('data-roll-state'),
     total:document.querySelector('.asteria-advanced-dice-official strong')?.textContent,
     towerSteps:scene.dataset.towerSteps||'',exited:scene.dataset.towerExited||'',
-    physicalExit:scene.dataset.towerExitComplete||'',error:scene.dataset.towerError||'',
+    physicalExit:scene.dataset.towerExitComplete||'',rest:scene.dataset.towerLastEnd||'',
+    baffles:scene.dataset.towerBaffles||'',error:scene.dataset.towerError||'',
     engineError:scene.dataset.watcherError||''};
   });
   check('Castle d'+sides+' is physical, exits and preserves official outcome',

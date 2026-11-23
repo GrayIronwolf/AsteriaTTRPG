@@ -305,6 +305,12 @@ export function AsteriaDiceTray({
         containerRef.current.dataset.towerExited=String(towerEvidence?.exited??0);
         containerRef.current.dataset.towerExitComplete=String(towerEvidence?.exitComplete===true);
         containerRef.current.dataset.towerSteps=String(towerEvidence?.steps??0);
+        containerRef.current.dataset.towerLastEnd=JSON.stringify(
+          towerEvidence?.rest?.map(r=>r.ends)||[]).slice(0,500);
+        containerRef.current.dataset.towerBaffles=JSON.stringify({
+          upper:towerEvidence?.upper||0,middle:towerEvidence?.middle||0,
+          lower:towerEvidence?.lower||0
+        });
       }
       if(next&&trayRef.current){
         towerRef.current?.dispose();towerRef.current=null;
