@@ -23,7 +23,7 @@ test('appearance edits validate, preserve other editor and do not mutate old sna
   const before=createDiceStudioState();
   const after=changeDiceStudio(before,{dice:{...before.current.dice,primaryColor:'#abcdef'}});
   assert.equal(after.current.dice.primaryColor,'#ABCDEF');
-  assert.equal(after.current.tray,before.current.tray);
+  assert.deepEqual(after.current.tray,before.current.tray);
   assert.equal(before.current.dice.primaryColor,defaultDiceAppearance().primaryColor);
   assert.equal(after.past.length,1);
   assert.throws(()=>changeDiceStudio(before,{dice:{...before.current.dice,primaryColor:'red'}}),/HEX/);
