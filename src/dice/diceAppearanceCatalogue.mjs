@@ -1,6 +1,7 @@
 /** Phase 3.1: versioned visual-only catalogue. No Firebase writes or gameplay effects. */
 import {DICE_SIDES} from '../state/diceRollModel.mjs';
 import {FAMILIAR_DECORATIONS} from './familiarDiceArt.mjs';
+const WATCHER_SWIRLS=['none','aurora','nebula','storm','opal','abyss'];
 export const APPEARANCE_VERSION=1;
 export const MAX_APPEARANCE_COLLECTIONS=20;
 export const MATERIALS=Object.freeze(['obsidian','steel','bronze','gemstone','crystal','marble','wood','resin']);
@@ -19,7 +20,7 @@ export const BLINK=Object.freeze(['off','rare','normal','frequent']);
 export const CAT_PATTERNS=Object.freeze(['solid','tabby','tuxedo','calico','tortoiseshell','spotted','colourpoint','bicolour']);
 export const CAT_POSES=Object.freeze(['sitting','curled','stretching','walking','pouncing','alert','perched','portrait']);
 export const PALETTE=Object.freeze(['#111925','#304557','#D3DDE4','#D5B36A','#9C7047','#F2F3EE','#AE3241','#295EA8','#247858','#7947B2','#43AEC2','#162C53','#B0E7EF','#C27B31','#C982A5','#61412F']);
-const watcher=Object.freeze({kind:'watcher',eyeType:'eldritch',irisColor:'#43AEC2',scleraColor:'#F2F3EE',pupil:'vertical-slit',resinColor:'#7947B2',transparency:'translucent',glow:'subtle',motion:'subtle',blink:'normal',cursorTracking:false});
+const watcher=Object.freeze({kind:'watcher',eyeType:'eldritch',irisColor:'#43AEC2',scleraColor:'#F2F3EE',pupil:'vertical-slit',resinColor:'#7947B2',transparency:'translucent',glow:'subtle',motion:'subtle',blink:'normal',swirl:'aurora',cursorTracking:false});
 const familiar=Object.freeze({kind:'familiar',coatColor:'#111925',coatPattern:'solid',eyeColor:'#D5B36A',pose:'sitting',pawColor:'#111925',resinColor:'#F2F3EE',transparency:'clear',decoration:'paw',animation:false});
 const rows=[
 ['dice-obsidian','Obsidian','obsidian','#111925','#304557','#B0E7EF'],
@@ -59,7 +60,7 @@ function keys(x,allowed,label){if(Object.keys(x).some(k=>!allowed.includes(k)))t
 const choose=(x,choices,label)=>{if(!choices.includes(x))throw Error('Invalid '+label+'.');return x;};
 const hex=(x,label)=>{if(typeof x!=='string'||!/^#[0-9a-f]{6}$/i.test(x))throw Error('Invalid '+label+' HEX.');return x.toUpperCase();};
 const specialFields={
- watcher:['kind','eyeType','irisColor','scleraColor','pupil','resinColor','transparency','glow','motion','blink','cursorTracking'],
+ watcher:['kind','eyeType','irisColor','scleraColor','pupil','resinColor','transparency','glow','motion','blink','cursorTracking','swirl'],
  familiar:['kind','coatColor','coatPattern','eyeColor','pose','pawColor','resinColor','transparency','animation','decoration']
 };
 function validateSpecial(value,familyId){
@@ -67,12 +68,13 @@ function validateSpecial(value,familyId){
   if(!kind){if(value!==null)throw Error('Core dice cannot have special settings.');return null;}
   object(value,'Special appearance');
   keys(value,specialFields[kind],'special appearance');
-  if(specialFields[kind].filter(k=>k!=='decoration').some(k=>!(k in value))||value.kind!==kind)throw Error('Special appearance does not match family.');
+  if(specialFields[kind].filter(k=>k!=='decoration'&&k!=='swirl').some(k=>!(k in value))||value.kind!==kind)throw Error('Special appearance does not match family.');
   const v={...value};
   if(kind==='watcher'){
     choose(v.eyeType,EYE_TYPES,'eye type');choose(v.pupil,EYE_PUPILS,'pupil');choose(v.transparency,TRANSPARENCY,'transparency');
     choose(v.glow,GLOW,'eye glow');choose(v.motion,EYE_MOTION,'eye motion');choose(v.blink,BLINK,'blink');
     v.irisColor=hex(v.irisColor,'iris');v.scleraColor=hex(v.scleraColor,'sclera');v.resinColor=hex(v.resinColor,'resin');
+    v.swirl=choose(v.swirl??'aurora',WATCHER_SWIRLS,'Watcher swirl');
     if(typeof v.cursorTracking!=='boolean')throw Error('Invalid cursor tracking.');
   }else{
     choose(v.coatPattern,CAT_PATTERNS,'cat coat');choose(v.pose,CAT_POSES,'cat pose');choose(v.transparency,TRANSPARENCY,'transparency');

@@ -32,6 +32,9 @@ export function createWatcherEyeRig(THREE,appearance,quality={}){
   const radius=.285;
   const sclera=sphere(THREE,radius,material(THREE,c.scleraColor,{metalness:.02}),q.segments);
   eyeball.add(sclera);
+  const typeScale={human:[1,1],feline:[.92,1.02],dragon:[1.04,.91],
+    reptilian:[.95,1.03],eldritch:[1.12,1.12],celestial:[1.05,1.05]}[c.eyeType];
+  sclera.scale.set(typeScale[0],typeScale[1],1);
   const iris=sphere(THREE,radius*.64,material(THREE,c.irisColor,{
     emissive:c.irisColor,emissiveIntensity:
       {off:0,subtle:.13,medium:.34,strong:.65}[c.glow]}),q.segments);
@@ -121,7 +124,7 @@ export function applyWatcherGelShell(mesh,appearance,quality={}){
     mat.transparent=true;
     mat.opacity=opacity;
     mat.depthWrite=false;
-    mat.side=mat.constructor.DoubleSide||2;
+    mat.side=2;
     mat.roughness=Math.min(mat.roughness,.18);
     mat.clearcoat=1;
     mat.needsUpdate=true;
