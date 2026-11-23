@@ -15,8 +15,6 @@ const clockProjection=state=>({
  clockRate:state.clockRate||1,clockAnchorMs:state.clockAnchorMs??null,
  categories:state.categories||DEFAULT_CALENDAR_CATEGORIES
 });
-const clockState=state=>({clockMode:state.clockMode||'manual',
- clockRate:state.clockRate||1,clockAnchorMs:state.clockAnchorMs??null});
 
 
 /**
