@@ -53,16 +53,20 @@ export function AsteriaDiceTray({
   const towerId=activeTowerAppearance?.designId||'off';
   const towerSignature=activeTowerAppearance?JSON.stringify(activeTowerAppearance):'off';
   const towerActive=Boolean(activeTowerAppearance);
+  // Tower impact material is implemented through the existing single
+  // physical tray audio adapter; no competing sound engine.
+  const physicalTrayAppearance=towerActive?
+    {...trayAppearance,sound:activeTowerAppearance.sound}:trayAppearance;
 
   const [trayStudioOpen,setTrayStudioOpen]=useState(false);
   const [cameraAngle,setCameraAngle]=useState(0);
   const [cameraTilt,setCameraTilt]=useState(false);
   const [cameraZoom,setCameraZoom]=useState(1);
-  const trayAppearanceRef=useRef(trayAppearance);
+  const trayAppearanceRef=useRef(physicalTrayAppearance);
   const trayRef=useRef(null),towerRef=useRef(null);
   const rollingRef=useRef(false);
   const deferredTrayRef=useRef(null);
-  useEffect(()=>{trayAppearanceRef.current=trayAppearance;},[trayAppearance]);
+  useEffect(()=>{trayAppearanceRef.current=physicalTrayAppearance;},[physicalTrayAppearance]);
   const stableId=useId().replace(/[^a-z0-9]/gi,'').toLowerCase();
   const appearanceRef=useRef(appearance);
   const registryRef=useRef(null);
@@ -162,7 +166,7 @@ export function AsteriaDiceTray({
   useEffect(()=>{
     const engine=engineRef.current;
     if(!ready||!enabled||!engine)return;
-    const config=validateDiceTrayAppearance(trayAppearance);
+    const config=validateDiceTrayAppearance(physicalTrayAppearance);
     if(rollingRef.current){
       deferredTrayRef.current=config;return;
     }
@@ -176,7 +180,7 @@ export function AsteriaDiceTray({
     }catch{
       setStatus('unavailable');
     }
-  },[ready,enabled,trayAppearance,towerSignature]);
+  },[ready,enabled,physicalTrayAppearance,towerSignature]);
   const changeTrayConfig=config=>{
     const checked=validateDiceTrayAppearance(config);
     if(onTrayAppearanceChange)onTrayAppearanceChange(checked);

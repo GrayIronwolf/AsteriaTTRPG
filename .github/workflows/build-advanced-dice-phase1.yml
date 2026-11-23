@@ -16,6 +16,8 @@ on:
       - 'scripts/dice-engine-phase3-6.test.mjs'
       - 'scripts/dice-engine-phase3-7.test.mjs'
       - 'scripts/dice-engine-phase3-8.test.mjs'
+      - 'scripts/dice-engine-phase3-9.test.mjs'
+      - 'scripts/dice-prototype/phase3-9*'
       - 'scripts/dice-prototype/phase3-8*'
       - 'scripts/dice-prototype/phase3-7*'
       - 'scripts/dice-prototype/phase3-6*'
@@ -72,6 +74,15 @@ jobs:
         run: node scripts/dice-prototype/phase3-7-runner.mjs
       - name: Verify Castle Tower physical feasibility in Chromium
         run: node scripts/dice-prototype/phase3-8-runner.mjs
+      - name: Verify five additional physical tower families in Chromium
+        run: node scripts/dice-prototype/phase3-9-runner.mjs
+      - name: Store Phase 3.9 five-tower physical evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asteria-dice-phase3-9-towers
+          path: dice-phase3-9-evidence/
+          if-no-files-found: warn
       - name: Store Phase 3.8 Castle physics evidence
         if: always()
         uses: actions/upload-artifact@v4
