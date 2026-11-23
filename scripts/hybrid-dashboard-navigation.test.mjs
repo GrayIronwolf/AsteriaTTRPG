@@ -19,7 +19,9 @@ test('approved hybrid dashboard menus preserve every GM and player destination',
   assert.equal(GM_DASHBOARD_CATEGORIES.length,7);
   assert.equal(PLAYER_DASHBOARD_CATEGORIES.length,7);
   const gm=dashboardTabs('gm'),player=dashboardTabs('player');
-  assert.equal(gm.length,25);
+  assert.equal(gm.length,26);
+  assert.ok(gm.some(page=>page.id==='player-manager'));
+  assert.equal(dashboardCategoryForPage('gm','player-manager'),'campaign');
   assert.equal(player.length,21);
   assert.ok(unique(gm.map(item=>item.id)));
   assert.ok(unique(player.map(item=>item.id)));
