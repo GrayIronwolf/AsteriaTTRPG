@@ -42,8 +42,8 @@ test('Phase 2 keeps controls in the same React dice table and preserves data',()
   assert.match(ui,/setReplayToken/);
   assert.match(ui,/firebaseService\.advancedDiceAction/);
   assert.match(ui,/firebaseService\.subscribeDiceWorkspace/);
-  assert.match(ui,/Save preset/);
-  assert.match(ui,/Clear roll history/);
+  assert.match(ui,/onClick=\{savePreset\}/);
+  assert.match(ui,/Clear private roll history/);
   assert.match(tray,/ResizeObserver/);
   assert.match(tray,/_handleResize/);
   assert.match(tray,/onToggleEnabled/);
