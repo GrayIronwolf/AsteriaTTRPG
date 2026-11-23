@@ -344,3 +344,13 @@
  .asteria-tray-options-grid,.asteria-tray-colour-grid{grid-template-columns:minmax(0,1fr)}
  .asteria-tray-design-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
+
+.asteria-tray-view-controls{position:absolute;right:7px;bottom:8px;z-index:3;
+ display:flex;flex-wrap:wrap;justify-content:flex-end;gap:4px;max-width:65%;
+ border-radius:5px;padding:4px;background:#0a1926e8;border:1px solid #5d7586}
+.asteria-advanced-dice .asteria-tray-view-controls button{
+ padding:3px 6px;min-height:28px;min-width:28px;font-size:.76rem}
+@container asteriaDice (max-width:420px){
+ .asteria-tray-view-controls{max-width:75%;right:4px;bottom:4px}
+ .asteria-advanced-dice .asteria-tray-view-controls button{min-width:26px;padding:2px 5px}
+}
