@@ -66,7 +66,6 @@ function emblemTexture(config){
   const tex=new THREE.CanvasTexture(c);tex.colorSpace=THREE.SRGBColorSpace;return tex;
 }
 function decorativeRing(points,config,radius=1){
-  const n=points.length;
   const pts=points.map(([x,z])=>new THREE.Vector3(x*radius,.13,z*radius));
   const mat=new THREE.LineBasicMaterial({color:config.trimColor,transparent:true,
     opacity:config.lighting==='off'?.32:.68});
