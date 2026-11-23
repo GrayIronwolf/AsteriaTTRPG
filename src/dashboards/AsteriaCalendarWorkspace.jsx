@@ -40,7 +40,6 @@ export function AsteriaCalendarWorkspace({campaignId,workspace={}}){
   return()=>window.clearInterval(timer);
  },[]);
  const displayDate=ready?effectiveCalendarDate(calendar,clockNow):null;
- const activeCategories=calendar?.categories||DEFAULT_CALENDAR_CATEGORIES;
  useEffect(()=>{
   setCalendar(null);setEntries([]);setDefinition(blankDefinition());setDate(blankDate());
   setEntryId('');setEntry(blankEvent());setMessage('');setError('');
