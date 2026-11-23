@@ -33,7 +33,7 @@ export const screenshotCalendarDraft=()=>({
 });
 export function cleanCalendarDraft(value){
  const c={...value,
-  months:value.months.map(row=>({name:String(row.name||''),days:Number(row.days),season:row.season||''})),
+  months:value.months.map((row,index)=>({name:String(row.name||ASTERIA_MONTHS[index]||('Month '+(index+1))),days:Number(row.days),season:row.season||''})),
   weekdays:[...value.weekdays],seasons:[...value.seasons],
   eras:value.eras.map(row=>({...row})),
   hoursPerDay:Number(value.hoursPerDay),minutesPerHour:Number(value.minutesPerHour),
