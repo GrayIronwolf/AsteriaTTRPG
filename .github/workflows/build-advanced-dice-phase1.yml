@@ -66,6 +66,15 @@ jobs:
         run: node scripts/dice-prototype/phase3-5-runner.mjs
       - name: Verify unified customisation studio in Chromium
         run: node scripts/dice-prototype/phase3-6-runner.mjs
+      - name: Verify Phase 3.7 saved collections in Chromium
+        run: node scripts/dice-prototype/phase3-7-runner.mjs
+      - name: Store Phase 3.7 collection browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asteria-dice-phase3-7
+          path: dice-phase3-7-evidence/
+          if-no-files-found: warn
       - name: Store Phase 3.6 studio browser evidence
         if: always()
         uses: actions/upload-artifact@v4
