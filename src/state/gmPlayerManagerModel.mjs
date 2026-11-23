@@ -20,8 +20,10 @@ const roles=new Set(['owner','co-gm','player']);
 const limited=value=>String(value||'').trim().slice(0,120);
 
 export function gmPlayerManagerAccess({campaign={},actorUid='',membership=null,flags={}}={}){
-  const v2=campaign?.membershipSchemaVersion===2;
-  const owner=id(actorUid)&&campaign?.ownerUid===actorUid;
+  const version=campaign?.membershipSchemaVersion;
+  const v2=version===2;
+  const supported=v2||version===1||version==null;
+  const owner=supported&&id(campaign?.id)&&id(actorUid)&&campaign?.ownerUid===actorUid;
   const gmMember=v2&&!owner&&membership?.uid===actorUid&&membership?.campaignId===campaign?.id&&
     membership?.status==='active'&&membership?.role==='co-gm';
   const legacyGM=!v2&&(campaign?.membershipSchemaVersion==null||campaign?.membershipSchemaVersion===1)&&
