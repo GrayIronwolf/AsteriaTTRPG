@@ -239,7 +239,8 @@ test('Combat canvas replaces old layout bars with a full-width icon HUD and over
  assert.match(css,/\.toolSidebar\[hidden\]\{display:none\}/);
  assert.match(css,/\.canvas\{[^}]*height:var\(--combat-viewport-height,max\(580px,calc\(100dvh - 190px\)\)\)/s);
  assert.match(renderer,/viewport\.style\.setProperty\('--combat-viewport-height',height\+'px'\)/);
- assert.match(renderer,/viewport\.getBoundingClientRect\(\)\.top\+scrollArea\.scrollTop/);
+ assert.match(renderer,/const contentTop=viewportRect\.top-scrollRect\.top\+scrollArea\.scrollTop/);
+  assert.match(renderer,/scrollArea\.clientHeight-contentTop-2/);
  assert.match(css,/\.centre\{[^}]*--combat-edge-left/s);
  const canvasStyles=css.match(/\.canvas\{[^}]*\}/s)?.[0]||'';
  assert.match(canvasStyles,/border:0!important;border-radius:0/,'Canvas surface must be borderless');
