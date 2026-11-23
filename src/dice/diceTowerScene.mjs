@@ -3,7 +3,6 @@
  * THREE meshes and static Cannon bodies use the same box dimensions, same
  * engine, same prediction worker. The existing Firebase roll is immutable.
  */
-import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import {diceTowerLayout,diceTowerSpawn,inspectDiceTowerRecording} from './diceTowerLayout.mjs';
 import {validateDiceTowerAppearance,defaultDiceTowerAppearance} from './diceTowerCatalogue.mjs';

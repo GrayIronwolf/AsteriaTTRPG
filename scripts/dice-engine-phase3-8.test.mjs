@@ -68,13 +68,13 @@ test('112 predetermined authoritative samples cover all seven die types and crit
 });
 test('tower adds static colliders to the same engine and restores original methods',()=>{
  const get=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
- const s=get('src/dice/castleDiceTowerScene.mjs');
+ const s=get('src/dice/castleDiceTowerScene.mjs')+'\n'+get('src/dice/diceTowerScene.mjs');
  assert.match(s,/new CANNON\.Body/);
  assert.match(s,/engine\.world\.addBody/);
  assert.match(s,/engine\._applyDiePhysics=function/);
  assert.match(s,/engine\._startReplay=function/);
  assert.match(s,/engine\._applyDiePhysics=applyBefore/);
- assert.match(s,/inspectCastleTowerRecording/);
+ assert.match(s,/inspectDiceTowerRecording/);
  assert.doesNotMatch(s,/new CANNON\.World|new DiceRoller|firebaseService|Math\.random/);
 });
 

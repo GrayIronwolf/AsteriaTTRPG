@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {TOWER_FAMILIES,TOWER_VARIATIONS,TOWER_LIGHTING,TOWER_QUALITY,TOWER_TRIMS,
  TOWER_MOTIFS,defaultDiceTowerAppearance,validateDiceTowerAppearance,
  pairedDiceTrayForTower,TOWER_MAX_VISIBLE_DICE} from '../src/dice/diceTowerCatalogue.mjs';
@@ -73,4 +74,25 @@ test('physical trajectory watcher binds family/variation to actual Cannon record
  const outcome=inspectDiceTowerRecording(layout,{bodies:1,steps:4,states});
  assert.equal(outcome.towerId,'tower-dragon');
  assert.equal(outcome.variation,'grand');assert.equal(outcome.exitComplete,true);
+});
+
+test('shared adapter owns physics and all six visible meshes use physical box definitions',()=>{
+ const get=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
+ const scene=get('src/dice/diceTowerScene.mjs'),visuals=get('src/dice/diceTowerVisuals.mjs'),
+  wrapper=get('src/dice/castleDiceTowerScene.mjs');
+ assert.match(scene,/engine\.world\.addBody/);
+ assert.match(scene,/engine\._predict=async function/);
+ assert.match(scene,/inspectDiceTowerRecording/);
+ assert.match(scene,/engine\._applyDiePhysics=function/);
+ assert.match(scene,/engine\.world\.gravity\.copy\(previousGravity\)/);
+ assert.match(wrapper,/attachDiceTower/);
+ assert.match(visuals,/segment\.role/);
+ assert.match(visuals,/physicalBoxId/);
+ for(const style of ['castle','dragon','wizard','forge','nature','celestial'])
+  assert.match(visuals,new RegExp("family.style==='"+style+"'"));
+ assert.doesNotMatch(scene+visuals,/new DiceRoller|new CANNON\.World|firebaseService|Math\.random/);
+ const surface=get('src/dice/AsteriaDiceTray.jsx');
+ assert.match(surface,/experimentalTowerAppearance/);
+ assert.match(surface,/attachDiceTower/);
+ assert.match(surface,/towerEvidence\?\.exitComplete/);
 });

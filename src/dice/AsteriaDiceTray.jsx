@@ -51,6 +51,7 @@ export function AsteriaDiceTray({
   const activeTowerAppearance=experimentalTowerAppearance||
     (experimentalCastleTower?defaultDiceTowerAppearance('tower-castle'):null);
   const towerId=activeTowerAppearance?.designId||'off';
+  const towerSignature=activeTowerAppearance?JSON.stringify(activeTowerAppearance):'off';
   const towerActive=Boolean(activeTowerAppearance);
 
   const [trayStudioOpen,setTrayStudioOpen]=useState(false);
@@ -140,7 +141,7 @@ export function AsteriaDiceTray({
         registryRef.current=null;
       }
     };
-  },[enabled,towerId]);
+  },[enabled,towerSignature]);
 
   // Visual orbit and zoom are camera-only. Die physics and face values do
   // not know these controls exist; wheel and touch do not change rolls.
@@ -175,7 +176,7 @@ export function AsteriaDiceTray({
     }catch{
       setStatus('unavailable');
     }
-  },[ready,enabled,trayAppearance,towerId,experimentalTowerAppearance]);
+  },[ready,enabled,trayAppearance,towerSignature]);
   const changeTrayConfig=config=>{
     const checked=validateDiceTrayAppearance(config);
     if(onTrayAppearanceChange)onTrayAppearanceChange(checked);
