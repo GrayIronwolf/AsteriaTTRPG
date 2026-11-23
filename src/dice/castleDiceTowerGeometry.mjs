@@ -18,7 +18,7 @@ export function castleTowerLayout(outline){
     {id:'north-wall',role:'wall',x,y:5.65,z:z-D-.12,w:5.35,h:11.3,d:.24},
     {id:'south-wall',role:'wall',x,y:5.65,z:z+D+.12,w:5.35,h:11.3,d:.24},
     // Castle front has a doorway starting at y=2.65, not a fake exit.
-    {id:'gate-wall',role:'wall',x:x+W+.13,y:7.325,z,w:.27,h:7.95,d:3.14},
+    {id:'gate-wall',role:'wall',x:x+W+.13,y:7.8,z,w:.27,h:7.0,d:3.14},
     {id:'baffle-upper',role:'baffle',x:x-.67,y:7.75,z,w:.64,h:.18,d:2.62,angleZ:-.54},
     {id:'baffle-middle',role:'baffle',x:x-.25,y:5.35,z,w:.64,h:.18,d:2.62,angleZ:.46},
     {id:'baffle-lower',role:'baffle',x:x-.65,y:3.23,z,w:.64,h:.18,d:2.62,angleZ:-.54},
@@ -32,7 +32,7 @@ export function castleTowerLayout(outline){
     exitX:x+W+.6,boxes,
     spawn:{x:x-.7,y:10.6,z},
     // The real physical gate, not just a drawn mark.
-    portal:{x:x+W+.13,minY:0,maxY:3.35},
+    portal:{x:x+W+.13,minY:0,maxY:4.3},
     maxRollingDice:CASTLE_TOWER_MAX_MESHES};
 }
 export function castleTowerSpawn(seed,layout){
@@ -41,7 +41,7 @@ export function castleTowerSpawn(seed,layout){
  return {x:layout.spawn.x+(seed.xPos-.5)*.28,
    y:layout.spawn.y+seed.yPos*.25,
    z:layout.spawn.z+(seed.zPos-.5)*.65,
-   vx:1.25+seed.vel?.[0]*1.1,
+   vx:3.3+seed.vel?.[0]*1.1,
    vz:(seed.vel?.[2]-.5)*1.7};
 }
 export function inspectCastleTowerRecording(layout,recording){
