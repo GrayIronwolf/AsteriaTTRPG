@@ -166,9 +166,6 @@ export function AdvancedDiceWorkspace({role='player',ownedCharacterId=''}){
         history:Array.isArray(value?.history)?value.history:[]}));}
     catch(err){setError(readFailure(err));return undefined;}
   },[]);
-  const setGroup=(index,key,value)=>setConfig(previous=>({
-    ...previous,pool:previous.pool.map((row,i)=>i===index?{...row,[key]:Number(value)}:row)
-  }));
   const replaceConfig=value=>{
     setConfig({pool:value.pool.map(row=>({...row})),modifier:value.modifier,label:value.label});
     setError('');setNotice('Preset loaded. Roll when ready.');
