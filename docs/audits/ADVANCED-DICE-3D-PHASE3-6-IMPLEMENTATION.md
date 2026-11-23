@@ -24,3 +24,9 @@
 5. The Firebase and website-wide checks on the final synchronized branch head.
 
 **Release gates:** owner approval before 3.7 and before any live Firebase deployment. Desktop/mobile GPU acceptance still recommended.
+
+## Final synchronization and verification
+- Dedicated 3D dice Phase 3.6 CI run [45111872471](https://github.com/GrayIronwolf/AsteriaTTRPG/actions/runs/45111872471) passed all unit/lint/build and Phase 2–3.6 browser regression steps.
+- The same workflow committed synchronized React/Vite assets as commit `ae80e6a571b95d6d2bdde7b8e98ca1caf4df2213`.
+- This non-deployment report commit reruns repository-wide Firebase and website checks against the synchronized assets.
+- An unrelated isolated generic Open Dice prototype run intermittently reported natural-1/20 visual-face variance; the server totals were unchanged. Do not reinterpret those prototype mismatches as changed official roll results.
