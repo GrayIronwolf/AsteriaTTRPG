@@ -36,7 +36,7 @@ test('schema rejects owner spoofing and unsupported values',()=>{
   {action:'appearance-assign',expectedRevision:0,collectionId:'collection-12345',characterId:'bad'}
  ])assert.throws(()=>validateDiceAppearanceAction(q));
  const base=emptyDiceAppearanceLibrary();
- for(const value of [{...base,ownerUid:'evil'}, {...base,revision:-1},
+ for(const value of [{...base,unexpectedField:'evil'}, {...base,revision:-1},
   {...base,version:9}, {...base,assignments:{'character-12345':'collection-12345'}}])
   assert.throws(()=>normalizeDiceAppearanceLibrary(value));
 });
