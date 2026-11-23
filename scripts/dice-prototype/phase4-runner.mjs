@@ -41,7 +41,17 @@ try{
   expression?.includes('1d6'),{expression});
  await page.getByRole('textbox',{name:'Preset name'}).fill('Phase 4 quick roll');
  await page.getByRole('button',{name:'Save',exact:true}).click();
- await page.locator('.asteria-advanced-dice-presets li').filter({hasText:'Phase 4 quick roll'}).waitFor();
+ try{
+  await page.locator('.asteria-advanced-dice-presets li').filter({hasText:'Phase 4 quick roll'}).waitFor({timeout:7000});
+ }catch(error){
+  const diagnostics=await page.evaluate(()=>({
+   metrics:window.phase4Metrics,
+   notice:document.querySelector('.asteria-dice-window-messages')?.textContent,
+   presets:document.querySelector('.asteria-advanced-dice-presets')?.textContent,
+   saveButton:[...document.querySelectorAll('button')].find(x=>x.textContent.trim()==='Save')?.disabled
+  }));
+  throw Error('Saved preset did not appear: '+JSON.stringify(diagnostics)+'; '+error.message);
+ }
  check('Existing server-backed presets remain available',
   await page.locator('.asteria-advanced-dice-presets li').filter({hasText:'Phase 4 quick roll'}).count()===1);
  await page.getByRole('button',{name:'Close dice selection'}).click();
