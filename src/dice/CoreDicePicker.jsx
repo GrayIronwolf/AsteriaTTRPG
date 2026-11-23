@@ -11,6 +11,7 @@ export function CoreDicePreview({appearance,dieType='d20'}){
   const node=useRef(null),id=useId().replace(/[^a-z0-9]/gi,'').toLowerCase()||'preview';
   const [error,setError]=useState('');
   const [zoom,setZoom]=useState(1);
+  const viewRef=useRef(null);
   const zoomRef=useRef(zoom);
   useEffect(()=>{zoomRef.current=zoom;},[zoom]);
   useEffect(()=>{
@@ -29,6 +30,7 @@ export function CoreDicePreview({appearance,dieType='d20'}){
       camera.position.set(3.15,2.65,4.2);
       camera.lookAt(0,0,0);
       view={camera,THREE,angle:0,tilt:.16};
+      viewRef.current=view;
       renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,
         powerPreference:'low-power'});
       renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));
@@ -93,26 +95,30 @@ export function CoreDicePreview({appearance,dieType='d20'}){
       if(registry){
         import('open-dice-dnd').then(api=>releaseCoreDesigns(api,registry)).catch(()=>{});
       }
+      viewRef.current=null;
       renderer?.dispose();
       if(renderer?.domElement?.parentNode)renderer.domElement.remove();
     };
   },[appearance,dieType,id]);
   const pointer=useRef(null);
-  const move=event=>{
-    if(pointer.current===null)return;
-    const dx=event.clientX-pointer.current.x;
+  const pointerDown=event=>{
     pointer.current={x:event.clientX,y:event.clientY};
-    const canvas=node.current?.querySelector('canvas');
-    if(canvas){
-      // The preview model's scene is recreated per style. Pointer interaction
-      // deliberately uses lightweight CSS feedback until full studio controls.
-      canvas.style.cursor='grabbing';
-      canvas.style.transform='translateX('+Math.max(-6,Math.min(6,dx*.15))+'px)';
-    }
+    event.currentTarget.setPointerCapture?.(event.pointerId);
   };
+  const pointerMove=event=>{
+    if(!pointer.current||!viewRef.current)return;
+    const dx=event.clientX-pointer.current.x;
+    const dy=event.clientY-pointer.current.y;
+    pointer.current={x:event.clientX,y:event.clientY};
+    viewRef.current.angle+=dx*.012;
+    viewRef.current.tilt=Math.max(-1,Math.min(1,viewRef.current.tilt+dy*.01));
+  };
+  const pointerUp=()=>{pointer.current=null;};
   return <div className="asteria-core-dice-preview">
     <div className="asteria-core-dice-preview-canvas" ref={node}
-      role="img" aria-label={'Rotating 3D '+dieType+' preview'}/>
+      role="img" aria-label={'Rotating 3D '+dieType+' preview'}
+      onPointerDown={pointerDown} onPointerMove={pointerMove}
+      onPointerUp={pointerUp} onPointerCancel={pointerUp}/>
     {error?<p role="status">{error}</p>:null}
     <div className="asteria-core-dice-preview-controls">
       <button type="button" onClick={()=>setZoom(z=>Math.max(.72,z-.1))}

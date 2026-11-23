@@ -9,6 +9,7 @@ on:
       - 'scripts/dice-engine-phase1.test.mjs'
       - 'scripts/dice-engine-phase2.test.mjs'
       - 'scripts/dice-engine-phase3-1.test.mjs'
+      - 'scripts/dice-engine-phase3-2.test.mjs'
       - 'scripts/dice-prototype/phase2*'
       - 'scripts/digital-gm-phase7-1.test.mjs'
       - 'package.json'

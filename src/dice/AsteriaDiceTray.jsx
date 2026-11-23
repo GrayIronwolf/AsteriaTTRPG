@@ -1,5 +1,7 @@
-import React,{useEffect,useRef,useState} from 'react';
+import React,{useEffect,useId,useRef,useState} from 'react';
 import {matchesAsteriaDicePreview,prepareAsteriaDicePreview} from './openDiceAdapter.mjs';
+import {prepareCoreDesigns,releaseCoreDesigns} from './coreDiceRegistry.mjs';
+import {defaultDiceAppearance,validateDiceAppearance} from './diceAppearanceCatalogue.mjs';
 
 const messages={
   loading:'Preparing the 3D dice table…',
@@ -28,11 +30,16 @@ function webGLAvailable(){
  * authoritative. Keep all engine-specific operations inside this component.
  */
 export function AsteriaDiceTray({
-  record,enabled=true,onToggleEnabled,onReplay,onClear,canReplay=false,replayToken=0
+  record,enabled=true,onToggleEnabled,onReplay,onClear,canReplay=false,replayToken=0,
+  appearance=null
 }){
   const containerRef=useRef(null),engineRef=useRef(null);
   const [ready,setReady]=useState(false),[status,setStatus]=useState('loading');
   const [traySize,setTraySize]=useState('standard');
+  const stableId=useId().replace(/[^a-z0-9]/gi,'').toLowerCase();
+  const appearanceRef=useRef(appearance);
+  const registryRef=useRef(null);
+  useEffect(()=>{appearanceRef.current=appearance;},[appearance]);
 
   useEffect(()=>{
     if(!enabled){setReady(false);setStatus('paused');return undefined;}
@@ -63,6 +70,11 @@ export function AsteriaDiceTray({
       const instance=engineRef.current;
       engineRef.current=null;
       if(instance)instance.destroy();
+      if(registryRef.current){
+        import('open-dice-dnd').then(api=>releaseCoreDesigns(api,registryRef.current))
+          .catch(()=>{});
+        registryRef.current=null;
+      }
     };
   },[enabled]);
 
@@ -108,16 +120,38 @@ export function AsteriaDiceTray({
       Promise.resolve(engine.reset()).catch(()=>{});
       return undefined;
     }
+    let diceToRoll=prepared.dice;
+    try{
+      // Register a private, replaceable PBR set per mounted workspace and die
+      // type. Only the current display uses it. Server values are unchanged.
+      const current=appearanceRef.current?
+        validateDiceAppearance(appearanceRef.current):defaultDiceAppearance();
+      // The public registration API is lazily imported in the render effect.
+      // This avoids putting Open Dice into the main application bundle.
+      if(current.special!==null)throw Error('Special dice are not available in Phase 3.2.');
+    }catch{
+      setStatus('unavailable');return undefined;
+    }
     let cancelled=false;
     setStatus('rolling');
-    Promise.resolve(engine.roll(prepared.dice)).then(()=>{
+    const run=async()=>{
+      const api=await import('open-dice-dnd');
+      if(cancelled)return;
+      const current=appearanceRef.current?
+        validateDiceAppearance(appearanceRef.current):defaultDiceAppearance();
+      const ids=prepareCoreDesigns(api,current,stableId);
+      registryRef.current=ids;
+      diceToRoll=prepared.dice.map(row=>({...row,set:ids[row.dice]}));
+      await engine.roll(diceToRoll);
+    };
+    Promise.resolve(run()).then(()=>{
       if(cancelled)return;
       const match=matchesAsteriaDicePreview(prepared,engine.getCurrentResults());
       setStatus(match?'settled':'mismatch');
       if(!match)Promise.resolve(engine.reset()).catch(()=>{});
     }).catch(()=>{if(!cancelled)setStatus('unavailable');});
     return ()=>{cancelled=true;};
-  },[record,ready,enabled,replayToken]);
+  },[record,ready,enabled,replayToken,stableId]);
 
   const canControl=enabled&&ready&&status!=='rolling';
   const renderFallback=!enabled||['unavailable','unsupported','oversized','mismatch'].includes(status);

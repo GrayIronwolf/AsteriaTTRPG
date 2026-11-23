@@ -203,3 +203,33 @@
   .asteria-advanced-dice-editor,.asteria-advanced-dice-record{padding:10px}
   .asteria-advanced-dice-fields{grid-template-columns:1fr}
 }
+
+/* Phase 3.2: real Open Dice PBR style picker and independent model preview. */
+.asteria-core-dice-picker{display:grid;gap:12px;padding:13px;border:1px solid #536b81;
+ border-radius:6px;background:#101d2c;min-width:0}
+.asteria-core-dice-picker-heading{display:grid;gap:3px}
+.asteria-core-dice-picker-heading h3{margin:0;color:#f1f7fc;font-size:1.05rem}
+.asteria-core-dice-picker-heading small{color:#b6c9d7}
+.asteria-core-dice-picker-layout{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(240px,.9fr);gap:14px;min-width:0}
+.asteria-core-dice-selection{display:grid;gap:10px;min-width:0;align-content:start}
+.asteria-core-dice-swatches{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px}
+.asteria-advanced-dice .asteria-core-dice-swatches button{display:grid;place-items:center;padding:4px;min-height:31px;
+ background:#122337;border-color:#5a6c80}
+.asteria-core-dice-swatches button span{display:block;width:19px;height:19px;background:var(--dice-swatch);
+ border:1px solid rgba(255,255,255,.35);border-radius:4px;transform:rotate(15deg)}
+.asteria-core-dice-swatches button.is-selected{outline:2px solid var(--asteria-accent,#95bcd8);outline-offset:0}
+.asteria-core-dice-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.asteria-core-dice-controls label{min-width:0}
+.asteria-core-dice-controls input[type=color]{min-height:35px;cursor:pointer;padding:3px}
+.asteria-core-dice-preview{display:grid;grid-template-rows:minmax(230px,1fr) auto;
+ min-width:0;max-height:450px;overflow:hidden;border:1px solid #4b6880;border-radius:5px;background:#101c2a}
+.asteria-core-dice-preview-canvas{position:relative;touch-action:none;cursor:grab;height:310px;min-width:0;overflow:hidden}
+.asteria-core-dice-preview-canvas:active{cursor:grabbing}
+.asteria-core-dice-preview-canvas canvas{display:block;width:100%;height:100%}
+.asteria-core-dice-preview-controls{display:flex;align-items:center;justify-content:space-between;gap:8px;
+ padding:6px 9px;border-top:1px solid #3b5367;color:#bcd0dc;font-size:.76rem}
+.asteria-advanced-dice .asteria-core-dice-preview-controls button{padding:2px 10px;min-height:29px}
+.asteria-core-dice-contrast{color:#ffdbab;font-size:.8rem}
+@container asteriaDice (max-width:720px){.asteria-core-dice-picker-layout{grid-template-columns:minmax(0,1fr)}}
+@container asteriaDice (max-width:450px){.asteria-core-dice-controls{grid-template-columns:minmax(0,1fr)}
+ .asteria-core-dice-preview-canvas{height:250px}}
