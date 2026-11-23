@@ -210,8 +210,14 @@ service cloud.firestore {
         // Only the authenticated Cloud Function may author digital dice results.
         allow create, update, delete: if false;
       }
+      match /diceAppearances/{documentId} {
+        allow get: if ownsUserData(uid) && documentId == 'current';
+        allow list: if ownsUserData(uid);
+        allow create, update, delete: if false;
+      }
       match /{collectionId}/{document=**} {
-        allow read, write: if collectionId != 'characters' && collectionId != 'diceWorkspace' && ownsUserData(uid);
+        allow read, write: if collectionId != 'characters' && collectionId != 'diceWorkspace' &&
+          collectionId != 'diceAppearances' && ownsUserData(uid);
       }
     }
 
