@@ -251,6 +251,9 @@ function normaliseBase(raw,config=COMBAT_CANVAS_CONFIG){
     partyCardOrder:[...new Set((Array.isArray(source.partyCardOrder)?source.partyCardOrder:[])
       .filter(id=>typeof id==='string'&&id.length>0&&id.length<=180))].slice(0,200),
     groups,
+    alignmentGuides:source.alignmentGuides!==false,
+    magneticSnap:source.magneticSnap===true,
+    snapStrength:['gentle','medium','strong'].includes(source.snapStrength)?source.snapStrength:'medium',
     gridVisible:source.gridVisible!==false,
     gridSize:[16,26,40].includes(Number(source.gridSize))?Number(source.gridSize):26,
     canvasBackground:['midnight','obsidian','slate'].includes(source.canvasBackground)
@@ -280,6 +283,29 @@ export function combatWorkspaceStorageKey(uid,campaignId){
   const good=value=>typeof value==='string'&&/^[A-Za-z0-9_-]{1,180}$/.test(value);
   return good(uid)&&good(campaignId)
     ?'asteria:gm-combat-workspace:v1:'+uid+':'+campaignId:null;
+}
+/** Align the active window to neighbouring window edges and centres. */
+export function combatWindowAlignment(layout,id,position,{snap=false,strength='medium'}={}){
+ const current=layout?.freeform?.positions?.[id];
+ if(!current||!position||!Number.isFinite(position.x)||!Number.isFinite(position.y))
+  return {position,guides:[]};
+ const threshold={gentle:8,medium:16,strong:28}[strength]??16;
+ const candidates={x:[],y:[]};
+ for(const [otherId,rect] of Object.entries(layout.freeform.positions)){
+  if(otherId===id||layout.hidden.includes(otherId))continue;
+  for(const [axis,size] of [['x','w'],['y','h']]){
+   const own=[position[axis],position[axis]+current[size]/2,position[axis]+current[size]];
+   const other=[rect[axis],rect[axis]+rect[size]/2,rect[axis]+rect[size]];
+   for(const source of own)for(const target of other){
+    const delta=target-source;
+    if(Math.abs(delta)<=threshold)candidates[axis].push({delta,line:target});
+   }
+  }
+ }
+ const nearest=axis=>candidates[axis].sort((a,b)=>Math.abs(a.delta)-Math.abs(b.delta))[0];
+ const x=nearest('x'),y=nearest('y');
+ return {position:{x:position.x+(snap&&x?x.delta:0),y:position.y+(snap&&y?y.delta:0)},
+  guides:[...(x?[{axis:'x',line:x.line}]:[]),...(y?[{axis:'y',line:y.line}]:[])]};
 }
 /** Atomic freeform move/resize with bounds, optional snapping and collision safety.
  * Unlike the shared dashboard grid, x and y may extend beyond the visible viewport. */

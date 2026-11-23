@@ -3,7 +3,7 @@ import {freeformPercent} from '../../../src/state/workspaceFreeformModel.mjs';
 import {
   COMBAT_PANEL_IDS,COMBAT_PANEL_LABELS,COMBAT_TOOL_CATEGORIES,
   normalizeCombatCamera,zoomCombatCamera,fitCombatCamera,openingCombatCamera,
-  combatCanvasGridStyle,combatCanvasDetailLevel,
+  combatCanvasGridStyle,combatCanvasDetailLevel,combatWindowAlignment,
   focusCombatCamera,clampCombatCamera,orderedCombatPartyIds,moveCombatPartyCard,
   combatWorkspaceStorageKey,defaultCombatWorkspaceLayout,dockCombatWindow,
   editCombatWindow,normalizeCombatWorkspace,setCombatGroup
@@ -354,6 +354,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
     }
   };
   const setPreference=change;
+  const [alignmentLines,setAlignmentLines]=useState([]);
   const undo=()=>{
     if(!canEditCanvas||!undoStack.length)return;
     const previous=undoStack[undoStack.length-1];
@@ -385,6 +386,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
     const ids=kind==='move'?layout.groups.find(row=>row.includes(id))||[id]:[id];
     const nodes=Object.fromEntries(ids.map(panelId=>
       [panelId,canvas.current?.querySelector('[data-combat-panel="'+panelId+'"]')]));
+    setAlignmentLines([]);
     if(canvas.current)canvas.current.dataset.draggingWindow=id;
     gesture.current={id,kind,edge,initial,width,scale:cameraRef.current.scale,
       pointer:event.pointerId,x:event.clientX,y:event.clientY,layout,ids,nodes,
@@ -398,7 +400,11 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
   const proposal=(g,x,y)=>{
     const dx=Math.round((x-g.x)*1000/(g.width*g.scale));
     const dy=Math.round((y-g.y)*1000/(g.width*g.scale));
-    if(g.kind==='move')return {x:g.initial.x+dx,y:g.initial.y+dy};
+    if(g.kind==='move'){
+      const position={x:g.initial.x+dx,y:g.initial.y+dy};
+      return g.layout.magneticSnap?combatWindowAlignment(g.layout,g.id,position,{
+        snap:true,strength:g.layout.snapStrength}).position:position;
+    }
     const values={...g.initial};
     if(g.edge.includes('e'))values.w+=dx;
     if(g.edge.includes('w')){values.x+=dx;values.w-=dx;}
@@ -427,6 +433,11 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
       return;
     }
     const candidate=editCombatWindow(g.layout,g.id,g.kind,g.pending,canvasConfig||undefined);
+    if(g.kind==='move'&&g.layout.alignmentGuides){
+      const guides=combatWindowAlignment(g.layout,g.id,g.pending,{
+        strength:g.layout.snapStrength}).guides;
+      setAlignmentLines(previous=>JSON.stringify(previous)===JSON.stringify(guides)?previous:guides);
+    }
     // A rejected strict-collision proposal retains the last valid frame.
     // Normal freeform mode accepts overlapping positions immediately.
     const atOrigin=Object.entries(g.pending).every(([key,value])=>
@@ -466,6 +477,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
       proposal(g,event.clientX,event.clientY);
     if(event.type==='pointerup')paintGesture(g);
     gesture.current=null;
+    setAlignmentLines([]);
     if(canvas.current)delete canvas.current.dataset.draggingWindow;
     if(g.kind==='pan'){
       if(event.type==='pointerup')updateCamera(g.latestCamera);
@@ -605,7 +617,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
               role="button" aria-label={'Move '+label}
               aria-disabled={!canEditCanvas||isLocked||layout.canvasLocked}
               onKeyDown={event=>keyboard(event,id)}>
-              {label}{grouped?' · Grouped':''}
+              {label}
             </strong>
             <div className={styles.windowActions}>
               <button type="button" aria-label={(isMinimised?'Restore ':'Minimise ')+label}
@@ -643,17 +655,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
                   <button type="button" disabled={!canEditCanvas||isLocked}
                     onClick={()=>change(previous=>dockCombatWindow(previous,id,'right',canvasConfig||undefined))}>
                     Dock right</button>
-                  {grouped?<button type="button" disabled={!canEditCanvas}
-                    onClick={()=>change(previous=>setCombatGroup(previous,id,'',canvasConfig||undefined))}>
-                    Ungroup window</button>:null}
-                  <label>Group with
-                    <select value="" disabled={!canEditCanvas||isLocked}
-                      onChange={event=>change(previous=>setCombatGroup(previous,id,event.target.value,canvasConfig||undefined))}>
-                      <option value="">Select window</option>
-                      {panelIds.filter(other=>other!==id&&!hidden.includes(other))
-                        .map(other=><option value={other} key={other}>{panelLabels[other]}</option>)}
-                    </select>
-                  </label>
+
                 </div>
               </details>
             </div>
@@ -686,6 +688,14 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
         </article>;
       })}
       </div>
+      {wide&&alignmentLines.length>0?<div className={styles.alignmentOverlay}
+        aria-hidden="true">{alignmentLines.map(line=><i key={line.axis}
+          className={line.axis==='x'?styles.alignmentVertical:styles.alignmentHorizontal}
+          style={line.axis==='x'?{
+            left:'calc('+line.line/10+'cqw * '+camera.scale+' + '+camera.x+'px)'
+          }:{
+            top:'calc('+line.line/10+'cqw * '+camera.scale+' + '+(camera.y+60)+'px)'
+          }}/>)}</div>:null}
       <div className={styles.canvasActions} role="toolbar"
         aria-label={playerCanvas?'Player dashboard canvas controls':
           gmCanvas?'GM dashboard canvas controls':'Combat canvas controls'}>
@@ -850,6 +860,27 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
             <p className={styles.sidebarHint}>Initial guide: 100 columns by 60 rows.
               The dot grid continues as you pan. At 50% zoom, approximately
               40 dot rows are visible on a typical desktop viewport.</p>
+            <fieldset className={styles.appearanceGroup}>
+              <legend>Window Management</legend>
+              <label><input type="checkbox" checked={layout.alignmentGuides}
+                disabled={!canEditCanvas}
+                onChange={event=>setPreference(previous=>({...previous,
+                  alignmentGuides:event.target.checked}))}/> Show alignment guides</label>
+              <label><input type="checkbox" checked={layout.magneticSnap}
+                disabled={!canEditCanvas}
+                onChange={event=>setPreference(previous=>({...previous,
+                  magneticSnap:event.target.checked}))}/> Magnetic window snapping</label>
+              <label>Snapping strength
+                <select aria-label="Window snapping strength" value={layout.snapStrength}
+                  disabled={!canEditCanvas||!layout.magneticSnap}
+                  onChange={event=>setPreference(previous=>({...previous,
+                    snapStrength:event.target.value}))}>
+                  <option value="gentle">Gentle</option>
+                  <option value="medium">Medium</option>
+                  <option value="strong">Strong</option>
+                </select>
+              </label>
+            </fieldset>
             <label><input type="checkbox" checked={layout.freeform.snap}
                disabled={!canEditCanvas}
               onChange={event=>setPreference(previous=>({...previous,freeform:{

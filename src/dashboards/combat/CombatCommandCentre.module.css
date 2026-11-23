@@ -219,3 +219,14 @@
 }
 @media(max-width:600px){.windowContent{padding:var(--asteria-space-2)}
  .options>div{right:0;max-width:70vw}}
+
+/* Alignment guides remain pointer-transparent and do not affect panel layout. */
+.alignmentOverlay{position:absolute;inset:0;pointer-events:none;z-index:4;overflow:hidden}
+.alignmentOverlay i{position:absolute;display:block;pointer-events:none;
+ border-color:rgba(125,206,237,.85);filter:drop-shadow(0 0 3px rgba(45,153,210,.6))}
+.alignmentVertical{top:60px;bottom:0;border-left:1px dashed}
+.alignmentHorizontal{left:0;right:0;border-top:1px dashed}
+.canvas[data-editing='true'] .resizeHandle{opacity:.45;transition:opacity 140ms ease}
+.canvas[data-editing='true'] .window:hover .resizeHandle,
+.canvas[data-editing='true'] .resizeHandle:focus-visible{opacity:1}
+@media(prefers-reduced-motion:reduce){.canvas[data-editing='true'] .resizeHandle{transition:none}}

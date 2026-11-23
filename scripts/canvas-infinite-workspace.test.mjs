@@ -137,3 +137,28 @@ test('Appearance preferences are scoped to each canvas layout and do not reset w
  assert.match(styles,/\.canvas\[data-background='slate'\]/);
  assert.match(styles,/\.canvas\[data-motion='off'\]/);
 });
+
+test('Optional window alignment has safe defaults and settings across all canvases',()=>{
+ for(const [initial,normalizer] of [
+  [defaultCombatWorkspaceLayout(),normalizeCombatWorkspace],
+  [defaultGMCanvasLayout(),normalizeGMCanvasLayout],
+  [defaultPlayerCanvasLayout(),normalizePlayerCanvasLayout]]){
+  assert.equal(initial.alignmentGuides,true);
+  assert.equal(initial.magneticSnap,false);
+  assert.equal(initial.snapStrength,'medium');
+  const changed=normalizer({...initial,alignmentGuides:false,
+   magneticSnap:true,snapStrength:'strong'});
+  assert.equal(changed.alignmentGuides,false);
+  assert.equal(changed.magneticSnap,true);
+  assert.equal(changed.snapStrength,'strong');
+  assert.deepEqual(changed.freeform.positions,initial.freeform.positions);
+ }
+ const model=read('src/dashboards/combat/combatWorkspaceLayoutModel.mjs');
+ const jsx=read('src/dashboards/combat/CombatCommandCentre.jsx');
+ assert.match(model,/export function combatWindowAlignment/);
+ assert.match(jsx,/Show alignment guides/);
+ assert.match(jsx,/Magnetic window snapping/);
+ assert.match(jsx,/Window snapping strength/);
+ assert.match(jsx,/styles.alignmentOverlay/);
+ assert.doesNotMatch(jsx,/>Group with</);
+});
