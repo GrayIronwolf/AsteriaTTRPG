@@ -89,7 +89,36 @@ export function attachCastleDiceTower(engine,outline){
  lantern.position.set(x,7.9,z);group.add(lantern);
  engine.scene.add(group);
  const applyBefore=engine._applyDiePhysics,replayBefore=engine._startReplay;
- let evidence=null,cleaned=false;
+ const predictBefore=engine._predict,finishBefore=engine._finishReplay;
+ let evidence=null,attempts=0,cleaned=false;
+ // Reject hidden physics candidates that never leave the tower. The worker
+ // really simulates each candidate; none creates a new official Firebase roll.
+ engine._predict=async function(diceConfig){
+  const maxAttempts=8;
+  for(let attempt=1;attempt<=maxAttempts;attempt++){
+   const candidate=await predictBefore.call(this,diceConfig);
+   attempts=attempt;
+   const outcome=inspectCastleTowerRecording(layout,candidate.recording);
+   if(outcome?.exitComplete)return candidate;
+  }
+  throw Error('Castle Tower physics could not complete an exit within eight attempts.');
+ };
+ // The worker already simulated the throw until rest and recorded the true
+ // final orientation. Stop any unrecorded late physical drift after replay,
+ // instead of allowing angled feed gravity to alter the visible number.
+ engine._finishReplay=function(...args){
+  const replay=this._replay;
+  const complete=Boolean(replay&&replay.cursor>=replay.recording.steps);
+  const result=finishBefore.apply(this,args);
+  if(complete){
+   for(const die of replay.dice){
+    if(!die?.body?.world)continue;
+    die.body.velocity.setZero();die.body.angularVelocity.setZero();
+    die.body.sleep();
+   }
+  }
+  return result;
+ };
  engine._applyDiePhysics=function(die,seed){
   applyBefore.call(this,die,seed);
   const spawn=castleTowerSpawn(seed,layout);
@@ -106,10 +135,11 @@ export function attachCastleDiceTower(engine,outline){
  };
  engine.renderer?.render(engine.scene,engine.camera);
  return {layout,group,colliders,previewMode:'actual-physics',
-  getEvidence:()=>evidence,
+  getEvidence:()=>evidence,getAttempts:()=>attempts,
   dispose(){
    if(cleaned)return;cleaned=true;
    engine._applyDiePhysics=applyBefore;engine._startReplay=replayBefore;
+   engine._predict=predictBefore;engine._finishReplay=finishBefore;
    engine.world.gravity.copy(previousGravity);
    for(const body of colliders)engine.world.removeBody(body);
    engine.world.removeContactMaterial(contact);
