@@ -8,7 +8,7 @@ function navigate(windowObject, route, state) {
 
 export function openGMCharacter(campaign, character, view, windowObject = window) {
   const uid = windowObject.AsteriaFirebase?.getUser?.()?.uid;
-  if(!windowObject.AsteriaCharacterAccess.canGMView(campaign, character, uid)) return false;
+  if(!windowObject.AsteriaCharacterAccess.canGMView(campaign, character, uid, view?.membership)) return false;
   const gmView = { uid, campaignId:campaign.id, tab:view.tab, selectedId:character.id, scrollY:windowObject.scrollY || 0 };
   windowObject.history.replaceState({ ...windowObject.history.state, gmView }, '');
   navigate(windowObject, { type:'character', campaignId:campaign.id, characterId:character.id }, {
@@ -17,10 +17,10 @@ export function openGMCharacter(campaign, character, view, windowObject = window
   return true;
 }
 
-export function gmReturnContext(campaign, character, uid, windowObject = window) {
+export function gmReturnContext(campaign, character, uid, windowObject = window, membership = null) {
   const context = windowObject.history.state?.gmReturn;
   return context?.uid === uid && context.campaignId === campaign?.id && context.characterId === character?.id &&
-    windowObject.AsteriaCharacterAccess.canGMView(campaign, character, uid) ? context : null;
+    windowObject.AsteriaCharacterAccess.canGMView(campaign, character, uid, membership) ? context : null;
 }
 
 export function returnToGM(context, windowObject = window) {
