@@ -6,24 +6,18 @@ import {
  CALENDAR_ENTRY_KINDS,calendarSourceReferences,
  sortedCalendarEntries,formatAsteriaDate,validateCalendarDefinition
 } from '../state/asteriaCalendarModel.mjs';
+import {CalendarDefinitionEditor,blankCalendarDefinition,cleanCalendarDraft} from './CalendarDefinitionEditor.jsx';
+import {calendarMonthGrid,calendarMonthDays} from '../state/asteriaCalendarModel.mjs';
 import '../styles/asteria-calendar.css';
 
-const blankDefinition=()=>({
- months:ASTERIA_MONTHS.map(()=>({days:'',season:''})),
- hoursPerDay:24,minutesPerHour:60,weekdayAnchor:0
-});
+const blankDefinition=blankCalendarDefinition;
 const blankDate=()=>({era:'EOSR',year:1,month:1,day:1,hour:0,minute:0});
 const blankEvent=()=>({title:'',description:'',kind:'event',visibility:'gm',
  date:blankDate(),related:null});
 const numericDate=date=>Object.fromEntries(Object.entries(date).map(([key,value])=>[
  key,key==='era'?value:Number(value)
 ]));
-const cleanDefinition=value=>({
- months:value.months.map(row=>({days:Number(row.days),season:row.season})),
- hoursPerDay:Number(value.hoursPerDay),
- minutesPerHour:Number(value.minutesPerHour),
- weekdayAnchor:Number(value.weekdayAnchor)
-});
+const cleanDefinition=cleanCalendarDraft;
 
 export function AsteriaCalendarWorkspace({campaignId,workspace={}}){
  const [calendar,setCalendar]=useState(null),[entries,setEntries]=useState([]);
@@ -48,13 +42,12 @@ export function AsteriaCalendarWorkspace({campaignId,workspace={}}){
  },[campaignId]);
  useEffect(()=>{
   if(calendar?.definition){
-   setDefinition(calendar.definition);
+   setDefinition({...calendar.definition,weekdays:calendar.definition.weekdays||[...ASTERIA_WEEKDAYS],
+    seasons:calendar.definition.seasons||[...ASTERIA_SEASONS],eras:calendar.definition.eras||ASTERIA_ERAS.map(x=>({...x})),
+    leapDays:calendar.definition.leapDays||[],moons:calendar.definition.moons||[],cycles:calendar.definition.cycles||[]});
    setDate(calendar.date);
   }
  },[calendar?.revision]);
- const updateMonth=(index,key,value)=>setDefinition(old=>({
-  ...old,months:old.months.map((row,i)=>i===index?{...row,[key]:value}:row)
- }));
  const updateDate=(key,value)=>setDate(old=>({...old,[key]:value}));
  const updateEntryDate=(key,value)=>setEntry(old=>({...old,date:{...old.date,[key]:value}}));
  const submit=async(action,success)=>{
@@ -105,12 +98,12 @@ export function AsteriaCalendarWorkspace({campaignId,workspace={}}){
  };
  const dateInputs=(current,change,prefix)=> <div className="asteria-calendar-grid">
   <label>Era<select value={current.era} disabled={busy} onChange={e=>change('era',e.target.value)}>
-   {ASTERIA_ERAS.map(row=><option key={row.id} value={row.id}>{row.id} — {row.name}</option>)}
+   {(definition.eras||ASTERIA_ERAS).map(row=><option key={row.id} value={row.id}>{row.id} — {row.name}</option>)}
   </select></label>
   <label>Year<input aria-label={prefix+' year'} type="number" min="1" max="100000" step="1" value={current.year}
    disabled={busy} onChange={e=>change('year',e.target.value)}/></label>
   <label>Month<select value={current.month} disabled={busy} onChange={e=>change('month',Number(e.target.value))}>
-   {ASTERIA_MONTHS.map((name,index)=><option key={name} value={index+1}>{index+1}. {name}</option>)}
+   {(definition.months||[]).map((row,index)=><option key={index} value={index+1}>{index+1}. {row.name||ASTERIA_MONTHS[index]}</option>)}
   </select></label>
   <label>Day<input aria-label={prefix+' day'} type="number" min="1" max={config?.months?.[Number(current.month)-1]?.days||100} step="1"
    value={current.day} disabled={busy} onChange={e=>change('day',e.target.value)}/></label>
@@ -122,38 +115,13 @@ export function AsteriaCalendarWorkspace({campaignId,workspace={}}){
  </div>;
  return <Panel title="Asteria Calendar" eyebrow="Digital GM Toolkit · Phase 8.1">
   <div className="asteria-calendar">
-   <p>The calendar uses Asteria's established twelve months, eight weekdays, four seasons and five eras. Day counts, weekday alignment and hours per day require your configuration; they have not been invented.</p>
+   <p>Your campaign calendar can be customised without changing the official Astria calendar. Review month lengths and eras before saving.</p>
    <section className="asteria-calendar-card">
     <h3>World chronology</h3>
     {ready?<p className="asteria-calendar-current"><strong>{formatAsteriaDate(calendar.date,config)}</strong>
       <small>Revision {calendar.revision}. Only the GM may change time. Players see the synchronized date.</small></p>:
-     <p role="status">Not configured. Complete all twelve month lengths before using in-world dates.</p>}
-    <details open={!ready}>
-     <summary>Calendar rules {ready?'(configured)':'(configuration required)'}</summary>
-     <div className="asteria-calendar-months">
-      {ASTERIA_MONTHS.map((name,index)=><div key={name} className="asteria-calendar-month">
-       <strong>{index+1}. {name}</strong>
-       <label>Days<input type="number" min="1" max="100" step="1" disabled={busy}
-        value={definition.months?.[index]?.days??''} onChange={e=>updateMonth(index,'days',e.target.value)}/></label>
-       <label>Season<select value={definition.months?.[index]?.season??''} disabled={busy}
-        onChange={e=>updateMonth(index,'season',e.target.value)}>
-        <option value="">Not specified</option>
-        {ASTERIA_SEASONS.map(s=><option key={s}>{s}</option>)}
-       </select></label>
-      </div>)}
-     </div>
-     <div className="asteria-calendar-grid">
-      <label>Hours per day<input type="number" min="1" max="48" step="1" value={definition.hoursPerDay}
-       disabled={busy} onChange={e=>setDefinition(old=>({...old,hoursPerDay:e.target.value}))}/></label>
-      <label>Minutes per hour<input type="number" min="1" max="120" step="1" value={definition.minutesPerHour}
-       disabled={busy} onChange={e=>setDefinition(old=>({...old,minutesPerHour:e.target.value}))}/></label>
-      <label>First weekday<select value={definition.weekdayAnchor} disabled={busy}
-       onChange={e=>setDefinition(old=>({...old,weekdayAnchor:Number(e.target.value)}))}>
-       {ASTERIA_WEEKDAYS.map((weekday,index)=><option key={weekday} value={index}>{weekday}</option>)}
-      </select></label>
-     </div>
-     <p className="react-help">The first weekday is day 1 of Aork, year 1 of each era. Seasons may be assigned to months when canon is confirmed. Calendar rules cannot be replaced while active dated entries exist.</p>
-    </details>
+     <p role="status">Not configured. Complete the calendar rules and save them before using in-world dates.</p>}
+    <CalendarDefinitionEditor value={definition} onChange={setDefinition} busy={busy} configured={ready} entryCount={calendar?.entryCount||0}/>
     {dateInputs(date,updateDate,'World')}
     <label>GM change reason (optional)<input maxLength={180} value={reason} disabled={busy}
      onChange={e=>setReason(e.target.value)} placeholder="Session progression"/></label>
@@ -170,6 +138,7 @@ export function AsteriaCalendarWorkspace({campaignId,workspace={}}){
      <button type="button" disabled={busy} onClick={advance}>Advance campaign time</button>
     </div>:null}
    </section>
+   {ready?<CalendarBrowser calendar={calendar} entries={ordered}/>:null}
    {ready?<section className="asteria-calendar-card">
     <h3>Campaign calendar events</h3>
     <div className="asteria-calendar-actions">
@@ -250,6 +219,7 @@ export function PlayerAsteriaCalendar({campaignId}){
     <strong>{formatAsteriaDate(calendar.date,config)}</strong>
     <small>Live campaign time, managed by your GM.</small>
    </p>:<p>The GM has not configured the campaign calendar yet.</p>}
+   {config&&calendar?.date?<CalendarBrowser calendar={calendar} entries={ordered}/>:null}
    <h3>Shared calendar events</h3>
    {config&&ordered.length?<ol className="asteria-calendar-events">
     {ordered.map(row=><li key={row.id}><strong>{row.title}</strong>
@@ -260,4 +230,55 @@ export function PlayerAsteriaCalendar({campaignId}){
    <p className="react-help">Private GM events and planning notes are never shown here.</p>
   </div>
  </Panel>;
+}
+
+/** Shared read-only calendar browser for both GM and player views. */
+export function CalendarBrowser({calendar,entries=[]}){
+ const config=calendar?.definition;
+ const [mode,setMode]=useState('month'),[offset,setOffset]=useState(0),[selection,setSelection]=useState(null);
+ if(!config||!calendar?.date)return null;
+ const c=validateCalendarDefinition(config),today=calendar.date;
+ const count=c.months.length;
+ const abs=(today.year-1)*count+today.month-1+offset;
+ const year=Math.max(1,Math.min(100000,Math.floor(abs/count)+1));
+ const month=Math.max(1,Math.min(count,((abs%count)+count)%count+1));
+ const grid=calendarMonthGrid(c,today.era,year,month);
+ const chosen=Math.max(1,Math.min(calendarMonthDays(c,year,month),selection||today.day));
+ const dayDate={...today,year,month,day:chosen};
+ const matches=date=>entries.filter(e=>e.date?.era===date.era&&e.date?.year===date.year&&e.date?.month===date.month&&e.date?.day===date.day);
+ const previous=()=>{setOffset(x=>Math.max(-(today.year-1)*count-today.month+1,x-(mode==='year'?count:1)));setSelection(null);};
+ const next=()=>{setOffset(x=>Math.min((100000-today.year)*count+count-today.month,x+(mode==='year'?count:1)));setSelection(null);};
+ return <section className="asteria-calendar-card asteria-calendar-browser">
+  <header className="asteria-calendar-browser-head"><h3>{c.months[month-1].name} {year} {today.era}</h3>
+   <nav className="asteria-calendar-actions" aria-label="Calendar display">
+    {['day','month','year'].map(view=><button type="button" key={view} aria-pressed={mode===view}
+     onClick={()=>{setMode(view);setSelection(null);}}>{view[0].toUpperCase()+view.slice(1)}</button>)}
+   </nav>
+  </header>
+  <div className="asteria-calendar-actions">
+   <button type="button" onClick={previous}>← Previous</button>
+   <button type="button" onClick={()=>{setOffset(0);setSelection(null);}}>Today</button>
+   <button type="button" onClick={next}>Next →</button>
+  </div>
+  {mode==='year'?<div className="asteria-calendar-year-grid">
+   {c.months.map((row,index)=><button type="button" key={index} onClick={()=>{
+    setOffset((year-today.year)*count+index-today.month+1);setSelection(null);setMode('month');
+   }}><strong>{row.name}</strong><small>{calendarMonthDays(c,year,index+1)} days</small></button>)}
+  </div>:mode==='month'?<div className="asteria-calendar-month-grid" role="grid" aria-label={c.months[month-1].name}>
+   {c.weekdays.map((name,index)=><div key={index} className="asteria-calendar-weekday" role="columnheader">{name}</div>)}
+   {grid.map((cell,index)=>cell?<button type="button" role="gridcell" key={index}
+    className={'asteria-calendar-day'+(cell.intercalary?' is-intercalary':'')+
+     (cell.date.year===today.year&&cell.date.month===today.month&&cell.date.day===today.day?' is-today':'')}
+    aria-selected={selection===cell.date.day}
+    onClick={()=>setSelection(cell.date.day)}><strong>{cell.date.day}</strong>
+    {cell.intercalary?<small>{cell.intercalary}</small>:null}
+    {matches(cell.date).slice(0,2).map(event=><small key={event.id} className="asteria-calendar-event-mark">{event.title}</small>)}
+   </button>:<span key={index} aria-hidden="true"/>)}
+  </div>:<div className="asteria-calendar-actions"><label>Select day<input type="number" min="1"
+   max={calendarMonthDays(c,year,month)} value={chosen} onChange={e=>setSelection(Number(e.target.value)||1)}/></label></div>}
+  {mode!=='year'?<div className="asteria-calendar-selected">
+   <strong>{formatAsteriaDate(dayDate,c,{time:false})}</strong>
+   {matches(dayDate).map(e=><p key={e.id}>{e.title}</p>)}
+  </div>:null}
+ </section>;
 }
