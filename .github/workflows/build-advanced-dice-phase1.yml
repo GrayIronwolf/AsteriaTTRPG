@@ -18,6 +18,7 @@ on:
       - 'scripts/dice-engine-phase3-8.test.mjs'
       - 'scripts/dice-engine-phase3-9.test.mjs'
       - 'scripts/dice-engine-phase3-10.test.mjs'
+      - 'docs/audits/ADVANCED-DICE-3D-PHASE3-10-IMPLEMENTATION.md'
       - 'scripts/dice-prototype/phase3-10*'
       - 'scripts/dice-prototype/phase3-9*'
       - 'scripts/dice-prototype/phase3-8*'
