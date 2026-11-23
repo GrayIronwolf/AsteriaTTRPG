@@ -137,7 +137,7 @@ test('the same Open Dice roller is reused with a single tray scene',()=>{
  assert.match(tray,/attachDiceTray\(instance/);
  assert.match(tray,/<DiceTrayStudio/);
  assert.match(engine,/new CANNON.Box/);
- assert.match(engine,/this\._applyDiePhysics/);
+ assert.match(engine,/engine\._applyDiePhysics/);
  assert.match(engine,/originalApply\.call/);
  assert.match(studio,/getDiceTrayFamily|TRAY_FAMILIES/);
  assert.match(workspace,/firebaseService\.advancedDiceAction/);
