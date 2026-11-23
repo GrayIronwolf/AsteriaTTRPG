@@ -58,6 +58,7 @@ try{
  check('Mobile viewport width',mobile.scroll<=mobile.width+1,mobile);
  await page.screenshot({path:path.join(out,'castle-mobile.png'),fullPage:true});
  await page.getByRole('checkbox',{name:'Animate in 3D'}).uncheck();
+ await page.waitForFunction(()=>document.querySelector('[data-roll-state=paused]'),null,{timeout:15000});
  check('Reduced mode pauses tower without altering server record',
   await page.locator('[data-roll-state=paused]').count()===1);
  check('Browser exceptions',errors.length===0,{errors});

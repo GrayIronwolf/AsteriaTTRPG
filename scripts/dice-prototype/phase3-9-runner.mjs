@@ -78,6 +78,7 @@ try{
  check('Mobile has no horizontal overflow',mobile.content<=mobile.screen+1,mobile);
  await page.screenshot({path:path.join(out,'tower-studio-mobile.png'),fullPage:true});
  await page.getByRole('checkbox',{name:'Animate in 3D'}).uncheck();
+ await page.waitForFunction(()=>document.querySelector('[data-roll-state=paused]'),null,{timeout:15000});
  check('Towers safely disable animation',await page.locator('[data-roll-state=paused]').count()===1);
  check('No uncaught browser exceptions',errors.length===0,{errors});
 }catch(error){

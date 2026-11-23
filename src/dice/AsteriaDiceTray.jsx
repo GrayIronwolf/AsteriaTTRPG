@@ -214,6 +214,20 @@ export function AsteriaDiceTray({
     const engine=engineRef.current;
     if(!record){
       rollingRef.current=false;
+      if(towerActive){
+        // Open Dice reset fades the previous bodies asynchronously. A new
+        // tower prediction must not see those as live dice, or the worker's
+        // recording may never replay. Keep input controls disabled until
+        // the old physics bodies have actually been released.
+        let obsolete=false;
+        setStatus('loading');
+        Promise.resolve(engine.reset()).then(()=>{
+          if(!obsolete)setStatus('ready');
+        }).catch(()=>{
+          if(!obsolete)setStatus('unavailable');
+        });
+        return ()=>{obsolete=true;};
+      }
       setStatus('ready');
       Promise.resolve(engine.reset()).catch(()=>{});
       return undefined;

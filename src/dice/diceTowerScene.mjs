@@ -43,7 +43,12 @@ export function attachDiceTower(engine,outline,input=defaultDiceTowerAppearance(
    const candidate=await predictBefore.call(this,diceConfig);
    attempts=attempt;
    const outcome=inspectDiceTowerRecording(layout,candidate.recording);
-   if(outcome?.exitComplete)return candidate;
+   if(outcome?.exitComplete){
+     // Retain the genuine worker trajectory even when Open Dice chooses a
+     // live-world playback because older bodies are still disappearing.
+     evidence=outcome;
+     return candidate;
+   }
   }
   throw Error('Dice Tower physics could not complete an exit within sixteen attempts.');
  };
