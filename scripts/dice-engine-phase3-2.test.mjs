@@ -97,7 +97,8 @@ test('Core dice picker integrates into existing React workspace without server m
   const ui=read('src/dashboards/AdvancedDiceWorkspace.jsx');
   const tray=read('src/dice/AsteriaDiceTray.jsx');
   const picker=read('src/dice/CoreDicePicker.jsx');
-  assert.match(ui,/<CoreDicePicker/);
+  assert.match(ui,/<DiceCustomizationStudio/);
+  assert.match(read('src/dice/DiceCustomizationStudio.jsx'),/<CoreDicePicker/);
   assert.match(ui,/<AsteriaDiceTray/);
   assert.match(ui,/firebaseService\.advancedDiceAction/);
   assert.match(ui,/firebaseService\.subscribeDiceWorkspace/);

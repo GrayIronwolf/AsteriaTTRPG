@@ -1,6 +1,6 @@
 import React,{useEffect,useId,useRef,useState} from 'react';
 import {CORE_DICE_FAMILIES,CORE_DICE_TYPES,coreNumeralContrast} from './coreDiceDesigns.mjs';
-import {MATERIALS,FINISHES,TRIMS,NUMBER_STYLES,defaultDiceAppearance,
+import {MATERIALS,FINISHES,TRIMS,NUMBER_STYLES,PATTERNS,GLOW,WEAR,defaultDiceAppearance,
   validateDiceAppearance} from './diceAppearanceCatalogue.mjs';
 import {prepareCoreDesigns,releaseCoreDesigns} from './coreDiceRegistry.mjs';
 import {FamiliarDiceControls} from './FamiliarDiceControls.jsx';
@@ -147,28 +147,44 @@ export function CoreDicePreview({appearance,dieType='d20'}){
       y:(event.clientY-bounds.top)/bounds.height*2-1};
   };
   const pointerUp=()=>{pointer.current=null;pointerEyeRef.current=null;};
+  const onPreviewKeyDown=event=>{
+    if(!viewRef.current||!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key))return;
+    event.preventDefault();
+    const view=viewRef.current;
+    if(event.key==='ArrowLeft')view.angle-=.2;
+    if(event.key==='ArrowRight')view.angle+=.2;
+    if(event.key==='ArrowUp')view.tilt=Math.max(-1,view.tilt-.2);
+    if(event.key==='ArrowDown')view.tilt=Math.min(1,view.tilt+.2);
+  };
+  const resetPreview=()=>{
+    if(viewRef.current){viewRef.current.angle=0;viewRef.current.tilt=.16;}
+    setZoom(1);
+  };
   return <div className="asteria-core-dice-preview" data-familiar-shimmer={familiarVisualAnimationAllowed(appearance)}>
     <div className="asteria-core-dice-preview-canvas" ref={node}
-      role="img" aria-label={'Rotating 3D '+dieType+' preview'}
+      role="group" tabIndex={0} aria-label={'Interactive 3D '+dieType+' preview'}
+      onKeyDown={onPreviewKeyDown}
       onPointerDown={pointerDown} onPointerMove={pointerMove}
       onPointerUp={pointerUp} onPointerCancel={pointerUp}/>
     {error?<p role="status">{error}</p>:null}
     <div className="asteria-core-dice-preview-controls">
       <button type="button" onClick={()=>setZoom(z=>Math.max(.72,z-.1))}
         aria-label="Zoom closer to dice preview">+</button>
-      <span>Live PBR preview</span>
+      <span>Live PBR preview · drag or use arrow keys</span>
+      <button type="button" aria-label="Reset dice preview camera" onClick={resetPreview}>Reset</button>
       <button type="button" onClick={()=>setZoom(z=>Math.min(1.7,z+.1))}
         aria-label="Zoom out of dice preview">−</button>
     </div>
   </div>;
 }
 
-export function CoreDicePicker({value,onChange}){
+export function CoreDicePicker({value,onChange,mode='advanced'}){
   const [dieType,setDieType]=useState('d20');
+  const [overrideDie,setOverrideDie]=useState('d20');
   const selected=CORE_DICE_FAMILIES.find(x=>x.id===value.familyId);
   const familiar=value.familyId==='dice-familiar';
   const watcher=value.familyId==='dice-watcher';
-  const special=familiar||watcher;
+  const special=familiar||watcher,advanced=mode==='advanced';
   const patch=part=>{
     try{onChange(validateDiceAppearance({...value,...part}));}catch{/* ignore unsupported edits */}
   };
@@ -177,7 +193,7 @@ export function CoreDicePicker({value,onChange}){
       <h3>Dice Appearance</h3>
       <small>12 core 3D designs + Familiar and Watcher · saved collections arrive in Phase 3.7</small>
     </div>
-    <div className="asteria-core-dice-picker-layout">
+    <div className="asteria-core-dice-picker-layout" data-picker-mode={mode}>
       <div className="asteria-core-dice-selection">
         <label>Dice design<select aria-label="Core dice design" value={value.familyId}
           onChange={event=>onChange(defaultDiceAppearance(event.target.value))}>
@@ -207,8 +223,8 @@ export function CoreDicePicker({value,onChange}){
             onClick={()=>onChange(defaultDiceAppearance('dice-watcher'))}>
             <span aria-hidden="true"/></button>
         </div>
-        {familiar?<FamiliarDiceControls value={value} onChange={onChange}/>:null}
-        {watcher?<WatcherDiceControls value={value} onChange={onChange}/>:null}
+        {advanced&&familiar?<FamiliarDiceControls value={value} onChange={onChange}/>:null}
+        {advanced&&watcher?<WatcherDiceControls value={value} onChange={onChange}/>:null}
         {!special?<div className="asteria-core-dice-controls">
           {[
             ['primaryColor','Dice body'],
@@ -218,6 +234,7 @@ export function CoreDicePicker({value,onChange}){
             <input type="color" value={value[field]} aria-label={label+' colour'}
               onChange={event=>patch({[field]:event.target.value.toUpperCase()})}/>
           </label>)}
+          {advanced?<>
           <label>Material<select aria-label="Core dice material"
             value={value.materialId} onChange={event=>{
               const materialId=event.target.value;
@@ -240,14 +257,71 @@ export function CoreDicePicker({value,onChange}){
             onChange={event=>patch({numberStyle:event.target.value})}>
             {NUMBER_STYLES.map(x=><option key={x}>{x}</option>)}
           </select></label>
+          <label>Pattern<select value={value.pattern} aria-label="Core dice pattern"
+            onChange={event=>patch({pattern:event.target.value})}>
+            {PATTERNS.map(x=><option key={x} value={x}>{x}</option>)}
+          </select></label>
+          <label>Glow<select value={value.glow} aria-label="Core dice glow"
+            onChange={event=>patch({glow:event.target.value})}>
+            {GLOW.map(x=><option key={x} value={x}>{x}</option>)}
+          </select></label>
+          <label>Wear<select value={value.wear} aria-label="Core dice wear"
+            onChange={event=>patch({wear:event.target.value})}>
+            {WEAR.map(x=><option key={x} value={x}>{x}</option>)}
+          </select></label>
+          </>:null}
           <label>Preview die<select value={dieType} aria-label="Preview dice type"
             onChange={event=>setDieType(event.target.value)}>
             {CORE_DICE_TYPES.map(x=><option key={x}>{x}</option>)}
           </select></label>
-        </div>:<label>Preview die<select value={dieType} aria-label="Preview dice type"
-          onChange={event=>setDieType(event.target.value)}>
-          {CORE_DICE_TYPES.map(x=><option key={x}>{x}</option>)}
-        </select></label>}
+        </div>:<div className="asteria-core-dice-controls">
+          {!advanced?<>
+            <label>Resin body colour
+              <input type="color" aria-label="Resin body colour" value={value.special.resinColor}
+                onChange={event=>patch({primaryColor:event.target.value.toUpperCase(),
+                  special:{...value.special,resinColor:event.target.value.toUpperCase()}})}/>
+            </label>
+            <label>{familiar?'Cat coat colour':'Iris colour'}
+              <input type="color" aria-label={familiar?'Cat coat colour':'Iris colour'}
+                value={familiar?value.special.coatColor:value.special.irisColor}
+                onChange={event=>patch({special:{...value.special,
+                  [familiar?'coatColor':'irisColor']:event.target.value.toUpperCase()}})}/>
+            </label>
+            <label>Numeral colour
+              <input type="color" aria-label="Special dice numeral colour" value={value.numberColor}
+                onChange={event=>patch({numberColor:event.target.value.toUpperCase()})}/>
+            </label>
+          </>:null}
+          <label>Preview die<select value={dieType} aria-label="Preview dice type"
+            onChange={event=>setDieType(event.target.value)}>
+            {CORE_DICE_TYPES.map(x=><option key={x}>{x}</option>)}
+          </select></label>
+        </div>}
+        {advanced&&!special?<fieldset className="asteria-core-dice-override">
+          <legend>Individual die overrides</legend>
+          <label>Override die<select value={overrideDie} aria-label="Override die type"
+            onChange={event=>setOverrideDie(event.target.value)}>
+            {CORE_DICE_TYPES.map(x=><option key={x} value={x}>{x}</option>)}
+          </select></label>
+          <label>Override body colour
+            <input type="color" aria-label="Override body colour"
+              value={value.perDie[overrideDie]?.primaryColor||value.primaryColor}
+              onChange={event=>patch({perDie:{...value.perDie,
+                [overrideDie]:{...value.perDie[overrideDie],
+                  primaryColor:event.target.value.toUpperCase()}}})}/>
+          </label>
+          <label>Override numeral colour
+            <input type="color" aria-label="Override numeral colour"
+              value={value.perDie[overrideDie]?.numberColor||value.numberColor}
+              onChange={event=>patch({perDie:{...value.perDie,
+                [overrideDie]:{...value.perDie[overrideDie],
+                  numberColor:event.target.value.toUpperCase()}}})}/>
+          </label>
+          <button type="button" disabled={!value.perDie[overrideDie]}
+            onClick={()=>{const perDie={...value.perDie};delete perDie[overrideDie];patch({perDie});}}>
+            Clear {overrideDie} override
+          </button>
+        </fieldset>:null}
         <button type="button" onClick={()=>onChange(defaultDiceAppearance(value.familyId))}>
           Restore {familiar?'Familiar Dice':watcher?'Watcher Dice':selected?.name||'dice'} defaults
         </button>

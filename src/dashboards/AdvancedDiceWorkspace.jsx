@@ -5,8 +5,9 @@ import {
   MAX_DICE_PRESETS,diceConfig,diceExpression
 } from '../state/diceRollModel.mjs';
 import {AsteriaDiceTray} from '../dice/AsteriaDiceTray.jsx';
-import {CoreDicePicker} from '../dice/CoreDicePicker.jsx';
-import {defaultDiceAppearance} from '../dice/diceAppearanceCatalogue.mjs';
+import {DiceCustomizationStudio} from '../dice/DiceCustomizationStudio.jsx';
+import {createDiceStudioState,changeDiceStudio,undoDiceStudio,redoDiceStudio,
+  applyDiceStudioLook,matchDiceTrayPalette,restoreDiceStudio} from '../dice/diceStudioModel.mjs';
 import '../styles/advanced-dice.css';
 
 const EMPTY={pool:[{count:1,sides:20}],modifier:0,label:''};
@@ -21,8 +22,16 @@ export function AdvancedDiceWorkspace({role='player'}){
   const [notice,setNotice]=useState(''),[showHistory,setShowHistory]=useState(true);
   const [animatedRoll,setAnimatedRoll]=useState(null);
   const [replayToken,setReplayToken]=useState(0);
-  // Appearance stays local in Phase 3.2. Account and character saving are 3.7.
-  const [appearance,setAppearance]=useState(()=>defaultDiceAppearance());
+  // Phase 3.6 edits are local; Phase 3.7 owns account and character persistence.
+  const [diceStudio,setDiceStudio]=useState(()=>createDiceStudioState());
+  const appearance=diceStudio.current.dice;
+  const trayAppearance=diceStudio.current.tray;
+  const setAppearance=next=>setDiceStudio(state=>changeDiceStudio(state,{
+    dice:typeof next==='function'?next(state.current.dice):next
+  }));
+  const setTrayAppearance=next=>setDiceStudio(state=>changeDiceStudio(state,{
+    tray:typeof next==='function'?next(state.current.tray):next
+  }));
   const [animateDice,setAnimateDice]=useState(()=>{
     if(typeof window==='undefined'||typeof window.matchMedia!=='function')return true;
     return !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -107,9 +116,17 @@ export function AdvancedDiceWorkspace({role='player'}){
         <p>Independent dice rolls for the GM and players. These do not spend AP, replace Universal Check Requests, or change combat results.</p></div>
       <span>Private account history</span>
     </header>
-    <CoreDicePicker value={appearance} onChange={setAppearance}/>
+    <DiceCustomizationStudio value={appearance} onChange={setAppearance}
+      trayValue={trayAppearance} onTrayChange={setTrayAppearance}
+      canUndo={diceStudio.past.length>0} canRedo={diceStudio.future.length>0}
+      onUndo={()=>setDiceStudio(undoDiceStudio)}
+      onRedo={()=>setDiceStudio(redoDiceStudio)}
+      onApplyLook={id=>setDiceStudio(state=>applyDiceStudioLook(state,id))}
+      onMatch={()=>setDiceStudio(matchDiceTrayPalette)}
+      onRestore={target=>setDiceStudio(state=>restoreDiceStudio(state,target))}/>
     <AsteriaDiceTray record={animatedRoll} enabled={animateDice}
-      appearance={appearance}
+      appearance={appearance} trayAppearance={trayAppearance}
+      onTrayAppearanceChange={setTrayAppearance} studioManaged
       replayToken={replayToken} canReplay={Boolean(latest||animatedRoll)}
       onToggleEnabled={setAnimateDice} onReplay={replayLast}
       onClear={clearTray}/>

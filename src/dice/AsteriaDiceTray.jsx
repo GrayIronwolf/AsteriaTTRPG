@@ -36,11 +36,13 @@ function webGLAvailable(){
  */
 export function AsteriaDiceTray({
   record,enabled=true,onToggleEnabled,onReplay,onClear,canReplay=false,replayToken=0,
-  appearance=null
+  appearance=null,trayAppearance:controlledTrayAppearance=null,
+  onTrayAppearanceChange=null,studioManaged=false
 }){
   const containerRef=useRef(null),engineRef=useRef(null);
   const [ready,setReady]=useState(false),[status,setStatus]=useState('loading');
-  const [trayAppearance,setTrayAppearance]=useState(()=>defaultDiceTrayAppearance());
+  const [localTrayAppearance,setLocalTrayAppearance]=useState(()=>defaultDiceTrayAppearance());
+  const trayAppearance=controlledTrayAppearance||localTrayAppearance;
   const [trayStudioOpen,setTrayStudioOpen]=useState(false);
   const [cameraAngle,setCameraAngle]=useState(0);
   const [cameraTilt,setCameraTilt]=useState(false);
@@ -155,7 +157,9 @@ export function AsteriaDiceTray({
     }
   },[ready,enabled,trayAppearance]);
   const changeTrayConfig=config=>{
-    setTrayAppearance(validateDiceTrayAppearance(config));
+    const checked=validateDiceTrayAppearance(config);
+    if(onTrayAppearanceChange)onTrayAppearanceChange(checked);
+    else setLocalTrayAppearance(checked);
   };
 
   // Dashboard canvas windows resize without resizing the browser window.
@@ -336,10 +340,10 @@ export function AsteriaDiceTray({
           <option value="expanded">Expanded</option>
         </select>
       </label>
-      <button type="button" className="asteria-tray-edit-toggle" aria-expanded={trayStudioOpen}
+      {!studioManaged?<button type="button" className="asteria-tray-edit-toggle" aria-expanded={trayStudioOpen}
         onClick={()=>setTrayStudioOpen(value=>!value)}>
         {trayStudioOpen?'Close tray studio':'Customise tray'}
-      </button>
+      </button>:<span className="asteria-tray-studio-managed">Edit tray in the studio above</span>}
       <div className="asteria-advanced-dice-tray-actions">
         <button type="button" onClick={onReplay}
           disabled={!canControl||!canReplay}
@@ -353,7 +357,7 @@ export function AsteriaDiceTray({
         </button>
       </div>
     </div>
-    {trayStudioOpen?<DiceTrayStudio value={trayAppearance}
+    {!studioManaged&&trayStudioOpen?<DiceTrayStudio value={trayAppearance}
       onChange={changeTrayConfig} rolling={status==='rolling'}/>:null}
     <div className="asteria-advanced-dice-stage">
       <div className="asteria-advanced-dice-scene" ref={containerRef} aria-hidden="true"/>

@@ -13,6 +13,8 @@ on:
       - 'scripts/dice-engine-phase3-3.test.mjs'
       - 'scripts/dice-engine-phase3-4.test.mjs'
       - 'scripts/dice-engine-phase3-5.test.mjs'
+      - 'scripts/dice-engine-phase3-6.test.mjs'
+      - 'scripts/dice-prototype/phase3-6*'
       - 'scripts/dice-prototype/phase2*'
       - 'scripts/dice-prototype/phase3-2*'
       - 'scripts/dice-prototype/phase3-3*'
@@ -60,6 +62,15 @@ jobs:
         run: node scripts/dice-prototype/phase3-4-runner.mjs
       - name: Verify six 3D trays and collision physics in Chromium
         run: node scripts/dice-prototype/phase3-5-runner.mjs
+      - name: Verify unified customisation studio in Chromium
+        run: node scripts/dice-prototype/phase3-6-runner.mjs
+      - name: Store Phase 3.6 studio browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asteria-dice-phase3-6
+          path: dice-phase3-6-evidence/
+          if-no-files-found: warn
       - name: Store Phase 3.5 tray browser evidence
         if: always()
         uses: actions/upload-artifact@v4

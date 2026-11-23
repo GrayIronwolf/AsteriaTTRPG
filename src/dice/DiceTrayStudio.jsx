@@ -22,7 +22,7 @@ function ColorOption({name,value,onChange}){
       <span aria-hidden="true"/></button>)}
   </div></div>;
 }
-export function DiceTrayStudio({value,onChange,rolling=false}){
+export function DiceTrayStudio({value,onChange,rolling=false,mode='advanced'}){
   const patch=change=>onChange(validateDiceTrayAppearance({...value,...change}));
   return <section className="asteria-tray-studio" aria-label="3D Dice Tray Studio">
     <header className="asteria-tray-studio-heading">
@@ -43,6 +43,7 @@ export function DiceTrayStudio({value,onChange,rolling=false}){
     <div className="asteria-tray-options-grid">
       <Option name="Tray size" value={value.size} items={TRAY_SIZE_IDS}
         onChange={size=>patch({size})}/>
+      {mode==='advanced'?<>
       <Option name="Wall height" value={value.wallHeight} items={TRAY_WALL_HEIGHT_IDS}
         onChange={wallHeight=>patch({wallHeight})}/>
       <Option name="Frame material" value={value.frameMaterial} items={TRAY_FRAME_MATERIALS}
@@ -63,14 +64,15 @@ export function DiceTrayStudio({value,onChange,rolling=false}){
         onChange={sound=>patch({sound})}/>
       <Option name="Impact volume" value={value.soundVolume} items={TRAY_SOUND_LEVELS}
         onChange={soundVolume=>patch({soundVolume})}/>
+      </>:null}
     </div>
     <div className="asteria-tray-colour-grid">
       <ColorOption name="Frame colour" value={value.frameColor}
         onChange={frameColor=>patch({frameColor})}/>
       <ColorOption name="Interior colour" value={value.interiorColor}
         onChange={interiorColor=>patch({interiorColor})}/>
-      <ColorOption name="Metallic trim" value={value.trimColor}
-        onChange={trimColor=>patch({trimColor})}/>
+      {mode==='advanced'?<ColorOption name="Metallic trim" value={value.trimColor}
+        onChange={trimColor=>patch({trimColor})}/>:null}
     </div>
     <div className="asteria-tray-studio-footer">
       <button type="button" onClick={()=>onChange(defaultDiceTrayAppearance(value.designId))}>
