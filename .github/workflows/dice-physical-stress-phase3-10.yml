@@ -3,6 +3,8 @@ on:
   push:
     branches: [Website-Build-Test]
     paths:
+      - 'src/dice/diceTowerScene.mjs'
+      - 'src/dice/diceTowerLayout.mjs'
       - 'scripts/dice-prototype/phase3-10-stress*'
       - '.github/workflows/dice-physical-stress-phase3-10.yml'
   workflow_dispatch:
