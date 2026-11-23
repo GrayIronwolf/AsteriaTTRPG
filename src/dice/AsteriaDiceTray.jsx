@@ -112,7 +112,6 @@ export function AsteriaDiceTray({
   const [cameraDragging,setCameraDragging]=useState(false);
   const touchPointsRef=useRef(new Map());
   const pinchRef=useRef(null);
-  const lastPointerRef=useRef(null);
   const cameraPointerRef=useRef(null);
   const dicePointerRef=useRef(null);
   const gestureRef=useRef(null);
@@ -228,6 +227,12 @@ export function AsteriaDiceTray({
     };
   },[effectiveEnabled,towerSignature,graphics.pixelRatio]);
 
+  // A subtle cosmetic camera follow on new official rolls; no physics mutation.
+  useEffect(()=>{
+    if(!windowMode||!windowSettings?.cinematicFollow||!record?.id)return;
+    setCameraTilt(true);
+    setCameraAngle(angle=>angle+.08);
+  },[record?.id,windowMode,windowSettings?.cinematicFollow]);
   // Visual orbit and zoom are camera-only. Die physics and face values do
   // not know these controls exist; wheel and touch do not change rolls.
   useEffect(()=>{
@@ -695,7 +700,8 @@ export function AsteriaDiceTray({
         <button type="button" aria-label="Zoom tray in" onClick={()=>setCameraZoom(v=>Math.min(1.65,v+.1))}>+</button>
         <button type="button" aria-label="Zoom tray out" onClick={()=>setCameraZoom(v=>Math.max(.7,v-.1))}>−</button>
         <button type="button" aria-label="Reset tray camera" onClick={()=>{
-          setCameraAngle(0);setCameraTilt(false);setCameraZoom(1);}}>Top</button>
+          setCameraAngle(0);setCameraTilt(false);setCameraZoom(1);
+          setCameraPan({x:0,z:0});}}>Top</button>
       </div>
       {!windowMode&&!record&&enabled&&status==='ready'?<div className="asteria-advanced-dice-placeholder"
         aria-hidden="true">
