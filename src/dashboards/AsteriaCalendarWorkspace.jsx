@@ -243,7 +243,7 @@ export function CalendarBrowser({calendar,entries=[]}){
  const year=Math.max(1,Math.min(100000,Math.floor(abs/count)+1));
  const month=Math.max(1,Math.min(count,((abs%count)+count)%count+1));
  const grid=calendarMonthGrid(c,today.era,year,month);
- const chosen=Math.max(1,Math.min(calendarMonthDays(c,year,month),selection||today.day));
+ const chosen=Math.max(1,Math.min(calendarMonthDays(c,year,month),selection??today.day));
  const dayDate={...today,year,month,day:chosen};
  const matches=date=>entries.filter(e=>e.date?.era===date.era&&e.date?.year===date.year&&e.date?.month===date.month&&e.date?.day===date.day);
  const previous=()=>{setOffset(x=>Math.max(-(today.year-1)*count-today.month+1,x-(mode==='year'?count:1)));setSelection(null);};
@@ -264,7 +264,7 @@ export function CalendarBrowser({calendar,entries=[]}){
    {c.months.map((row,index)=><button type="button" key={index} onClick={()=>{
     setOffset((year-today.year)*count+index-today.month+1);setSelection(null);setMode('month');
    }}><strong>{row.name}</strong><small>{calendarMonthDays(c,year,index+1)} days</small></button>)}
-  </div>:mode==='month'?<div className="asteria-calendar-month-grid" role="grid" aria-label={c.months[month-1].name}>
+  </div>:mode==='month'?<div className="asteria-calendar-month-grid" style={{"--calendar-weekdays":c.weekdays.length}} role="grid" aria-label={c.months[month-1].name}>
    {c.weekdays.map((name,index)=><div key={index} className="asteria-calendar-weekday" role="columnheader">{name}</div>)}
    {grid.map((cell,index)=>cell?<button type="button" role="gridcell" key={index}
     className={'asteria-calendar-day'+(cell.intercalary?' is-intercalary':'')+
