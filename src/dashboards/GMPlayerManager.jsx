@@ -271,6 +271,15 @@ export function GMPlayerManager({campaignId,campaign={},characters={},members=nu
     run('invitation:'+row.inviteId,()=>firebaseService.changeSecureCampaignInvitation(
       campaignId,row.inviteId,action,row.revision),'Invitation '+(action==='revoke'?'revoked.':'expired.'));
   };
+  const copyCampaignUCN=async()=>{
+    const ucn=campaign?.ucn||campaign?.uniqueCampaignCode||'';
+    if(!/^\\d{12}$/.test(ucn)){setFeedback('This campaign does not have a valid 12-digit UCN.');return;}
+    try{
+      if(!navigator.clipboard?.writeText)throw Error('Clipboard is unavailable.');
+      await navigator.clipboard.writeText(ucn);
+      setFeedback('Campaign UCN copied. Players can use it in Campaign Forge.');
+    }catch(error){setFeedback(errorText(error));}
+  };
   const copyInvite=async()=>{
     if(!issuedLink)return;
     try{
@@ -385,6 +394,10 @@ export function GMPlayerManager({campaignId,campaign={},characters={},members=nu
     {view==='joins'?<Panel title="Join Requests" eyebrow="Approval, Capacity & Onboarding"
       action={<span>{pendingJoins.length} pending</span>}>
       <p className="react-gm-player-hint">Share the campaign UCN through Campaign Forge. Joining never automatically links a private character sheet.</p>
+      <div className="react-gm-player-actions"><ActionButton
+        onClick={copyCampaignUCN} disabled={!/^\\d{12}$/.test(campaign?.ucn||campaign?.uniqueCampaignCode||'')}>
+        Copy campaign UCN
+      </ActionButton></div>
       <div className="react-gm-player-capacity">
         <div><small>Campaign UCN</small><strong>{campaign?.ucn||campaign?.uniqueCampaignCode||'Unavailable'}</strong></div>
         <div><small>Player capacity</small><strong>{capacity.limit??'Review required'}</strong></div>
