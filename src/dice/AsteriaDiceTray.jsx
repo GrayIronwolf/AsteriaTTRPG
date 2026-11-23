@@ -270,23 +270,17 @@ export function AsteriaDiceTray({
     const engine=engineRef.current;
     if(!record){
       rollingRef.current=false;
-      if(towerActive){
-        // Open Dice reset fades the previous bodies asynchronously. A new
-        // tower prediction must not see those as live dice, or the worker's
-        // recording may never replay. Keep input controls disabled until
-        // the old physics bodies have actually been released.
-        let obsolete=false;
-        setStatus('loading');
-        Promise.resolve(engine.reset()).then(()=>{
-          if(!obsolete)setStatus('ready');
-        }).catch(()=>{
-          if(!obsolete)setStatus('unavailable');
-        });
-        return ()=>{obsolete=true;};
-      }
-      setStatus('ready');
-      Promise.resolve(engine.reset()).catch(()=>{});
-      return undefined;
+      // Open Dice reset keeps visible dice physically active for a 500 ms fade.
+      // Never offer Ready until those bodies have left the Cannon world:
+      // a quick second normal-tray roll must not accidentally use live mode.
+      let obsolete=false;
+      setStatus('loading');
+      Promise.resolve(engine.reset()).then(()=>{
+        if(!obsolete)setStatus('ready');
+      }).catch(()=>{
+        if(!obsolete)setStatus('unavailable');
+      });
+      return ()=>{obsolete=true;};
     }
     let prepared;
     try{prepared=prepareAsteriaDicePreview(record);}
@@ -405,6 +399,10 @@ export function AsteriaDiceTray({
       }
       const observed=engine.getCurrentResults();
       const match=matchesAsteriaDicePreview(prepared,observed);
+      if(containerRef.current){
+        containerRef.current.dataset.visualFaceMatch=String(match);
+        containerRef.current.dataset.visualFaces=JSON.stringify(observed).slice(0,1000);
+      }
       if(containerRef.current&&towerActive){
         containerRef.current.dataset.towerFaceMatch=String(match);
         containerRef.current.dataset.towerObserved=JSON.stringify(observed).slice(0,1000);
