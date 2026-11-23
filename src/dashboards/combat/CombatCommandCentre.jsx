@@ -82,6 +82,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
   const [focused,setFocused]=useState(null);
   const [message,setMessage]=useState('');
   const [frontWindow,setFrontWindow]=useState('');
+  const [windowSearch,setWindowSearch]=useState('');
   const [wide,setWide]=useState(false);
   const [sidebarExpanded,setSidebarExpanded]=useState(false);
   const [selectedTools,setSelectedTools]=useState(
@@ -248,7 +249,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
   };
   const focusWindow=id=>{
     const viewport=canvas.current;
-    if(!viewport||!wide)return;
+    if(!viewport||!wide||!layout.focusMode)return;
     animateCamera();
     if(focused?.id===id){
       updateCamera(focused.previous);
@@ -293,7 +294,9 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
       const factor=Math.exp(-Math.max(-140,Math.min(140,delta))*.0015);
       const requested=zoomCombatCamera(cameraRef.current,
         cameraRef.current.scale*factor,
-        {x:event.clientX-rect.left,y:event.clientY-rect.top-60});
+        layout.zoomTowardCursor?
+          {x:event.clientX-rect.left,y:event.clientY-rect.top-60}:
+          {x:viewport.clientWidth/2,y:(viewport.clientHeight-60)/2});
       cameraRef.current=clampCombatCamera(requested,layout,
         visible.map(panel=>panel.props.id),viewport.clientWidth,
         Math.max(200,viewport.clientHeight-64));
@@ -507,7 +510,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
     };
   });
   const keyboard=(event,id)=>{
-    if(!canEditCanvas||!wide||layout.canvasLocked||!event.altKey||
+    if(!layout.keyboardShortcuts||!canEditCanvas||!wide||layout.canvasLocked||!event.altKey||
       !event.key.startsWith('Arrow'))return;
     const deltas={ArrowLeft:[-10,0],ArrowRight:[10,0],
       ArrowUp:[0,-10],ArrowDown:[0,10]};
@@ -751,6 +754,18 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
             className={styles.zoomValue}>{Math.round(camera.scale*100)}%</output>
         </>:null}
       </div>
+      {wide&&layout.windowSwitcher?<nav className={styles.navigationSwitcher}
+        aria-label="Canvas window switcher">
+        <input type="search" aria-label="Search canvas windows"
+          placeholder="Find a window" value={windowSearch}
+          onChange={event=>setWindowSearch(event.target.value)}/>
+        <div>{visible.filter(panel=>(panelLabels[panel.props.id]||panel.props.id)
+          .toLowerCase().includes(windowSearch.trim().toLowerCase()))
+          .map(panel=><button type="button" key={panel.props.id}
+            onClick={()=>{setFrontWindow(panel.props.id);focusWindow(panel.props.id);}}>
+            {panelLabels[panel.props.id]||panel.props.id}
+          </button>)}</div>
+      </nav>:null}
       {gmCanvas?<div className={styles.manageActions} role="toolbar"
         aria-label={canvasRole+' dashboard window management'}>
         <button type="button" className={styles.iconButton}
@@ -822,6 +837,25 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
                 <option value="proportional">Proportional at every zoom</option>
               </select>
             </label>
+            <fieldset className={styles.appearanceGroup}>
+              <legend>Navigation</legend>
+              <label><input type="checkbox" checked={layout.windowSwitcher}
+                disabled={!canEditCanvas}
+                onChange={event=>setPreference(previous=>({...previous,
+                  windowSwitcher:event.target.checked}))}/> Window switcher and search</label>
+              <label><input type="checkbox" checked={layout.focusMode}
+                disabled={!canEditCanvas}
+                onChange={event=>setPreference(previous=>({...previous,
+                  focusMode:event.target.checked}))}/> Window focus mode</label>
+              <label><input type="checkbox" checked={layout.zoomTowardCursor}
+                disabled={!canEditCanvas}
+                onChange={event=>setPreference(previous=>({...previous,
+                  zoomTowardCursor:event.target.checked}))}/> Zoom toward cursor</label>
+              <label><input type="checkbox" checked={layout.keyboardShortcuts}
+                disabled={!canEditCanvas}
+                onChange={event=>setPreference(previous=>({...previous,
+                  keyboardShortcuts:event.target.checked}))}/> Keyboard shortcuts</label>
+            </fieldset>
             <fieldset className={styles.appearanceGroup}>
               <legend>Appearance</legend>
               <label>Grid spacing
