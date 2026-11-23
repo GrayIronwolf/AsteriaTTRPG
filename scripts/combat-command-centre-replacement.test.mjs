@@ -241,6 +241,9 @@ test('Combat canvas replaces old layout bars with a full-width icon HUD and over
  assert.match(renderer,/viewport\.style\.setProperty\('--combat-viewport-height',height\+'px'\)/);
  assert.match(renderer,/viewport\.getBoundingClientRect\(\)\.top\+scrollArea\.scrollTop/);
  assert.match(css,/\.centre\{[^}]*--combat-edge-left/s);
+ const canvasStyles=css.match(/\.canvas\{[^}]*\}/s)?.[0]||'';
+ assert.doesNotMatch(canvasStyles,/\bborder(?:-radius)?:/,'Canvas surface must be borderless on GM, Player and Combat workspaces');
+ assert.match(canvasStyles,/background-size:100% 100%,26px 26px/,'Keep the 26px dotted canvas grid');
  assert.doesNotMatch(css,/\.workArea\{|\.modeBar\{|\.quickActions\{/);
  for(const name of ['unlock','undo','redo','zoomIn','zoomOut','fitCanvas'])
    assert.match(icons,new RegExp('  '+name+':'));

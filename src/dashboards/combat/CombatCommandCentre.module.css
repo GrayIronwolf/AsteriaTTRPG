@@ -4,7 +4,6 @@
 .canvas{position:relative;container-type:inline-size;min-width:0;width:100%;
   height:var(--combat-viewport-height,max(580px,calc(100dvh - 190px)));
   min-height:420px;overflow:hidden;touch-action:none;cursor:grab;
-  border:1px solid var(--asteria-border);border-radius:var(--asteria-radius);
   background-color:#091623;
   background-image:radial-gradient(ellipse at 50% 0%,rgba(42,86,117,.20),transparent 68%),
     radial-gradient(circle,rgba(130,174,194,.22) .8px,transparent 1px);
