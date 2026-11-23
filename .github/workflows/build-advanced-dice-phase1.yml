@@ -11,6 +11,7 @@ on:
       - 'scripts/dice-engine-phase3-1.test.mjs'
       - 'scripts/dice-engine-phase3-2.test.mjs'
       - 'scripts/dice-prototype/phase2*'
+      - 'scripts/dice-prototype/phase3-2*'
       - 'scripts/digital-gm-phase7-1.test.mjs'
       - 'package.json'
       - '.github/workflows/build-advanced-dice-phase1.yml'
@@ -45,6 +46,15 @@ jobs:
         run: npm install --no-save --package-lock=false --ignore-scripts --no-audit --no-fund playwright@1.56.1
       - name: Verify the redesigned dice tray in Chromium
         run: node scripts/dice-prototype/phase2-runner.mjs
+      - name: Verify twelve Asteria PBR dice in Chromium
+        run: node scripts/dice-prototype/phase3-2-runner.mjs
+      - name: Store Phase 3.2 preview evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asteria-dice-phase3-2
+          path: dice-phase3-2-evidence/
+          if-no-files-found: warn
       - name: Store Phase 2 responsive browser evidence
         if: always()
         uses: actions/upload-artifact@v4
