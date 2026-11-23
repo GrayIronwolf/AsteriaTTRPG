@@ -139,7 +139,7 @@ function CharacterDashboardContent({campaignId,characterId,live}) {
   const isOwner = window.AsteriaCharacterAccess.owns(character, uid);
   const editable = Boolean(campaignId && isOwner && live.session?.editable);
   const combat=useCombatPanel(campaignId,character||{id:characterId},live.encounter,editable);
-  const gmReturn = gmReturnContext(live.campaign, character, uid);
+  const gmReturn = gmReturnContext(live.campaign, character, uid, window, live.membership);
   useEffect(()=>{
     setAcknowledged(new Set());
     processedLoot.current.clear();
@@ -188,7 +188,7 @@ function CharacterDashboardContent({campaignId,characterId,live}) {
   if(live.loading) return <div className="react-route-state">Connecting Character Dashboard...</div>;
   if(!character) return <div className="react-route-state" role="alert">This character is unavailable. Return to your campaigns and check its link.</div>;
   if(!campaignId && !isOwner) return <div className="react-route-state" role="alert">Only the owner can view this unassigned character.</div>;
-  if(!isOwner && window.AsteriaCharacterAccess.isGM(live.campaign, uid) && !window.AsteriaCharacterAccess.isLinked(live.campaign, character)) return <div className="react-route-state" role="alert">This character is not linked to your campaign.</div>;
+  if(!isOwner && window.AsteriaCharacterAccess.isGM(live.campaign, uid, live.membership) && !window.AsteriaCharacterAccess.isLinked(live.campaign, character)) return <div className="react-route-state" role="alert">This character is not linked to your campaign.</div>;
   const tabs=CHARACTER_TABS.filter(item=>campaignId || !['quest','information','party','crafting','battle-maps','asteria-calendar','weather-environment','world-atlas'].includes(item.id));
   const activeTab = resolveDashboardTab(tabs, tab);
   const navigate=next=>{if(tabs.some(item=>item.id===next))setTab(next);else window.toast?.('Link this character to a campaign to view campaign information.');};
@@ -203,7 +203,7 @@ function CharacterDashboardContent({campaignId,characterId,live}) {
     {campaignId?<PlayerRecordingNotice key={campaignId} campaignId={campaignId}/>:null}
     <DashboardNavigation role="player" storageScope={characterId+":"+uid} tabs={tabs} active={activeTab} onChange={navigate} ariaLabel="Character Dashboard menu" />
     <CombatDashboardLayout combat={combat}>
-    {activeTab === 'dashboard' ? <><PlayerDashboardOverview combat={combat} isGM={window.AsteriaCharacterAccess.isGM(live.campaign,uid)} sessionEditable={live.session?.editable} clock={{encounter:live.encounter,now:live.clock}} campaignId={campaignId} campaign={live.campaign || {}} character={character} characters={live.characters} partyWorkspace={live.partyWorkspace} editable={editable} canEditLayout={isOwner} onNavigate={navigate} /></> : null}
+    {activeTab === 'dashboard' ? <><PlayerDashboardOverview combat={combat} isGM={window.AsteriaCharacterAccess.isGM(live.campaign,uid,live.membership)} sessionEditable={live.session?.editable} clock={{encounter:live.encounter,now:live.clock}} campaignId={campaignId} campaign={live.campaign || {}} character={character} characters={live.characters} partyWorkspace={live.partyWorkspace} editable={editable} canEditLayout={isOwner} onNavigate={navigate} /></> : null}
     {activeTab === 'character' ? <CharacterTab campaignId={campaignId} character={character} editable={editable} /> : null}
     {activeTab === 'talents' ? <TalentsTab campaignId={campaignId} character={character} editable={editable} characters={live.characters} encounter={live.encounter} /> : null}
     {activeTab === 'skills' ? <SkillsTab clock={{encounter:live.encounter,now:live.clock}} campaignId={campaignId} character={character} editable={editable} /> : null}
