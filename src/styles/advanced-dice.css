@@ -418,3 +418,27 @@
 .asteria-advanced-dice-tray[data-tower-mode="castle-prototype"] .asteria-advanced-dice-stage{
  min-height:350px;
 }
+
+/* Phase 3.9 isolated local-only tower studio and resizable 3D stage. */
+.asteria-dice-tower-studio{display:grid;gap:12px;border:1px solid #4b6178;
+ padding:12px;background:#142536;border-radius:7px;min-width:0}
+.asteria-dice-tower-studio header{display:flex;align-items:baseline;justify-content:space-between;
+ flex-wrap:wrap;gap:8px}
+.asteria-dice-tower-studio header h3{margin:0;font-size:1.05rem}
+.asteria-dice-tower-studio header small{color:#b5cad8}
+.asteria-dice-tower-family-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.asteria-dice-tower-family-grid button[aria-pressed="true"]{border-color:#c6b187;
+ box-shadow:inset 0 0 0 1px #c6b187;background:#394756}
+.asteria-dice-tower-editor-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.asteria-dice-tower-editor-grid label{display:grid;gap:5px;min-width:0}
+.asteria-dice-tower-editor-grid input,.asteria-dice-tower-editor-grid select{min-width:0;width:100%}
+.asteria-advanced-dice-tray[data-tower-mode$="-prototype"] .asteria-advanced-dice-stage{
+ min-height:350px}
+@container asteriaDice (max-width:570px){
+ .asteria-dice-tower-family-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .asteria-dice-tower-editor-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:420px){
+ .asteria-dice-tower-family-grid,.asteria-dice-tower-editor-grid{
+  grid-template-columns:minmax(0,1fr)}
+}
