@@ -145,7 +145,7 @@
 .asteria-advanced-dice-tray[data-tray-size=expanded] .asteria-advanced-dice-stage{height:440px}
 .asteria-advanced-dice-scene{position:absolute;inset:0;overflow:hidden;width:100%;height:100%;
   background:radial-gradient(ellipse at 50% 25%,#243c52,#0d1b29 78%)}
-.asteria-advanced-dice-scene canvas{display:block;width:100%;height:100%}
+.asteria-advanced-dice-scene canvas{display:block;max-width:100%;width:100% !important;height:100% !important;min-width:0}
 .asteria-advanced-dice-stage::after{content:'';position:absolute;z-index:1;inset:5px;
   border:1px solid rgba(160,191,210,.19);pointer-events:none}
 .asteria-advanced-dice-placeholder,.asteria-advanced-dice-fallback{

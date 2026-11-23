@@ -256,6 +256,9 @@ export function AsteriaDiceTray({
       });
     });
     observer.observe(node);
+    // Watch the actual dashboard stage as well; external panel-size changes
+    // can leave Open Dice's inline canvas dimensions from the previous layout.
+    if(node.parentElement)observer.observe(node.parentElement);
     return ()=>{
       observer.disconnect();
       if(frame)cancelAnimationFrame(frame);
