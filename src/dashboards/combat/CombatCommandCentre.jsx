@@ -6,7 +6,7 @@ import {
   combatCanvasGridStyle,combatCanvasDetailLevel,combatWindowAlignment,
   focusCombatCamera,clampCombatCamera,orderedCombatPartyIds,moveCombatPartyCard,
   combatWorkspaceStorageKey,defaultCombatWorkspaceLayout,dockCombatWindow,
-  editCombatWindow,normalizeCombatWorkspace,setCombatGroup
+  editCombatWindow,normalizeCombatWorkspace
 } from './combatWorkspaceLayoutModel.mjs';
 import {AsteriaIcon} from '../../components/AsteriaIcons.jsx';
 import styles from './CombatCommandCentre.module.css';
@@ -583,7 +583,6 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
         const id=panel.props.id,rect=layout.freeform.positions[id];
         const isMinimised=layout.minimized.includes(id),isFocused=focused?.id===id;
         const isLocked=layout.locked.includes(id);
-        const grouped=layout.groups.some(row=>row.includes(id));
         const label=panelLabels[id]||id;
         return <article key={id} className={styles.window+
           (isMinimised?' '+styles.minimised:'')+
