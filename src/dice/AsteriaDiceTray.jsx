@@ -229,7 +229,12 @@ export function AsteriaDiceTray({
       const match=matchesAsteriaDicePreview(prepared,engine.getCurrentResults());
       setStatus(match?'settled':'mismatch');
       if(!match)Promise.resolve(engine.reset()).catch(()=>{});
-    }).catch(()=>{if(!cancelled)setStatus('unavailable');});
+    }).catch(error=>{
+      if(cancelled)return;
+      if(containerRef.current)containerRef.current.dataset.watcherError=
+        String(error?.message||error||'Unknown render failure').slice(0,200);
+      setStatus('unavailable');
+    });
     return ()=>{
       cancelled=true;
       if(watcherFrameRef.current)cancelAnimationFrame(watcherFrameRef.current);

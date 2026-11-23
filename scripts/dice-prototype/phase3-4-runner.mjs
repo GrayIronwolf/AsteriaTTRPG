@@ -69,8 +69,18 @@ try{
   check('Appearance editor sends no official roll while previewing',
     (await page.evaluate(()=>window.phase32Metrics.officialCalls))===0);
   await page.click('#server-roll');
-  await page.waitForFunction(()=>document.querySelector('[data-roll-state=settled]'),
-    null,{timeout:140000});
+  await page.waitForFunction(()=>{
+    const stage=document.querySelector('[data-roll-state]');
+    return stage&&['settled','unavailable','mismatch','unsupported'].includes(
+      stage.getAttribute('data-roll-state'));
+  },null,{timeout:50000}).catch(()=>{});
+  const stage=await page.locator('[data-roll-state]').first().getAttribute('data-roll-state');
+  const debug=await page.evaluate(()=>({
+    status:document.querySelector('.asteria-advanced-dice-tray-status')?.textContent,
+    error:document.querySelector('[data-watcher-error]')?.dataset.watcherError||null,
+    dice:document.querySelector('.asteria-advanced-dice-stage canvas')?.width||0
+  }));
+  check('Watcher reaches settled roll state',stage==='settled',{stage,...debug});
   const total=await page.locator('.asteria-advanced-dice-official strong').textContent();
   check('Animated Watcher roll preserves the server-confirmed 25',
     total==='25'&&(await page.evaluate(()=>window.phase32Metrics.officialCalls))===1,{total});
