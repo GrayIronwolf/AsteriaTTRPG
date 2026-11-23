@@ -42,7 +42,7 @@ export function attachCastleDiceTower(engine,outline){
  // An inclined chute feeds dice through the gate without scripted teleports.
  // This gravity vector is shared by prediction and replay and restored on dispose.
  const previousGravity=engine.world.gravity.clone();
- engine.world.gravity.x=8;
+ engine.world.gravity.x=12;
  const matStone=createMaterial('#ffffff',.13,.83,{map:stoneTexture(),clearcoat:.12});
  const matSteel=createMaterial('#455769',.88,.31,{clearcoat:.28});
  const matGold=createMaterial('#bda06a',.82,.3,{emissive:'#493115',emissiveIntensity:.11});

@@ -19,9 +19,9 @@ export function castleTowerLayout(outline){
     {id:'south-wall',role:'wall',x,y:5.65,z:z+D+.12,w:3.35,h:11.3,d:.24},
     // Castle front has a doorway starting at y=2.65, not a fake exit.
     {id:'gate-wall',role:'wall',x:x+W+.13,y:7.325,z,w:.27,h:7.95,d:3.14},
-    {id:'baffle-upper',role:'baffle',x:x-.67,y:7.75,z,w:1.57,h:.18,d:2.62,angleZ:-.31},
-    {id:'baffle-middle',role:'baffle',x:x+.67,y:5.35,z,w:1.57,h:.18,d:2.62,angleZ:.31},
-    {id:'baffle-lower',role:'baffle',x:x-.65,y:3.23,z,w:1.57,h:.18,d:2.62,angleZ:-.30},
+    {id:'baffle-upper',role:'baffle',x:x-.67,y:7.75,z,w:.64,h:.18,d:2.62,angleZ:-.54},
+    {id:'baffle-middle',role:'baffle',x:x-.25,y:5.35,z,w:.64,h:.18,d:2.62,angleZ:.46},
+    {id:'baffle-lower',role:'baffle',x:x-.65,y:3.23,z,w:.64,h:.18,d:2.62,angleZ:-.54},
     // A real descending return ramp extends into the 3D tray.
     {id:'exit-ramp',role:'ramp',x:x+1.23,y:1.02,z,w:5.62,h:.23,d:2.82,angleZ:-.21},
     {id:'exit-north-rail',role:'guide',x:x+2.2,y:.78,z:z-1.48,w:3.76,h:.95,d:.16,angleZ:-.21},
