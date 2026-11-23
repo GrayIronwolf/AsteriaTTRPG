@@ -18,7 +18,9 @@ export function DiceAppearanceCollections({library,ready,characters=[],character
   return false;
  };
  const save=async(asNew=false)=>{
-  const label=name.trim().replace(/\s+/g,' ');
+  let label=name.trim().replace(/\s+/g,' ');
+  if(asNew&&selected&&label.toLowerCase()===selected.name.toLowerCase())
+   label=(selected.name.slice(0,42)+' copy '+(data.collections.length+1)).slice(0,60);
   if(!label||label.length>60){setMessage('Name the appearance collection (1-60 characters).');return;}
   const id=asNew||!selected?crypto.randomUUID():selected.id;
   if(await run({action:'appearance-save',collection:{id,name:label,
