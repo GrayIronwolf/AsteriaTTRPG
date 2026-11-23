@@ -10,6 +10,11 @@ import {attachDiceTower} from './diceTowerScene.mjs';
 import {defaultDiceTowerAppearance,getDiceTowerFamily,
  TOWER_MAX_VISIBLE_DICE} from './diceTowerCatalogue.mjs';
 import {DiceTrayStudio} from './DiceTrayStudio.jsx';
+import {DiceEffectsControls} from './DiceEffectsControls.jsx';
+import {DiceOutcomeEffects} from './DiceOutcomeEffects.jsx';
+import {defaultDicePresentation,deviceDicePresentation,validateDicePresentation,
+ diceGraphicsProfile,diceSoundAppearance,PRESENTATION_STORAGE_KEY}
+ from './dicePresentationModel.mjs';
 
 const messages={
   loading:'Preparing the 3D dice table…',
@@ -41,10 +46,41 @@ export function AsteriaDiceTray({
   record,enabled=true,onToggleEnabled,onReplay,onClear,canReplay=false,replayToken=0,
   appearance=null,trayAppearance:controlledTrayAppearance=null,
   onTrayAppearanceChange=null,studioManaged=false,
-  experimentalCastleTower=false,experimentalTowerAppearance=null
+  experimentalCastleTower=false,experimentalTowerAppearance=null,
+  presentationPreferences=null,onPresentationPreferencesChange=null
 }){
   const containerRef=useRef(null),engineRef=useRef(null);
   const physicalTrayMemoRef=useRef(null);
+  const [localPresentation,setLocalPresentation]=useState(()=>{
+    try{return deviceDicePresentation(window.localStorage.getItem(PRESENTATION_STORAGE_KEY));}
+    catch{return defaultDicePresentation();}
+  });
+  const [effectsOpen,setEffectsOpen]=useState(false);
+  const [systemReducedMotion,setSystemReducedMotion]=useState(()=>Boolean(
+    typeof window!=='undefined'&&window.matchMedia?.('(prefers-reduced-motion: reduce)').matches));
+  useEffect(()=>{
+    const media=window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    if(!media)return undefined;
+    const handle=()=>setSystemReducedMotion(media.matches);
+    media.addEventListener?.('change',handle);
+    return ()=>media.removeEventListener?.('change',handle);
+  },[]);
+  const presentation=validateDicePresentation(presentationPreferences||localPresentation);
+  const setPresentation=next=>{
+    const checked=validateDicePresentation(next);
+    if(onPresentationPreferencesChange)onPresentationPreferencesChange(checked);
+    else setLocalPresentation(checked);
+  };
+  useEffect(()=>{
+    try{window.localStorage.setItem(PRESENTATION_STORAGE_KEY,JSON.stringify(presentation));}
+    catch{ /* Browsers may forbid storage; session controls remain functional. */ }
+  },[presentation]);
+  const graphics=diceGraphicsProfile(presentation,{
+    systemReducedMotion,viewportWidth:typeof window!=='undefined'?window.innerWidth:1000,
+    deviceMemory:typeof navigator!=='undefined'?navigator.deviceMemory:null,
+    hardwareConcurrency:typeof navigator!=='undefined'?navigator.hardwareConcurrency:null
+  });
+  const effectiveEnabled=enabled&&!graphics.reducedMotion;
   const [ready,setReady]=useState(false),[status,setStatus]=useState('loading');
   const [localTrayAppearance,setLocalTrayAppearance]=useState(()=>defaultDiceTrayAppearance());
   const trayAppearance=controlledTrayAppearance||localTrayAppearance;
@@ -57,11 +93,12 @@ export function AsteriaDiceTray({
   // Reuse the same validated tray configuration object until its actual
   // values change. Creating a fresh object on every status render previously
   // deferred an identical tray rebuild during an active tower throw.
-  const physicalTraySignature=JSON.stringify(trayAppearance)+':'+
-    (towerActive?activeTowerAppearance.sound:'none');
+  const presentationSound=diceSoundAppearance(trayAppearance,presentation,
+    towerActive?activeTowerAppearance:null);
+  const physicalTraySignature=JSON.stringify(presentationSound);
   if(physicalTrayMemoRef.current?.signature!==physicalTraySignature){
     physicalTrayMemoRef.current={signature:physicalTraySignature,
-      value:towerActive?{...trayAppearance,sound:activeTowerAppearance.sound}:trayAppearance};
+      value:presentationSound};
   }
   const physicalTrayAppearance=physicalTrayMemoRef.current.value;
 
@@ -101,7 +138,7 @@ export function AsteriaDiceTray({
   },[]);
 
   useEffect(()=>{
-    if(!enabled){setReady(false);setStatus('paused');return undefined;}
+    if(!effectiveEnabled){setReady(false);setStatus('paused');return undefined;}
     if(!webGLAvailable()){setReady(false);setStatus('unsupported');return undefined;}
     let cancelled=false;
     setReady(false);setStatus('loading');
@@ -110,7 +147,7 @@ export function AsteriaDiceTray({
       try{
         const instance=new DiceRoller({
           container:containerRef.current,
-          pixelRatio:1,
+          pixelRatio:graphics.pixelRatio,
           powerPreference:'default',
           throwSpeed:14,
           throwSpin:17
@@ -152,7 +189,7 @@ export function AsteriaDiceTray({
         registryRef.current=null;
       }
     };
-  },[enabled,towerSignature]);
+  },[effectiveEnabled,towerSignature,graphics.pixelRatio]);
 
   // Visual orbit and zoom are camera-only. Die physics and face values do
   // not know these controls exist; wheel and touch do not change rolls.
@@ -172,7 +209,7 @@ export function AsteriaDiceTray({
   // during active rolls are deferred so physics prediction/replay sees one world.
   useEffect(()=>{
     const engine=engineRef.current;
-    if(!ready||!enabled||!engine)return;
+    if(!ready||!effectiveEnabled||!engine)return;
     const config=validateDiceTrayAppearance(physicalTrayAppearance);
     if(rollingRef.current){
       deferredTrayRef.current=config;return;
@@ -187,7 +224,7 @@ export function AsteriaDiceTray({
     }catch{
       setStatus('unavailable');
     }
-  },[ready,enabled,physicalTrayAppearance,towerSignature]);
+  },[ready,effectiveEnabled,physicalTrayAppearance,towerSignature]);
   const changeTrayConfig=config=>{
     const checked=validateDiceTrayAppearance(config);
     if(onTrayAppearanceChange)onTrayAppearanceChange(checked);
@@ -199,7 +236,7 @@ export function AsteriaDiceTray({
   // resize method is contained here, never in Asteria gameplay code.
   useEffect(()=>{
     const node=containerRef.current;
-    if(!ready||!enabled||!node||typeof ResizeObserver==='undefined')return undefined;
+    if(!ready||!effectiveEnabled||!node||typeof ResizeObserver==='undefined')return undefined;
     let frame=0;
     const observer=new ResizeObserver(()=>{
       if(frame)cancelAnimationFrame(frame);
@@ -214,10 +251,10 @@ export function AsteriaDiceTray({
       observer.disconnect();
       if(frame)cancelAnimationFrame(frame);
     };
-  },[ready,enabled]);
+  },[ready,effectiveEnabled]);
 
   useEffect(()=>{
-    if(!enabled||!ready||!engineRef.current)return undefined;
+    if(!effectiveEnabled||!ready||!engineRef.current)return undefined;
     const engine=engineRef.current;
     if(!record){
       rollingRef.current=false;
@@ -288,11 +325,12 @@ export function AsteriaDiceTray({
         for(const rig of watcherRigsRef.current.values())rig.dispose();
         watcherRigsRef.current.clear();
         const q=watcherVisualQuality({
-          reducedMotion:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches,
-          mobile:window.matchMedia?.('(max-width: 650px)').matches,
+          reducedMotion:graphics.reducedMotion,
+          mobile:graphics.tier!=='high',
           deviceMemory:navigator.deviceMemory||null,
           visibleDice:prepared.dice.length
         });
+        q.eyeLimit=Math.min(q.eyeLimit,graphics.watcherLimit);
         const reaction=watcherReactionForRecord(record);
         const initial=performance.now();
         const tick=()=>{
@@ -311,7 +349,7 @@ export function AsteriaDiceTray({
           for(const rig of watcherRigsRef.current.values())
             rig.update(t,{rolling:Boolean(engine.isAnimating),
               pointer:watcherPointerRef.current,
-              reducedMotion:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches,
+              reducedMotion:graphics.reducedMotion,
               reaction});
           // Render idle blinks; while the dice tumble the engine already
           // owns rendering and cannot be replaced without moving physics.
@@ -377,13 +415,15 @@ export function AsteriaDiceTray({
       for(const rig of watcherRigsRef.current.values())rig.dispose();
       watcherRigsRef.current.clear();
     };
-  },[record,ready,enabled,replayToken,stableId,towerId]);
+  },[record,ready,effectiveEnabled,replayToken,stableId,towerId]);
 
-  const canControl=enabled&&ready&&status!=='rolling';
-  const renderFallback=!enabled||['unavailable','unsupported','oversized','mismatch'].includes(status);
+  const canControl=effectiveEnabled&&ready&&status!=='rolling';
+  const renderFallback=!effectiveEnabled||['unavailable','unsupported','oversized','mismatch'].includes(status);
   const selectedTray=getDiceTrayFamily(trayAppearance.designId);
   return <section className="asteria-advanced-dice-tray" data-tray-size={trayAppearance.size}
-    data-roll-state={status} data-tower-mode={towerActive?towerId+'-prototype':'off'} aria-label="3D dice tray">
+    data-roll-state={status} data-tower-mode={towerActive?towerId+'-prototype':'off'}
+    data-graphics-tier={graphics.tier} data-reduced-motion={graphics.reducedMotion}
+    aria-label="3D dice tray">
     <header className="asteria-advanced-dice-tray-heading">
       <div className="asteria-advanced-dice-tray-title">
         <span className="asteria-advanced-dice-crystal" aria-hidden="true"/>
@@ -426,12 +466,20 @@ export function AsteriaDiceTray({
     </div>
     {!studioManaged&&trayStudioOpen?<DiceTrayStudio value={trayAppearance}
       onChange={changeTrayConfig} rolling={status==='rolling'}/>:null}
+    <button type="button" className="asteria-dice-fx-toggle"
+      aria-expanded={effectsOpen} onClick={()=>setEffectsOpen(x=>!x)}>
+      {effectsOpen?'Close effects and performance':'Effects & performance'}
+    </button>
+    {effectsOpen?<DiceEffectsControls value={presentation} onChange={setPresentation}
+      profile={graphics}/>:null}
     {towerActive?<p className="asteria-tower-warning" role="note">
       Experimental 3D tower physics. Visual designs and physical exit paths require
       final stress testing and owner approval before release. The official result is unchanged.
     </p>:null}
     <div className="asteria-advanced-dice-stage">
       <div className="asteria-advanced-dice-scene" ref={containerRef} aria-hidden="true"/>
+      {status==='settled'?<DiceOutcomeEffects record={record} preferences={presentation}
+        profile={graphics} replayToken={replayToken}/>:null}
       <div className="asteria-tray-view-controls" role="group" aria-label="3D tray camera controls">
         <button type="button" aria-label="Rotate tray left" onClick={()=>{setCameraTilt(true);setCameraAngle(v=>v-.28);}}>↶</button>
         <button type="button" aria-label="Rotate tray right" onClick={()=>{setCameraTilt(true);setCameraAngle(v=>v+.28);}}>↷</button>
