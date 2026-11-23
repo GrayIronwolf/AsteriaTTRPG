@@ -411,3 +411,10 @@
 .asteria-dice-collections-assign>small{color:#b5cbdc}
 .asteria-dice-collections-status{padding:8px 10px;margin:0;border-left:2px solid #9cc4dc;background:#1d3448;color:#e5f2fa;font-size:.82rem}
 @container asteriaDice (max-width:480px){.asteria-dice-collections-form{grid-template-columns:minmax(0,1fr)}.asteria-dice-collections{padding:9px}}
+
+/* Castle feasibility only; no production-ready tower selector until verified. */
+.asteria-tower-warning{border:1px solid #8a7245;background:#31281a;color:#f3dcc0;
+ padding:8px 10px;margin:0;font-size:.82rem;line-height:1.5}
+.asteria-advanced-dice-tray[data-tower-mode="castle-prototype"] .asteria-advanced-dice-stage{
+ min-height:350px;
+}

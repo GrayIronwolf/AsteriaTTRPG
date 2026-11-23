@@ -15,6 +15,8 @@ on:
       - 'scripts/dice-engine-phase3-5.test.mjs'
       - 'scripts/dice-engine-phase3-6.test.mjs'
       - 'scripts/dice-engine-phase3-7.test.mjs'
+      - 'scripts/dice-engine-phase3-8.test.mjs'
+      - 'scripts/dice-prototype/phase3-8*'
       - 'scripts/dice-prototype/phase3-7*'
       - 'scripts/dice-prototype/phase3-6*'
       - 'scripts/dice-prototype/phase2*'
