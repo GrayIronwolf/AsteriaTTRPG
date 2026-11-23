@@ -112,7 +112,6 @@ export function AsteriaDiceTray({
   const [cameraDragging,setCameraDragging]=useState(false);
   const touchPointsRef=useRef(new Map());
   const pinchRef=useRef(null);
-  const lastPointerRef=useRef(null);
   const cameraPointerRef=useRef(null);
   const dicePointerRef=useRef(null);
   const gestureRef=useRef(null);
