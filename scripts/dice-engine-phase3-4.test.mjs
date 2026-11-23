@@ -146,6 +146,7 @@ test('Existing React and Firebase architecture is reused',()=>{
   assert.match(picker,/createWatcherEyeRig/);
   assert.match(tray,/createWatcherEyeRig/);
   assert.match(tray,/applyWatcherGelShell/);
+  assert.doesNotMatch(tray,/Watcher Dice are reserved for Phase 3\.4/);
   assert.match(workspace,/firebaseService\.advancedDiceAction/);
   assert.match(workspace,/subscribeDiceWorkspace/);
   assert.doesNotMatch(workspace+tray,/Math\.random/);
