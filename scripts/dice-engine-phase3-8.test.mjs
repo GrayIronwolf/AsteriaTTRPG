@@ -6,7 +6,7 @@ import {castleTowerLayout,castleTowerSpawn,inspectCastleTowerRecording,
 import {trayOutline} from '../src/dice/diceTrayGeometry.mjs';
 import {defaultDiceTrayAppearance} from '../src/dice/diceTrayCatalogue.mjs';
 import {diceResult} from '../src/state/diceRollModel.mjs';
-import {prepareAsteriaDicePreview} from '../src/dice/openDiceAdapter.mjs';
+import {prepareAsteriaDicePreview,matchesAsteriaDicePreview} from '../src/dice/openDiceAdapter.mjs';
 
 test('Castle Tower has ten genuine matching collision and visual boxes',()=>{
  const layout=castleTowerLayout(trayOutline(defaultDiceTrayAppearance()));
@@ -76,4 +76,24 @@ test('tower adds static colliders to the same engine and restores original metho
  assert.match(s,/engine\._applyDiePhysics=applyBefore/);
  assert.match(s,/inspectCastleTowerRecording/);
  assert.doesNotMatch(s,/new CANNON\.World|new DiceRoller|firebaseService|Math\.random/);
+});
+
+
+test('Open Dice actual printed d10 glyph 10 equals canonical zero; not arbitrary variance',()=>{
+ const record=diceResult({pool:[{sides:10,count:1}],modifier:5,label:'die face 10'},
+  ()=>10,1730000000000,'castle-d10-zero');
+ const prepared=prepareAsteriaDicePreview(record);
+ assert.equal(prepared.expectedFaces[0],0);
+ assert.equal(matchesAsteriaDicePreview(prepared,{
+  results:[{type:'d10',value:0,visible:10,target:0}],
+  variances:[{type:'d10',expected:0,visible:10}]
+ }),true);
+ assert.equal(matchesAsteriaDicePreview(prepared,{
+  results:[{type:'d10',value:0,visible:9,target:0}],
+  variances:[{type:'d10',expected:0,visible:9}]
+ }),false);
+ assert.equal(matchesAsteriaDicePreview(prepared,{
+  results:[{type:'d10',value:1,visible:10,target:0}],
+  variances:[{type:'d10',expected:0,visible:10}]
+ }),false);
 });

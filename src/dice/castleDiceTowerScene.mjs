@@ -94,14 +94,14 @@ export function attachCastleDiceTower(engine,outline){
  // Reject hidden physics candidates that never leave the tower. The worker
  // really simulates each candidate; none creates a new official Firebase roll.
  engine._predict=async function(diceConfig){
-  const maxAttempts=8;
+  const maxAttempts=16;
   for(let attempt=1;attempt<=maxAttempts;attempt++){
    const candidate=await predictBefore.call(this,diceConfig);
    attempts=attempt;
    const outcome=inspectCastleTowerRecording(layout,candidate.recording);
    if(outcome?.exitComplete)return candidate;
   }
-  throw Error('Castle Tower physics could not complete an exit within eight attempts.');
+  throw Error('Castle Tower physics could not complete an exit within sixteen attempts.');
  };
  // The worker already simulated the throw until rest and recorded the true
  // final orientation. Stop any unrecorded late physical drift after replay,
@@ -127,7 +127,10 @@ export function attachCastleDiceTower(engine,outline){
   applyBefore.call(this,die,seed);
   const spawn=castleTowerSpawn(seed,layout);
   die.body.position.set(spawn.x,spawn.y,spawn.z);
-  die.body.velocity.set(spawn.vx,-.65,spawn.vz);
+  // Small tetrahedra have a higher tendency to settle on a baffle edge;
+  // a faster downward release keeps the physical path moving.
+  die.body.velocity.set(spawn.vx+(die.type==='d4'?1.4:0),
+    die.type==='d4'?-7:-.65,spawn.vz);
   die.body.angularVelocity.scale(.60,die.body.angularVelocity);
   if(die.mesh){die.mesh.position.copy(die.body.position);die.mesh.quaternion.copy(die.body.quaternion);}
  };

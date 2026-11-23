@@ -59,9 +59,16 @@ export function prepareAsteriaDicePreview(record){
 // convention is different from the server's 1-10/1-100 rules.
 export function matchesAsteriaDicePreview(prepared,observed){
   if(prepared?.mode!=='3d'||!Array.isArray(observed?.results)||
-    !Array.isArray(observed?.variances)||observed.variances.length!==0||
+    !Array.isArray(observed?.variances)||
     observed.results.length!==prepared.expectedFaces.length)return false;
-  return observed.results.every((face,index)=>
-    face.value===prepared.expectedFaces[index]&&
-    face.visible===prepared.expectedFaces[index]);
+  // Open Dice renders the numbered face "10" for its zero-based d10 value
+  // zero (see upstream dice.js getDieValue). It reports that as a variance,
+  // even though the physical face and Asteria's official value are both 10.
+  // No other physical face variance may be accepted.
+  const tenFace=face=>face?.type==='d10'&&face?.expected===0&&face?.visible===10;
+  return observed.variances.every(tenFace)&&observed.results.every((face,index)=>{
+    const expected=prepared.expectedFaces[index];
+    return face.value===expected&&(face.visible===expected||
+      face.type==='d10'&&expected===0&&face.visible===10);
+  });
 }
