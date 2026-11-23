@@ -305,6 +305,7 @@ export function AsteriaDiceTray({
         containerRef.current.dataset.towerExited=String(towerEvidence?.exited??0);
         containerRef.current.dataset.towerExitComplete=String(towerEvidence?.exitComplete===true);
         containerRef.current.dataset.towerSteps=String(towerEvidence?.steps??0);
+        containerRef.current.dataset.towerAttempts=String(towerRef.current?.getAttempts?.()??0);
         containerRef.current.dataset.towerLastEnd=JSON.stringify(
           towerEvidence?.rest?.map(r=>r.ends)||[]).slice(0,500);
         containerRef.current.dataset.towerBaffles=JSON.stringify({

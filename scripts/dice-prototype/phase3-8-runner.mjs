@@ -32,7 +32,8 @@ try{
    const scene=document.querySelector('.asteria-advanced-dice-scene');
    return {state:document.querySelector('[data-roll-state]').getAttribute('data-roll-state'),
     total:document.querySelector('.asteria-advanced-dice-official strong')?.textContent,
-    towerSteps:scene.dataset.towerSteps||'',exited:scene.dataset.towerExited||'',
+    towerSteps:scene.dataset.towerSteps||'',attempts:scene.dataset.towerAttempts||'',
+    exited:scene.dataset.towerExited||'',
     physicalExit:scene.dataset.towerExitComplete||'',rest:scene.dataset.towerLastEnd||'',
     baffles:scene.dataset.towerBaffles||'',faceMatch:scene.dataset.towerFaceMatch||'',
     observed:scene.dataset.towerObserved||'',error:scene.dataset.towerError||'',
