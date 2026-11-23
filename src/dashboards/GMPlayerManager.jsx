@@ -273,7 +273,7 @@ export function GMPlayerManager({campaignId,campaign={},characters={},members=nu
   };
   const copyCampaignUCN=async()=>{
     const ucn=campaign?.ucn||campaign?.uniqueCampaignCode||'';
-    if(!/^\\d{12}$/.test(ucn)){setFeedback('This campaign does not have a valid 12-digit UCN.');return;}
+    if(!/^\d{12}$/.test(ucn)){setFeedback('This campaign does not have a valid 12-digit UCN.');return;}
     try{
       if(!navigator.clipboard?.writeText)throw Error('Clipboard is unavailable.');
       await navigator.clipboard.writeText(ucn);
@@ -395,7 +395,7 @@ export function GMPlayerManager({campaignId,campaign={},characters={},members=nu
       action={<span>{pendingJoins.length} pending</span>}>
       <p className="react-gm-player-hint">Share the campaign UCN through Campaign Forge. Joining never automatically links a private character sheet.</p>
       <div className="react-gm-player-actions"><ActionButton
-        onClick={copyCampaignUCN} disabled={!/^\\d{12}$/.test(campaign?.ucn||campaign?.uniqueCampaignCode||'')}>
+        onClick={copyCampaignUCN} disabled={!/^\d{12}$/.test(campaign?.ucn||campaign?.uniqueCampaignCode||'')}>
         Copy campaign UCN
       </ActionButton></div>
       <div className="react-gm-player-capacity">
