@@ -2,6 +2,8 @@ import React,{useEffect,useId,useRef,useState} from 'react';
 import {matchesAsteriaDicePreview,prepareAsteriaDicePreview} from './openDiceAdapter.mjs';
 import {prepareCoreDesigns,releaseCoreDesigns} from './coreDiceRegistry.mjs';
 import {defaultDiceAppearance,validateDiceAppearance} from './diceAppearanceCatalogue.mjs';
+import {createWatcherEyeRig,applyWatcherGelShell} from './watcherEyeRig.mjs';
+import {watcherVisualQuality,watcherReactionForRecord} from './watcherDiceDesign.mjs';
 
 const messages={
   loading:'Preparing the 3D dice table…',
@@ -39,7 +41,28 @@ export function AsteriaDiceTray({
   const stableId=useId().replace(/[^a-z0-9]/gi,'').toLowerCase();
   const appearanceRef=useRef(appearance);
   const registryRef=useRef(null);
+  const watcherRigsRef=useRef(new Map());
+  const watcherFrameRef=useRef(0);
+  const watcherPointerRef=useRef(null);
   useEffect(()=>{appearanceRef.current=appearance;},[appearance]);
+  useEffect(()=>{
+    const node=containerRef.current;
+    if(!node)return undefined;
+    const move=event=>{
+      const rect=node.getBoundingClientRect();
+      watcherPointerRef.current={
+        x:(event.clientX-rect.left)/Math.max(1,rect.width)*2-1,
+        y:(event.clientY-rect.top)/Math.max(1,rect.height)*2-1
+      };
+    };
+    const leave=()=>{watcherPointerRef.current=null;};
+    node.addEventListener('pointermove',move,{passive:true});
+    node.addEventListener('pointerleave',leave);
+    return ()=>{
+      node.removeEventListener('pointermove',move);
+      node.removeEventListener('pointerleave',leave);
+    };
+  },[]);
 
   useEffect(()=>{
     if(!enabled){setReady(false);setStatus('paused');return undefined;}
@@ -67,6 +90,10 @@ export function AsteriaDiceTray({
     });
     return ()=>{
       cancelled=true;
+      if(watcherFrameRef.current)cancelAnimationFrame(watcherFrameRef.current);
+      watcherFrameRef.current=0;
+      for(const rig of watcherRigsRef.current.values())rig.dispose();
+      watcherRigsRef.current.clear();
       const instance=engineRef.current;
       engineRef.current=null;
       if(instance)instance.destroy();
@@ -150,6 +177,51 @@ export function AsteriaDiceTray({
           throw Error('Familiar Dice artwork could not be loaded.');
         if(cancelled)return;
       }
+      if(current.familyId==='dice-watcher'){
+        const THREE=await import('three');
+        if(cancelled)return;
+        if(watcherFrameRef.current)cancelAnimationFrame(watcherFrameRef.current);
+        for(const rig of watcherRigsRef.current.values())rig.dispose();
+        watcherRigsRef.current.clear();
+        const q=watcherVisualQuality({
+          reducedMotion:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches,
+          mobile:window.matchMedia?.('(max-width: 650px)').matches,
+          deviceMemory:navigator.deviceMemory||null,
+          visibleDice:prepared.dice.length
+        });
+        const reaction=watcherReactionForRecord(record);
+        const initial=performance.now();
+        const tick=()=>{
+          if(cancelled)return;
+          // The engine spawns each visual mesh after prediction; the eye is
+          // parented then, not inserted into the physics world.
+          const dice=engine.dice||[];
+          for(const die of dice.slice(0,q.eyeLimit)){
+            if(!die.mesh||watcherRigsRef.current.has(die.mesh))continue;
+            applyWatcherGelShell(die.mesh,current,q);
+            const rig=createWatcherEyeRig(THREE,current,q);
+            die.mesh.add(rig.group);
+            watcherRigsRef.current.set(die.mesh,rig);
+          }
+          const t=(performance.now()-initial)/1000;
+          for(const rig of watcherRigsRef.current.values())
+            rig.update(t,{rolling:Boolean(engine.isAnimating),
+              pointer:watcherPointerRef.current,
+              reducedMotion:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches,
+              reaction});
+          // Render idle blinks; while the dice tumble the engine already
+          // owns rendering and cannot be replaced without moving physics.
+          if(!engine.isAnimating&&watcherRigsRef.current.size)
+            engine.renderer?.render(engine.scene,engine.camera);
+          watcherFrameRef.current=requestAnimationFrame(tick);
+        };
+        watcherFrameRef.current=requestAnimationFrame(tick);
+      }else{
+        if(watcherFrameRef.current)cancelAnimationFrame(watcherFrameRef.current);
+        watcherFrameRef.current=0;
+        for(const rig of watcherRigsRef.current.values())rig.dispose();
+        watcherRigsRef.current.clear();
+      }
       await engine.roll(diceToRoll);
     };
     Promise.resolve(run()).then(()=>{
@@ -158,7 +230,13 @@ export function AsteriaDiceTray({
       setStatus(match?'settled':'mismatch');
       if(!match)Promise.resolve(engine.reset()).catch(()=>{});
     }).catch(()=>{if(!cancelled)setStatus('unavailable');});
-    return ()=>{cancelled=true;};
+    return ()=>{
+      cancelled=true;
+      if(watcherFrameRef.current)cancelAnimationFrame(watcherFrameRef.current);
+      watcherFrameRef.current=0;
+      for(const rig of watcherRigsRef.current.values())rig.dispose();
+      watcherRigsRef.current.clear();
+    };
   },[record,ready,enabled,replayToken,stableId]);
 
   const canControl=enabled&&ready&&status!=='rolling';
