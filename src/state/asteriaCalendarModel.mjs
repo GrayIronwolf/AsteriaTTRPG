@@ -28,6 +28,17 @@ export const CALENDAR_RELATED_TYPES=Object.freeze(['quest','timeline','event','r
 export const MAX_CALENDAR_YEAR=100000;
 export const MAX_CALENDAR_HISTORY=50;
 export const MAX_CALENDAR_ENTRIES=120;
+export const CALENDAR_RECURRENCE_UNITS=Object.freeze(['none','day','week','month','year']);
+export const CALENDAR_CLOCK_RATES=Object.freeze([1,2,5,10,60]);
+export const DEFAULT_CALENDAR_CATEGORIES=Object.freeze([
+ {id:'festival',name:'Festival',color:'#B99A5D'},
+ {id:'quest',name:'Quest',color:'#659AC5'},
+ {id:'travel',name:'Travel',color:'#6DA99B'},
+ {id:'event',name:'General Event',color:'#8A94BF'},
+ {id:'timeline',name:'History',color:'#A18BBF'},
+ {id:'economy',name:'Economy',color:'#C3976E'},
+ {id:'other',name:'Other',color:'#8E9AA5'}
+]);
 const object=value=>Boolean(value)&&typeof value==='object'&&!Array.isArray(value);
 const id=value=>typeof value==='string'&&/^[A-Za-z0-9_-]{1,160}$/.test(value);
 const whole=(value,min,max,label)=>{
@@ -273,13 +284,112 @@ export function calendarYearSummary(config,year=1){
  return {year,days:calendarYearDays(c,year),months:c.months.length,
   weekdays:c.weekdays.length,leapDays:c.leapDays.filter(x=>leapApplies(x,year)).map(x=>x.name)};
 }
-export function validateCalendarEntry(input,config,idValue,previous=null){
+
+export function validateCalendarCategories(value){
+ if(!Array.isArray(value)||value.length<1||value.length>24)
+  throw Error('Configure between 1 and 24 calendar categories.');
+ const categories=value.map((row,index)=>{
+  fields(row,['id','name','color'],'calendar category');
+  if(!id(row.id)||row.id.length>40)throw Error('Invalid event category ID.');
+  if(typeof row.color!=='string'||!/^#[0-9a-fA-F]{6}$/.test(row.color))
+   throw Error('Event category colours must use six-digit hex values.');
+  return {id:row.id,name:text(row.name,40,'event category '+(index+1)),color:row.color.toUpperCase()};
+ });
+ if(new Set(categories.map(row=>row.id.toLowerCase())).size!==categories.length)
+  throw Error('Duplicate calendar category IDs.');
+ return categories;
+}
+export function validateCalendarRecurrence(value,date,config){
+ if(value===undefined||value===null)return null;
+ fields(value,['unit','interval','untilYear'],'event recurrence');
+ if(!CALENDAR_RECURRENCE_UNITS.includes(value.unit))throw Error('Invalid event recurrence unit.');
+ if(value.unit==='none')return null;
+ const interval=whole(value.interval??1,1,365,'Event recurrence interval');
+ const untilYear=value.untilYear===null||value.untilYear===undefined?null:
+  whole(value.untilYear,date.year,MAX_CALENDAR_YEAR,'Last recurrence year');
+ return {unit:value.unit,interval,untilYear};
+}
+/** The UI shows a live clock by deriving time from the last trusted server anchor.
+ * No Firestore writes occur while clients display a running clock. */
+export function effectiveCalendarDate(calendar,nowMs=Date.now()){
+ if(!calendar?.definition||!calendar?.date)return null;
+ const config=validateCalendarDefinition(calendar.definition);
+ const base=validateCalendarDate(calendar.date,config);
+ if(calendar.clockMode!=='realtime')return base;
+ const anchor=calendar.clockAnchorMs,rate=calendar.clockRate??1;
+ if(!Number.isSafeInteger(anchor)||anchor<0||!CALENDAR_CLOCK_RATES.includes(rate))
+  return base;
+ const seconds=Math.max(0,Math.floor((nowMs-anchor)/1000));
+ const deltaMinutes=Math.floor((seconds*rate)/60);
+ if(deltaMinutes===0)return base;
+ try{return calendarDateFromMinutes(calendarDateToMinutes(base,config)+deltaMinutes,config,base.era);}
+ catch{return base;} // A running clock must never render beyond its configured year cap.
+}
+export function calendarEventOccursOnDate(entry,target,config){
+ const c=validateCalendarDefinition(config),start=validateCalendarDate(entry.date,c);
+ const day=validateCalendarDate(target,c);
+ if(start.era!==day.era)return false;
+ const offset=calendarDayIndex(day,c)-calendarDayIndex(start,c);
+ if(offset<0)return false;
+ if(offset===0)return true;
+ const recurrence=validateCalendarRecurrence(entry.recurrence,start,c);
+ if(!recurrence)return false;
+ if(recurrence.untilYear!==null&&day.year>recurrence.untilYear)return false;
+ if(recurrence.unit==='day')return offset%recurrence.interval===0;
+ if(recurrence.unit==='week')return offset%(recurrence.interval*c.weekdays.length)===0;
+ if(recurrence.unit==='month'){
+  const from=(start.year-1)*c.months.length+start.month-1;
+  const to=(day.year-1)*c.months.length+day.month-1;
+  return to>from&&(to-from)%recurrence.interval===0&&day.day===start.day;
+ }
+ if(recurrence.unit==='year')return day.year>start.year&&
+  (day.year-start.year)%recurrence.interval===0&&day.month===start.month&&day.day===start.day;
+ return false;
+}
+export function calendarOccurrencesOnDate(entries,date,config){
+ return (Array.isArray(entries)?entries:[]).filter(entry=>{
+  try{return entry?.status!=='archived'&&calendarEventOccursOnDate(entry,date,config);}
+  catch{return false;}
+ });
+}
+export function calendarMoonPhases(date,config){
+ const c=validateCalendarDefinition(config),d=validateCalendarDate(date,c);
+ const index=calendarDayIndex(d,c);
+ return c.moons.map(moon=>{
+  const indexInOrbit=(index+moon.offset)%moon.period;
+  const portion=indexInOrbit/moon.period;
+  const names=['New Moon','Waxing Crescent','First Quarter','Waxing Gibbous',
+   'Full Moon','Waning Gibbous','Last Quarter','Waning Crescent'];
+  const phase=names[Math.floor((portion+1/16)*8)%8];
+  return {name:moon.name,period:moon.period,phase,progress:portion,day:indexInOrbit};
+ });
+}
+export function calendarCelestialEventsOnDate(date,config){
+ const c=validateCalendarDefinition(config),d=validateCalendarDate(date,c);
+ const index=calendarDayIndex(d,c);
+ return [
+  ...c.moons.flatMap(moon=>{
+   const ordinal=(index+moon.offset)%moon.period;
+   const full=Math.round(moon.period/2)%moon.period;
+   return ordinal===0?[{id:'moon-'+moon.name+'-new',title:moon.name+' · New Moon',kind:'celestial'}]:
+    ordinal===full?[{id:'moon-'+moon.name+'-full',title:moon.name+' · Full Moon',kind:'celestial'}]:[];
+  }),
+  ...c.cycles.flatMap(cycle=>(index+cycle.offset)%cycle.period===0?
+   [{id:'cycle-'+cycle.name,title:cycle.name+' · Cycle Begins',kind:'cycle'}]:[])
+ ];
+}
+export function validateCalendarEntry(input,config,idValue,previous=null,categories=DEFAULT_CALENDAR_CATEGORIES){
  if(!id(idValue))throw Error('Choose a valid calendar entry identifier.');
- fields(input,['title','description','kind','visibility','date','related'],'calendar entry');
+ fields(input,['title','description','kind','visibility','date','related','recurrence','categoryId'],'calendar entry');
  const kind=CALENDAR_ENTRY_KINDS.includes(input.kind)?input.kind:null;
  if(!kind)throw Error('Choose a valid calendar event type.');
  const visibility=input.visibility;
  if(!['gm','party'].includes(visibility))throw Error('Choose GM-only or party visibility.');
+ const categoryList=validateCalendarCategories(categories);
+ const categoryId=input.categoryId??(categoryList.some(row=>row.id===kind)?kind:'other');
+ if(!categoryList.some(row=>row.id===categoryId))throw Error('Select an existing calendar event category.');
+ const date=validateCalendarDate(input.date,config);
+ const recurrence=validateCalendarRecurrence(input.recurrence,date,config);
  const related=input.related??null;
  if(related!==null){
   fields(related,['type','id'],'linked calendar record');
@@ -289,7 +399,7 @@ export function validateCalendarEntry(input,config,idValue,previous=null){
  if(previous?.status==='archived')throw Error('Archived calendar entries cannot be edited.');
  return {id:idValue,title:text(input.title,120,'calendar event title'),
   description:text(input.description??'',1000,'calendar event description',true),
-  kind,visibility,date:validateCalendarDate(input.date,config),
+  kind,categoryId,recurrence,visibility,date,
   related:related?{type:related.type,id:related.id}:null,
   status:'active',revision:(previous?.revision||0)+1};
 }
@@ -313,16 +423,19 @@ export function sortedCalendarEntries(entries=[],config=null){
   .sort((a,b)=>calendarDateSortKey(a.date,config).localeCompare(calendarDateSortKey(b.date,config))||a.title.localeCompare(b.title));
 }
 export function validateCalendarAction(action={}){
- fields(action,['type','expectedRevision','definition','date','unit','amount','reason','entryId','entry','expectedEntryRevision'],'calendar action');
+ fields(action,['type','expectedRevision','definition','date','unit','amount','reason','entryId','entry','expectedEntryRevision','clockMode','clockRate','categories'],'calendar action');
  const type=action.type;
- if(!['configure','set','advance','saveEntry','archiveEntry'].includes(type))
+ if(!['configure','set','advance','saveEntry','archiveEntry','setClock','undoTime','setCategories'].includes(type))
   throw Error('Unsupported Asteria calendar action.');
  const keys={
   configure:['type','expectedRevision','definition','date','reason'],
   set:['type','expectedRevision','date','reason'],
   advance:['type','expectedRevision','unit','amount','reason'],
   saveEntry:['type','expectedRevision','entryId','expectedEntryRevision','entry'],
-  archiveEntry:['type','expectedRevision','entryId','expectedEntryRevision']
+  archiveEntry:['type','expectedRevision','entryId','expectedEntryRevision'],
+  setClock:['type','expectedRevision','clockMode','clockRate','reason'],
+  undoTime:['type','expectedRevision','reason'],
+  setCategories:['type','expectedRevision','categories']
  }[type];
  if(Object.keys(action).some(key=>!keys.includes(key)))
   throw Error('Fields are not permitted for this Asteria calendar action.');
@@ -333,7 +446,12 @@ export function validateCalendarAction(action={}){
   if(!id(action.entryId))throw Error('Choose a calendar entry.');
   whole(action.expectedEntryRevision,0,1000000,'Calendar entry revision');
  }
- if(['configure','set','advance'].includes(type)){
+ if(type==='setClock'){
+  if(!['manual','realtime'].includes(action.clockMode))throw Error('Invalid calendar clock mode.');
+  if(!CALENDAR_CLOCK_RATES.includes(action.clockRate))throw Error('Invalid calendar clock speed.');
+ }
+ if(type==='setCategories')validateCalendarCategories(action.categories);
+ if(['configure','set','advance','setClock','undoTime'].includes(type)){
   if(action.reason!==undefined)text(action.reason,180,'GM reason',true);
  }
  return {type,expectedRevision};
