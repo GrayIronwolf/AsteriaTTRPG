@@ -11,10 +11,6 @@ export async function advancedDiceAction(db,uid,input,clock=()=>Date.now(),
   stamp=()=>new Date(),randomFace=sides=>randomInt(1,sides+1)){
   if(typeof uid!=='string'||!/^[A-Za-z0-9]{3,160}$/.test(uid))
     throw Error('Sign in to use the dice roller.');
-  if(typeof input?.action==='string'&&input.action.startsWith('appearance-')){
-    const {diceAppearanceAction}=await import('./diceAppearanceCommands.mjs');
-    return diceAppearanceAction(db,uid,input,stamp,clock);
-  }
   const request=validateDiceAction(input);
   const ref=db.doc('users/'+uid+'/diceWorkspace/current');
   return db.runTransaction(async tx=>{
