@@ -23,7 +23,7 @@ try{
   await page.waitForFunction(()=>document.querySelector('[data-roll-state=ready]'));
   check('Asteria tray mounts in real React panel',await page.locator('.asteria-advanced-dice-scene canvas').count()===1);
   await page.click('#fixture-roll');
-  await page.waitForFunction(()=>document.querySelector('[data-roll-state=settled]'),{timeout:120000});
+  await page.waitForFunction(()=>document.querySelector('[data-roll-state=settled]'),null,{timeout:120000});
   let state=await page.evaluate(()=>({
     result:document.querySelector('.asteria-advanced-dice-official strong')?.textContent,
     status:document.querySelector('.asteria-advanced-dice-tray-status')?.textContent,
