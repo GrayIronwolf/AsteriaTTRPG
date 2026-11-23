@@ -578,7 +578,7 @@ export function GMDashboard({ campaignId }) {
   const gmTradeHub=useMemo(()=>gmTradeLootOverview({itemEcosystem:live.itemEcosystem,partyLoot:live.partyLoot}),
     [live.itemEcosystem,live.partyLoot]);
   const openCanvasCharacter=character=>{
-    if(!window.AsteriaCharacterAccess?.canGMView(live.campaign,character,accountUid)){
+    if(!window.AsteriaCharacterAccess?.canGMView(live.campaign,character,accountUid,live.membership)){
       setActionError('You do not have permission to view this character.');
       return;
     }
@@ -776,7 +776,7 @@ export function GMDashboard({ campaignId }) {
         campaign={live.campaign||{id:campaignId}} characters={live.characters}
         selectedId={selectedId} setSelectedId={setSelectedId} presence={live.presence}
         order={order} onReorder={onReorder} onFocus={openCanvasCharacter}
-        onOpen={character=>openGMCharacter(live.campaign,character,{tab})}/>;
+        onOpen={character=>openGMCharacter(live.campaign,character,{tab,membership:live.membership})}/>;
       case 'requestsOverview':return <GMQuickRequests campaignId={campaignId}
         characters={live.characters} editable={live.session?.editable}
         onNavigate={setTab}/>;
@@ -828,7 +828,8 @@ export function GMDashboard({ campaignId }) {
 
   const run = async operation => { setBusy(true); setActionError(''); try { const result=await operation(); if(result?.ok===false) setActionError(result.error || 'The change could not be saved.'); } catch(error) { setActionError(error.message || String(error)); } finally { setBusy(false); } };
   if(live.loading) return <div className="react-route-state">Connecting GM Dashboard...</div>;
-  if(!window.AsteriaCharacterAccess.isGM(live.campaign, firebaseService.currentUser()?.uid)) return <div className="react-route-state" role="alert">You do not have GM access to this campaign.</div>;
+  if(live.membershipLoading) return <div className="react-route-state">Verifying GM campaign membership...</div>;
+  if(!window.AsteriaCharacterAccess.isGM(live.campaign,accountUid,live.membership)) return <div className="react-route-state" role="alert">{live.membershipError||'You do not have GM access to this campaign.'}</div>;
   return <AsteriaAppShell
     className="react-gm-dashboard"
     eyebrow="GM Dashboard"
@@ -841,7 +842,7 @@ export function GMDashboard({ campaignId }) {
       <PartySidebar campaign={live.campaign || { id: campaignId }}
         characters={live.characters} selectedId={selectedId}
         setSelectedId={setSelectedId} presence={live.presence}
-        onOpen={character=>openGMCharacter(live.campaign,character,{tab})}/>
+        onOpen={character=>openGMCharacter(live.campaign,character,{tab,membership:live.membership})}/>
     </section>:null}
     <GMRecordingParticipationNotice key={campaignId} campaignId={campaignId}/>
     <DashboardNavigation role="gm" storageScope={campaignId+":"+accountUid} tabs={GM_TABS} active={tab} onChange={next=>{setGMSearchTarget(null);setGMHubDestination(null);setTab(next);}} ariaLabel="GM Dashboard menu" />
@@ -856,7 +857,7 @@ export function GMDashboard({ campaignId }) {
       <GMPartyControl key={campaignId+':'+accountUid+':party'} campaign={live.campaign}
         characters={live.characters} selectedId={selectedId} onSelect={setSelectedId}
         onNavigate={openGMHubLink}
-        onOpenCharacter={character=>openGMCharacter(live.campaign,character,{tab})}/>
+        onOpenCharacter={character=>openGMCharacter(live.campaign,character,{tab,membership:live.membership})}/>
     </> : null}
     {tab === 'main' ? <CanvasWorkspace key={campaignId+':'+accountUid+':gm-main'}
         uid={accountUid} campaignId={campaignId}
@@ -889,7 +890,7 @@ export function GMDashboard({ campaignId }) {
         campaign={live.campaign||{id:campaignId}} characters={live.characters}
         selectedId={selectedId} setSelectedId={setSelectedId} presence={live.presence}
         order={order} onReorder={onReorder} onFocus={openCanvasCharacter}
-        onOpen={character=>openGMCharacter(live.campaign,character,{tab})}/>}/> : null}
+        onOpen={character=>openGMCharacter(live.campaign,character,{tab,membership:live.membership})}/>}/> : null}
     {tab === 'inventory' ? <><GMTradeLootHub overview={gmTradeHub} onNavigate={openGMHubLink}/><PCInventory campaignId={campaignId} characters={live.characters} selectedId={selectedId} onSelect={setSelectedId} editable={live.session?.editable} rewards={<><section id="react-gm-inventory-audit" tabIndex={-1}><GMInventoryAuditWorkspace characters={live.characters} events={live.events}/></section><LootRewards campaignId={campaignId} characters={live.characters} events={live.events} customItems={live.customItems}/><GMRewardTools campaignId={campaignId} characters={live.characters} events={live.events} workspace={workspace} saveSection={saveSection} customItems={live.customItems} editable={live.session?.editable}/><section id="react-gm-party-loot" tabIndex={-1}><GMPartyLootPanel campaignId={campaignId} characters={live.characters} partyLoot={live.partyLoot} customItems={live.customItems} editable={live.session?.editable}/></section></>}/></> : null}
     {tab === 'information' ? <CampaignInformationWorkspace campaignId={campaignId} campaign={live.campaign} workspace={workspace} characters={live.characters}/> : null}
     {tab === 'quests' ? <QuestWorkspace campaignId={campaignId} workspace={workspace} characters={live.characters} saveSection={saveSection} searchTarget={gmSearchTarget}/> : null}
@@ -901,7 +902,7 @@ export function GMDashboard({ campaignId }) {
     {tab === 'economy' ? <><GMTradeLootHub overview={gmTradeHub} onNavigate={openGMHubLink}/><EconomyWorkspace campaignId={campaignId} workspace={workspace} characters={live.characters} itemEcosystem={live.itemEcosystem} customItems={live.customItems} saveSection={saveSection} searchTarget={gmSearchTarget}/></> : null}
     {tab === 'crafting' ? <CraftingWorkspace campaignId={campaignId} workspace={workspace} characters={live.characters} saveSection={saveSection}/> : null}
     <GMUniversalCheckNotification campaignId={campaignId} onOpen={()=>setTab('tools')}/>
-    {tab === 'tools' ? <div className="react-gm-tools-grid"><GMUniversalCheckManager campaignId={campaignId} characters={live.characters}/>{live.characters[selectedId]?<><ConditionsPanel campaignId={campaignId} character={live.characters[selectedId]} isGM editable={live.session?.editable} clock={{encounter:live.encounter,now:live.clock}}/><ResourceRulesPanel key={selectedId} campaignId={campaignId} character={live.characters[selectedId]} editable={live.session?.editable}/></>:null}<CampaignManagerWorkspace campaignId={campaignId} campaign={live.campaign} characters={live.characters} session={live.session} workspace={workspace} saveSection={saveSection}/><ACInspectionPanel campaignId={campaignId} characters={live.characters} selectedId={selectedId} setSelectedId={setSelectedId}/><PlayerManagementTools campaignId={campaignId} characters={live.characters}/><MagicElementRewards campaignId={campaignId} characters={live.characters} events={live.events} /><GMRewardTools campaignId={campaignId} characters={live.characters} events={live.events} workspace={workspace} saveSection={saveSection} customItems={live.customItems} editable={live.session?.editable}/></div> : null}
+    {tab === 'tools' ? <div className="react-gm-tools-grid"><GMUniversalCheckManager campaignId={campaignId} characters={live.characters}/>{live.characters[selectedId]?<><ConditionsPanel campaignId={campaignId} character={live.characters[selectedId]} isGM editable={live.session?.editable} clock={{encounter:live.encounter,now:live.clock}}/><ResourceRulesPanel key={selectedId} campaignId={campaignId} character={live.characters[selectedId]} editable={live.session?.editable}/></>:null}<CampaignManagerWorkspace campaignId={campaignId} campaign={live.campaign} characters={live.characters} members={live.members} rosterError={live.memberRosterError} session={live.session} workspace={workspace} saveSection={saveSection}/><ACInspectionPanel campaignId={campaignId} characters={live.characters} selectedId={selectedId} setSelectedId={setSelectedId}/><PlayerManagementTools campaignId={campaignId} characters={live.characters}/><MagicElementRewards campaignId={campaignId} characters={live.characters} events={live.events} /><GMRewardTools campaignId={campaignId} characters={live.characters} events={live.events} workspace={workspace} saveSection={saveSection} customItems={live.customItems} editable={live.session?.editable}/></div> : null}
     {tab === 'gameplay' ? <GameplayWorkspace campaignId={campaignId} workspace={workspace} partyWorkspace={live.partyWorkspace} characters={live.characters} saveSection={saveSection}/> : null}
     {tab === 'world' ? <WorldWorkspace workspace={workspace} saveSection={saveSection} searchTarget={gmSearchTarget}/> : null}
     {tab === 'battle-maps' ? <GMBattleMapManager campaignId={campaignId} characters={live.characters} encounter={live.encounter} searchTarget={gmSearchTarget}/> : null}
@@ -912,7 +913,7 @@ export function GMDashboard({ campaignId }) {
     {tab === 'weather-environment' ? <GMWeatherEnvironmentWorkspace key={campaignId} campaignId={campaignId}/> : null}
     {tab === 'world-atlas' ? <GMWorldAtlasWorkspace key={campaignId} campaignId={campaignId} searchTarget={gmSearchTarget}/> : null}
     {(tab==='combat'||tab==='main')&&canvasCharacterId&&live.characters[canvasCharacterId]&&
-      window.AsteriaCharacterAccess?.canGMView(live.campaign,live.characters[canvasCharacterId],accountUid)?
+      window.AsteriaCharacterAccess?.canGMView(live.campaign,live.characters[canvasCharacterId],accountUid,live.membership)?
       <Modal title={(live.characters[canvasCharacterId]?.name||'Character')+' — Player Dashboard'}
         eyebrow="GM Character Inspection" onClose={()=>setCanvasCharacterId('')}>
         <div className="react-canvas-character-dashboard" data-testid="gm-canvas-character-dashboard">
