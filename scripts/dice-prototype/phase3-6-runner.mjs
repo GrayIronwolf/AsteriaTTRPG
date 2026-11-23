@@ -29,7 +29,7 @@ try{
     await page.getByRole('tab',{name:'Advanced'}).count()===1);
   check('All fourteen dice families are available in Basic',
     await page.locator('select[aria-label="Core dice design"] option').count()===14);
-  await page.locator('input[aria-label="Dice body colour"]').fill('#AABBCC');
+  await page.locator('input[aria-label="Dice body colour"]').fill('#aabbcc');
   check('Live appearance edits enable Undo without requesting a roll',
     await page.getByRole('button',{name:'Undo'}).isEnabled()&&
     await page.evaluate(()=>window.phase36Metrics.officialCalls)===0);
