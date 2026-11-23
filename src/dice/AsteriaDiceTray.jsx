@@ -8,7 +8,7 @@ import {defaultDiceTrayAppearance,validateDiceTrayAppearance,getDiceTrayFamily} 
 import {attachDiceTray} from './diceTrayScene.mjs';
 import {attachDiceTower} from './diceTowerScene.mjs';
 import {defaultDiceTowerAppearance,getDiceTowerFamily,
- validateDiceTowerAppearance,TOWER_MAX_VISIBLE_DICE} from './diceTowerCatalogue.mjs';
+ TOWER_MAX_VISIBLE_DICE} from './diceTowerCatalogue.mjs';
 import {DiceTrayStudio} from './DiceTrayStudio.jsx';
 
 const messages={
