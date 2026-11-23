@@ -10,8 +10,10 @@ on:
       - 'scripts/dice-engine-phase2.test.mjs'
       - 'scripts/dice-engine-phase3-1.test.mjs'
       - 'scripts/dice-engine-phase3-2.test.mjs'
+      - 'scripts/dice-engine-phase3-3.test.mjs'
       - 'scripts/dice-prototype/phase2*'
       - 'scripts/dice-prototype/phase3-2*'
+      - 'scripts/dice-prototype/phase3-3*'
       - 'scripts/digital-gm-phase7-1.test.mjs'
       - 'package.json'
       - '.github/workflows/build-advanced-dice-phase1.yml'
@@ -48,6 +50,15 @@ jobs:
         run: node scripts/dice-prototype/phase2-runner.mjs
       - name: Verify twelve Asteria PBR dice in Chromium
         run: node scripts/dice-prototype/phase3-2-runner.mjs
+      - name: Verify Familiar Dice artwork and animations in Chromium
+        run: node scripts/dice-prototype/phase3-3-runner.mjs
+      - name: Store Phase 3.3 Familiar Dice evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asteria-dice-phase3-3
+          path: dice-phase3-3-evidence/
+          if-no-files-found: warn
       - name: Store Phase 3.2 preview evidence
         if: always()
         uses: actions/upload-artifact@v4

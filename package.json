@@ -73,7 +73,7 @@
     "test:asteria-calendar": "node --test scripts/digital-gm-phase8-1.test.mjs",
     "test:encounter-rewards": "node --test scripts/digital-gm-phase7-3.test.mjs",
     "test:random-tables": "node --test scripts/digital-gm-phase7-2.test.mjs",
-    "test:advanced-dice": "node --test scripts/digital-gm-phase7-1.test.mjs scripts/dice-engine-phase1.test.mjs scripts/dice-engine-phase2.test.mjs scripts/dice-engine-phase3-1.test.mjs scripts/dice-engine-phase3-2.test.mjs",
+    "test:advanced-dice": "node --test scripts/digital-gm-phase7-1.test.mjs scripts/dice-engine-phase1.test.mjs scripts/dice-engine-phase2.test.mjs scripts/dice-engine-phase3-1.test.mjs scripts/dice-engine-phase3-2.test.mjs scripts/dice-engine-phase3-3.test.mjs",
     "test:combat": "node --test scripts/combat-panel.test.mjs scripts/site-encounter-completion-phase6-8.test.mjs scripts/site-combat-final-phase6-9.test.mjs",
     "test:dashboard": "node --test scripts/hybrid-dashboard-navigation.test.mjs scripts/dashboard-gameplay.test.mjs scripts/dashboard-navigation.test.mjs scripts/dashboard-layout.test.mjs scripts/dashboard-grid.test.mjs scripts/dashboard-responsive-editor.test.mjs scripts/phase6-optional-panels.test.mjs scripts/phase6-gameplay-integration.test.mjs scripts/gm-toolkit-phase2-1.test.mjs scripts/gm-focus-phase2-2.test.mjs scripts/gm-phase2-3.test.mjs scripts/gm-phase3-1.test.mjs scripts/gm-phase3-2.test.mjs scripts/gm-phase3-3.test.mjs scripts/gm-main-canvas-phase2.test.mjs scripts/player-main-canvas-phase3.test.mjs scripts/canvas-resource-card-zoom.test.mjs",
     "test:compendium": "node --test scripts/compendium.test.mjs scripts/compendium-loading.test.mjs scripts/approved-vault-bridge.test.mjs",
