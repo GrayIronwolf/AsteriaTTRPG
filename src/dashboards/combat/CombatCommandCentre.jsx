@@ -228,7 +228,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
         Math.round(value.y*100)/100+'px,0) scale('+value.scale+')';
     const viewport=canvas.current;
     if(viewport){
-      const grid=combatCanvasGridStyle(value);
+      const grid=combatCanvasGridStyle(value,layout.gridSize);
       for(const [key,entry] of Object.entries(grid))
         viewport.style.setProperty(key,key==='--combat-grid-opacity'&&!layout.gridVisible?'0':entry);
       viewport.dataset.detailLevel=combatCanvasDetailLevel(value,layout.detailMode);
@@ -237,7 +237,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
   };
   const animateCamera=()=>{
     const node=stage.current,viewport=canvas.current;
-    if(!node||window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;
+    if(!node||!layout.smoothAnimations||window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;
     clearTimeout(focusTimer.current);
     node.classList.add(styles.cameraFocus);
     viewport?.classList.add(styles.cameraFocus);
@@ -541,7 +541,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
       [...previous.hidden,id]
     }));
   };
-  const gridStyle=combatCanvasGridStyle(camera);
+  const gridStyle=combatCanvasGridStyle(camera,layout.gridSize);
   const detailLevel=combatCanvasDetailLevel(camera,layout.detailMode);
   return <section className={styles.centre} ref={root}
     aria-label={playerCanvas?'Player Main Dashboard Canvas':
@@ -552,6 +552,8 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
       style={{...gridStyle,'--combat-grid-opacity':layout.gridVisible?gridStyle['--combat-grid-opacity']:'0'}}
       data-detail-level={detailLevel}
       data-detail-mode={layout.detailMode}
+      data-background={layout.canvasBackground}
+      data-motion={layout.smoothAnimations?'on':'off'}
       data-editing={wide&&canEditCanvas&&!layout.canvasLocked}
       data-layout-mode={wide?'freeform':'stacked'}
       aria-label={playerCanvas?'Player dashboard freeform canvas':
@@ -811,6 +813,40 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
                 <option value="proportional">Proportional at every zoom</option>
               </select>
             </label>
+            <fieldset className={styles.appearanceGroup}>
+              <legend>Appearance</legend>
+              <label>Grid spacing
+                <select aria-label="Canvas grid spacing"
+                  disabled={!canEditCanvas} value={layout.gridSize}
+                  onChange={event=>setPreference(previous=>({...previous,
+                    gridSize:Number(event.target.value)}))}>
+                  <option value={16}>Small (16)</option>
+                  <option value={26}>Standard (26)</option>
+                  <option value={40}>Large (40)</option>
+                </select>
+              </label>
+              <label>Canvas background
+                <select aria-label="Canvas background"
+                  disabled={!canEditCanvas} value={layout.canvasBackground}
+                  onChange={event=>setPreference(previous=>({...previous,
+                    canvasBackground:event.target.value}))}>
+                  <option value="midnight">Midnight blue-grey</option>
+                  <option value="obsidian">Obsidian Stone</option>
+                  <option value="slate">Stone Slate</option>
+                </select>
+              </label>
+              <label><input type="checkbox" checked={layout.smoothAnimations}
+                disabled={!canEditCanvas}
+                onChange={event=>setPreference(previous=>({...previous,
+                  smoothAnimations:event.target.checked}))}/> Smooth canvas animations</label>
+              <button type="button" className={styles.openingView}
+                disabled={!canEditCanvas}
+                onClick={()=>setPreference(previous=>({...previous,
+                  gridVisible:true,gridSize:26,canvasBackground:'midnight',
+                  smoothAnimations:true,detailMode:'adaptive'}))}>
+                Reset appearance only
+              </button>
+            </fieldset>
             <p className={styles.sidebarHint}>Initial guide: 100 columns by 60 rows.
               The dot grid continues as you pan. At 50% zoom, approximately
               40 dot rows are visible on a typical desktop viewport.</p>

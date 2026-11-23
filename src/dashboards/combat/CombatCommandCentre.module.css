@@ -6,12 +6,25 @@
   height:var(--combat-viewport-height,max(580px,calc(100dvh - 190px)));
   min-height:380px;overflow:hidden;touch-action:none;cursor:grab;
   border:0!important;border-radius:0;box-shadow:none;outline:0;
-  background-color:#091623;
+  --combat-canvas-background:#091623;
+  background-color:var(--combat-canvas-background);
   background-image:radial-gradient(ellipse at 50% 0%,rgba(42,86,117,.20),transparent 68%),
     radial-gradient(circle,rgba(130,174,194,var(--combat-grid-opacity,.22)) .8px,transparent 1px);
   background-size:100% 100%,var(--combat-grid-spacing,26px) var(--combat-grid-spacing,26px);
   background-position:center top,var(--combat-grid-x,0px) var(--combat-grid-y,60px);
   overscroll-behavior:contain}
+.canvas[data-background='obsidian']{--combat-canvas-background:#090e14;
+ background-image:linear-gradient(rgba(5,12,19,.82),rgba(5,12,19,.82)),
+  var(--asteria-panel-backdrop,url("../../../assets/ui/royal-relic-obsidian.svg")),
+  radial-gradient(circle,rgba(130,174,194,var(--combat-grid-opacity,.22)) .8px,transparent 1px);
+ background-size:100% 100%,512px 512px,var(--combat-grid-spacing,26px) var(--combat-grid-spacing,26px);
+ background-position:center,center,var(--combat-grid-x,0px) var(--combat-grid-y,60px)}
+.canvas[data-background='slate']{--combat-canvas-background:#222a31;
+ background-image:linear-gradient(rgba(20,27,33,.87),rgba(20,27,33,.87)),
+  var(--asteria-panel-slate-backdrop,linear-gradient(140deg,#36414b,#151d25)),
+  radial-gradient(circle,rgba(150,180,194,var(--combat-grid-opacity,.22)) .8px,transparent 1px);
+ background-size:100% 100%,100% 100%,var(--combat-grid-spacing,26px) var(--combat-grid-spacing,26px);
+ background-position:center,center,var(--combat-grid-x,0px) var(--combat-grid-y,60px)}
 .canvas:active{cursor:grabbing}
 .canvas button:disabled{opacity:.42;cursor:not-allowed}
 .canvas button:focus-visible,.canvas input:focus-visible,.canvas select:focus-visible,
@@ -22,6 +35,8 @@
   transform:translate3d(var(--combat-pan-x),var(--combat-pan-y),0) scale(var(--combat-scale));
   pointer-events:auto}
 .cameraFocus{transition:transform 240ms cubic-bezier(.22,1,.36,1);will-change:transform}
+.canvas[data-motion='off'] .cameraFocus{transition:none!important}
+.canvas[data-motion='off'].cameraFocus{transition:none!important}
 .canvas.cameraFocus{transition:background-size 240ms cubic-bezier(.22,1,.36,1),
  background-position 240ms cubic-bezier(.22,1,.36,1)}
 @media(prefers-reduced-motion:reduce){.cameraFocus{transition:none}}
@@ -162,6 +177,12 @@
 .openingView:hover{border-color:var(--asteria-border-active);background:var(--asteria-accent-soft)}
 .drawerSettings label{display:flex;gap:9px;align-items:center;margin-top:12px;font-size:.82rem}
 .drawerSettings input{accent-color:var(--asteria-accent)}
+.appearanceGroup{margin:12px 0 0;padding:10px;border:1px solid var(--asteria-border-subtle);
+ border-radius:var(--asteria-radius-sm);min-width:0}
+.appearanceGroup legend{font-weight:600;font-size:.85rem;padding:0 5px}
+.appearanceGroup label{display:flex;flex-wrap:wrap;justify-content:space-between}
+.appearanceGroup select{width:100%;margin-top:5px}
+.appearanceGroup .openingView{margin-top:12px}
 .drawerSettings select{min-width:0;max-width:100%;padding:7px;
  border:1px solid var(--asteria-border-active);
  background:var(--asteria-surface-raised);color:var(--asteria-text)}

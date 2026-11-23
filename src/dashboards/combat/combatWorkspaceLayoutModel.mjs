@@ -58,10 +58,11 @@ export function zoomCombatCamera(camera,scale,pivot={x:0,y:0}){
  * coordinates as the windows. Level-of-detail avoids aliasing at small zoom.
  * The 100 x 60 initial guide is not a hard movement boundary.
  */
-export function combatCanvasGridStyle(camera){
+export function combatCanvasGridStyle(camera,gridSize=COMBAT_CANVAS_GRID_DOT_SPACING){
  const view=normalizeCombatCamera(camera);
  const stride=view.scale<.18?8:view.scale<.3?4:view.scale<.45?2:1;
- const spacing=Math.round(COMBAT_CANVAS_GRID_DOT_SPACING*view.scale*stride*100)/100;
+ const base=[16,26,40].includes(Number(gridSize))?Number(gridSize):COMBAT_CANVAS_GRID_DOT_SPACING;
+ const spacing=Math.round(base*view.scale*stride*100)/100;
  return {
   '--combat-grid-spacing':spacing+'px',
   '--combat-grid-x':view.x+'px',
@@ -251,6 +252,10 @@ function normaliseBase(raw,config=COMBAT_CANVAS_CONFIG){
       .filter(id=>typeof id==='string'&&id.length>0&&id.length<=180))].slice(0,200),
     groups,
     gridVisible:source.gridVisible!==false,
+    gridSize:[16,26,40].includes(Number(source.gridSize))?Number(source.gridSize):26,
+    canvasBackground:['midnight','obsidian','slate'].includes(source.canvasBackground)
+      ?source.canvasBackground:'midnight',
+    smoothAnimations:source.smoothAnimations!==false,
     detailMode:source.detailMode==='proportional'?'proportional':'adaptive',
     canvasLocked:source.canvasLocked===true
   };

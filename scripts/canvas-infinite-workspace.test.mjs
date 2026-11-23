@@ -100,3 +100,40 @@ test('Canvas preserves existing panel layouts and moves far beyond the initial g
  assert.match(renderer,/\{x:event.clientX-rect.left,y:event.clientY-rect.top-60\}/);
  assert.match(renderer,/setFrontWindow\(current=>current===id\?current:id\)/);
 });
+
+test('Appearance preferences are scoped to each canvas layout and do not reset window positions',()=>{
+ const normalizers=[
+  [defaultCombatWorkspaceLayout(),normalizeCombatWorkspace],
+  [defaultGMCanvasLayout(),normalizeGMCanvasLayout],
+  [defaultPlayerCanvasLayout(),normalizePlayerCanvasLayout]
+ ];
+ for(const [initial,normalize] of normalizers){
+  assert.equal(initial.gridSize,26);
+  assert.equal(initial.canvasBackground,'midnight');
+  assert.equal(initial.smoothAnimations,true);
+  const altered=normalize({...initial,gridVisible:false,gridSize:40,
+   canvasBackground:'slate',smoothAnimations:false,detailMode:'proportional'});
+  assert.equal(altered.gridVisible,false);
+  assert.equal(altered.gridSize,40);
+  assert.equal(altered.canvasBackground,'slate');
+  assert.equal(altered.smoothAnimations,false);
+  assert.equal(altered.detailMode,'proportional');
+  assert.deepEqual(altered.freeform.positions,initial.freeform.positions);
+  assert.equal(normalize(altered).canvasBackground,'slate');
+  assert.equal(normalize({...altered,gridSize:999,canvasBackground:'unknown'}).gridSize,26);
+  assert.equal(normalize({...altered,gridSize:999,canvasBackground:'unknown'}).canvasBackground,'midnight');
+ }
+ assert.equal(combatCanvasGridStyle({scale:.5,x:0,y:0},16)['--combat-grid-spacing'],'8px');
+ assert.equal(combatCanvasGridStyle({scale:.5,x:0,y:0},40)['--combat-grid-spacing'],'20px');
+ const renderer=read('src/dashboards/combat/CombatCommandCentre.jsx');
+ const styles=read('src/dashboards/combat/CombatCommandCentre.module.css');
+ assert.match(renderer,/Canvas grid spacing/);
+ assert.match(renderer,/Canvas background/);
+ assert.match(renderer,/Smooth canvas animations/);
+ assert.match(renderer,/Reset appearance only/);
+ assert.match(renderer,/data-background=\{layout.canvasBackground\}/);
+ assert.match(renderer,/data-motion=\{layout.smoothAnimations\?'on':'off'\}/);
+ assert.match(styles,/\.canvas\[data-background='obsidian'\]/);
+ assert.match(styles,/\.canvas\[data-background='slate'\]/);
+ assert.match(styles,/\.canvas\[data-motion='off'\]/);
+});
