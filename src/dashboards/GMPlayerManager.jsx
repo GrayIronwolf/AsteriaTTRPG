@@ -66,6 +66,8 @@ export function GMPlayerManager({campaignId,campaign={},characters={},members=nu
   const invitations=Array.isArray(invitationData?.invitations)?invitationData.invitations:[];
   const activity=Array.isArray(activityData?.events)?activityData.events:[];
   const scope=campaignId+':'+uid;
+  const liveScope=useRef(scope);
+  liveScope.current=scope;
   const owner=access.owner;
 
   // Page data is fetched from existing authenticated callable services.
@@ -91,7 +93,16 @@ export function GMPlayerManager({campaignId,campaign={},characters={},members=nu
     let active=true;
     if(!tasks.length){setLoading(false);return()=>{active=false;};}
     setLoading(true);
-    setLoadErrors(previous=>({...previous,[view]:''}));
+    setLoadErrors(previous=>({...previous,...Object.fromEntries(tasks.map(item=>[item.key,'']))}));
+    // Never leave stale privileged controls visible after a refresh failure.
+    for(const task of tasks){
+      if(task.key==='roster')setServerRoster(null);
+      else if(task.key==='joins')setJoinData(null);
+      else if(task.key==='links')setLinksData(null);
+      else if(task.key==='lifecycle')setLifecycleData(null);
+      else if(task.key==='invitations')setInvitationData(null);
+      else if(task.key==='activity')setActivityData(null);
+    }
     Promise.allSettled(tasks.map(item=>item.request)).then(results=>{
       if(!active)return;
       const errors={};
@@ -152,7 +163,8 @@ export function GMPlayerManager({campaignId,campaign={},characters={},members=nu
     try{
       const result=await request();
       if(result?.ok===false)throw Error(result.error||'The server rejected the change.');
-      if(firebaseService.currentUser()?.uid!==uid)throw Error('Account changed. Refresh your dashboard.');
+      if(firebaseService.currentUser()?.uid!==uid||liveScope.current!==scope)
+        throw Error('Campaign or account changed. Refresh your dashboard.');
       setFeedback(success||'Saved on the campaign server.');
       refresh();
     }catch(error){setFeedback(errorText(error));}
@@ -244,6 +256,8 @@ export function GMPlayerManager({campaignId,campaign={},characters={},members=nu
         campaignId,requestId:window.crypto.randomUUID(),type:'share-link',
         roleOffered:inviteRole,recipientEmail:null,expiresInHours,maxUses
       });
+      if(firebaseService.currentUser()?.uid!==uid||liveScope.current!==scope)
+        throw Error('Campaign or account changed. Private link will not be displayed.');
       if(result?.token&&result?.inviteId){
         const base=window.location.href.split('#')[0];
         setIssuedLink(linkBuilder(base,campaignId,result.inviteId,result.token));
@@ -283,7 +297,11 @@ export function GMPlayerManager({campaignId,campaign={},characters={},members=nu
     else onNavigate?.({tab});
   };
   const stateMessage=(key,enabled)=>{
-    if(!access.v2)return 'This legacy campaign uses its existing membership system. Upgrading to canonical membership requires a separately approved migration.';
+    if(!access.v2){
+      if(campaign?.membershipSchemaVersion!=null&&campaign.membershipSchemaVersion!==1)
+        return 'This campaign uses an unsupported membership schema. Administration is blocked.';
+      return 'This legacy campaign uses its existing membership system. Upgrading to canonical membership requires a separately approved migration.';
+    }
     if(!enabled)return 'This feature is staged but not activated. The necessary browser and server release switches remain off.';
     if(loadErrors[key])return loadErrors[key];
     return 'No records to display.';
@@ -385,10 +403,10 @@ export function GMPlayerManager({campaignId,campaign={},characters={},members=nu
         <div><h3>Account {row.uid}</h3><small>Requested {row.requestedAt||'Date unavailable'}</small>
           <p>Preferred character: {row.requestedCharacterId||'None selected'} (not automatically linked)</p></div>
         <div className="react-gm-player-actions">
-          <ActionButton disabled={!!busy||!gmPlayerManagerApprovalAllowed({...row,status:'pending'},'approve',capacity)}
-            onClick={()=>reviewJoin({...row,status:'pending'},'approve')}>Approve</ActionButton>
-          <ActionButton disabled={!!busy||!gmPlayerManagerApprovalAllowed({...row,status:'pending'},'decline',capacity)}
-            onClick={()=>reviewJoin({...row,status:'pending'},'decline')} danger>Decline</ActionButton>
+          <ActionButton disabled={!!busy||!gmPlayerManagerApprovalAllowed(row,'approve',capacity)}
+            onClick={()=>reviewJoin(row,'approve')}>Approve</ActionButton>
+          <ActionButton disabled={!!busy||!gmPlayerManagerApprovalAllowed(row,'decline',capacity)}
+            onClick={()=>reviewJoin(row,'decline')} danger>Decline</ActionButton>
         </div>
       </article>)}</div>
       {joinData?.truncated?<ReadOnlyNotice>Additional pending requests may exist. Review the current page, then refresh.</ReadOnlyNotice>:null}
