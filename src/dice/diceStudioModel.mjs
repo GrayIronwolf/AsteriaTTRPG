@@ -7,7 +7,7 @@ export const STUDIO_LOOKS=Object.freeze([
   Object.freeze({id:'obsidian',name:'Obsidian & Steel',diceId:'dice-obsidian',trayId:'obsidian-hexagon'}),
   Object.freeze({id:'royal',name:'Royal Court',diceId:'dice-celestial',trayId:'royal-marble'}),
   Object.freeze({id:'arcane',name:'Arcane Study',diceId:'dice-arcane',trayId:'arcane-circle'}),
-  Object.freeze({id:'forest',name:'Woodland Hunt',diceId:'dice-nature',trayId:'hunter-leather'})
+  Object.freeze({id:'forest',name:'Woodland Hunt',diceId:'dice-nature',trayId:'hunters-leather'})
 ]);
 
 const validatePair=({dice,tray})=>({
