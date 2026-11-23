@@ -32,7 +32,8 @@ test('Larger resize handles and balanced default GM windows keep custom layouts 
  const css=read('src/dashboards/combat/CombatCommandCentre.module.css');
  const {defaultGMCanvasLayout,normalizeGMCanvasLayout}=await import('../src/state/dashboardLayoutModel.mjs');
  assert.match(css,/width:16px;height:16px;min-height:16px!important/);
- assert.match(css,/background-color:#091623/);
+ assert.match(css,/--combat-canvas-background:#091623/);
+ assert.match(css,/background-color:var\(--combat-canvas-background\)/);
  assert.match(css,/\.focused\{border-color:/);
  const base=defaultGMCanvasLayout();
  assert.deepEqual(base.freeform.positions.gmResources,{x:0,y:0,w:490,h:620});
