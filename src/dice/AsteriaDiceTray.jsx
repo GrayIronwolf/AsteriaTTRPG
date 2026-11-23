@@ -128,7 +128,7 @@ export function AsteriaDiceTray({
         validateDiceAppearance(appearanceRef.current):defaultDiceAppearance();
       // The public registration API is lazily imported in the render effect.
       // This avoids putting Open Dice into the main application bundle.
-      if(current.special!==null)throw Error('Special dice are not available in Phase 3.2.');
+      if(current.familyId==='dice-watcher')throw Error('Watcher Dice are reserved for Phase 3.4.');
     }catch{
       setStatus('unavailable');return undefined;
     }
