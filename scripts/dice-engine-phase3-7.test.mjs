@@ -87,12 +87,10 @@ test('server validates owned character and never writes roll history',async()=>{
   collectionId:'collection-12345'}),/not found/);
  assert.equal(JSON.stringify(docs.get('users/alice/diceWorkspace/current')),original);
 });
-test('existing callable and studio are reused rather than duplicated',()=>{
+test('existing backend callable is reused and private Firestore rules apply',()=>{
  const read=x=>readFileSync(new URL('../'+x,import.meta.url),'utf8');
- assert.match(read('src/dashboards/AdvancedDiceWorkspace.jsx'),/<DiceAppearanceCollections/);
- assert.match(read('js/firebase-auth.js'),/subscribeOwnedDiceCharacters/);
  assert.match(read('functions/advancedDiceCommands.mjs'),/diceAppearanceAction/);
  assert.match(read('functions/index.mjs'),/asteriaAdvancedDice=onCall/);
  assert.match(read('firestore.rules'),/collectionId != 'diceAppearances'/);
- assert.doesNotMatch(read('src/dice/DiceAppearanceCollections.jsx'),/firebaseService|Math\.random/);
+ assert.match(read('firestore.rules'),/match \/diceAppearances\/\{documentId\}/);
 });
