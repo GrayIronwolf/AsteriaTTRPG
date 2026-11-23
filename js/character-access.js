@@ -2,9 +2,18 @@
 (function(root){
   const owns = (character, uid) => Boolean(uid && character?.ownerUid === uid);
   const ownedIds = (characters, uid) => Object.keys(characters || {}).filter(id => owns(characters[id], uid));
-  const isGM = (campaign, uid) => Boolean(uid && campaign && (
-    campaign.ownerUid === uid || campaign.roles?.[uid] === 'gm' || (campaign.gmUids || []).includes(uid)
-  ));
+  // v2 access is derived from the active member document, never legacy roles.
+  const isGM = (campaign, uid, membership = null) => {
+    if(!uid || !campaign)return false;
+    const version=campaign.membershipSchemaVersion;
+    if(version===2)return campaign.ownerUid===uid || Boolean(
+      campaign.id && membership?.uid===uid && membership?.campaignId===campaign.id &&
+      membership?.status==='active' && membership?.role==='co-gm'
+    );
+    if(version!==undefined && version!==null && version!==1)return false;
+    return campaign.ownerUid===uid || campaign.roles?.[uid]==='gm' ||
+      (Array.isArray(campaign.gmUids) && campaign.gmUids.includes(uid));
+  };
   function linkProblem(campaign, character){
     if(!campaign?.id || !character?.id) return 'The campaign or character record ID is missing.';
     if(!character.ownerUid) return 'This character has no verified owner.';
@@ -18,6 +27,6 @@
   }
   const isLinked=(campaign,character)=>linkProblem(campaign,character)==='';
   root.AsteriaCharacterAccess = Object.freeze({ owns, ownedIds, isGM, isLinked, linkProblem,
-    canGMView:(campaign, character, uid) => isGM(campaign, uid) && isLinked(campaign, character)
+    canGMView:(campaign, character, uid, membership = null) => isGM(campaign, uid, membership) && isLinked(campaign, character)
   });
 })(typeof window === 'undefined' ? globalThis : window);
