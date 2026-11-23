@@ -4,6 +4,7 @@ import {
   DICE_SIDES,MAX_DICE_GROUPS,MAX_DICE_PER_ROLL,MAX_DICE_HISTORY,
   MAX_DICE_PRESETS,diceConfig,diceExpression
 } from '../state/diceRollModel.mjs';
+import {AsteriaDiceTray} from '../dice/AsteriaDiceTray.jsx';
 import '../styles/advanced-dice.css';
 
 const EMPTY={pool:[{count:1,sides:20}],modifier:0,label:''};
@@ -16,6 +17,11 @@ export function AdvancedDiceWorkspace({role='player'}){
   const [config,setConfig]=useState(EMPTY),[presetName,setPresetName]=useState('');
   const [busy,setBusy]=useState(false),[error,setError]=useState('');
   const [notice,setNotice]=useState(''),[showHistory,setShowHistory]=useState(true);
+  const [animatedRoll,setAnimatedRoll]=useState(null);
+  const [animateDice,setAnimateDice]=useState(()=>{
+    if(typeof window==='undefined'||typeof window.matchMedia!=='function')return true;
+    return !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  });
   const lastRequest=useRef(null);
   useEffect(()=>{
     setWorkspace({presets:[],history:[]});setError('');setNotice('');
@@ -52,7 +58,10 @@ export function AdvancedDiceWorkspace({role='player'}){
       lastRequest.current={fingerprint,requestId:crypto.randomUUID()};
     const response=await execute({action:'roll',...checked,requestId:lastRequest.current.requestId},
       'Digital roll recorded in your private history.');
-    if(response?.ok)lastRequest.current=null;
+    if(response?.ok){
+      lastRequest.current=null;
+      if(response.roll)setAnimatedRoll(response.roll);
+    }
   };
   const savePreset=async()=>{
     let checked;
@@ -70,7 +79,8 @@ export function AdvancedDiceWorkspace({role='player'}){
   };
   const clear=async()=>{
     if(!window.confirm('Permanently clear your private dice roll history? Saved presets will remain.'))return;
-    await execute({action:'clear-history',confirmed:true},'Private dice history cleared.');
+    const result=await execute({action:'clear-history',confirmed:true},'Private dice history cleared.');
+    if(result?.ok)setAnimatedRoll(null);
   };
   let expression='',validation='';
   try{expression=diceExpression(config);}catch(err){validation=readFailure(err);}
@@ -138,6 +148,12 @@ export function AdvancedDiceWorkspace({role='player'}){
         </section>
       </div>
       <div className="asteria-advanced-dice-record">
+        <label className="asteria-advanced-dice-motion-control">
+          <input type="checkbox" checked={animateDice}
+            onChange={event=>setAnimateDice(event.target.checked)}/>
+          Animate confirmed rolls in 3D
+        </label>
+        <AsteriaDiceTray record={animatedRoll} enabled={animateDice}/>
         <h3>Last roll</h3>
         {latest?<article className="asteria-advanced-dice-latest" aria-live="polite">
           <strong className="asteria-advanced-dice-total">{latest.total}</strong>

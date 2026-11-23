@@ -43,3 +43,16 @@
 .asteria-advanced-dice-message{padding:8px 10px;border:1px solid #8d9ab1;border-radius:6px}
 @media(max-width:800px){.asteria-advanced-dice-grid{grid-template-columns:1fr}}
 @media(max-width:540px){.asteria-advanced-dice{padding:10px}.asteria-advanced-dice-editor,.asteria-advanced-dice-record{padding:10px}.asteria-advanced-dice-history li{grid-template-columns:minmax(0,1fr) auto}.asteria-advanced-dice-history li>span{grid-column:1}.asteria-advanced-dice-history li>strong{grid-column:2;grid-row:1 / 3}}
+
+/* Phase 1: an engine-neutral scene inside the existing dice workspace. */
+.asteria-advanced-dice-tray{display:grid;gap:8px;min-width:0;overflow:hidden;border:1px solid #3e546c;border-radius:10px;background:#0f1927}
+.asteria-advanced-dice-tray-heading{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px;padding:12px 12px 0}
+.asteria-advanced-dice-tray-heading h3{margin:0}
+.asteria-advanced-dice-tray-heading span,.asteria-advanced-dice-tray-status,.asteria-advanced-dice-tray-note{color:#bcc9d9;font-size:.78rem}
+.asteria-advanced-dice-scene{position:relative;width:100%;height:clamp(210px,27vw,330px);min-height:210px;overflow:hidden;background:radial-gradient(ellipse at center,#25364b 0%,#101826 80%)}
+.asteria-advanced-dice-scene canvas{display:block;width:100%;height:100%}
+.asteria-advanced-dice-tray-status{margin:0!important;padding:0 12px 8px}
+.asteria-advanced-dice-tray-note{padding:0 12px 12px}
+.asteria-advanced-dice-motion-control{display:flex!important;align-items:center;gap:7px}
+.asteria-advanced-dice-motion-control input{width:auto!important;min-width:auto!important}
+@media(max-width:540px){.asteria-advanced-dice-scene{height:230px;min-height:230px}}

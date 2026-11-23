@@ -1,0 +1,56 @@
+name: Build Advanced Dice 3D Phase 1 on test branch (no Firebase deploy)
+on:
+  push:
+    branches: [Website-Build-Test]
+    paths:
+      - 'src/dice/**'
+      - 'src/dashboards/AdvancedDiceWorkspace.jsx'
+      - 'src/styles/advanced-dice.css'
+      - 'scripts/dice-engine-phase1.test.mjs'
+      - 'scripts/digital-gm-phase7-1.test.mjs'
+      - 'package.json'
+      - '.github/workflows/build-advanced-dice-phase1.yml'
+permissions:
+  contents: write
+concurrency:
+  group: asteria-advanced-dice-phase1
+  cancel-in-progress: true
+jobs:
+  verify-and-build:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Update lockfile for the pinned 3D engine
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+      - run: npm ci
+      - name: Verify dice rules, rendering adapter and lint
+        run: |
+          npm run test:advanced-dice
+          npm run lint
+      - name: Build React/Vite site on test branch only
+        run: npm run build
+      - name: Commit generated lockfile and built assets
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- package-lock.json react-dist data/compendium.js data/compendium-handbook.js data/compendium-index.js data/compendium-parts
+          if git diff --cached --quiet; then
+            echo "Generated files are already in sync."
+            exit 0
+          fi
+          SOURCE_SHA="$(git rev-parse HEAD)"
+          git fetch --no-tags origin Website-Build-Test
+          if [ "$(git rev-parse FETCH_HEAD)" != "$SOURCE_SHA" ]; then
+            echo "Test branch advanced; not pushing stale bundle."
+            exit 1
+          fi
+          git commit -m "build(dice): synchronize 3D engine lockfile and React bundle [skip ci]"
+          git push origin HEAD:Website-Build-Test
