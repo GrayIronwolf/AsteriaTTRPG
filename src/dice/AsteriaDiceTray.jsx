@@ -4,6 +4,9 @@ import {prepareCoreDesigns,releaseCoreDesigns} from './coreDiceRegistry.mjs';
 import {defaultDiceAppearance,validateDiceAppearance} from './diceAppearanceCatalogue.mjs';
 import {createWatcherEyeRig,applyWatcherGelShell} from './watcherEyeRig.mjs';
 import {watcherVisualQuality,watcherReactionForRecord} from './watcherDiceDesign.mjs';
+import {defaultDiceTrayAppearance,validateDiceTrayAppearance,getDiceTrayFamily} from './diceTrayCatalogue.mjs';
+import {attachDiceTray} from './diceTrayScene.mjs';
+import {DiceTrayStudio} from './DiceTrayStudio.jsx';
 
 const messages={
   loading:'Preparing the 3D dice table…',
@@ -37,7 +40,13 @@ export function AsteriaDiceTray({
 }){
   const containerRef=useRef(null),engineRef=useRef(null);
   const [ready,setReady]=useState(false),[status,setStatus]=useState('loading');
-  const [traySize,setTraySize]=useState('standard');
+  const [trayAppearance,setTrayAppearance]=useState(()=>defaultDiceTrayAppearance());
+  const [trayStudioOpen,setTrayStudioOpen]=useState(false);
+  const trayAppearanceRef=useRef(trayAppearance);
+  const trayRef=useRef(null);
+  const rollingRef=useRef(false);
+  const deferredTrayRef=useRef(null);
+  useEffect(()=>{trayAppearanceRef.current=trayAppearance;},[trayAppearance]);
   const stableId=useId().replace(/[^a-z0-9]/gi,'').toLowerCase();
   const appearanceRef=useRef(appearance);
   const registryRef=useRef(null);
@@ -81,6 +90,9 @@ export function AsteriaDiceTray({
         });
         if(cancelled){instance.destroy();return;}
         engineRef.current=instance;
+        const tray=attachDiceTray(instance,trayAppearanceRef.current);
+        trayRef.current=tray;
+        if(containerRef.current)containerRef.current.dataset.trayShape=tray.outline.shape;
         setReady(true);setStatus('ready');
       }catch{
         if(!cancelled){setReady(false);setStatus('unavailable');}
@@ -95,6 +107,8 @@ export function AsteriaDiceTray({
       for(const rig of watcherRigsRef.current.values())rig.dispose();
       watcherRigsRef.current.clear();
       const instance=engineRef.current;
+      trayRef.current?.dispose();
+      trayRef.current=null;
       engineRef.current=null;
       if(instance)instance.destroy();
       if(registryRef.current){
@@ -104,6 +118,28 @@ export function AsteriaDiceTray({
       }
     };
   },[enabled]);
+
+  // Reconfigure the same Open Dice scene and physical boundaries. Changes
+  // during active rolls are deferred so physics prediction/replay sees one world.
+  useEffect(()=>{
+    const engine=engineRef.current;
+    if(!ready||!enabled||!engine)return;
+    const config=validateDiceTrayAppearance(trayAppearance);
+    if(rollingRef.current){
+      deferredTrayRef.current=config;return;
+    }
+    if(!trayRef.current||JSON.stringify(trayRef.current.config)===JSON.stringify(config))return;
+    try{
+      trayRef.current.dispose();
+      trayRef.current=attachDiceTray(engine,config);
+      if(containerRef.current)containerRef.current.dataset.trayShape=trayRef.current.outline.shape;
+    }catch{
+      setStatus('unavailable');
+    }
+  },[ready,enabled,trayAppearance]);
+  const changeTrayConfig=config=>{
+    setTrayAppearance(validateDiceTrayAppearance(config));
+  };
 
   // Dashboard canvas windows resize without resizing the browser window.
   // Open Dice 1.13.0 only listens to window resize; its pinned internal
@@ -131,6 +167,7 @@ export function AsteriaDiceTray({
     if(!enabled||!ready||!engineRef.current)return undefined;
     const engine=engineRef.current;
     if(!record){
+      rollingRef.current=false;
       setStatus('ready');
       Promise.resolve(engine.reset()).catch(()=>{});
       return undefined;
@@ -159,6 +196,7 @@ export function AsteriaDiceTray({
       setStatus('unavailable');return undefined;
     }
     let cancelled=false;
+    rollingRef.current=true;
     setStatus('rolling');
     const run=async()=>{
       const api=await import('open-dice-dnd');
@@ -225,17 +263,27 @@ export function AsteriaDiceTray({
     };
     Promise.resolve(run()).then(()=>{
       if(cancelled)return;
+      rollingRef.current=false;
+      const next=deferredTrayRef.current;
+      deferredTrayRef.current=null;
+      if(next&&trayRef.current){
+        trayRef.current.dispose();
+        trayRef.current=attachDiceTray(engine,next);
+        if(containerRef.current)containerRef.current.dataset.trayShape=trayRef.current.outline.shape;
+      }
       const match=matchesAsteriaDicePreview(prepared,engine.getCurrentResults());
       setStatus(match?'settled':'mismatch');
       if(!match)Promise.resolve(engine.reset()).catch(()=>{});
     }).catch(error=>{
       if(cancelled)return;
+      rollingRef.current=false;
       if(containerRef.current)containerRef.current.dataset.watcherError=
         String(error?.message||error||'Unknown render failure').slice(0,200);
       setStatus('unavailable');
     });
     return ()=>{
       cancelled=true;
+      rollingRef.current=false;
       if(watcherFrameRef.current)cancelAnimationFrame(watcherFrameRef.current);
       watcherFrameRef.current=0;
       for(const rig of watcherRigsRef.current.values())rig.dispose();
@@ -245,12 +293,13 @@ export function AsteriaDiceTray({
 
   const canControl=enabled&&ready&&status!=='rolling';
   const renderFallback=!enabled||['unavailable','unsupported','oversized','mismatch'].includes(status);
-  return <section className="asteria-advanced-dice-tray" data-tray-size={traySize}
+  const selectedTray=getDiceTrayFamily(trayAppearance.designId);
+  return <section className="asteria-advanced-dice-tray" data-tray-size={trayAppearance.size}
     data-roll-state={status} aria-label="3D dice tray">
     <header className="asteria-advanced-dice-tray-heading">
       <div className="asteria-advanced-dice-tray-title">
         <span className="asteria-advanced-dice-crystal" aria-hidden="true"/>
-        <div><h3>Dice Table</h3><small>3D roll animation</small></div>
+        <div><h3>{selectedTray?.name||'Dice Table'}</h3><small>Realistic 3D dice tray</small></div>
       </div>
       <span className="asteria-advanced-dice-trust">Server-verified results</span>
     </header>
@@ -262,13 +311,18 @@ export function AsteriaDiceTray({
       </label>
       <label className="asteria-advanced-dice-size-control">
         Tray size
-        <select value={traySize} onChange={event=>setTraySize(event.target.value)}
+        <select value={trayAppearance.size} onChange={event=>
+          changeTrayConfig({...trayAppearance,size:event.target.value})}
           aria-label="Dice tray size">
           <option value="compact">Compact</option>
           <option value="standard">Standard</option>
           <option value="expanded">Expanded</option>
         </select>
       </label>
+      <button type="button" className="asteria-tray-edit-toggle" aria-expanded={trayStudioOpen}
+        onClick={()=>setTrayStudioOpen(value=>!value)}>
+        {trayStudioOpen?'Close tray studio':'Customise tray'}
+      </button>
       <div className="asteria-advanced-dice-tray-actions">
         <button type="button" onClick={onReplay}
           disabled={!canControl||!canReplay}
@@ -282,6 +336,8 @@ export function AsteriaDiceTray({
         </button>
       </div>
     </div>
+    {trayStudioOpen?<DiceTrayStudio value={trayAppearance}
+      onChange={changeTrayConfig} rolling={status==='rolling'}/>:null}
     <div className="asteria-advanced-dice-stage">
       <div className="asteria-advanced-dice-scene" ref={containerRef} aria-hidden="true"/>
       {!record&&enabled&&status==='ready'?<div className="asteria-advanced-dice-placeholder"

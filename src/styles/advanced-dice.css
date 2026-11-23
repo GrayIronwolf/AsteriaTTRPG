@@ -309,3 +309,38 @@
 @container asteriaDice (max-width:440px){
   .asteria-watcher-fields{grid-template-columns:minmax(0,1fr)}
 }
+
+
+/* Phase 3.5: the original table is now a single live PBR customisation studio. */
+.asteria-tray-studio{display:grid;gap:11px;background:#101d2a;padding:11px;
+ border-block:1px solid #50687c;min-width:0}
+.asteria-tray-studio-heading{display:grid;gap:3px}
+.asteria-tray-studio-heading strong{color:#eff6fc;font-size:.92rem}
+.asteria-tray-studio-heading small,.asteria-tray-studio-footer small{font-size:.76rem;color:#b7cbd9}
+.asteria-tray-design-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.asteria-advanced-dice .asteria-tray-design-grid button{
+ display:flex;flex-direction:column;align-items:center;gap:5px;min-height:72px;
+ padding:6px 4px;white-space:normal;font-size:.73rem;text-align:center}
+.asteria-tray-design-grid button.is-selected{outline:2px solid #98b9d0;outline-offset:0}
+.asteria-tray-design-swatch{height:30px;width:55px;display:block;background:var(--tray-lining);
+ border:8px ridge var(--tray-frame);border-radius:11px;box-shadow:0 2px 4px #050a0e}
+.asteria-tray-options-grid,.asteria-tray-colour-grid{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.asteria-tray-options-grid label{min-width:0}
+.asteria-tray-color{display:grid;gap:5px;min-width:0}
+.asteria-tray-color>label{display:flex;justify-content:space-between;
+ align-items:center;gap:8px;font-size:.82rem;color:#d8e5ed}
+.asteria-tray-color input[type=color]{width:48px;height:34px;cursor:pointer;padding:2px}
+.asteria-tray-swatches{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:4px}
+.asteria-advanced-dice .asteria-tray-swatches button{
+ display:grid;place-items:center;min-height:27px;padding:2px}
+.asteria-tray-swatches button span{display:block;width:16px;height:16px;
+ background:var(--tray-color);border:1px solid #c4d1dd70;border-radius:3px}
+.asteria-tray-swatches button.is-selected{outline:2px solid #a7cadc}
+.asteria-tray-studio-footer{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.asteria-advanced-dice .asteria-tray-edit-toggle{font-size:.78rem;padding:5px 9px}
+.asteria-advanced-dice-stage::after{display:none}
+@container asteriaDice (max-width:480px){
+ .asteria-tray-options-grid,.asteria-tray-colour-grid{grid-template-columns:minmax(0,1fr)}
+ .asteria-tray-design-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
