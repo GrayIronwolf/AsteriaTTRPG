@@ -122,6 +122,59 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
     if(viewport)observer?.observe(viewport);
     return ()=>observer?.disconnect();
   },[]);
+  // All three workspaces use the same viewport-filling canvas. Measure the
+  // content area after the live dashboard header and navigation, rather than
+  // assuming the same fixed header height for GM, Player and Combat pages.
+  useEffect(()=>{
+    const host=root.current,viewport=canvas.current;
+    const page=host?.closest('#reactDashboard');
+    const scrollArea=host?.closest('#mainContent');
+    // Keep the compact stacked view and embedded GM inspection modals intact.
+    if(!host||!viewport||!page||!scrollArea||host.closest('.react-modal'))return;
+    let frame=0;
+    const fit=()=>{
+      frame=0;
+      const pageStyle=window.getComputedStyle(page);
+      const scrollStyle=window.getComputedStyle(scrollArea);
+      const screenBottom=window.visualViewport
+        ?window.visualViewport.height+window.visualViewport.offsetTop
+        :window.innerHeight;
+      const bottom=Math.min(screenBottom,scrollArea.getBoundingClientRect().bottom);
+      // The parent scroller can retain its scroll position between dashboard
+      // tabs. Add scrollTop so height never grows as the user scrolls.
+      const top=viewport.getBoundingClientRect().top+scrollArea.scrollTop;
+      const height=Math.max(420,Math.floor(bottom-top-8));
+      const expandHorizontally=window.innerWidth>=900&&
+        (host.parentElement?.clientWidth||0)>=700;
+      const left=expandHorizontally?Math.max(0,
+        (parseFloat(pageStyle.paddingLeft)||0)+
+        (parseFloat(scrollStyle.paddingLeft)||0)-8):0;
+      const right=expandHorizontally?Math.max(0,
+        (parseFloat(pageStyle.paddingRight)||0)+
+        (parseFloat(scrollStyle.paddingRight)||0)-8):0;
+      host.style.setProperty('--combat-edge-left',left+'px');
+      host.style.setProperty('--combat-edge-right',right+'px');
+      viewport.style.setProperty('--combat-viewport-height',height+'px');
+    };
+    const schedule=()=>{
+      if(frame)window.cancelAnimationFrame(frame);
+      frame=window.requestAnimationFrame(fit);
+    };
+    const observer=typeof ResizeObserver==='undefined'?null:new ResizeObserver(schedule);
+    observer?.observe(scrollArea);
+    observer?.observe(page);
+    const shell=host.closest('.react-workspace-main');
+    if(shell)observer?.observe(shell);
+    window.addEventListener('resize',schedule);
+    window.visualViewport?.addEventListener('resize',schedule);
+    schedule();
+    return ()=>{
+      if(frame)window.cancelAnimationFrame(frame);
+      observer?.disconnect();
+      window.removeEventListener('resize',schedule);
+      window.visualViewport?.removeEventListener('resize',schedule);
+    };
+  },[]);
   useEffect(()=>{
     if(!wide)return;
     const viewport=canvas.current;
