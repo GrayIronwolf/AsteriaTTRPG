@@ -64,6 +64,10 @@ export function attachDiceTower(engine,outline,input=defaultDiceTowerAppearance(
     if(!die?.body?.world)continue;
     die.body.velocity.setZero();die.body.angularVelocity.setZero();
     die.body.sleep();
+    // Synchronise to the exact final pose already recorded by the same
+    // physical worker, not a newly guessed or cosmetic orientation.
+    die.mesh?.position?.copy(die.body.position);
+    die.mesh?.quaternion?.copy(die.body.quaternion);
    }
   }
   return result;

@@ -44,6 +44,7 @@ export function AsteriaDiceTray({
   experimentalCastleTower=false,experimentalTowerAppearance=null
 }){
   const containerRef=useRef(null),engineRef=useRef(null);
+  const physicalTrayMemoRef=useRef(null);
   const [ready,setReady]=useState(false),[status,setStatus]=useState('loading');
   const [localTrayAppearance,setLocalTrayAppearance]=useState(()=>defaultDiceTrayAppearance());
   const trayAppearance=controlledTrayAppearance||localTrayAppearance;
@@ -53,10 +54,16 @@ export function AsteriaDiceTray({
   const towerId=activeTowerAppearance?.designId||'off';
   const towerSignature=activeTowerAppearance?JSON.stringify(activeTowerAppearance):'off';
   const towerActive=Boolean(activeTowerAppearance);
-  // Tower impact material is implemented through the existing single
-  // physical tray audio adapter; no competing sound engine.
-  const physicalTrayAppearance=towerActive?
-    {...trayAppearance,sound:activeTowerAppearance.sound}:trayAppearance;
+  // Reuse the same validated tray configuration object until its actual
+  // values change. Creating a fresh object on every status render previously
+  // deferred an identical tray rebuild during an active tower throw.
+  const physicalTraySignature=JSON.stringify(trayAppearance)+':'+
+    (towerActive?activeTowerAppearance.sound:'none');
+  if(physicalTrayMemoRef.current?.signature!==physicalTraySignature){
+    physicalTrayMemoRef.current={signature:physicalTraySignature,
+      value:towerActive?{...trayAppearance,sound:activeTowerAppearance.sound}:trayAppearance};
+  }
+  const physicalTrayAppearance=physicalTrayMemoRef.current.value;
 
   const [trayStudioOpen,setTrayStudioOpen]=useState(false);
   const [cameraAngle,setCameraAngle]=useState(0);
