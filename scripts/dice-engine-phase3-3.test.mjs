@@ -135,8 +135,12 @@ test('Familiar registers alongside all twelve core designs with isolated names',
   assert.equal(registry.size,14);
   releaseCoreDesigns(api,cat);releaseCoreDesigns(api,ruby);
   assert.equal(registry.size,0);
-  assert.throws(()=>prepareCoreDesigns(api,defaultDiceAppearance('dice-watcher'),'watcher-unit'),
-    /Phase 3.4/);
+  // Phase 3.4 adds Watcher support without replacing the Familiar registry.
+  const watcher=prepareCoreDesigns(api,defaultDiceAppearance('dice-watcher'),'watcher-unit');
+  assert.equal(registry.size,7);
+  assert.equal(registry.get(watcher.d20).name,'Watcher Dice');
+  releaseCoreDesigns(api,watcher);
+  assert.equal(registry.size,0);
 });
 test('Optional shimmer respects both setting and reduced motion',()=>{
   const a=defaultDiceAppearance('dice-familiar');
