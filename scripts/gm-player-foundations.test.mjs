@@ -106,3 +106,18 @@ test('membership streams are read-only and used by GM React dashboard',()=>{
   assert.match(dashboard,/live\.membership\)/);
   assert.match(manager,/gmCampaignMemberSummary/);
 });
+
+test('canonical roster ignores stale legacy GM grants and counts inactive members separately',()=>{
+  const campaign={...base,gmUids:['owner','ghost-gm'],roles:{'ghost-gm':'gm'},players:{
+    ...base.players,'ghost-gm':{displayName:'Old GM'}
+  }};
+  const report=gmCampaignMemberSummary({campaign,characters:{'char-a':character},members:[
+    {id:'alice',uid:'alice',campaignId:base.id,role:'player',status:'active'},
+    {id:'former-gm',uid:'former-gm',campaignId:base.id,role:'co-gm',status:'suspended'}
+  ]});
+  assert.equal(report.summary.activeGMs,1);
+  assert.equal(report.summary.activePlayers,1);
+  assert.equal(report.summary.inactive,1);
+  assert.equal(report.members.some(row=>row.uid==='ghost-gm'),false);
+  assert.equal(report.summary.linkedCharacters,1);
+});
