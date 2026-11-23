@@ -34,7 +34,8 @@ export const GM_TOOLKIT_GROUPS=Object.freeze([
     tools:[
       {id:'quests',label:'Quest Manager',tab:'quests',description:'Manage campaign objectives, quest offers and progress.',keywords:'quest tasks objective'},
       {id:'party',label:'Party Inventory',tab:'inventory',description:'Review linked characters and their inventory.',keywords:'pc equipment player items'},
-      {id:'campaign-manager',label:'Campaign Manager',tab:'tools',description:'Campaign details, linked accounts and party membership.',keywords:'players invitations management'},
+      {id:'player-manager',label:'Player Manager',tab:'player-manager',description:'Unified campaign account roster, join approvals, character links, invitations, roles and access.',keywords:'players player manager campaign party membership co-gm invites approvals permissions moderation'},
+      {id:'campaign-manager',label:'Campaign Manager',tab:'tools',description:'Campaign identity, artwork, settings and linked-account summary.',keywords:'campaign settings ucn code artwork administration'},
       {id:'rewards',label:'Rewards & Advancement',tab:'tools',description:'Existing GM reward tools, magic rewards and character management.',keywords:'xp loot award titles magic'},
       {id:'gameplay',label:'Gameplay Systems',tab:'gameplay',description:'Manage existing gameplay records and system settings.',keywords:'systems templates encounter'},
       {id:'npc-library',label:'NPC & Creature Library',tab:'bestiary',description:'Find, generate and create custom character cards for campaign NPCs and creatures.',keywords:'npc generator character card portrait creature bestiary customise custom library'}
