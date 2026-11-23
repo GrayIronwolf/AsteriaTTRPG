@@ -142,6 +142,14 @@ export function AsteriaDiceTray({
       const ids=prepareCoreDesigns(api,current,stableId);
       registryRef.current=ids;
       diceToRoll=prepared.dice.map(row=>({...row,set:ids[row.dice]}));
+      if(current.familyId==='dice-familiar'){
+        const sources=[...new Set(Object.values(ids).map(id=>
+          api.getDiceSet(id)?.body?.image?.src).filter(Boolean))];
+        await engine.decalRegistry.preload(sources);
+        if(!sources.length||!sources.every(src=>engine.decalRegistry.get(src)))
+          throw Error('Familiar Dice artwork could not be loaded.');
+        if(cancelled)return;
+      }
       await engine.roll(diceToRoll);
     };
     Promise.resolve(run()).then(()=>{

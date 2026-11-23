@@ -17,7 +17,7 @@ export function CoreDicePreview({appearance,dieType='d20'}){
   const zoomRef=useRef(zoom);
   useEffect(()=>{zoomRef.current=zoom;},[zoom]);
   useEffect(()=>{
-    let cancelled=false,frame=0,view,registry,api,scene,renderer,resizeObserver,mesh;
+    let cancelled=false,frame=0,view,registry,api,imageRegistry,scene,renderer,resizeObserver,mesh;
     const container=node.current;
     if(!container)return undefined;
     setError('');
@@ -25,6 +25,7 @@ export function CoreDicePreview({appearance,dieType='d20'}){
       const [THREE,openDice]=await Promise.all([import('three'),import('open-dice-dnd')]);
       if(cancelled)return;
       api=openDice;
+      imageRegistry=new openDice.DecalRegistry();
       registry=prepareCoreDesigns(openDice,appearance,'preview-'+id);
       const setId=registry[dieType];
       scene=new THREE.Scene();
@@ -51,10 +52,15 @@ export function CoreDicePreview({appearance,dieType='d20'}){
       floor.rotation.x=-Math.PI/2;floor.position.y=-1.12;
       scene.add(floor);
       if(typeof openDice.prepareDiceSets==='function')
-        await openDice.prepareDiceSets({renderer,scene,sets:[setId]});
+        await openDice.prepareDiceSets({renderer,scene,decalRegistry:imageRegistry,sets:[setId]});
+      if(appearance.familyId==='dice-familiar'){
+        const imageSrc=api.getDiceSet(setId)?.body?.image?.src;
+        if(!imageSrc||!imageRegistry.has(imageSrc))throw Error('Familiar texture failed to load.');
+        container.dataset.artReady='true';
+      }else container.dataset.artReady='false';
       if(cancelled)return;
       const die=openDice.createDie(dieType,true,true,undefined,undefined,null,
-        scene,null,null,null,null,false,null,null,{set:setId});
+        scene,null,null,null,null,false,null,imageRegistry,{set:setId});
       mesh=die.mesh;
       const size=()=>{
         if(!renderer||!container)return;
@@ -96,6 +102,9 @@ export function CoreDicePreview({appearance,dieType='d20'}){
       });
       // Package unloads cached face textures when the design is unregistered.
       if(api&&registry)releaseCoreDesigns(api,registry);
+      imageRegistry?.cache?.clear?.();
+      imageRegistry?.loading?.clear?.();
+      if(container)delete container.dataset.artReady;
       viewRef.current=null;
       renderer?.dispose();
       if(renderer?.domElement?.parentNode)renderer.domElement.remove();

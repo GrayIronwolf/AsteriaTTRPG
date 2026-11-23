@@ -24,8 +24,12 @@ try{
   const canvas=page.locator('.asteria-core-dice-preview-canvas canvas');
   await canvas.waitFor({state:'visible',timeout:100000});
   await page.waitForTimeout(1200);
-  check('Familiar Dice has a real WebGL preview and no fallback error',
-    await canvas.count()===1&&await page.locator('.asteria-core-dice-preview p[role=status]').count()===0);
+  await page.waitForFunction(()=>document.querySelector(
+    '.asteria-core-dice-preview-canvas[data-art-ready=true]'),null,{timeout:60000});
+  check('Familiar artwork really preloads into WebGL preview',
+    await canvas.count()===1&&
+    await page.locator('.asteria-core-dice-preview-canvas[data-art-ready=true]').count()===1&&
+    await page.locator('.asteria-core-dice-preview p[role=status]').count()===0);
   check('Twelve core designs and Familiar coexist in one selector',
     await page.getByRole('combobox',{name:'Core dice design'}).locator('option').count()===13);
   check('Eight coat patterns and eight cat poses selectable',
