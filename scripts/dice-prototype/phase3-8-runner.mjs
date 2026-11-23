@@ -34,7 +34,8 @@ try{
     total:document.querySelector('.asteria-advanced-dice-official strong')?.textContent,
     towerSteps:scene.dataset.towerSteps||'',exited:scene.dataset.towerExited||'',
     physicalExit:scene.dataset.towerExitComplete||'',rest:scene.dataset.towerLastEnd||'',
-    baffles:scene.dataset.towerBaffles||'',error:scene.dataset.towerError||'',
+    baffles:scene.dataset.towerBaffles||'',faceMatch:scene.dataset.towerFaceMatch||'',
+    observed:scene.dataset.towerObserved||'',error:scene.dataset.towerError||'',
     engineError:scene.dataset.watcherError||''};
   });
   check('Castle d'+sides+' is physical, exits and preserves official outcome',

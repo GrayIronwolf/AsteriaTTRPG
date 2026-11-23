@@ -319,7 +319,12 @@ export function AsteriaDiceTray({
         if(experimentalCastleTower)towerRef.current=attachCastleDiceTower(engine,trayRef.current.outline);
         if(containerRef.current)containerRef.current.dataset.trayShape=trayRef.current.outline.shape;
       }
-      const match=matchesAsteriaDicePreview(prepared,engine.getCurrentResults());
+      const observed=engine.getCurrentResults();
+      const match=matchesAsteriaDicePreview(prepared,observed);
+      if(containerRef.current&&experimentalCastleTower){
+        containerRef.current.dataset.towerFaceMatch=String(match);
+        containerRef.current.dataset.towerObserved=JSON.stringify(observed).slice(0,1000);
+      }
       const physical=!experimentalCastleTower||towerEvidence?.exitComplete===true;
       setStatus(match&&physical?'settled':'mismatch');
       if(!match||!physical)Promise.resolve(engine.reset()).catch(()=>{});

@@ -12,24 +12,24 @@ export function castleTowerLayout(outline){
     throw Error('A physical tray outline is required for the tower.');
   const x=-outline.halfX*.42,z=-outline.halfZ*.16;
   // x increases from the tower's rear wall through its open exit to the tray.
-  const W=1.65,D=1.55;
+  const W=2.65,D=1.55;
   const boxes=[
     {id:'rear-wall',role:'wall',x:x-W-.13,y:5.65,z,w:.27,h:11.3,d:3.14},
-    {id:'north-wall',role:'wall',x,y:5.65,z:z-D-.12,w:3.35,h:11.3,d:.24},
-    {id:'south-wall',role:'wall',x,y:5.65,z:z+D+.12,w:3.35,h:11.3,d:.24},
+    {id:'north-wall',role:'wall',x,y:5.65,z:z-D-.12,w:5.35,h:11.3,d:.24},
+    {id:'south-wall',role:'wall',x,y:5.65,z:z+D+.12,w:5.35,h:11.3,d:.24},
     // Castle front has a doorway starting at y=2.65, not a fake exit.
     {id:'gate-wall',role:'wall',x:x+W+.13,y:7.325,z,w:.27,h:7.95,d:3.14},
     {id:'baffle-upper',role:'baffle',x:x-.67,y:7.75,z,w:.64,h:.18,d:2.62,angleZ:-.54},
     {id:'baffle-middle',role:'baffle',x:x-.25,y:5.35,z,w:.64,h:.18,d:2.62,angleZ:.46},
     {id:'baffle-lower',role:'baffle',x:x-.65,y:3.23,z,w:.64,h:.18,d:2.62,angleZ:-.54},
     // A real descending return ramp extends into the 3D tray.
-    {id:'exit-ramp',role:'ramp',x:x+1.23,y:1.02,z,w:5.62,h:.23,d:2.82,angleZ:-.21},
-    {id:'exit-north-rail',role:'guide',x:x+2.2,y:.78,z:z-1.48,w:3.76,h:.95,d:.16,angleZ:-.21},
-    {id:'exit-south-rail',role:'guide',x:x+2.2,y:.78,z:z+1.48,w:3.76,h:.95,d:.16,angleZ:-.21}
+    {id:'exit-ramp',role:'ramp',x:x+2.23,y:1.04,z,w:6.5,h:.23,d:2.82,angleZ:-.32},
+    {id:'exit-north-rail',role:'guide',x:x+3.2,y:.82,z:z-1.48,w:4.8,h:.95,d:.16,angleZ:-.32},
+    {id:'exit-south-rail',role:'guide',x:x+3.2,y:.82,z:z+1.48,w:4.8,h:.95,d:.16,angleZ:-.32}
   ];
   return {id:CASTLE_TOWER_ID,version:CASTLE_TOWER_VERSION,
     origin:{x,z},height:11.3,innerHalfX:W,innerHalfZ:D,
-    exitX:x+W+.8,boxes,
+    exitX:x+W+.6,boxes,
     spawn:{x:x-.7,y:10.6,z},
     // The real physical gate, not just a drawn mark.
     portal:{x:x+W+.13,minY:0,maxY:3.35},
