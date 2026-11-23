@@ -19,7 +19,7 @@ test('Replay uses one recorded roll, not a client-generated random number',()=>{
   assert.equal(matchesAsteriaDicePreview(a,{
     results:[{value:20,visible:20}],variances:[]
   }),true);
-  assert.equal(prepareAsteriaDicePreview({...record,total:999}).mode,undefined);
+  assert.throws(()=>prepareAsteriaDicePreview({...record,total:999}),/totals/);
 });
 
 test('d10/d100 100 values remain official even when visual values are zero',()=>{
