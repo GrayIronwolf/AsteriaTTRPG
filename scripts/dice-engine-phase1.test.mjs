@@ -84,9 +84,9 @@ test('Existing private history/presets and server-only rolling stay wired to the
   assert.match(ui,/AdvancedDiceWorkspace/);
   assert.match(ui,/firebaseService\.advancedDiceAction/);
   assert.match(ui,/firebaseService\.subscribeDiceWorkspace/);
-  assert.match(ui,/Save preset/);
-  assert.match(ui,/Clear roll history/);
-  assert.match(ui,/Roll digital dice/);
+  assert.match(ui,/onClick=\{savePreset\}/);
+  assert.match(ui,/Clear private roll history/);
+  assert.match(ui,/Roll All/);
   assert.match(ui,/<AsteriaDiceTray/);
   assert.match(scene,/import\('open-dice-dnd'\)/);
   assert.match(scene,/instance\.destroy\(\)/);
