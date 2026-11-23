@@ -12,10 +12,12 @@ on:
       - 'scripts/dice-engine-phase3-2.test.mjs'
       - 'scripts/dice-engine-phase3-3.test.mjs'
       - 'scripts/dice-engine-phase3-4.test.mjs'
+      - 'scripts/dice-engine-phase3-5.test.mjs'
       - 'scripts/dice-prototype/phase2*'
       - 'scripts/dice-prototype/phase3-2*'
       - 'scripts/dice-prototype/phase3-3*'
       - 'scripts/dice-prototype/phase3-4*'
+      - 'scripts/dice-prototype/phase3-5*'
       - 'scripts/digital-gm-phase7-1.test.mjs'
       - 'package.json'
       - '.github/workflows/build-advanced-dice-phase1.yml'
@@ -56,6 +58,15 @@ jobs:
         run: node scripts/dice-prototype/phase3-3-runner.mjs
       - name: Verify Watcher Dice transparent shell and animated eyes in Chromium
         run: node scripts/dice-prototype/phase3-4-runner.mjs
+      - name: Verify six 3D trays and collision physics in Chromium
+        run: node scripts/dice-prototype/phase3-5-runner.mjs
+      - name: Store Phase 3.5 tray browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asteria-dice-phase3-5
+          path: dice-phase3-5-evidence/
+          if-no-files-found: warn
       - name: Store Watcher Phase 3.4 browser evidence
         if: always()
         uses: actions/upload-artifact@v4
