@@ -44,91 +44,234 @@ function text(value,max,label,optional=false){
   throw Error('Enter valid '+label+' (maximum '+max+' characters).');
  return value.trim();
 }
-/** No unverified Asteria month lengths, weekday epoch, or day length. */
+/**
+ * Calendar schema v2. Legacy campaign documents (without custom names,
+ * intercalary days or celestial data) are interpreted as the existing Astria
+ * calendar; no migration or changed chronology is imposed on saved campaigns.
+ */
 export function validateCalendarDefinition(config){
- fields(config,['months','hoursPerDay','minutesPerHour','weekdayAnchor'],'calendar definition');
- if(!Array.isArray(config.months)||config.months.length!==ASTERIA_MONTHS.length)
-  throw Error('Configure the exact length of all 12 Asteria months.');
- const months=config.months.map((row,index)=>{
-  fields(row,['days','season'],'month '+ASTERIA_MONTHS[index]);
-  const season=row.season??'';
-  if(typeof season!=='string'||(season&&!ASTERIA_SEASONS.includes(season)))
-   throw Error('Choose an existing season for '+ASTERIA_MONTHS[index]+'.');
-  return {days:whole(row.days,1,100,'Days in '+ASTERIA_MONTHS[index]),season};
+ fields(config,['months','hoursPerDay','minutesPerHour','weekdayAnchor','weekdays','seasons',
+  'eras','leapDays','moons','cycles','weekdayOverflow'],'calendar definition');
+ const weekdays=config.weekdays??ASTERIA_WEEKDAYS;
+ if(!Array.isArray(weekdays)||weekdays.length<1||weekdays.length>14)
+  throw Error('Configure between 1 and 14 weekdays.');
+ const cleanWeekdays=weekdays.map((name,index)=>text(name,40,'weekday '+(index+1)));
+ const seasons=config.seasons??ASTERIA_SEASONS;
+ if(!Array.isArray(seasons)||seasons.length<1||seasons.length>12)
+  throw Error('Configure between 1 and 12 seasons.');
+ const cleanSeasons=seasons.map((name,index)=>text(name,50,'season '+(index+1)));
+ const eraRows=config.eras??ASTERIA_ERAS;
+ if(!Array.isArray(eraRows)||eraRows.length<1||eraRows.length>20)
+  throw Error('Configure between 1 and 20 eras.');
+ const eras=eraRows.map((row,index)=>{
+  fields(row,['id','name'],'era');
+  if(!id(row.id)||row.id.length>20)throw Error('Era IDs must contain only letters, numbers, hyphens or underscores.');
+  return {id:row.id,name:text(row.name,80,'era '+(index+1))};
  });
- return {months,
-  hoursPerDay:whole(config.hoursPerDay,1,48,'Hours per day'),
+ const unique=(rows,label)=>{if(new Set(rows.map(x=>x.toLowerCase())).size!==rows.length)throw Error('Duplicate '+label+' names are not allowed.');};
+ unique(cleanWeekdays,'weekday');unique(cleanSeasons,'season');unique(eras.map(x=>x.id),'era');
+ if(!Array.isArray(config.months)||config.months.length<1||config.months.length>24)
+  throw Error('Configure between 1 and 24 calendar months.');
+ const months=config.months.map((row,index)=>{
+  fields(row,['name','days','season'],'month');
+  const name=text(row.name??ASTERIA_MONTHS[index]??('Month '+(index+1)),50,'month name');
+  const season=row.season??'';
+  if(typeof season!=='string'||(season&&!cleanSeasons.includes(season)))
+   throw Error('Choose an existing season for '+name+'.');
+  return {name,days:whole(row.days,1,100,'Days in '+name),season};
+ });
+ unique(months.map(x=>x.name),'month');
+ const leapRows=config.leapDays??[];
+ if(!Array.isArray(leapRows)||leapRows.length>12)throw Error('Configure up to 12 leap-day rules.');
+ const leapDays=leapRows.map((row,index)=>{
+  fields(row,['name','afterMonth','every','offset','skipWeekday'],'leap day');
+  const afterMonth=whole(row.afterMonth,1,months.length,'Leap day month');
+  const every=whole(row.every,2,1000,'Leap day interval');
+  const offset=whole(row.offset??0,0,every-1,'Leap day offset');
+  return {name:text(row.name,50,'leap day '+(index+1)),afterMonth,every,offset,
+   skipWeekday:row.skipWeekday===true};
+ });
+ const phaseRows=(value,label,maximum)=>{
+  if(!Array.isArray(value)||value.length>maximum)throw Error('Configure up to '+maximum+' '+label+'.');
+  const result=value.map((row,index)=>{
+   fields(row,['name','period','offset'],label);
+   return {name:text(row.name,50,label+' '+(index+1)),
+    period:whole(row.period,2,100000,label+' period'),
+    offset:whole(row.offset??0,0,99999,label+' offset')};
+  });
+  unique(result.map(row=>row.name),label);return result;
+ };
+ return {
+  months,hoursPerDay:whole(config.hoursPerDay,1,48,'Hours per day'),
   minutesPerHour:whole(config.minutesPerHour,1,120,'Minutes per hour'),
-  weekdayAnchor:whole(config.weekdayAnchor,0,7,'First weekday')};
+  weekdayAnchor:whole(config.weekdayAnchor,0,cleanWeekdays.length-1,'First weekday'),
+  weekdays:cleanWeekdays,seasons:cleanSeasons,eras,leapDays,
+  moons:phaseRows(config.moons??[],'moons',12),
+  cycles:phaseRows(config.cycles??[],'cycles',20),
+  weekdayOverflow:config.weekdayOverflow!==false
+ };
+}
+function leapApplies(rule,year){return year%rule.every===rule.offset;}
+export function calendarMonthDays(config,year,month){
+ const c=validateCalendarDefinition(config);
+ whole(year,1,MAX_CALENDAR_YEAR,'Year');
+ whole(month,1,c.months.length,'Month');
+ return c.months[month-1].days+c.leapDays.filter(rule=>rule.afterMonth===month&&leapApplies(rule,year)).length;
+}
+export function calendarYearDays(config,year=1){
+ const c=validateCalendarDefinition(config);
+ whole(year,1,MAX_CALENDAR_YEAR,'Year');
+ return c.months.reduce((sum,row)=>sum+row.days,0)+c.leapDays.filter(row=>leapApplies(row,year)).length;
+}
+function leapCountBefore(rule,year){
+ const y=year-1;
+ if(y<=0)return 0;
+ // Years x in [1,y] where x mod every === offset.
+ return rule.offset===0?Math.floor(y/rule.every):
+  y<rule.offset?0:1+Math.floor((y-rule.offset)/rule.every);
+}
+function daysBeforeYear(c,year){
+ return (year-1)*c.months.reduce((sum,row)=>sum+row.days,0)+
+  c.leapDays.reduce((sum,rule)=>sum+leapCountBefore(rule,year),0);
 }
 export function validateCalendarDate(date,config){
  fields(date,['era','year','month','day','hour','minute'],'calendar date');
- const validated=validateCalendarDefinition(config);
- const era=ASTERIA_ERAS.find(row=>row.id===date.era)?.id;
- if(!era)throw Error('Choose one of Asteria’s established historical eras.');
+ const c=validateCalendarDefinition(config);
+ if(!c.eras.some(row=>row.id===date.era))
+  throw Error('Choose an era in this calendar.');
  const year=whole(date.year,1,MAX_CALENDAR_YEAR,'Year');
- const month=whole(date.month,1,12,'Month');
- const day=whole(date.day,1,validated.months[month-1].days,'Day of month');
- const hour=whole(date.hour,0,validated.hoursPerDay-1,'Hour');
- const minute=whole(date.minute,0,validated.minutesPerHour-1,'Minute');
- return {era,year,month,day,hour,minute};
-}
-export function calendarYearDays(config){
- return config.months.reduce((sum,row)=>sum+row.days,0);
+ const month=whole(date.month,1,c.months.length,'Month');
+ const day=whole(date.day,1,calendarMonthDays(c,year,month),'Day of month');
+ return {era:date.era,year,month,day,
+  hour:whole(date.hour,0,c.hoursPerDay-1,'Hour'),
+  minute:whole(date.minute,0,c.minutesPerHour-1,'Minute')};
 }
 export function calendarDayIndex(date,config){
- const days=calendarYearDays(config);
- return (date.year-1)*days+config.months.slice(0,date.month-1).reduce((sum,row)=>sum+row.days,0)+date.day-1;
+ const c=validateCalendarDefinition(config),d=validateCalendarDate(date,c);
+ let day=daysBeforeYear(c,d.year);
+ for(let m=1;m<d.month;m++){
+  day+=c.months[m-1].days+c.leapDays.filter(rule=>rule.afterMonth===m&&leapApplies(rule,d.year)).length;
+ }
+ return day+d.day-1;
+}
+export function calendarDateFromDayIndex(index,config,era){
+ const c=validateCalendarDefinition(config);
+ whole(index,0,daysBeforeYear(c,MAX_CALENDAR_YEAR+1)-1,'Calendar day index');
+ if(!c.eras.some(row=>row.id===era))throw Error('Choose a valid calendar era.');
+ let low=1,high=MAX_CALENDAR_YEAR;
+ while(low<high){
+  const mid=Math.ceil((low+high)/2);
+  if(daysBeforeYear(c,mid)<=index)low=mid;else high=mid-1;
+ }
+ const year=low;
+ let rest=index-daysBeforeYear(c,year),month=1;
+ while(month<=c.months.length){
+  const length=c.months[month-1].days+
+   c.leapDays.filter(rule=>rule.afterMonth===month&&leapApplies(rule,year)).length;
+  if(rest<length)break;
+  rest-=length;month++;
+ }
+ return {era,year,month,day:rest+1,hour:0,minute:0};
+}
+export function calendarDateToMinutes(date,config){
+ const c=validateCalendarDefinition(config),d=validateCalendarDate(date,c);
+ return calendarDayIndex(d,c)*c.hoursPerDay*c.minutesPerHour+
+  d.hour*c.minutesPerHour+d.minute;
+}
+export function calendarDateFromMinutes(minutes,config,era){
+ const c=validateCalendarDefinition(config);
+ if(!Number.isSafeInteger(minutes)||minutes<0)throw Error('Invalid calendar minute index.');
+ const perDay=c.hoursPerDay*c.minutesPerHour;
+ const d=calendarDateFromDayIndex(Math.floor(minutes/perDay),c,era);
+ const remainder=minutes%perDay;
+ return {...d,hour:Math.floor(remainder/c.minutesPerHour),minute:remainder%c.minutesPerHour};
+}
+export function calendarIntercalaryName(date,config){
+ const c=validateCalendarDefinition(config),d=validateCalendarDate(date,c);
+ const base=c.months[d.month-1].days;
+ if(d.day<=base)return '';
+ const rules=c.leapDays.filter(row=>row.afterMonth===d.month&&leapApplies(row,d.year));
+ return rules[d.day-base-1]?.name??'';
+}
+function skippedDaysBefore(c,date){
+ let skipped=c.leapDays.filter(row=>row.skipWeekday)
+  .reduce((sum,row)=>sum+leapCountBefore(row,date.year),0);
+ for(const rule of c.leapDays){
+  if(!rule.skipWeekday||!leapApplies(rule,date.year))continue;
+  if(rule.afterMonth<date.month)skipped++;
+  if(rule.afterMonth===date.month&&date.day>c.months[date.month-1].days)skipped++;
+ }
+ return skipped;
 }
 export function calendarWeekday(date,config){
- const clean=validateCalendarDate(date,config);
- return ASTERIA_WEEKDAYS[(config.weekdayAnchor+calendarDayIndex(clean,config))%ASTERIA_WEEKDAYS.length];
+ const c=validateCalendarDefinition(config),d=validateCalendarDate(date,c);
+ const leapIndex=d.day-c.months[d.month-1].days-1;
+ if(leapIndex>=0){
+  const extra=c.leapDays.filter(rule=>rule.afterMonth===d.month&&leapApplies(rule,d.year))[leapIndex];
+  if(extra?.skipWeekday)return extra.name;
+ }
+ const ordinal=c.weekdayOverflow?calendarDayIndex(d,c)-skippedDaysBefore(c,d):
+  d.day-1-Math.min(d.day-1,c.leapDays.filter(rule=>rule.afterMonth===d.month&&rule.skipWeekday&&leapApplies(rule,d.year)).length);
+ return c.weekdays[((c.weekdayAnchor+ordinal)%c.weekdays.length+c.weekdays.length)%c.weekdays.length];
 }
 export function formatAsteriaDate(date,config,{time=true}={}){
- const clean=validateCalendarDate(date,config);
- const weekday=calendarWeekday(clean,config);
- const season=config.months[clean.month-1].season;
- const timeText=time?' · '+String(clean.hour).padStart(2,'0')+':'+String(clean.minute).padStart(2,'0'):'';
- return weekday+', '+clean.day+' '+ASTERIA_MONTHS[clean.month-1]+' '+clean.year+' '+clean.era+
-   timeText+(season?' · '+season:'');
+ const c=validateCalendarDefinition(config),d=validateCalendarDate(date,c);
+ const weekday=calendarWeekday(d,c),season=c.months[d.month-1].season;
+ const timeText=time?' · '+String(d.hour).padStart(2,'0')+':'+String(d.minute).padStart(2,'0'):'';
+ return weekday+', '+d.day+' '+c.months[d.month-1].name+' '+d.year+' '+d.era+
+  timeText+(season?' · '+season:'');
 }
-export function calendarDateSortKey(date){
+export function calendarDateSortKey(date,config=null){
  if(!object(date))return '';
- const era=ASTERIA_ERAS.findIndex(row=>row.id===date.era);
+ const eras=config?validateCalendarDefinition(config).eras:ASTERIA_ERAS;
+ const era=eras.findIndex(row=>row.id===date.era);
  if(era<0)return '';
  return [String(era).padStart(2,'0'),String(date.year).padStart(6,'0'),
   String(date.month).padStart(2,'0'),String(date.day).padStart(3,'0'),
   String(date.hour).padStart(2,'0'),String(date.minute).padStart(3,'0')].join('-');
 }
 export function advanceAsteriaDate(date,config,unit,amount){
- const start=validateCalendarDate(date,config);
+ const c=validateCalendarDefinition(config),start=validateCalendarDate(date,c);
  if(!['minute','hour','day','week','month','year'].includes(unit))
   throw Error('Choose minutes, hours, days, weeks, months or years.');
  const maximum={minute:10000,hour:1000,day:365,week:52,month:120,year:20}[unit];
  const count=whole(amount,1,maximum,'Calendar advance amount');
  if(unit==='month'||unit==='year'){
-  const delta=unit==='year'?count*12:count;
-  const total=(start.year-1)*12+start.month-1+delta;
-  const year=Math.floor(total/12)+1,month=total%12+1;
+  const delta=unit==='year'?count*c.months.length:count;
+  const total=(start.year-1)*c.months.length+start.month-1+delta;
+  const year=Math.floor(total/c.months.length)+1,month=total%c.months.length+1;
   if(year>MAX_CALENDAR_YEAR)throw Error('Calendar year is outside the supported range.');
-  return {...start,year,month,day:Math.min(start.day,config.months[month-1].days)};
+  return {...start,year,month,day:Math.min(start.day,calendarMonthDays(c,year,month))};
  }
- const minutesPerDay=config.hoursPerDay*config.minutesPerHour;
- const add=unit==='minute'?count:unit==='hour'?count*config.minutesPerHour:
-   unit==='day'?count*minutesPerDay:count*ASTERIA_WEEKDAYS.length*minutesPerDay;
- const total=calendarDayIndex(start,config)*minutesPerDay+
-   start.hour*config.minutesPerHour+start.minute+add;
- const dayIndex=Math.floor(total/minutesPerDay);
- const year=Math.floor(dayIndex/calendarYearDays(config))+1;
- if(year>MAX_CALENDAR_YEAR)throw Error('Calendar year is outside the supported range.');
- let offset=dayIndex%calendarYearDays(config),month=1;
- for(const row of config.months){
-  if(offset<row.days)break;
-  offset-=row.days;month++;
+ const extra=unit==='minute'?count:unit==='hour'?count*c.minutesPerHour:
+  unit==='day'?count*c.hoursPerDay*c.minutesPerHour:count*c.weekdays.length*c.hoursPerDay*c.minutesPerHour;
+ return calendarDateFromMinutes(calendarDateToMinutes(start,c)+extra,c,start.era);
+}
+export function calendarMonthGrid(config,era,year,month){
+ const c=validateCalendarDefinition(config);
+ const length=calendarMonthDays(c,year,month);
+ const start={era,year,month,day:1,hour:0,minute:0};
+ const first=calendarWeekday(start,c);
+ const leading=c.weekdays.indexOf(first);
+ const rows=[];
+ for(let i=0;i<leading;i++)rows.push(null);
+ for(let day=1;day<=length;day++){
+  const date={...start,day};
+  rows.push({date,weekday:calendarWeekday(date,c),
+   intercalary:calendarIntercalaryName(date,c)});
  }
- const minuteOfDay=total%minutesPerDay;
- return {...start,year,month,day:offset+1,hour:Math.floor(minuteOfDay/config.minutesPerHour),
-  minute:minuteOfDay%config.minutesPerHour};
+ return rows;
+}
+export function calendarCyclePhase(date,config,cycle){
+ const c=validateCalendarDefinition(config),d=validateCalendarDate(date,c);
+ const source=[...c.moons,...c.cycles].find(row=>row.name===cycle);
+ if(!source)throw Error('Unknown calendar cycle.');
+ return ((calendarDayIndex(d,c)+source.offset)%source.period)/source.period;
+}
+export function calendarYearSummary(config,year=1){
+ const c=validateCalendarDefinition(config);
+ return {year,days:calendarYearDays(c,year),months:c.months.length,
+  weekdays:c.weekdays.length,leapDays:c.leapDays.filter(x=>leapApplies(x,year)).map(x=>x.name)};
 }
 export function validateCalendarEntry(input,config,idValue,previous=null){
  if(!id(idValue))throw Error('Choose a valid calendar entry identifier.');
@@ -167,7 +310,7 @@ export function sortedCalendarEntries(entries=[],config=null){
  const rows=(Array.isArray(entries)?entries:[]).filter(row=>object(row)&&row.status!=='archived');
  if(!config)return rows;
  return rows.filter(row=>{try{validateCalendarDate(row.date,config);return true;}catch{return false;}})
-  .sort((a,b)=>calendarDateSortKey(a.date).localeCompare(calendarDateSortKey(b.date))||a.title.localeCompare(b.title));
+  .sort((a,b)=>calendarDateSortKey(a.date,config).localeCompare(calendarDateSortKey(b.date,config))||a.title.localeCompare(b.title));
 }
 export function validateCalendarAction(action={}){
  fields(action,['type','expectedRevision','definition','date','unit','amount','reason','entryId','entry','expectedEntryRevision'],'calendar action');
