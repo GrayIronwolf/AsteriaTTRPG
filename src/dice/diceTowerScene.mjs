@@ -38,7 +38,9 @@ export function attachDiceTower(engine,outline,input=defaultDiceTowerAppearance(
  // Reject hidden physics candidates that never leave the tower. The worker
  // really simulates each candidate; none creates a new official Firebase roll.
  engine._predict=async function(diceConfig){
-  const maxAttempts=16;
+  // Larger percentile pairs and d4 can need additional genuine Cannon throws.
+  // The acceptance gate still demands a real exit; no fake exit or value changes.
+  const maxAttempts=48;
   for(let attempt=1;attempt<=maxAttempts;attempt++){
    const candidate=await predictBefore.call(this,diceConfig);
    attempts=attempt;
@@ -50,7 +52,7 @@ export function attachDiceTower(engine,outline,input=defaultDiceTowerAppearance(
      return candidate;
    }
   }
-  throw Error('Dice Tower physics could not complete an exit within sixteen attempts.');
+  throw Error('Dice Tower physics could not complete an exit within forty-eight physical attempts.');
  };
  // The worker already simulated the throw until rest and recorded the true
  // final orientation. Stop any unrecorded late physical drift after replay,
