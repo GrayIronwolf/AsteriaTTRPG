@@ -397,3 +397,17 @@
   .asteria-dice-studio-looks-grid{grid-template-columns:minmax(0,1fr)}
   .asteria-dice-studio{padding:8px}
 }
+
+/* Phase 3.7: private account visual collection panel */
+.asteria-dice-collections{display:grid;gap:11px;min-width:0;padding:13px;border:1px solid #4e6e86;border-radius:6px;background:#112435}
+.asteria-dice-collections-heading{display:flex;align-items:start;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.asteria-dice-collections-heading h3{font-size:1.04rem;margin:0 0 4px}
+.asteria-dice-collections-heading p{font-size:.82rem;line-height:1.4;color:#b2c5d4;margin:0}
+.asteria-dice-collections-heading strong{font-variant-numeric:tabular-nums;color:#d4e7f6}
+.asteria-dice-collections-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.asteria-dice-collections-actions{display:flex;flex-wrap:wrap;gap:7px}
+.asteria-dice-collections-assign{display:grid;gap:8px;padding:10px;border:1px solid #38556b;border-radius:5px;background:#142a3b}
+.asteria-dice-collections-assign>strong{font-size:.88rem;color:#d9eaf7}
+.asteria-dice-collections-assign>small{color:#b5cbdc}
+.asteria-dice-collections-status{padding:8px 10px;margin:0;border-left:2px solid #9cc4dc;background:#1d3448;color:#e5f2fa;font-size:.82rem}
+@container asteriaDice (max-width:480px){.asteria-dice-collections-form{grid-template-columns:minmax(0,1fr)}.asteria-dice-collections{padding:9px}}

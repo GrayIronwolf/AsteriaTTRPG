@@ -20,7 +20,7 @@ export function DiceCustomizationStudio({
         <h3>Dice Customisation Studio</h3>
         <p>Personalise your dice and their physical tray. Changes are preview-only until a roll is requested.</p>
       </div>
-      <span>Local session · saving arrives in Phase 3.7</span>
+      <span>Local edits · save using appearance collections below</span>
     </header>
     <div className="asteria-dice-studio-tabs" role="tablist" aria-label="Customisation detail">
       {['basic','advanced'].map(key=><button key={key} type="button"

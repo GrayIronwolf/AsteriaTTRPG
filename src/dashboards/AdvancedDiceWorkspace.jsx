@@ -6,6 +6,10 @@ import {
 } from '../state/diceRollModel.mjs';
 import {AsteriaDiceTray} from '../dice/AsteriaDiceTray.jsx';
 import {DiceCustomizationStudio} from '../dice/DiceCustomizationStudio.jsx';
+import {DiceAppearanceCollections} from '../dice/DiceAppearanceCollections.jsx';
+import {appearanceForCharacter,normalizeDiceAppearanceLibrary} from '../dice/diceAppearanceCollections.mjs';
+import {defaultDiceAppearance} from '../dice/diceAppearanceCatalogue.mjs';
+import {defaultDiceTrayAppearance} from '../dice/diceTrayCatalogue.mjs';
 import {createDiceStudioState,changeDiceStudio,undoDiceStudio,redoDiceStudio,
   applyDiceStudioLook,matchDiceTrayPalette,restoreDiceStudio} from '../dice/diceStudioModel.mjs';
 import '../styles/advanced-dice.css';
@@ -15,15 +19,23 @@ const visibleTime=timestamp=>Number.isFinite(Number(timestamp))?
   new Date(Number(timestamp)).toLocaleString():'';
 const signed=value=>Number(value)>=0?'+'+value:String(value);
 const readFailure=error=>error?.message||'Unable to complete the dice action.';
-export function AdvancedDiceWorkspace({role='player'}){
+export function AdvancedDiceWorkspace({role='player',ownedCharacterId=''}){
   const [workspace,setWorkspace]=useState({presets:[],history:[]});
   const [config,setConfig]=useState(EMPTY),[presetName,setPresetName]=useState('');
   const [busy,setBusy]=useState(false),[error,setError]=useState('');
   const [notice,setNotice]=useState(''),[showHistory,setShowHistory]=useState(true);
   const [animatedRoll,setAnimatedRoll]=useState(null);
   const [replayToken,setReplayToken]=useState(0);
-  // Phase 3.6 edits are local; Phase 3.7 owns account and character persistence.
   const [diceStudio,setDiceStudio]=useState(()=>createDiceStudioState());
+  const [appearanceLibrary,setAppearanceLibrary]=useState(null);
+  const [libraryReady,setLibraryReady]=useState(false);
+  const [appearanceCharacters,setAppearanceCharacters]=useState([]);
+  const [appearanceBusy,setAppearanceBusy]=useState(false);
+  const [appearanceError,setAppearanceError]=useState('');
+  const [appearanceNotice,setAppearanceNotice]=useState('');
+  const [selectedAppearanceCharacter,setSelectedAppearanceCharacter]=useState('');
+  const appearanceLoadedScope=useRef('');
+  const appearanceUid=useRef('');
   const appearance=diceStudio.current.dice;
   const trayAppearance=diceStudio.current.tray;
   const setAppearance=next=>setDiceStudio(state=>changeDiceStudio(state,{
@@ -32,6 +44,60 @@ export function AdvancedDiceWorkspace({role='player'}){
   const setTrayAppearance=next=>setDiceStudio(state=>changeDiceStudio(state,{
     tray:typeof next==='function'?next(state.current.tray):next
   }));
+  useEffect(()=>{
+    let unsubLibrary=()=>{},unsubCharacters=()=>{};
+    const connect=()=>{
+      const uid=firebaseService.currentUser()?.uid||'';
+      if(!uid||uid===appearanceUid.current)return;
+      appearanceUid.current=uid;appearanceLoadedScope.current='';
+      unsubLibrary();unsubCharacters();
+      setAppearanceLibrary(null);setLibraryReady(false);setAppearanceCharacters([]);
+      setSelectedAppearanceCharacter('');
+      unsubLibrary=firebaseService.subscribeDiceAppearanceLibrary(raw=>{
+        try{setAppearanceLibrary(normalizeDiceAppearanceLibrary(raw));setLibraryReady(true);}
+        catch(err){setAppearanceError(readFailure(err));setLibraryReady(false);}
+      },err=>setAppearanceError(readFailure(err)));
+      unsubCharacters=firebaseService.subscribeOwnedDiceCharacters(items=>
+        setAppearanceCharacters(items),err=>setAppearanceError(readFailure(err)));
+    };
+    connect();
+    window.addEventListener('asteria:firebase-ready',connect);
+    return ()=>{window.removeEventListener('asteria:firebase-ready',connect);
+      unsubLibrary();unsubCharacters();};
+  },[]);
+  useEffect(()=>{
+    if(!libraryReady||!appearanceLibrary)return;
+    const owned=appearanceCharacters.some(c=>c.id===ownedCharacterId);
+    const active=owned?ownedCharacterId:'';
+    const scope=appearanceUid.current+':'+active;
+    if(appearanceLoadedScope.current===scope)return;
+    if(ownedCharacterId&&!owned&&!appearanceCharacters.length)return;
+    appearanceLoadedScope.current=scope;setSelectedAppearanceCharacter(active);
+    const saved=appearanceForCharacter(appearanceLibrary,active);
+    if(saved)setDiceStudio(createDiceStudioState(saved.dice,saved.tray));
+  },[libraryReady,appearanceLibrary,appearanceCharacters,ownedCharacterId]);
+  const loadSavedAppearance=collection=>{
+    setDiceStudio(createDiceStudioState(collection.dice,collection.tray));
+    setAppearanceError('');setAppearanceNotice('Loaded '+collection.name+'.');
+  };
+  const chooseAppearanceCharacter=id=>{
+    setSelectedAppearanceCharacter(id);
+    const saved=appearanceForCharacter(appearanceLibrary,id||null);
+    setDiceStudio(createDiceStudioState(
+      saved?.dice||defaultDiceAppearance(),saved?.tray||defaultDiceTrayAppearance()));
+  };
+  const executeAppearance=async(request,success)=>{
+    if(appearanceBusy||!libraryReady||!appearanceLibrary)return false;
+    setAppearanceBusy(true);setAppearanceError('');setAppearanceNotice('');
+    try{
+      const response=await firebaseService.advancedDiceAction({
+        ...request,expectedRevision:appearanceLibrary.revision
+      });
+      if(!response?.ok)throw Error(response?.error||'Appearance action failed.');
+      setAppearanceNotice(success||'Appearance updated.');return true;
+    }catch(err){setAppearanceError(readFailure(err));return false;}
+    finally{setAppearanceBusy(false);}
+  };
   const [animateDice,setAnimateDice]=useState(()=>{
     if(typeof window==='undefined'||typeof window.matchMedia!=='function')return true;
     return !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -124,6 +190,10 @@ export function AdvancedDiceWorkspace({role='player'}){
       onApplyLook={id=>setDiceStudio(state=>applyDiceStudioLook(state,id))}
       onMatch={()=>setDiceStudio(matchDiceTrayPalette)}
       onRestore={target=>setDiceStudio(state=>restoreDiceStudio(state,target))}/>
+    <DiceAppearanceCollections library={appearanceLibrary} ready={libraryReady}
+      characters={appearanceCharacters} characterId={selectedAppearanceCharacter}
+      onCharacterChange={chooseAppearanceCharacter} current={diceStudio.current}
+      onLoad={loadSavedAppearance} onAction={executeAppearance} busy={appearanceBusy}/>
     <AsteriaDiceTray record={animatedRoll} enabled={animateDice}
       appearance={appearance} trayAppearance={trayAppearance}
       onTrayAppearanceChange={setTrayAppearance} studioManaged
@@ -213,6 +283,8 @@ export function AdvancedDiceWorkspace({role='player'}){
         </section>
       </div>
     </div>
+    {appearanceError?<p className="asteria-advanced-dice-message" role="alert">{appearanceError}</p>:null}
+    {appearanceNotice?<p className="asteria-advanced-dice-message" role="status">{appearanceNotice}</p>:null}
     {error?<p className="asteria-advanced-dice-message" role="alert">{error}</p>:null}
     {notice?<p className="asteria-advanced-dice-message" role="status">{notice}</p>:null}
   </section>;

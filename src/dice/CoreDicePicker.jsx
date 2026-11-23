@@ -332,6 +332,6 @@ export function CoreDicePicker({value,onChange,mode='advanced'}){
       </div>
       <CoreDicePreview appearance={value} dieType={dieType}/>
     </div>
-    <p className="asteria-advanced-dice-help">All fourteen dice designs are available. Watcher animation is visual only and follows reduced-motion preferences. Appearance collections are saved to accounts in Phase 3.7; roll results remain Firebase-authoritative.</p>
+    <p className="asteria-advanced-dice-help">All fourteen dice designs are available. Watcher animation is visual only and follows reduced-motion preferences. Appearance collections save privately to your account; roll results remain Firebase-authoritative.</p>
   </section>;
 }

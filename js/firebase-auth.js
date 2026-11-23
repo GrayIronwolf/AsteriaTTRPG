@@ -1440,6 +1440,24 @@ const firebasePublicApi = {
       if(currentUser?.uid===uid)onChange(snapshot.exists()?snapshot.data():{version:1,presets:[],history:[]});
     },error=>reportSyncError('dice-workspace-listener',error,{uid}));
   },
+  subscribeDiceAppearanceLibrary: function(onChange,onError){
+    if(!db||!currentUser||typeof onChange!=='function')return ()=>{};
+    const uid=currentUser.uid;
+    return onSnapshot(doc(db,'users',uid,'diceAppearances','current'),snapshot=>{
+      if(currentUser?.uid===uid)onChange(snapshot.exists()?snapshot.data():{});
+    },error=>{reportSyncError('dice-appearance-listener',error,{uid});onError?.(error);});
+  },
+  subscribeOwnedDiceCharacters: function(onChange,onError){
+    if(!db||!currentUser||typeof onChange!=='function')return ()=>{};
+    const uid=currentUser.uid;
+    return onSnapshot(query(collection(db,'users',uid,'characters'),where('ownerUid','==',uid)),
+    snapshot=>{
+      if(currentUser?.uid!==uid)return;
+      onChange(snapshot.docs.map(d=>({id:d.id,
+        name:String(d.data()?.name||d.data()?.characterName||d.id).slice(0,100)}))
+        .sort((a,b)=>a.name.localeCompare(b.name)));
+    },error=>{reportSyncError('dice-owned-characters-listener',error,{uid});onError?.(error);});
+  },
   universalCheckAction: async data=>{
     if(!functionsClient||!currentUser)return {ok:false,error:'Sign in to continue.'};
     try{return (await httpsCallable(functionsClient,'asteriaUniversalCheck')(data)).data;}

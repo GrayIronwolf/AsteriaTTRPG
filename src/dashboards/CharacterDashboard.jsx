@@ -219,7 +219,7 @@ function CharacterDashboardContent({campaignId,characterId,live}) {
     {activeTab === 'party' ? <PartyTab campaignId={campaignId} character={character} characters={live.characters} partyWorkspace={live.partyWorkspace} messages={live.partyChat} presence={live.presence} editable={editable} /> : null}
     {activeTab === 'gallery' ? <GalleryTab campaignId={campaignId} character={character} editable={editable} /> : null}
     {activeTab === 'battle-maps' && campaignId ? <PlayerBattleMapView campaignId={campaignId} encounter={live.encounter}/> : null}
-    {activeTab === 'advanced-dice' ? <AdvancedDiceWorkspace role="player"/> : null}
+    {activeTab === 'advanced-dice' ? <AdvancedDiceWorkspace role="player" ownedCharacterId={isOwner?(character?.sourceCharacterId||characterId):""}/> : null}
     {activeTab === 'asteria-calendar' && campaignId ? <PlayerAsteriaCalendar campaignId={campaignId}/> : null}
     {activeTab === 'weather-environment' && campaignId ? <PlayerWeatherEnvironment campaignId={campaignId}/> : null}
     {activeTab === 'world-atlas' && campaignId ? <PlayerWorldAtlas campaignId={campaignId}/> : null}
