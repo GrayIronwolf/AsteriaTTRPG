@@ -39,7 +39,7 @@ try{
   log('d100 3D preview renders',await preview.count()===1&&
     await page.locator('.asteria-core-dice-preview p[role=status]').count()===0);
   await page.getByRole('combobox',{name:'Preview dice type'}).selectOption('d20');
-  await page.locator('input[aria-label="Dice body colour"]').fill('#AABBCC');
+  await page.locator('input[aria-label="Dice body colour"]').fill('#aabbcc');
   await page.waitForTimeout(750);
   await page.click('#server-roll');
   await page.waitForFunction(()=>document.querySelector('[data-roll-state=settled]'),
@@ -73,6 +73,6 @@ try{
   await fs.mkdir(output,{recursive:true});
   await fs.writeFile(path.join(output,'report.json'),JSON.stringify(checks,null,2));
 }
-const failures=checks.filter(x=>!x.ok).length;
+const failures=checks.filter(x=>!x.okay).length;
 console.log('PHASE 3.2 BROWSER SUMMARY '+JSON.stringify({passed:checks.length-failures,failed:failures}));
 if(failures)process.exitCode=1;
