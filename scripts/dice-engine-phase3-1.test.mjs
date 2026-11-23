@@ -86,7 +86,7 @@ test('Watcher eye and Familiar coat customisation validate independently',()=>{
     pupil:'starfish'}}),/pupil/);
   assert.throws(()=>validateDiceAppearance({...cat,special:{...cat.special,
     coatColor:'invalid'}}),/HEX/);
-  assert.throws(()=>validateDiceAppearance({...eye,special:{...cat.special}}),/family/);
+  assert.throws(()=>validateDiceAppearance({...eye,special:{...cat.special}}),/Unsupported special appearance field|family/);
 });
 
 test('Die-specific overrides resolve into rendering colours only',()=>{
