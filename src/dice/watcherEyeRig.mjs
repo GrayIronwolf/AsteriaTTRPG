@@ -23,7 +23,8 @@ export function createWatcherEyeRig(THREE,appearance,quality={}){
   const a=validateDiceAppearance(appearance);
   if(a.familyId!=='dice-watcher')throw Error('Cannot attach eye to a non-Watcher die.');
   const c=a.special;
-  const q=watcherVisualQuality(quality);
+  const q=quality&&Number.isFinite(quality.segments)&&typeof quality.animated==='boolean'
+    ?quality:watcherVisualQuality(quality);
   const group=new THREE.Group();
   group.name='asteria-watcher-visual-eye';
   group.userData.asteriaWatcher=true;
