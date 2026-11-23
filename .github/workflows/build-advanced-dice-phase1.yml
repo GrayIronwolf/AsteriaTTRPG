@@ -163,8 +163,16 @@ jobs:
           SOURCE_SHA="$(git rev-parse HEAD)"
           git fetch --no-tags origin Website-Build-Test
           if [ "$(git rev-parse FETCH_HEAD)" != "$SOURCE_SHA" ]; then
-            echo "Test branch advanced; not pushing stale bundle."
-            exit 1
+            echo "::notice::Test branch advanced during verification. Skipping stale generated assets; the newer commit owns its own build."
+            exit 0
           fi
           git commit -m "build(dice): synchronize 3D engine lockfile and React bundle [skip ci]"
-          git push origin HEAD:Website-Build-Test
+          if ! git push origin HEAD:Website-Build-Test; then
+            git fetch --no-tags origin Website-Build-Test
+            if [ "$(git rev-parse FETCH_HEAD)" != "$SOURCE_SHA" ]; then
+              echo "::notice::Test branch advanced during push. Stale assets were not published."
+              exit 0
+            fi
+            echo "::error::Could not push generated assets to unchanged test branch."
+            exit 1
+          fi
