@@ -1,6 +1,8 @@
 import React,{useEffect,useMemo,useRef,useState} from 'react';
 import {Panel,StatusPill} from '../components/WorkspaceUI.jsx';
 import {firebaseService} from '../firebase/asteriaFirebaseService.js';
+import {GMPlayerTools,GMPlayerLiveActions,GMPlayerActivity} from './GMPlayerOperations.jsx';
+import {gmVerifiedPlayerCharacters} from '../state/gmPlayerOperationsModel.mjs';
 import {
   GM_PLAYER_MANAGER_VIEWS,GM_PLAYER_MANAGER_DELEGATIONS,
   gmPlayerManagerAccess,gmPlayerManagerRoster,gmPlayerManagerCapacity,
@@ -29,8 +31,11 @@ function RecordStatus({status}){
 }
 
 export function GMPlayerManager({campaignId,campaign={},characters={},members=null,rosterError='',
-  membership=null,uid='',presence={},onOpenCharacter,onSelectCharacter,onNavigate}){
+  membership=null,uid='',presence={},events=[],session={},clock={},onOpenCharacter,onSelectCharacter,onNavigate}){
   const [view,setView]=useState('players');
+  const [focusedCharacterId,setFocusedCharacterId]=useState('');
+  const [checks,setChecks]=useState([]);
+  const [checkError,setCheckError]=useState('');
   const [query,setQuery]=useState('');
   const [roleFilter,setRoleFilter]=useState('all');
   const [statusFilter,setStatusFilter]=useState('all');
@@ -59,6 +64,16 @@ export function GMPlayerManager({campaignId,campaign={},characters={},members=nu
     campaign,characters,members,rosterError,serverRoster,query,role:roleFilter,
     status:statusFilter,presence
   }),[campaign,characters,members,rosterError,serverRoster,query,roleFilter,statusFilter,presence]);
+  const fullReport=useMemo(()=>gmPlayerManagerRoster({
+    campaign,characters,members,rosterError,serverRoster,presence
+  }),[campaign,characters,members,rosterError,serverRoster,presence]);
+  const verifiedCharacters=useMemo(()=>gmVerifiedPlayerCharacters({
+    campaign,characters,report:fullReport
+  }),[campaign,characters,fullReport]);
+  const focused=verifiedCharacters.find(row=>row.id===focusedCharacterId)||verifiedCharacters[0]||null;
+  const verifiedCharacterMap=useMemo(()=>Object.fromEntries(
+    verifiedCharacters.map(row=>[row.id,row.character])
+  ),[verifiedCharacters]);
   const capacity=gmPlayerManagerCapacity(campaign,joinData);
   const pendingJoins=Array.isArray(joinData?.requests)?joinData.requests:[];
   const pendingLinks=Array.isArray(linksData?.requests)?linksData.requests:[];
@@ -144,15 +159,38 @@ export function GMPlayerManager({campaignId,campaign={},characters={},members=nu
   },[scope,view,revision,cursorIndex,access.gm,access.roster,access.joinReview,
     access.characterApproval,access.characterLifecycle,access.invitationManagement,access.activity]);
 
+  // The existing Universal Check System is the only request and roll feed.
+  // Subscribe only when an interactive or history section requires it.
+  useEffect(()=>{
+    setChecks([]);setCheckError('');
+    if(!campaignId||!access.gm||!['live-actions','activity'].includes(view))return;
+    let active=true,unsubscribe=null;
+    try{
+      unsubscribe=firebaseService.subscribeUniversalChecks(campaignId,rows=>{
+        if(active&&firebaseService.currentUser()?.uid===uid)
+          setChecks(Array.isArray(rows)?rows:[]);
+      },{gm:true});
+    }catch(error){if(active)setCheckError(errorText(error));}
+    return()=>{active=false;unsubscribe?.();};
+  },[campaignId,uid,access.gm,view]);
+
   // One-time invitation credentials must never survive a campaign/account switch.
   useEffect(()=>{
     setIssuedLink('');setCopyMessage('');setServerRoster(null);
     setJoinData(null);setLinksData(null);setLifecycleData(null);
     setInvitationData(null);setActivityData(null);
     setCursorHistory([null]);setCursorIndex(0);
+    setFocusedCharacterId('');setChecks([]);setCheckError('');
   },[scope]);
 
   const refresh=()=>setRevision(value=>value+1);
+  const focusCharacter=(characterId,nextView='player-tools')=>{
+    if(!verifiedCharacters.some(row=>row.id===characterId))return;
+    setFocusedCharacterId(characterId);
+    onSelectCharacter?.(characterId);
+    setFeedback('');
+    setView(nextView);
+  };
   const changeView=next=>{
     setFeedback('');setView(next);
     if(next==='invitations'){setIssuedLink('');setCopyMessage('');}
@@ -378,6 +416,10 @@ export function GMPlayerManager({campaignId,campaign={},characters={},members=nu
             {row.characters.map(character=><div className="react-gm-player-character" key={character.id}>
               <div><strong>{character.name}</strong><small>{character.level!=null?'Level '+character.level:'Level not recorded'}</small></div>
               <div className="react-gm-player-actions">
+                <ActionButton disabled={!verifiedCharacters.some(row=>row.id===character.id)}
+                  onClick={()=>focusCharacter(character.id)}>Player tools</ActionButton>
+                <ActionButton disabled={!verifiedCharacters.some(row=>row.id===character.id)}
+                  onClick={()=>focusCharacter(character.id,'live-actions')}>Request check</ActionButton>
                 <ActionButton disabled={!characters[character.id]} onClick={()=>gotoCharacter(character.id,'character')}>View sheet</ActionButton>
                 <ActionButton disabled={!characters[character.id]} onClick={()=>gotoCharacter(character.id,'tools')}>GM tools</ActionButton>
                 <ActionButton disabled={!characters[character.id]} onClick={()=>gotoCharacter(character.id,'inventory')}>Inventory</ActionButton>
@@ -391,6 +433,33 @@ export function GMPlayerManager({campaignId,campaign={},characters={},members=nu
       {readOnly?<p className="react-gm-player-hint">Account administration requires an activated canonical server roster. This overview is read-only; online presence does not grant membership.</p>:null}
     </Panel>:null}
 
+    {view==='player-tools'?<>
+      <div className="react-gm-player-focus-choice">
+        <label>Manage verified character<select value={focused?.id||''}
+          onChange={event=>focusCharacter(event.target.value,'player-tools')}>
+          {!verifiedCharacters.length?<option value="">No verified characters</option>:null}
+          {verifiedCharacters.map(row=><option key={row.id} value={row.id}>
+            {row.characterName} · {row.accountName}</option>)}
+        </select></label>
+      </div>
+      <GMPlayerTools key={focused?.id||'none'} campaignId={campaignId}
+        selected={focused} access={access} session={session} clock={clock}
+        onOpenCharacter={onOpenCharacter} onNavigate={onNavigate}/>
+    </>:null}
+    {view==='live-actions'?<>
+      <div className="react-gm-player-focus-choice">
+        <label>Target player character<select value={focused?.id||''}
+          onChange={event=>focusCharacter(event.target.value,'live-actions')}>
+          {!verifiedCharacters.length?<option value="">No verified characters</option>:null}
+          {verifiedCharacters.map(row=><option key={row.id} value={row.id}>
+            {row.characterName} · {row.accountName}</option>)}
+        </select></label>
+      </div>
+      {checkError?<ReadOnlyNotice>{checkError}</ReadOnlyNotice>:null}
+      <GMPlayerLiveActions key={focused?.id||'none'} campaignId={campaignId}
+        selected={focused} access={access} session={session} checks={checks}
+        characters={verifiedCharacterMap} onNavigate={onNavigate}/>
+    </>:null}
     {view==='joins'?<Panel title="Join Requests" eyebrow="Approval, Capacity & Onboarding"
       action={<span>{pendingJoins.length} pending</span>}>
       <p className="react-gm-player-hint">Share the campaign UCN through Campaign Forge. Joining never automatically links a private character sheet.</p>
@@ -527,17 +596,15 @@ export function GMPlayerManager({campaignId,campaign={},characters={},members=nu
       </article>)}</div>
     </Panel>:null}
 
-    {view==='activity'?<Panel title="Player & GM Activity" eyebrow="Read-Only Server Audit History">
-      {!access.activity?<ReadOnlyNotice>{stateMessage('activity',access.activity)}</ReadOnlyNotice>:null}
+    {view==='activity'?<>
+      {checkError?<ReadOnlyNotice>{checkError}</ReadOnlyNotice>:null}
       {loadErrors.activity?<ReadOnlyNotice>{loadErrors.activity}</ReadOnlyNotice>:null}
-      {access.activity&&activityData&&!activity.length?<ReadOnlyNotice>No campaign membership events in the available history.</ReadOnlyNotice>:null}
-      <ol className="react-gm-player-events">{access.activity&&activity.map((event,index)=><li key={event.type+':'+event.uid+':'+index}>
-        <strong>{readable(event.type)} · {event.uid}</strong>
-        <small>{event.at||'Date unavailable'} · GM: {event.actorUid}</small>
-        <p>{event.detail}{event.reason?' · Reason: '+event.reason:''}</p>
-      </li>)}</ol>
-      {activityData?.limited?<ReadOnlyNotice>Older activity exists beyond the bounded server response.</ReadOnlyNotice>:null}
-    </Panel>:null}
+      <GMPlayerActivity events={events} checks={checks} characters={verifiedCharacterMap}
+        membershipEvents={access.activity?activity:[]}
+        membershipAvailable={access.activity&&Boolean(activityData)}
+        selected={focused}/>
+      {activityData?.limited?<ReadOnlyNotice>Older membership decisions exist beyond the bounded server activity response.</ReadOnlyNotice>:null}
+    </>:null}
     <p className="react-gm-player-footnote">
       {sectionSupport[view]&&!access[sectionSupport[view]]?'This section is informational until its gated server feature is enabled. ':' '}
       All account, character and permission changes use existing authenticated Firebase functions. The dashboard does not write membership records directly.
