@@ -130,7 +130,7 @@ export const GM_DASHBOARD_CANVAS_CONFIG=Object.freeze({
     ]},
     {id:'overviews',label:'Quick Reference',panels:[
       'diceQuick','npcQuick','soundboardQuick','worldQuick','playerDisplayQuick',
-      'explorationOverview','inventoryOverview'
+      'explorationOverview','inventoryOverview','worldContext'
     ]},
     {id:'shortcuts',label:'Other Page Shortcuts',panels:DASHBOARD_PANEL_REGISTRY.gm
       .filter(item=>item.category==='Shortcuts').map(item=>item.id)}
