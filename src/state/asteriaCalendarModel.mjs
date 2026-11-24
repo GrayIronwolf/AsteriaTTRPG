@@ -423,9 +423,9 @@ export function sortedCalendarEntries(entries=[],config=null){
   .sort((a,b)=>calendarDateSortKey(a.date,config).localeCompare(calendarDateSortKey(b.date,config))||a.title.localeCompare(b.title));
 }
 export function validateCalendarAction(action={}){
- fields(action,['type','expectedRevision','definition','date','unit','amount','reason','entryId','entry','expectedEntryRevision','clockMode','clockRate','categories'],'calendar action');
+ fields(action,['type','expectedRevision','definition','date','unit','amount','reason','entryId','entry','expectedEntryRevision','clockMode','clockRate','categories','activity'],'calendar action');
  const type=action.type;
- if(!['configure','set','advance','saveEntry','archiveEntry','setClock','undoTime','setCategories'].includes(type))
+ if(!['configure','set','advance','saveEntry','archiveEntry','setClock','undoTime','setCategories','advanceActivity'].includes(type))
   throw Error('Unsupported Asteria calendar action.');
  const keys={
   configure:['type','expectedRevision','definition','date','reason'],
@@ -435,7 +435,8 @@ export function validateCalendarAction(action={}){
   archiveEntry:['type','expectedRevision','entryId','expectedEntryRevision'],
   setClock:['type','expectedRevision','clockMode','clockRate','reason'],
   undoTime:['type','expectedRevision','reason'],
-  setCategories:['type','expectedRevision','categories']
+  setCategories:['type','expectedRevision','categories'],
+  advanceActivity:['type','expectedRevision','activity','reason']
  }[type];
  if(Object.keys(action).some(key=>!keys.includes(key)))
   throw Error('Fields are not permitted for this Asteria calendar action.');
@@ -451,7 +452,12 @@ export function validateCalendarAction(action={}){
   if(!CALENDAR_CLOCK_RATES.includes(action.clockRate))throw Error('Invalid calendar clock speed.');
  }
  if(type==='setCategories')validateCalendarCategories(action.categories);
- if(['configure','set','advance','setClock','undoTime'].includes(type)){
+ if(type==='advanceActivity'){
+  if(!action.activity||typeof action.activity!=='object'||Array.isArray(action.activity))
+   throw Error('Choose a supported gameplay time activity.');
+  // The shared gameplay model validates the activity fields and durations.
+ }
+ if(['configure','set','advance','setClock','undoTime','advanceActivity'].includes(type)){
   if(action.reason!==undefined)text(action.reason,180,'GM reason',true);
  }
  return {type,expectedRevision};
