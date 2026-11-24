@@ -175,3 +175,17 @@ test('core synchronization hook does not create a refresh loop on repeated snaps
     await renderer.act(async()=>{root.unmount();});
   } finally {await server.close();delete globalThis.window;}
 });
+
+ test('player HUD uses canonical resource bounds and blocks unavailable gameplay writes',()=>{
+  const hud=fs.readFileSync('src/components/DashboardInformation.jsx','utf8');
+  const dashboard=fs.readFileSync('src/dashboards/CharacterDashboard.jsx','utf8');
+  assert.match(hud,/resourceSnapshot\(character,row.id\)/);
+  assert.match(hud,/state.current > state.minimum/);
+  assert.match(hud,/state.allowOverflow \|\| state.current < state.cap/);
+  assert.match(hud,/min:1,max:1e9/);
+  assert.match(dashboard,/resourceEditable = editable && live.online && !live.error && !combat.active/);
+  const character=sheet({hp:[80,100],specialDamage:{soul:20}});
+  assert.equal(resourceSnapshot(character,'hp').cap,80);
+  assert.equal(resourceSnapshot(character,'bp').allowOverflow,true);
+  assert.throws(()=>resourceSnapshot(sheet({hp:undefined}),'hp'));
+});
