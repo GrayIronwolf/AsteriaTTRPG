@@ -32,3 +32,9 @@ Use separate real account sessions, not only unit-test fixtures:
 7. Compare performance with large real rosters and presence churn, including Firestore listener counts and signed-out teardown.
 
 **Release status:** Source staged on test branch. Passing CI does not authorize production feature activation, merging to `main`, or Firebase deployment. Real multi-account acceptance and explicit user release approval remain mandatory.
+
+## Source and compiled bundle verification
+
+The React/Vite compilation workflow writes the tracked `react-dist` artifacts to `Website-Build-Test` and deliberately skips publishing or deploying Firebase. The full GitHub checks must be run again **after** these compiled assets have reached the branch to verify deterministic source/bundle parity. Earlier CI failures on source commits may reflect the known build/commit race and are not accepted as a passing release gate.
+
+On any new code change, repeat the same validation. Do not enable disabled campaign member-management flags on the basis of this source-only verification.
