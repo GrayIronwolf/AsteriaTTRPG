@@ -31,7 +31,7 @@ const characters={a:{id:'a',name:'Aster',level:8,ownerUid:'alice',
 
 test('player manager adds single canonical GM route and all six distinct sections',()=>{
   assert.deepEqual(GM_PLAYER_MANAGER_VIEWS.map(x=>x.id),[
-    'players','joins','characters','invitations','access','activity']);
+    'players','player-tools','live-actions','joins','characters','invitations','access','activity']);
   assert.deepEqual(GM_PLAYER_MANAGER_DELEGATIONS.map(x=>x.id),[
     'review-join-requests','moderate-members']);
   const menu=text('src/state/dashboardMenuModel.mjs');
