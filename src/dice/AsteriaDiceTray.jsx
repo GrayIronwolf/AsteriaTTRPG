@@ -49,7 +49,7 @@ export function AsteriaDiceTray({
   onTrayAppearanceChange=null,studioManaged=false,
   experimentalCastleTower=false,experimentalTowerAppearance=null,
   presentationPreferences=null,onPresentationPreferencesChange=null,
-  windowMode=false,windowSettings=null,onRollDie=null
+  windowMode=false,windowSettings=null,onRollDie=null,onLifecycleStatus=null
 }){
   const containerRef=useRef(null),engineRef=useRef(null);
   const physicalTrayMemoRef=useRef(null);
@@ -84,6 +84,9 @@ export function AsteriaDiceTray({
   });
   const effectiveEnabled=enabled&&!graphics.reducedMotion;
   const [ready,setReady]=useState(false),[status,setStatus]=useState('loading');
+  const lifecycleRef=useRef(onLifecycleStatus);
+  useEffect(()=>{lifecycleRef.current=onLifecycleStatus;},[onLifecycleStatus]);
+  useEffect(()=>{lifecycleRef.current?.(status);},[status]);
   const [localTrayAppearance,setLocalTrayAppearance]=useState(()=>defaultDiceTrayAppearance());
   const trayAppearance=controlledTrayAppearance||localTrayAppearance;
   // Explicit test-only tower props. No dashboard or Firebase setting enables them.

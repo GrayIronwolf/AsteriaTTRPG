@@ -37,6 +37,9 @@ export function AdvancedDiceWorkspace({role='player',ownedCharacterId=''}){
   const [settingsTab,setSettingsTab]=useState('appearance');
   const [immersive,setImmersive]=useState(false);
   const [showResult,setShowResult]=useState(true);
+  const [rollPhase,setRollPhase]=useState('idle');
+  const [rollWarning,setRollWarning]=useState('');
+  const rollInFlightRef=useRef(false);
   const [gmSharing,setGmSharing]=useState('private');
   const [shareStatus,setShareStatus]=useState('');
   const [windowSettings,setWindowSettings]=useState(()=>{
@@ -182,6 +185,7 @@ export function AdvancedDiceWorkspace({role='player',ownedCharacterId=''}){
     finally{setBusy(false);}
   };
   const roll=async(override=null)=>{
+    if(rollInFlightRef.current)return;
     let checked;
     try{checked=diceConfig(override||config);}catch(err){setError(readFailure(err));return;}
     // Preserve the request ID after a transient network failure to prevent
@@ -189,15 +193,18 @@ export function AdvancedDiceWorkspace({role='player',ownedCharacterId=''}){
     const fingerprint=JSON.stringify(checked);
     if(lastRequest.current?.fingerprint!==fingerprint)
       lastRequest.current={fingerprint,requestId:crypto.randomUUID()};
+    rollInFlightRef.current=true;
+    setRollPhase('requesting');setRollWarning('');setShowResult(false);
     const response=await execute({action:'roll',...checked,requestId:lastRequest.current.requestId},
       'Digital roll recorded in your private history.');
+    rollInFlightRef.current=false;
     if(response?.ok){
       lastRequest.current=null;
       if(response.roll){
-        setAnimatedRoll(response.roll);setShowResult(true);
+        setRollPhase('animating');setAnimatedRoll(response.roll);
         setReplayToken(token=>token+1);
       }
-    }
+    }else{setRollPhase('error');setShowResult(true);}
   };
   const savePreset=async()=>{
     let checked;
@@ -223,12 +230,14 @@ export function AdvancedDiceWorkspace({role='player',ownedCharacterId=''}){
   const totalDice=config.pool.reduce((total,row)=>total+(Number(row.count)||0),0);
   const latest=workspace.history?.[0];
   const replayLast=()=>{
+    if(rollPhase==='requesting'||rollPhase==='animating')return;
     const saved=latest||animatedRoll;
     if(!saved)return;
-    setAnimatedRoll(saved);
-    setReplayToken(token=>token+1);
+    setShowResult(false);setRollWarning('');setRollPhase('animating');
+    setAnimatedRoll(saved);setReplayToken(token=>token+1);
   };
-  const clearTray=()=>{setAnimatedRoll(null);setShowResult(false);};
+  const clearTray=()=>{if(busy||rollPhase==='animating')return;
+    setAnimatedRoll(null);setShowResult(false);setRollPhase('idle');};
   const shareResult=async()=>{
     if(role!=='gm'||gmSharing!=='shareable'||!latest)return;
     try{
@@ -237,6 +246,24 @@ export function AdvancedDiceWorkspace({role='player',ownedCharacterId=''}){
     }catch{setShareStatus('Clipboard permission denied. Your roll remains private.');}
   };
   const currentResult=animatedRoll||latest;
+  const handleTrayLifecycle=state=>{
+    if(rollPhase!=='animating')return;
+    if(state==='settled'){setRollPhase('settled');setShowResult(true);}
+    else if(['mismatch','unavailable','oversized','unsupported','paused'].includes(state)){
+      setRollPhase('fallback');
+      setRollWarning('3D animation could not finish normally. The server-confirmed result is unchanged.');
+      setShowResult(true);
+    }
+  };
+  useEffect(()=>{
+    if(rollPhase!=='animating')return undefined;
+    const timer=window.setTimeout(()=>{
+      setRollPhase('fallback');
+      setRollWarning('3D animation timed out. Showing the verified result instead.');
+      setShowResult(true);
+    },20000);
+    return ()=>window.clearTimeout(timer);
+  },[rollPhase,animatedRoll?.id,replayToken]);
   useEffect(()=>{
     if(!showResult||!currentResult||!windowSettings.autoHideResult)return undefined;
     const timer=window.setTimeout(()=>setShowResult(false),7000);
@@ -259,6 +286,7 @@ export function AdvancedDiceWorkspace({role='player',ownedCharacterId=''}){
     <div className="asteria-dice-window">
       <div className="asteria-dice-window-surface">
         <AsteriaDiceTray record={animatedRoll} enabled={animateDice}
+          onLifecycleStatus={handleTrayLifecycle}
           appearance={appearance} trayAppearance={trayAppearance}
           onTrayAppearanceChange={setTrayAppearance} studioManaged windowMode
           windowSettings={windowSettings}
@@ -291,7 +319,14 @@ export function AdvancedDiceWorkspace({role='player',ownedCharacterId=''}){
         <button type="button" className="asteria-dice-window-edge-tab"
           aria-controls="asteria-dice-selection" aria-expanded={activePanel==='dice'}
           onClick={()=>openPanel('dice')}>Dice {activePanel==='dice'?'‹':'›'}</button>
-        {currentResult&&showResult?<div className="asteria-dice-window-result"
+        {(rollPhase==='requesting'||rollPhase==='animating')?
+          <div className="asteria-dice-roll-progress" role="status" aria-live="polite"
+            data-roll-phase={rollPhase}>
+            <span className="asteria-dice-roll-progress-spinner" aria-hidden="true"/>
+            {rollPhase==='requesting'?'Rolling dice…':'Dice tumbling…'}
+          </div>:null}
+        {currentResult&&showResult&&rollPhase!=='requesting'&&rollPhase!=='animating'?
+          <div className="asteria-dice-window-result"
           aria-live="polite" data-result-visible="true">
           <button type="button" aria-label="Hide result overlay"
             className="asteria-dice-window-result-dismiss"
@@ -514,8 +549,8 @@ export function AdvancedDiceWorkspace({role='player',ownedCharacterId=''}){
           {appearanceNotice?<p className="asteria-advanced-dice-message"
             role="status">{appearanceNotice}</p>:null}
         </aside>:null}
-        {(error||notice||shareStatus)?<div className="asteria-dice-window-messages"
-          role={error?'alert':'status'}>{error||shareStatus||notice}</div>:null}
+        {(error||rollWarning||notice||shareStatus)?<div className="asteria-dice-window-messages"
+          role={error?'alert':'status'}>{error||rollWarning||shareStatus||notice}</div>:null}
       </div>
     </div>
   </section>;

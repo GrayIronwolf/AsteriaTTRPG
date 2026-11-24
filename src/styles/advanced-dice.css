@@ -600,3 +600,15 @@
 @media(prefers-reduced-motion:reduce){
  .asteria-dice-window-drawer,.asteria-dice-window-result{transition:none!important}
 }
+
+/* Phase 5.1: immediate cosmetic feedback while the server confirms a roll. */
+.asteria-dice-roll-progress{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+ z-index:12;display:flex;align-items:center;gap:12px;padding:12px 18px;border-radius:999px;
+ background:rgba(8,16,28,.84);color:#eef5ff;border:1px solid rgba(157,197,236,.45);
+ box-shadow:0 8px 30px rgba(0,0,0,.3);pointer-events:none;font-weight:650}
+.asteria-dice-roll-progress-spinner{display:inline-block;width:19px;height:19px;
+ border:2px solid rgba(220,234,255,.24);border-top-color:#d7ecff;border-radius:50%;
+ animation:asteria-dice-wait .65s linear infinite}
+@keyframes asteria-dice-wait{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.asteria-dice-roll-progress-spinner{
+ animation:none;border-color:#d7ecff}}
