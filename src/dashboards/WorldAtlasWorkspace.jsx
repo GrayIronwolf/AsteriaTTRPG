@@ -6,7 +6,7 @@ import {
  atlasPins,atlasRoutes,atlasRows,ATLAS_PIN_TYPES
 } from '../state/worldAtlasModel.mjs';
 import {formatAsteriaDate,effectiveCalendarDate} from '../state/asteriaCalendarModel.mjs';
-import {publishedWeatherForDate} from '../state/calendarGameplayModel.mjs';
+import {publishedWeatherForDate,previewGameplayTimeActivity} from '../state/calendarGameplayModel.mjs';
 import '../styles/world-atlas.css';
 const emptySettings=()=>({name:'',description:'',region:'',visibility:'gm'});
 const emptyPin=()=>({id:'',name:'',description:'',kind:'landmark',x:50,y:50,
@@ -120,6 +120,12 @@ function AtlasContext({context,region}){
 }
 export function GMWorldAtlasWorkspace({campaignId,searchTarget=null}){
  const maps=useAtlas(campaignId,'gm'),context=useAtlasContext(campaignId);
+ const [gmCalendar,setGMCalendar]=useState(null),[travelBusy,setTravelBusy]=useState(false);
+ useEffect(()=>{
+  setGMCalendar(null);
+  if(!campaignId)return undefined;
+  return firebaseService.subscribeAsteriaCalendar(campaignId,setGMCalendar,'gm');
+ },[campaignId]);
  const [mapId,setMapId]=useState(''),[file,setFile]=useState(null),[settings,setSettings]=useState(emptySettings);
  const [pins,setPins]=useState([]),[routes,setRoutes]=useState([]);
  const [newPin,setNewPin]=useState(emptyPin),[newRoute,setNewRoute]=useState(emptyRoute);
@@ -182,6 +188,29 @@ export function GMWorldAtlasWorkspace({campaignId,searchTarget=null}){
    type==='unpublish'?'Map withdrawn from player view.':'Atlas archived.').then(result=>{
    if(result?.status==='archived')setMapId('');
   });
+ };
+ const confirmTravelTime=async route=>{
+  if(travelBusy||!gmCalendar?.definition||!gmCalendar?.date)return;
+  const minutes=Number(route.travelDays)*Number(gmCalendar.definition.hoursPerDay)*
+   Number(gmCalendar.definition.minutesPerHour);
+  try{
+   previewGameplayTimeActivity(gmCalendar,{kind:'travel',
+    durationMinutes:minutes,label:route.name});
+  }catch(error){setError(error.message||'Invalid travel time.');return;}
+  if(!window.confirm('Advance campaign time for '+route.name+' by '+route.travelDays+
+   ' in-world day(s)? This only changes chronology, not party position, resources or quest state.'))return;
+  setTravelBusy(true);setError('');setMessage('');
+  try{
+   const result=await firebaseService.manageAsteriaCalendar(campaignId,'gm-scope',{
+    type:'advanceActivity',expectedRevision:gmCalendar.revision,
+    activity:{kind:'travel',durationMinutes:minutes,label:route.name},
+    reason:'Atlas route: '+route.name
+   });
+   if(result?.ok!==true)throw Error(result?.error||'Calendar did not confirm travel time.');
+   setMessage('Campaign calendar advanced for '+route.name+'. End date: '+
+    formatAsteriaDate(result.date,gmCalendar.definition)+'.');
+  }catch(error){setError(error?.message||'Could not advance travel time.');}
+  finally{setTravelBusy(false);}
  };
  const placePoint=point=>{
   setNewPin(old=>({...old,...point}));setPlacing(false);
@@ -297,8 +326,14 @@ export function GMWorldAtlasWorkspace({campaignId,searchTarget=null}){
      <span>{route.name} · {route.travelDays} days · {route.visibility}</span>
      <button onClick={()=>setNewRoute({...route})}>Edit</button>
      <button onClick={()=>setRoutes(x=>x.filter(r=>r.id!==route.id))}>Remove</button>
+     {route.travelDays>0?<button type="button" disabled={travelBusy||!gmCalendar?.definition||
+      !gmCalendar?.date||!Number.isSafeInteger(route.travelDays*
+       gmCalendar.definition.hoursPerDay*gmCalendar.definition.minutesPerHour)||
+       route.travelDays*gmCalendar.definition.hoursPerDay*
+       gmCalendar.definition.minutesPerHour>10080}
+      onClick={()=>confirmTravelTime(route)}>Advance calendar for route</button>:null}
     </div>)}</div>
-    <small>Travel durations are GM-authored estimates, not an automatic time or stamina cost.</small>
+    <small>Travel durations are GM-authored estimates. Only GM-confirmed journeys up to 10,080 in-world minutes can advance the shared calendar. This never moves map tokens or changes character resources.</small>
    </section>:null}
    {error?<p role="alert" className="asteria-atlas-error">{error}</p>:null}
    {message?<p role="status">{message}</p>:null}
