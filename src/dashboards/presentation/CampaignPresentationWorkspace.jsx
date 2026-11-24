@@ -11,6 +11,7 @@ import {PRESENTATION_MEDIA_SCENES} from '../../state/presentationAssetModel.mjs'
 import {useCampaignStream,CampaignMapWorkspace,CampaignAtlasWorkspace} from './CampaignMapWorkspace.jsx';
 import styles from './CampaignPresentationWorkspace.module.css';
 import {usePresentationDisplayRuntime} from './usePresentationDisplayRuntime.js';
+import {CalendarWeatherSceneOverlay} from './CalendarWeatherSceneOverlay.jsx';
 
 const names={'blank':'Blackout','title':'Title','announcement':'Announcement',
   'battle-map':'Battle Map','world-map':'World Atlas',combat:'Combat',party:'Party',
@@ -33,8 +34,10 @@ function Scene({api,campaignId,display,party=[],combat={}}){
     return <CampaignMapWorkspace api={api} campaignId={campaignId}
       selectedMapId={display.mapId}/>;
   if(display.scene==='world-map')
-    return <CampaignAtlasWorkspace api={api} campaignId={campaignId}
-      mapId={display.mapId}/>;
+    return <div className={styles.worldPresentation}>
+      <CampaignAtlasWorkspace api={api} campaignId={campaignId} mapId={display.mapId}/>
+      <CalendarWeatherSceneOverlay campaignId={campaignId}/>
+    </div>;
   if(display.scene==='combat'){
     const safe=safeCombatPresentation(combat,Object.fromEntries(party.map(p=>[p.id,p])));
     return <div className={styles.sceneTitle}><h2>Combat status</h2>
