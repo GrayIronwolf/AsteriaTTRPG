@@ -132,3 +132,52 @@
 @media(max-width:640px){.react-gm-player-details{grid-template-columns:repeat(2,minmax(0,1fr));}
   .react-gm-player-action-fields{grid-template-columns:1fr;}
   .react-gm-player-action-form>button{width:100%;}}
+
+
+/* Priority 11: constrain the full management workspace within desktop or canvas
+ * containers without forcing fixed page widths or horizontal document scroll. */
+.react-gm-player-manager{container-type:inline-size;container-name:gm-player;overflow-wrap:anywhere;isolation:isolate;}
+.react-gm-player-manager :is(.react-gm-player-account,.react-gm-player-character,
+  .react-gm-player-record-list>article,.react-gm-player-metric){min-width:0;}
+.react-gm-player-manager :is(.react-gm-player-sections,.react-gm-player-roster,
+  .react-gm-player-focus-grid,.react-gm-player-live){max-width:100%;}
+.react-gm-player-online-filter{display:flex!important;align-items:center;gap:9px;align-self:end;
+  padding:6px 0;min-height:42px;cursor:pointer;}
+.react-gm-player-online-filter input{min-height:20px!important;width:20px;height:20px;flex:none;accent-color:#8cc5dc;}
+.react-gm-player-filters{grid-template-columns:minmax(210px,2fr) repeat(2,minmax(125px,1fr));align-items:end;}
+.react-gm-player-filters>.react-gm-player-online-filter{align-self:end;}
+.react-gm-player-filters>label:last-child{max-width:200px;}
+.react-gm-player-pagination{display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:10px;margin:16px 0 6px;color:#c8d5dd;font-size:.82rem;}
+.react-gm-player-pagination .react-gm-player-actions{margin-left:auto;}
+.react-gm-player-pagination button{min-width:86px;}
+.react-gm-player-sections{overscroll-behavior-x:contain;scroll-snap-type:x proximity;}
+.react-gm-player-sections button{scroll-snap-align:start;touch-action:manipulation;}
+.react-gm-player-character{align-items:flex-start;}
+.react-gm-player-character .react-gm-player-actions{flex:1 1 240px;justify-content:flex-end;}
+.react-gm-player-actions{max-width:100%;}
+.react-gm-player-manager :is(.react-gm-player-actions button,.react-gm-player-sections button){white-space:normal;overflow-wrap:anywhere;}
+.react-gm-player-roster{align-items:start;}
+.react-gm-player-one-time{min-width:0;overflow-wrap:anywhere;}
+.react-gm-player-one-time .react-gm-player-qr{overflow:hidden;}
+@container gm-player (max-width:850px){
+  .react-gm-player-roster,.react-gm-player-record-list,.react-gm-player-focus-grid,
+  .react-gm-player-live,.react-gm-player-focus-wide,.react-gm-player-section-grid{grid-template-columns:minmax(0,1fr);}
+  .react-gm-player-filters{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .react-gm-player-filters>label:first-child{grid-column:1/-1;}
+  .react-gm-player-character .react-gm-player-actions{justify-content:flex-start;}
+}
+@container gm-player (max-width:540px){
+  .react-gm-player-heading{padding:12px;}
+  .react-gm-player-metrics,.react-gm-player-details{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .react-gm-player-filters,.react-gm-player-capacity,.react-gm-player-action-fields{grid-template-columns:minmax(0,1fr);}
+  .react-gm-player-filters>label:first-child{grid-column:auto;}
+  .react-gm-player-filters>label:last-child{max-width:none;}
+  .react-gm-player-character .react-gm-player-actions{flex-basis:100%;}
+  .react-gm-player-character .react-gm-player-actions button{flex:1 1 auto;min-height:44px;}
+  .react-gm-player-pagination .react-gm-player-actions{margin-left:0;width:100%;}
+  .react-gm-player-pagination .react-gm-player-actions button{flex:1;}
+}
+@media(prefers-reduced-motion:reduce){
+  .react-gm-player-manager *{scroll-snap-type:none!important;animation:none!important;}
+}
