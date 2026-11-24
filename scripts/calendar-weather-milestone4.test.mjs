@@ -85,7 +85,8 @@ test('GM-only gameplay approval writes only existing calendar projections and re
  const advanced=await h.run(correct);
  assert.equal(advanced.ok,true,advanced.error);
  assert.equal(advanced.revision,2);
- assert.equal(advanced.date.month,2);
+ assert.equal(advanced.date.month,1);
+ assert.equal(advanced.date.day,30);
  const privateState=h.store.get('campaigns/camp/calendarState/current');
  const publicState=h.store.get('campaigns/camp/calendarPublic/current');
  assert.equal(privateState.history[0].activity.kind,'long-rest');
