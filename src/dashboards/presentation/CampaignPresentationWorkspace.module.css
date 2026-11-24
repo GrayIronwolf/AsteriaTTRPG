@@ -9,3 +9,15 @@
 .stage[data-theme="slate"]{background:var(--ast-color-panel-slate)}
 .stage[data-theme="parchment"]{background:var(--ast-color-panel-raised)}
 .display:fullscreen .stage{min-height:calc(100vh - 9rem)}
+
+
+/* Milestone 4: player-safe world map date and weather display */
+.worldPresentation{position:relative;min-width:0;width:100%;height:100%;overflow:auto}
+.worldPresentation .asteria-presentation-world-status{
+ position:sticky;bottom:12px;left:12px;z-index:20;
+ display:flex;gap:10px;flex-wrap:wrap;align-items:center;
+ width:fit-content;max-width:calc(100% - 24px);padding:10px 14px;
+ color:#f0f4fa;background:rgba(12,21,32,.92);
+ border:1px solid #6b7d92;border-radius:9px;pointer-events:none;
+ box-shadow:0 2px 14px rgba(0,0,0,.3)}
+@media(max-width:600px){.worldPresentation .asteria-presentation-world-status{font-size:.85rem;padding:8px}}
