@@ -5,7 +5,8 @@ import {
  atlasFileError,atlasMapSettings,atlasPointFromEvent,
  atlasPins,atlasRoutes,atlasRows,ATLAS_PIN_TYPES
 } from '../state/worldAtlasModel.mjs';
-import {formatAsteriaDate} from '../state/asteriaCalendarModel.mjs';
+import {formatAsteriaDate,effectiveCalendarDate} from '../state/asteriaCalendarModel.mjs';
+import {publishedWeatherForDate} from '../state/calendarGameplayModel.mjs';
 import '../styles/world-atlas.css';
 const emptySettings=()=>({name:'',description:'',region:'',visibility:'gm'});
 const emptyPin=()=>({id:'',name:'',description:'',kind:'landmark',x:50,y:50,
@@ -103,13 +104,18 @@ function useAtlasContext(campaignId){
 }
 function AtlasContext({context,region}){
  const {calendar,weather}=context;
+ const current=calendar?.definition&&calendar?.date?
+  effectiveCalendarDate(calendar):null;
+ const activeWeather=publishedWeatherForDate(weather,current,region);
  const reports=weather.filter(x=>x.status==='published'&&(
   !region||String(x.region||'').toLowerCase()===region.toLowerCase()));
  return <div className="asteria-atlas-context">
-  {calendar?.date&&calendar?.definition?<p><strong>Campaign date:</strong> {formatAsteriaDate(calendar.date,calendar.definition)}</p>:null}
-  {reports.length?<div><strong>Published weather · {region||'Campaign'}</strong>
-   {reports.map(r=><p key={r.id}>{r.zoneName}: {r.forecast?.[0]?.condition||'Unknown'} · {r.forecast?.[0]?.severity||'Unknown'}</p>)}
-  </div>:<p>No published weather for this region.</p>}
+  {current?<p><strong>Campaign date:</strong> {formatAsteriaDate(current,calendar.definition)}</p>:null}
+  {activeWeather?<div><strong>Published weather · {region||'Campaign'}</strong>
+   <p>{activeWeather.report.zoneName}: {activeWeather.day.condition} · {activeWeather.day.severity}
+    {activeWeather.day.metrics?' · '+activeWeather.day.metrics.temperatureC+'°C':''}</p>
+  </div>:reports.length?<p>No published forecast covers today's campaign date for this region.</p>:
+   <p>No published weather for this region.</p>}
  </div>;
 }
 export function GMWorldAtlasWorkspace({campaignId,searchTarget=null}){
