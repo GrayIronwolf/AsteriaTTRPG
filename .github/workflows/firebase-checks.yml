@@ -1,5 +1,6 @@
 name: Firebase and website checks
 on:
+  workflow_dispatch:
   pull_request:
   push:
     branches: [main, Website-Build-Test]
