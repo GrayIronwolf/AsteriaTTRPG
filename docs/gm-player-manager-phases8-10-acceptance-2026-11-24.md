@@ -35,3 +35,7 @@ The campaign migration and advanced roster, invitations, Co-GM, character-link a
 Automated regressions: `npm run test:gm-player-manager`, `npm run test:gm-player-operations`, `npm test`, `npm run lint`, `npm run test:firebase`, `npm run build`, the React compiled-asset workflow and source-vs-bundle CI verification.
 
 Before any production release, independently check real owner/Co-GM/active/inactive/outsider accounts, stale browser sessions, character ownership cross-links, concurrent resource-revision conflicts, duplicate XP confirmations, player dice submissions, group checks, private notifications, item reward claim/decline, audit scoping, and mobile/tablet layouts. **Do not equate GitHub checks with a Firebase live-account acceptance test.**
+
+## Test-branch build verification gate
+
+After the isolated React asset compiler commits generated `react-dist` output, this source and documentation commit requests a fresh GitHub `Firebase and website checks` run against the synchronized branch, including asset parity. It is not a Firebase deployment command. Older workflow runs may fail parity if they started before generated files were synchronized; only a completed run against the synchronized head establishes the current branch check status.
