@@ -40,7 +40,8 @@ export const DASHBOARD_PANEL_REGISTRY = {
     {id:'combatOverview',label:'Combat Overview',category:'Focus Panels',size:'3x3',optional:true},
     {id:'explorationOverview',label:'Exploration Overview',category:'Focus Panels',size:'3x3',optional:true},
     {id:'questTracker',label:'Quest Tracker',category:'Focus Panels',size:'3x3',optional:true},
-    {id:'inventoryOverview',label:'Inventory Overview',category:'Focus Panels',size:'3x3',optional:true}
+    {id:'inventoryOverview',label:'Inventory Overview',category:'Focus Panels',size:'3x3',optional:true},
+    {id:'worldContext',label:'Calendar & Weather',category:'Adventures',size:'3x3',optional:true}
   ],
   gm: [
     {id:'restRequests',label:'Rest Requests',category:'Session',size:'3x3'},
@@ -74,7 +75,7 @@ export const GM_CANVAS_DEFAULT_IDS=Object.freeze([
   'quickNotes','questTracker','calendarWeather','sessionOverview'
 ]);
 const GM_CANVAS_NEW_OPTIONALS=Object.freeze([
-  'diceQuick','npcQuick','soundboardQuick','worldQuick','playerDisplayQuick','focusModes','playerManagerQuick'
+  'diceQuick','npcQuick','soundboardQuick','worldQuick','playerDisplayQuick','focusModes','playerManagerQuick','worldContext'
 ]);
 const GM_CORE_POSITIONS=Object.freeze({
   // Balanced columns, readable overview heights, 20-unit gutters.
@@ -100,7 +101,8 @@ const GM_CANVAS_LABEL_EXTRAS=Object.freeze({
   worldQuick:'World Overview',
   playerDisplayQuick:'Player Display',
   focusModes:'GM Focus Modes',
-  playerManagerQuick:'Player Manager Quick Access'
+  playerManagerQuick:'Player Manager Quick Access',
+  worldContext:'Calendar & Weather'
 });
 const gmCanvasIds=[...GM_CANVAS_DEFAULT_IDS,
   ...DASHBOARD_PANEL_REGISTRY.gm.map(item=>item.id).filter(id=>!GM_CANVAS_DEFAULT_IDS.includes(id)),
