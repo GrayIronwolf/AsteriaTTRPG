@@ -217,6 +217,9 @@ export function weatherWeights(zone,season=''){
   weights[condition]+=adjustment;
  for(const [condition,adjustment] of Object.entries(SEASON_BONUS[season]||{}))
   weights[condition]+=adjustment;
+ if(zone.coastal===true){
+  weights.wind+=7;weights.showers+=6;weights.fog+=4;
+ }
  if(zone.magicWeather!==true)weights['arcane-surge']=0;
  else weights['arcane-surge']+=6;
  if(zone.volatility==='calm'){
@@ -301,7 +304,7 @@ export function weatherMetrics(zone,calendar,date,season,condition,severity,rng)
  const n=(min,max)=>rng(min,max);
  const cold=['snow','blizzard'].includes(condition)?-4:
   condition==='heatwave'?9:condition==='clear'?2:0;
- const temperature=clamp(climate.temperatureC+seasonal+cold+n(-5,6),-85,75);
+ const temperature=clamp(climate.temperatureC+seasonal*(climate.coastal?0.65:1)+cold+n(-5,6),-85,75);
  const low=temperature-(2+n(0,5));
  const high=temperature+(2+n(0,7));
  const windCondition=['wind','blizzard','duststorm','thunderstorm'].includes(condition);
@@ -309,7 +312,7 @@ export function weatherMetrics(zone,calendar,date,season,condition,severity,rng)
  const rain=['showers','downpour','thunderstorm'].includes(condition);
  const snow=['snow','blizzard'].includes(condition);
  const precipitationMm=rain||snow?rounded((rain?2:1)*(intensity**2)+n(0,8)):0;
- const humidityPct=clamp(climate.humidityPct+(rain||snow?14:0)+
+ const humidityPct=clamp(climate.humidityPct+(climate.coastal?5:0)+(rain||snow?14:0)+
   (condition==='heatwave'?-22:0)+n(-12,13),5,100);
  const cloudCoverPct=clamp((condition==='clear'?8:
   condition==='cloudy'?75:rain||snow?90:condition==='fog'?98:45)+n(-14,15),0,100);
