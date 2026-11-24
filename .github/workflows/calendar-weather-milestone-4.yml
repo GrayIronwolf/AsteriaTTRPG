@@ -1,0 +1,41 @@
+name: Verify Calendar Weather Milestone 4 (test branch only)
+on:
+  push:
+    branches: [Website-Build-Test]
+    paths:
+      - 'src/state/calendarGameplayModel.mjs'
+      - 'src/state/asteriaCalendarModel.mjs'
+      - 'functions/asteriaCalendarCommands.mjs'
+      - 'src/dashboards/AsteriaCalendarWorkspace.jsx'
+      - 'src/dashboards/CalendarWeatherQuickPanel.jsx'
+      - 'src/dashboards/presentation/CalendarWeatherSceneOverlay.jsx'
+      - 'src/dashboards/WorldAtlasWorkspace.jsx'
+      - 'scripts/calendar-weather-milestone4.test.mjs'
+      - '.github/workflows/calendar-weather-milestone-4.yml'
+      - 'package.json'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  calendar-world:
+    name: Gameplay chronology and world view regressions
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Calendar, weather and gameplay regressions
+        run: |
+          npm run test:asteria-calendar
+          npm run test:weather-environment
+          npm run test:world-atlas
+      - name: Parse existing command and selectors
+        run: |
+          node --check src/state/calendarGameplayModel.mjs
+          node --check src/state/asteriaCalendarModel.mjs
+          node --check functions/asteriaCalendarCommands.mjs
+      - run: npm run lint
