@@ -542,17 +542,19 @@ export function AsteriaDiceTray({
     gestureRef.current={x:event.clientX,y:event.clientY};
     const session=++pointerSessionRef.current;
     const pointerId=event.pointerId;
+    const hitPoint={clientX:event.clientX,clientY:event.clientY};
     // Capture synchronously: asynchronous raycasting must not lose a quick
     // touch or mouse release before the die has been selected.
     try{containerRef.current?.setPointerCapture?.(pointerId);}catch{}
     const begin=async()=>{
       if(event.button===0&&status==='settled'&&record){
-        const die=await raycastDie(event);
+        const die=await raycastDie(hitPoint);
         if(session!==pointerSessionRef.current)return;
         if(die&&gestureRef.current){
           dicePointerRef.current={die,oldType:die.body.type,
-            x:event.clientX,y:event.clientY,
-            lastX:event.clientX,lastY:event.clientY,dragged:false};
+            pointerId,x:hitPoint.clientX,y:hitPoint.clientY,
+            lastX:hitPoint.clientX,lastY:hitPoint.clientY,
+            lastTime:performance.now(),dragged:false};
           containerRef.current?.setPointerCapture?.(pointerId);
           return;
         }
@@ -579,7 +581,7 @@ export function AsteriaDiceTray({
       return;
     }
     const drag=dicePointerRef.current;
-    if(drag&&canInteract){
+    if(drag&&drag.pointerId===event.pointerId&&canInteract){
       const delta=Math.hypot(event.clientX-drag.x,event.clientY-drag.y);
       if(delta>=9)drag.dragged=true;
       if(drag.dragged){
@@ -588,6 +590,7 @@ export function AsteriaDiceTray({
           drag.die.body.type=4; // CANNON.Body.KINEMATIC; presentation-only while held
           drag.die.body.velocity.set(0,0,0);
           drag.die.body.angularVelocity.set(0,0,0);
+          drag.lastTime=performance.now();
           drag.die.body.position.x=point.x;
           drag.die.body.position.z=point.z;
           drag.die.mesh.position.copy(drag.die.body.position);
@@ -620,7 +623,7 @@ export function AsteriaDiceTray({
     const elapsed=performance.now()-gestureTimeRef.current;
     const motion=start?diceGesture(start,{x:event.clientX,y:event.clientY},
       elapsed,windowSettings?.interactionSpeed):null;
-    const canRoll=Boolean(drag&&canInteract&&onRollDie);
+    const canRoll=Boolean(drag&&drag.pointerId===event.pointerId&&canInteract&&onRollDie);
     const sides=drag?.die?.type?.replace?.('d','');
     clearInteraction();
     gestureRef.current=null;
