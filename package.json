@@ -71,7 +71,7 @@
     "test:campaign-audio": "node --test scripts/digital-gm-phase9-2.test.mjs",
     "test:session-library": "node --test scripts/digital-gm-phase9-1.test.mjs",
     "test:world-atlas": "node --test scripts/digital-gm-phase8-3.test.mjs",
-    "test:weather-environment": "node --test scripts/digital-gm-phase8-2.test.mjs",
+    "test:weather-environment": "node --test scripts/digital-gm-phase8-2.test.mjs scripts/calendar-weather-milestone3.test.mjs",
     "test:asteria-calendar": "node --test scripts/digital-gm-phase8-1.test.mjs scripts/calendar-milestone1.test.mjs scripts/calendar-milestone2.test.mjs",
     "test:encounter-rewards": "node --test scripts/digital-gm-phase7-3.test.mjs",
     "test:random-tables": "node --test scripts/digital-gm-phase7-2.test.mjs",
