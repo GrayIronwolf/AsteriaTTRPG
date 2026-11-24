@@ -2,6 +2,8 @@ import {gmCampaignMemberSummary} from './gmCampaignRosterModel.mjs';
 
 export const GM_PLAYER_MANAGER_VIEWS=Object.freeze([
   {id:'players',label:'Players & Party'},
+  {id:'player-tools',label:'Individual Tools'},
+  {id:'live-actions',label:'Live GM Actions'},
   {id:'joins',label:'Join Requests'},
   {id:'characters',label:'Character Links'},
   {id:'invitations',label:'Invitations'},
