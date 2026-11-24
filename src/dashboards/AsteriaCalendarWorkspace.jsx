@@ -9,6 +9,7 @@ import {
 } from '../state/asteriaCalendarModel.mjs';
 import {CalendarDefinitionEditor,blankCalendarDefinition,cleanCalendarDraft} from './CalendarDefinitionEditor.jsx';
 import {calendarMonthGrid,calendarMonthDays} from '../state/asteriaCalendarModel.mjs';
+import {CALENDAR_GAMEPLAY_ACTIVITIES,previewGameplayTimeActivity} from '../state/calendarGameplayModel.mjs';
 import '../styles/asteria-calendar.css';
 
 const blankDefinition=blankCalendarDefinition;
@@ -25,6 +26,8 @@ export function AsteriaCalendarWorkspace({campaignId,workspace={}}){
  const [definition,setDefinition]=useState(blankDefinition),[date,setDate]=useState(blankDate);
  const [entry,setEntry]=useState(blankEvent),[entryId,setEntryId]=useState('');
  const [unit,setUnit]=useState('day'),[amount,setAmount]=useState(1),[reason,setReason]=useState('');
+ const [activityKind,setActivityKind]=useState('short-rest'),[activityMinutes,setActivityMinutes]=useState(240);
+ const [activityLabel,setActivityLabel]=useState('');
  const [clockMode,setClockMode]=useState('manual'),[clockRate,setClockRate]=useState(1);
  const [clockNow,setClockNow]=useState(()=>Date.now());
  const [categories,setCategories]=useState(DEFAULT_CALENDAR_CATEGORIES.map(row=>({...row})));
@@ -87,6 +90,20 @@ export function AsteriaCalendarWorkspace({campaignId,workspace={}}){
  };
  const setWorldDate=()=>submit({type:'set',expectedRevision:calendar?.revision||0,
   date:numericDate(date),reason},()=> 'World date updated and synchronized to players.');
+ const gameplayPreview=useMemo(()=>{
+  if(!ready)return null;
+  try{return previewGameplayTimeActivity(calendar,{kind:activityKind,
+   durationMinutes:Number(activityMinutes),label:activityLabel},clockNow);}
+  catch{return null;}
+ },[calendar,ready,activityKind,activityMinutes,activityLabel,clockNow]);
+ const approveActivity=()=>{
+  if(!gameplayPreview||!window.confirm('Advance shared campaign chronology for '+
+    gameplayPreview.label+' ('+gameplayPreview.durationMinutes+' game minutes)? This does NOT resolve rests, combat, quests or character resources.'))return;
+  submit({type:'advanceActivity',expectedRevision:calendar.revision,
+   activity:{kind:gameplayPreview.kind,durationMinutes:gameplayPreview.durationMinutes,
+    label:gameplayPreview.label},reason},
+    result=>'Campaign time advanced to '+formatAsteriaDate(result.date,config)+'.');
+ };
  const advance=()=>submit({type:'advance',expectedRevision:calendar?.revision||0,
   unit,amount:Number(amount),reason},result=>'Calendar advanced to '+
   formatAsteriaDate(result.date,config)+'.');
@@ -178,6 +195,29 @@ export function AsteriaCalendarWorkspace({campaignId,workspace={}}){
      <button type="button" disabled={busy} onClick={advance}>Advance campaign time</button>
     </div>:null}
    </section>
+   {ready?<section className="asteria-calendar-card asteria-calendar-gameplay">
+    <h3>Gameplay time integration</h3>
+    <p className="react-help">Approve time spent resting, travelling, in encounters or on downtime. This moves the single campaign calendar only. Rest recovery, movement, combat and quest outcomes remain controlled by their existing systems.</p>
+    <div className="asteria-calendar-grid">
+     <label>Activity<select value={activityKind} disabled={busy} onChange={e=>{
+      const activity=CALENDAR_GAMEPLAY_ACTIVITIES.find(row=>row.id===e.target.value);
+      setActivityKind(e.target.value);setActivityMinutes(activity?.minutes??60);
+     }}>{CALENDAR_GAMEPLAY_ACTIVITIES.map(row=><option key={row.id} value={row.id}>
+      {row.label} · {row.detail}</option>)}</select></label>
+     <label>Elapsed game minutes<input type="number" step="1" min="1" max="10080"
+      disabled={busy||CALENDAR_GAMEPLAY_ACTIVITIES.some(row=>row.id===activityKind&&row.minutes!==null)}
+      value={activityMinutes} onChange={e=>setActivityMinutes(Number(e.target.value))}/></label>
+     <label>Activity note<input maxLength={120} value={activityLabel}
+      disabled={busy} onChange={e=>setActivityLabel(e.target.value)}
+      placeholder="Optional journey, encounter or downtime note"/></label>
+    </div>
+    {gameplayPreview?<p className="asteria-calendar-current">
+     <strong>{formatAsteriaDate(gameplayPreview.from,config)} → {formatAsteriaDate(gameplayPreview.to,config)}</strong>
+     <small>{gameplayPreview.durationMinutes} minutes · GM approval required · chronology only</small>
+    </p>:<p role="status">Choose a valid activity and duration to preview the change.</p>}
+    <button type="button" className="primary" disabled={busy||!gameplayPreview} onClick={approveActivity}>
+     Approve campaign time advancement</button>
+   </section>:null}
    {ready?<CalendarBrowser calendar={calendar} entries={ordered} currentDate={displayDate}/>:null}
    {ready?<section className="asteria-calendar-card">
     <h3>Campaign calendar events</h3>
@@ -256,7 +296,7 @@ export function AsteriaCalendarWorkspace({campaignId,workspace={}}){
    </details>:null}
    {error?<p role="alert" className="asteria-calendar-error">{error}</p>:null}
    {message?<p role="status">{message}</p>:null}
-   <p className="react-help">Campaign time advances through the manual GM controls or the optional running clock. It does not alter cooldowns, rest mechanics, combat rounds, weather, quests or economy state automatically.</p>
+   <p className="react-help">Only explicit GM time actions or the optional running clock advance campaign chronology. Gameplay resource effects are never inferred automatically.</p>
   </div>
  </Panel>;
 }
