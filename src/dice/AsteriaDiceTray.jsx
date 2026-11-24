@@ -531,8 +531,18 @@ export function AsteriaDiceTray({
       if(touchPointsRef.current.size===2){
         const [a,b]=[...touchPointsRef.current.values()];
         pinchRef.current=Math.hypot(a.x-b.x,a.y-b.y);
-        cameraPointerRef.current=null;
+        // Release the held die before switching to pinch navigation.
+        const held=dicePointerRef.current;
+        if(held?.die?.body){
+          held.die.body.type=held.oldType;
+          held.die.body.velocity.set(0,0,0);
+          held.die.body.angularVelocity.set(0,0,0);
+        }
         dicePointerRef.current=null;
+        cameraPointerRef.current=null;
+        pointerSessionRef.current++;
+        gestureRef.current=null;
+        setCameraDragging(false);
         return;
       }
     }
@@ -542,12 +552,13 @@ export function AsteriaDiceTray({
     gestureRef.current={x:event.clientX,y:event.clientY};
     const session=++pointerSessionRef.current;
     const pointerId=event.pointerId;
-    const hitPoint={clientX:event.clientX,clientY:event.clientY};
+    const hitPoint={clientX:event.clientX,clientY:event.clientY,
+      pointerType:event.pointerType,button:event.button};
     // Capture synchronously: asynchronous raycasting must not lose a quick
     // touch or mouse release before the die has been selected.
     try{containerRef.current?.setPointerCapture?.(pointerId);}catch{}
     const begin=async()=>{
-      if(event.button===0&&status==='settled'&&record){
+      if((event.button===0||hitPoint.pointerType==='touch')&&status==='settled'&&record){
         const die=await raycastDie(hitPoint);
         if(session!==pointerSessionRef.current)return;
         if(die&&gestureRef.current){
@@ -601,7 +612,7 @@ export function AsteriaDiceTray({
       return;
     }
     const camera=cameraPointerRef.current;
-    if(!camera)return;
+    if(!camera||camera.pointerId!==event.pointerId)return;
     const dx=event.clientX-camera.x,dy=event.clientY-camera.y;
     if(camera.button===1){
       setCameraPan(v=>({x:Math.max(-5,Math.min(5,v.x-dx*.012)),
@@ -619,6 +630,9 @@ export function AsteriaDiceTray({
       pinchRef.current=null;clearInteraction();gestureRef.current=null;return;
     }
     const drag=dicePointerRef.current;
+    const camera=cameraPointerRef.current;
+    if((drag&&drag.pointerId!==event.pointerId)||
+      (camera&&camera.pointerId!==event.pointerId))return;
     const start=gestureRef.current;
     const elapsed=performance.now()-gestureTimeRef.current;
     const motion=start?diceGesture(start,{x:event.clientX,y:event.clientY},
