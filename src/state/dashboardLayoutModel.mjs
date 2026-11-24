@@ -74,7 +74,7 @@ export const GM_CANVAS_DEFAULT_IDS=Object.freeze([
   'quickNotes','questTracker','calendarWeather','sessionOverview'
 ]);
 const GM_CANVAS_NEW_OPTIONALS=Object.freeze([
-  'diceQuick','npcQuick','soundboardQuick','worldQuick','playerDisplayQuick','focusModes'
+  'diceQuick','npcQuick','soundboardQuick','worldQuick','playerDisplayQuick','focusModes','playerManagerQuick'
 ]);
 const GM_CORE_POSITIONS=Object.freeze({
   // Balanced columns, readable overview heights, 20-unit gutters.
@@ -99,7 +99,8 @@ const GM_CANVAS_LABEL_EXTRAS=Object.freeze({
   soundboardQuick:'Soundboard & Ambience',
   worldQuick:'World Overview',
   playerDisplayQuick:'Player Display',
-  focusModes:'GM Focus Modes'
+  focusModes:'GM Focus Modes',
+  playerManagerQuick:'Player Manager Quick Access'
 });
 const gmCanvasIds=[...GM_CANVAS_DEFAULT_IDS,
   ...DASHBOARD_PANEL_REGISTRY.gm.map(item=>item.id).filter(id=>!GM_CANVAS_DEFAULT_IDS.includes(id)),
@@ -123,7 +124,7 @@ export const GM_DASHBOARD_CANVAS_CONFIG=Object.freeze({
     {id:'core',label:'Core GM Windows',panels:GM_CANVAS_DEFAULT_IDS},
     {id:'tools',label:'GM Controls & Rewards',panels:[
       'restRequests','encounter','xp','specialDamage','loot','magicRewards',
-      'acInspector','playerManagement','partySummary','focusModes'
+      'acInspector','playerManagement','partySummary','focusModes','playerManagerQuick'
     ]},
     {id:'overviews',label:'Quick Reference',panels:[
       'diceQuick','npcQuick','soundboardQuick','worldQuick','playerDisplayQuick',
