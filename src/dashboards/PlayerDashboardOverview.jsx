@@ -16,6 +16,7 @@ import {
 import {ActivityLog} from './CharacterWorkspaceTabs.jsx';
 import { PlayerCombatOverview, PlayerExplorationOverview, PlayerQuestTracker, PlayerInventoryOverview } from './DashboardFocusPanels.jsx';
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
+import {CalendarWeatherQuickPanel} from './CalendarWeatherQuickPanel.jsx';
 import { normalizeDashboardPreferences, parseResourceCost } from '../state/liveWorkspaceModel.mjs';
 import { resourcePair, soulDamageValue, soulHealingCap } from '../state/specialDamageModel.mjs';
 import { useArmourClass } from '../systems/armour/useArmourClass.js';
@@ -333,6 +334,8 @@ export function PlayerDashboardOverview({ campaignId, campaign, character, chara
       case 'explorationOverview':return <PlayerExplorationOverview campaign={campaign} partyWorkspace={partyWorkspace} character={character} onNavigate={onNavigate}/>;
       case 'questTracker':return <PlayerQuestTracker character={character} partyWorkspace={partyWorkspace} onNavigate={onNavigate}/>;
       case 'inventoryOverview':return <PlayerInventoryOverview character={character} onNavigate={onNavigate}/>;
+      case 'worldContext':return campaignId?<CalendarWeatherQuickPanel campaignId={campaignId}
+        role="player" onNavigate={onNavigate}/>:null;
       case 'shortcutInventory':return shortcut('Inventory','View equipment, storage and consumables.','inventory');
       case 'shortcutQuest':return shortcut('Quest Log','Review active missions and objectives.','quest');
       case 'shortcutCharacter':return shortcut('Character Sheet','Review your character details and progression.','character');
