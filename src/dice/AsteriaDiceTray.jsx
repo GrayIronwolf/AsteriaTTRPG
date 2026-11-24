@@ -421,6 +421,23 @@ export function AsteriaDiceTray({
         watcherRigsRef.current.clear();
       }
       await engine.roll(diceToRoll);
+      // A tower's genuine replay may occasionally settle on a different
+      // physical face than the server-authorised target. Retry the VISUAL
+      // throw with the same immutable server result, never another callable
+      // roll, and never fake the physical exit or visible face.
+      if(towerActive){
+        let retries=0;
+        while(!cancelled&&retries<3){
+          const observed=engine.getCurrentResults();
+          if(matchesAsteriaDicePreview(prepared,observed)&&
+            towerRef.current?.getEvidence()?.exitComplete===true)break;
+          retries++;
+          await engine.reset();
+          if(cancelled)return;
+          await engine.roll(diceToRoll);
+        }
+        if(containerRef.current)containerRef.current.dataset.towerVisualRetries=String(retries);
+      }
     };
     Promise.resolve(run()).then(()=>{
       if(cancelled)return;
