@@ -1,3 +1,4 @@
+import {previewGameplayTimeActivity} from '../src/state/calendarGameplayModel.mjs';
 import {
  ASTERIA_CALENDAR_ID,MAX_CALENDAR_HISTORY,MAX_CALENDAR_ENTRIES,
  validateCalendarAction,validateCalendarDefinition,validateCalendarDate,
@@ -65,12 +66,15 @@ export function createAsteriaCalendarCommands(context,{requireCampaignGM}){
       tx.set(publicRef,{...clockProjection(updated),updatedAt:serverTimestamp()});
       return {revision:updated.revision,categories,configured:true};
      }
-     if(['advance','set','setClock','undoTime'].includes(type)){
+     if(['advance','set','setClock','undoTime','advanceActivity'].includes(type)){
       const nowMs=Date.now();
       const liveDate=effectiveCalendarDate(previous,nowMs);
       let date=liveDate,mode=previous.clockMode||'manual',rate=previous.clockRate||1;
       let anchor=mode==='realtime'?nowMs:null;
       if(type==='advance')date=advanceAsteriaDate(liveDate,definition,action.unit,action.amount);
+      if(type==='advanceActivity')
+       date=previewGameplayTimeActivity({...previous,date:liveDate,clockMode:'manual'},
+        action.activity,nowMs).to;
       if(type==='set')date=validateCalendarDate(action.date,definition);
       if(type==='setClock'){
        mode=action.clockMode;rate=action.clockRate;
@@ -78,7 +82,7 @@ export function createAsteriaCalendarCommands(context,{requireCampaignGM}){
       }
       if(type==='undoTime'){
        const latest=previous.history?.[0];
-       if(!latest?.previousDate||!['advance','set','setClock'].includes(latest.type))
+       if(!latest?.previousDate||!['advance','set','setClock','advanceActivity'].includes(latest.type))
         throw Error('The latest history item has no reversible time change.');
        date=validateCalendarDate(latest.previousDate,definition);
        mode=latest.previousClockMode||'manual';
@@ -90,7 +94,10 @@ export function createAsteriaCalendarCommands(context,{requireCampaignGM}){
        previousDate:liveDate,
        previousClockMode:previous.clockMode||'manual',
        previousClockRate:previous.clockRate||1,
-       ...(type==='advance'?{unit:action.unit,amount:action.amount}:{})};
+       ...(type==='advance'?{unit:action.unit,amount:action.amount}:{}),
+       ...(type==='advanceActivity'?{activity:{
+        kind:action.activity.kind,durationMinutes:action.activity.durationMinutes,
+        label:String(action.activity.label||'').slice(0,120)}}:{})};
       const updated={...previous,revision:revision+1,date,
        clockMode:mode,clockRate:rate,clockAnchorMs:anchor,
        history:[historyEntry,...(previous.history||[])].slice(0,MAX_CALENDAR_HISTORY),
