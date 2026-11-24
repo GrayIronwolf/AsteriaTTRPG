@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {validateCalendarAction} from '../src/state/asteriaCalendarModel.mjs';
+import {dashboardPanelSizeChoices,GM_DASHBOARD_CANVAS_CONFIG,
+ PLAYER_DASHBOARD_CANVAS_CONFIG} from '../src/state/dashboardLayoutModel.mjs';
 import {
  CALENDAR_GAMEPLAY_ACTIVITIES,validateGameplayTimeActivity,previewGameplayTimeActivity,
  publishedWeatherForDate,playerWorldContext
@@ -118,6 +120,11 @@ test('both canvas allowlists expose optional reusable world context, not duplica
  const gm=read('src/dashboards/GMDashboard.jsx');
  const panel=read('src/dashboards/CalendarWeatherQuickPanel.jsx');
  assert.match(registry,/id:'worldContext'/);
+ assert.ok(dashboardPanelSizeChoices('player','worldContext').length>=3);
+ assert.ok(GM_DASHBOARD_CANVAS_CONFIG.ids.includes('worldContext'));
+ assert.ok(PLAYER_DASHBOARD_CANVAS_CONFIG.ids.includes('worldContext'));
+ assert.equal(GM_DASHBOARD_CANVAS_CONFIG.categories.filter(c=>
+  c.panels.includes('worldContext')).length,1);
  assert.match(registry,/worldContext:'Calendar & Weather'/);
  assert.match(player,/case 'worldContext':return campaignId/);
  assert.match(gm,/case 'worldContext':return <CalendarWeatherQuickPanel/);
