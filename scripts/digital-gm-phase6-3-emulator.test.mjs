@@ -3,9 +3,12 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {initializeTestEnvironment,assertFails,assertSucceeds} from '@firebase/rules-unit-testing';
 import {getDoc,doc,setDoc,updateDoc,deleteDoc,Timestamp} from 'firebase/firestore';
+import {battleMapProjectionHarness} from './helpers/battle-map-projection-harness.mjs';
 
+const projectId='demo-asteria-combat-map';
 const campaignId='battle-session',mapId='arena';
-let env;
+const publicPath='campaigns/'+campaignId+'/battleMapsPublic/'+mapId;
+let env,projections;
 const scene={
  id:mapId,campaignId,name:'Battle Arena',description:'',visibility:'players',
  kind:'video',contentType:'video/mp4',
@@ -19,10 +22,11 @@ const participant={id:'hero',label:'Hero',kind:'character',refId:'hero',
  combatantId:'actor-1',x:25,y:25};
 const db=user=>env.authenticatedContext(user).firestore();
 before(async()=>{
- env=await initializeTestEnvironment({projectId:'demo-asteria-combat-map',
+ env=await initializeTestEnvironment({projectId,
   firestore:{rules:readFileSync('firestore.rules','utf8')}});
+ projections=battleMapProjectionHarness(projectId);
 });
-after(async()=>env?.cleanup());
+after(async()=>{await env?.cleanup();await projections?.close();});
 beforeEach(async()=>{
  await env.clearFirestore();
  await env.withSecurityRulesDisabled(async context=>{
@@ -36,7 +40,11 @@ beforeEach(async()=>{
 });
 test('player can view an explicitly published combat map but not edit positions',async()=>{
  const path='campaigns/'+campaignId+'/battleMaps/'+mapId;
- await assertSucceeds(getDoc(doc(db('alice'),path)));
+ await projections.sync(campaignId,mapId);
+ await assertFails(getDoc(doc(db('alice'),path)));
+ const view=await assertSucceeds(getDoc(doc(db('alice'),publicPath)));
+ assert.deepEqual(view.data().tokens,[{id:'hero',label:'Hero',kind:'character',x:25,y:25}]);
+ await assertFails(updateDoc(doc(db('alice'),publicPath),{tokens:[participant]}));
  await assertFails(updateDoc(doc(db('alice'),path),{tokens:[participant]}));
  await assertFails(updateDoc(doc(db('alice'),path),{combatId:'combat-1'}));
  await assertFails(deleteDoc(doc(db('alice'),path)));
@@ -57,7 +65,11 @@ test('backend-linked map prevents browser token edits even from GM',async()=>{
    combatId:'combat-1',tokens:[participant]
   });
  });
- await assertSucceeds(getDoc(doc(db('alice'),path)));
+ await projections.sync(campaignId,mapId);
+ await assertFails(getDoc(doc(db('alice'),path)));
+ const view=await assertSucceeds(getDoc(doc(db('alice'),publicPath)));
+ assert.deepEqual(view.data().tokens,[{id:'hero',label:'Hero',kind:'character',x:25,y:25}]);
+ assert.equal('combatId' in view.data(),false);
  await assertFails(updateDoc(doc(db('gm'),path),{
   tokens:[{...participant,x:50,y:50}]
  }));
