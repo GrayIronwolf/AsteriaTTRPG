@@ -7,7 +7,7 @@ import {defaultDiceWindowSettings,validateDiceWindowSettings,readDiceWindowSetti
 import {diceGesture,fitDieInsideTray} from '../src/dice/diceTrayInteraction.mjs';
 import {trayOutline,verifyTrayContainment} from '../src/dice/diceTrayGeometry.mjs';
 import {defaultDiceTrayAppearance} from '../src/dice/diceTrayCatalogue.mjs';
-import {diceResult} from '../src/state/diceRollModel.mjs';
+import {diceResult,diceExpression,dicePreset} from '../src/state/diceRollModel.mjs';
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 test('Phase 4 window settings are device-local and reject invalid input',()=>{
  const defaults=defaultDiceWindowSettings();
@@ -73,4 +73,15 @@ test('single existing workspace owns fullscreen, drawers, settings and server ro
  assert.match(tray,/engine\.roll\(diceToRoll\)/);
  assert.match(css,/asteria-dice-window-drawer/);
  assert.doesNotMatch(read('src/dice/diceWindowModel.mjs'),/firebaseService|Math\.random/);
+});
+
+test('saved preset rendering never passes metadata to the strict dice expression validator',()=>{
+ const preset=dicePreset({id:'phase4-preset-001',name:'Phase 4 quick roll',
+  pool:[{count:1,sides:20},{count:1,sides:6}],modifier:0,label:''});
+ assert.throws(()=>diceExpression(preset),/Invalid dice configuration/);
+ assert.equal(diceExpression({pool:preset.pool,modifier:preset.modifier,label:preset.label}),
+  '1d20 + 1d6');
+ const workspace=read('src/dashboards/AdvancedDiceWorkspace.jsx');
+ assert.match(workspace,/diceExpression\\(\\{pool:preset\\.pool,modifier:preset\\.modifier,label:preset\\.label\\}\\)/);
+ assert.doesNotMatch(workspace,/diceExpression\\(preset\\)/);
 });
