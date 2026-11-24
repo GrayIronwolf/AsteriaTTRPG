@@ -38,3 +38,10 @@ Target branch: `Website-Build-Test`. The update extends existing React/Vite dash
 - The targeted Milestone 4 regression workflow has passed after the dashboard compatibility fixes.
 - The existing React/Vite compiled bundle was regenerated and committed to the test branch through its approved GitHub Actions workflow.
 - Final combined Firebase/website CI must be checked at the post-build commit before declaring the test branch release-ready.
+
+## Test-branch integration verification (24 November 2026)
+
+- Milestone 4 gameplay, calendar/weather, atlas and player presentation source is already integrated into Website-Build-Test.
+- A separate dice-workspace regression was repaired by rendering saved presets using only the dice expression's allowed configuration fields. The strict validator still rejects extraneous preset metadata, and Phase 4 regression coverage was added.
+- The React/Vite bundle compilation workflow has committed the synchronized tracked assets to Website-Build-Test. The final Firebase and website workflow is required to pass against this updated branch state before release sign-off.
+- This verification does not merge into main or deploy Firebase production.
