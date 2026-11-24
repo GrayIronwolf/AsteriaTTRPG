@@ -82,6 +82,6 @@ test('saved preset rendering never passes metadata to the strict dice expression
  assert.equal(diceExpression({pool:preset.pool,modifier:preset.modifier,label:preset.label}),
   '1d20 + 1d6');
  const workspace=read('src/dashboards/AdvancedDiceWorkspace.jsx');
- assert.match(workspace,/diceExpression\\(\\{pool:preset\\.pool,modifier:preset\\.modifier,label:preset\\.label\\}\\)/);
- assert.doesNotMatch(workspace,/diceExpression\\(preset\\)/);
+ assert.match(workspace,/diceExpression\(\{pool:preset\.pool,modifier:preset\.modifier,label:preset\.label\}\)/);
+ assert.doesNotMatch(workspace,/diceExpression\(preset\)/);
 });
