@@ -32,3 +32,9 @@ Target branch: `Website-Build-Test`. The update extends existing React/Vite dash
 - Automatic coupling to an actual completed rest, journey or encounter would require a separate server-side atomic workflow and explicit GM policy. This milestone provides explicit chronological approvals only.
 - Atlas travel legs over 10,080 in-world minutes require separately approved segments.
 - Hourly weather, true astronomy, long-term forecasting and restricted-viewer weather broadcasting are future choices rather than silently enabled features.
+
+## Final verification record
+
+- The targeted Milestone 4 regression workflow has passed after the dashboard compatibility fixes.
+- The existing React/Vite compiled bundle was regenerated and committed to the test branch through its approved GitHub Actions workflow.
+- Final combined Firebase/website CI must be checked at the post-build commit before declaring the test branch release-ready.
