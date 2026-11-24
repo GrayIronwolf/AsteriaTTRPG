@@ -105,7 +105,6 @@ const checkedAt=value=>{
   return Number.isFinite(t)?t:0;
 };
 const readable=value=>short(value,120).replace(/[-_]/g,' ');
-const targetIds=row=>[row?.characterId,...rows(row?.characterIds)].filter(validId);
 
 /**
  * Merge user-visible GM check, reward, inventory and restricted membership
