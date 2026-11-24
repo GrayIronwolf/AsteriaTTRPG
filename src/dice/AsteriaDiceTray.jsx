@@ -120,6 +120,7 @@ export function AsteriaDiceTray({
   const gestureRef=useRef(null);
   const gestureTimeRef=useRef(0);
   const interactionLockRef=useRef(false);
+  const pointerSessionRef=useRef(0);
   const windowPreset=windowSettings?.cameraPreset||'classic';
   const [sceneInteractionNotice,setSceneInteractionNotice]=useState('');
   const renderIdle=()=>{
@@ -138,6 +139,7 @@ export function AsteriaDiceTray({
         drag.die.mesh.position.copy(drag.die.body.position);
       }
     }
+    pointerSessionRef.current++;
     dicePointerRef.current=null;
     cameraPointerRef.current=null;
     touchPointsRef.current.clear();pinchRef.current=null;
@@ -494,8 +496,13 @@ export function AsteriaDiceTray({
     const meshes=dice.map(d=>d.mesh).filter(Boolean);
     const hit=ray.intersectObjects(meshes,true)[0];
     if(!hit)return null;
-    return dice.find(d=>d.mesh===hit.object||
-      d.mesh?.getObjectById?.(hit.object.id))||null;
+    // Child meshes are common on custom dice; getObjectById does not
+    // establish ancestry and can select the wrong die.
+    return dice.find(d=>{
+      let node=hit.object;
+      while(node){if(node===d.mesh)return true;node=node.parent;}
+      return false;
+    })||null;
   };
   const trayPoint=(event,die)=>{
     const engine=engineRef.current,coords=pointerAt(event);
@@ -533,18 +540,24 @@ export function AsteriaDiceTray({
     if(event.pointerType==='mouse'&&event.button!==0&&event.button!==1&&event.button!==2)return;
     gestureTimeRef.current=performance.now();
     gestureRef.current={x:event.clientX,y:event.clientY};
+    const session=++pointerSessionRef.current;
+    const pointerId=event.pointerId;
+    // Capture synchronously: asynchronous raycasting must not lose a quick
+    // touch or mouse release before the die has been selected.
+    try{containerRef.current?.setPointerCapture?.(pointerId);}catch{}
     const begin=async()=>{
       if(event.button===0&&status==='settled'&&record){
         const die=await raycastDie(event);
+        if(session!==pointerSessionRef.current)return;
         if(die&&gestureRef.current){
           dicePointerRef.current={die,oldType:die.body.type,
             x:event.clientX,y:event.clientY,
             lastX:event.clientX,lastY:event.clientY,dragged:false};
-          containerRef.current?.setPointerCapture?.(event.pointerId);
+          containerRef.current?.setPointerCapture?.(pointerId);
           return;
         }
       }
-      if(!gestureRef.current)return;
+      if(session!==pointerSessionRef.current||!gestureRef.current)return;
       cameraPointerRef.current={x:event.clientX,y:event.clientY,
         button:event.button,pointerId:event.pointerId};
       setCameraDragging(true);
@@ -692,6 +705,9 @@ export function AsteriaDiceTray({
         data-interaction-mode={windowMode?'grab-and-camera':'disabled'}
         onPointerDown={pointerDown} onPointerMove={pointerMove}
         onPointerUp={pointerUp} onPointerCancel={()=>{clearInteraction();gestureRef.current=null;}}
+        onLostPointerCapture={()=>{if(dicePointerRef.current||cameraPointerRef.current){
+          clearInteraction();gestureRef.current=null;
+        }}}
         onWheel={onWheel} onContextMenu={event=>windowMode&&event.preventDefault()}
         style={{cursor:cameraDragging?'grabbing':windowMode?'grab':'default',
           touchAction:windowMode?'none':'auto'}}/>
