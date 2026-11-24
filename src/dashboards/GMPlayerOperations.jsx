@@ -8,13 +8,11 @@ import {
   GM_PLAYER_ACTIVITY_KINDS,gmPlayerSnapshot,gmPlayerOperationsEnabled,
   gmPlayerResourceAdjustmentValid,gmPlayerActivityRows,gmPlayerCheckActionAllowed
 } from '../state/gmPlayerOperationsModel.mjs';
-import {resourcePair} from '../state/resourceValues.mjs';
 
 const title=value=>String(value||'').replace(/[-_]/g,' ').replace(/^./,char=>char.toUpperCase());
 const err=e=>e?.message||String(e||'The server rejected the request.');
 const formatTime=ms=>ms?new Date(ms).toLocaleString():'Time unavailable';
 const amountLabel=n=>Number(n)>0?'+'+n:String(n);
-const activeId=value=>String(value?.id||'');
 function EmptySelection(){return <p className="react-gm-player-notice" role="status">Choose a verified campaign character to view player tools and request interactions.</p>;}
 function Field({label,value}){return <div><small>{label}</small><strong>{value??'—'}</strong></div>;}
 
