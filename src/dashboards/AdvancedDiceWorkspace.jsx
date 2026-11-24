@@ -410,7 +410,7 @@ export function AdvancedDiceWorkspace({role='player',ownedCharacterId=''}){
                 onClick={savePreset}>Save</button>
             </div>
             <ul>{workspace.presets.map(preset=><li key={preset.id}>
-              <span><b>{preset.name}</b><small>{diceExpression(preset)}</small></span>
+              <span><b>{preset.name}</b><small>{diceExpression({pool:preset.pool,modifier:preset.modifier,label:preset.label})}</small></span>
               <button type="button" disabled={busy} onClick={()=>replaceConfig(preset)}>Load</button>
               <button type="button" disabled={busy}
                 onClick={()=>{setActivePanel(null);roll({
