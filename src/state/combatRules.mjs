@@ -16,6 +16,45 @@ export const currentCombatant=encounter=>encounter?.status==='active'&&encounter
 export const participantFor=(encounter,characterId)=>characterId?(encounter?.combatants||[]).find(row=>row.characterId===characterId&&row.active!==false):undefined;
 export const combatActive=(encounter,characterId)=>encounter?.status==='active'&&encounter.combat?.version===1&&Boolean(participantFor(encounter,characterId));
 export const apState=(encounter,id)=>({ap:0,bonus:false,turns:0,...encounter?.combat?.participants?.[id]});
+// Shared guards for the dashboard and combat transaction. Keep display and
+// permission checks in sync without storing a second AP pool in the browser.
+export function activeReactionWindow(encounter,actorId) {
+  const pending=encounter?.combat?.pending;
+  return pending?.reactionWindow && pending.reactorId===actorId && !pending.reaction ? pending : null;
+}
+export function combatActionScope(encounter,actorId) {
+  const state=apState(encounter,actorId),pending=encounter?.combat?.pending;
+  return JSON.stringify([encounter?.combatId||'',encounter?.status,actorId,currentCombatant(encounter)?.id,state.turns,Boolean(state.turnComplete),pending?.id,pending?.status,pending?.reactorId,Boolean(pending?.reaction)]);
+}
+export function manualAPProblem(character,encounter,actorId,ap) {
+  if(!Number.isInteger(ap)||ap<0||ap>3)return 'Choose a whole AP cost from 0 to 3.';
+  if(encounter?.status!=='active')return 'Combat is not active.';
+  const state=apState(encounter,actorId);
+  if(!actorId||currentCombatant(encounter)?.id!==actorId||state.turnComplete)return 'Spend AP only on your own turn before it is completed.';
+  if(encounter.combat?.pending)return 'Resolve the pending action before continuing.';
+  const restriction=combatRestriction(character,{encounter});
+  if(restriction||state.pendingDeathSave)return restriction||'Resolve the turn-start death save first.';
+  if(state.ap<ap)return 'Not enough AP.';
+  if(ap===0&&!state.bonus)return 'The shared bonus action has already been used.';
+  if((state.apSpends||[]).length>=24)return 'This turn already has the maximum number of recorded actions.';
+  return '';
+}
+export function basicReactionProblem(character,encounter,actorId,key) {
+  const pending=activeReactionWindow(encounter,actorId),state=apState(encounter,actorId);
+  if(!pending?.reactionChoices?.includes(key))return 'No eligible reaction window.';
+  const restriction=combatRestriction(character,{encounter});
+  if(restriction)return restriction;
+  if(key==='prepared'){
+    if(!state.prepared||state.turns>=state.prepared.expiresOnTurn)return 'No unexpired prepared action.';
+    return state.ap<state.prepared.ap?'Not enough held AP.':'';
+  }
+  if(state.ap<1)return 'No held AP.';
+  try{
+    validateReactionEquipment(character,key);
+    if(key!=='opportunity')applyResourceChanges(character,{costs:{sp:10}});
+  }catch(error){return error.message;}
+  return '';
+}
 export const spellAP=rank=>{const index=SPELL_RANKS.findIndex(row=>slug(row)===slug(rank));if(index<0)throw new Error('Spell rank is not recorded.');return index<4?1:index<6?2:3;};
 export function combatRestriction(character,clock={}) {
   if(character.downed?.dead) return 'Dead';
@@ -133,7 +172,7 @@ export function optionProblem(option,character,encounter,actorId,{reaction=false
   const restriction=combatRestriction(character,{encounter});if(restriction)return restriction;
   if(encounter?.status!=='active')return 'Combat is not active.';
   if(!reaction&&currentCombatant(encounter)?.id!==actorId)return 'Wait for your turn.';
-  if(reaction&&!encounter.combat?.pending?.reactionWindow)return 'No eligible reaction window.';
+  if(reaction&&!activeReactionWindow(encounter,actorId))return 'No eligible reaction window.';
   const state=apState(encounter,actorId);
   if(!reaction&&state.turnComplete)return 'Turn complete. Waiting for the GM to advance.';
   if(option.key==='stand'&&!activeConditions(character,{encounter}).some(row=>/prone/i.test(row.name)))return 'Not prone.';
@@ -141,7 +180,9 @@ export function optionProblem(option,character,encounter,actorId,{reaction=false
   if(option.key==='drag'&&!state.grappleTarget)return 'No established hold.';
   if(option.key==='jump'&&!state.movement)return 'Pay for movement first.';
   if(option.key==='attack'&&!wieldedItems(character).length)return 'No intact wielded weapon.';
-  if(option.ap>state.ap+(prepaid?.ap||0))return 'Not enough held AP.';
+  if(!Number.isInteger(option.ap)||option.ap<0||option.ap>3)return 'Invalid action point cost.';
+  // A reaction's actual AP override is confirmed by the GM on the server.
+  if(!reaction&&option.ap>state.ap+(prepaid?.ap||0))return 'Not enough held AP.';
   if(option.bonus&&!state.bonus&&!prepaid?.bonus)return 'Bonus action already used.';
   if(state.pendingDeathSave)return 'Resolve the turn-start death save.';
   try{applyResourceChanges(character,{costs:option.costs});}catch(error){return error.message;}
