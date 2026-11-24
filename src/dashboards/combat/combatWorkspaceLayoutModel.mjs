@@ -251,6 +251,8 @@ function normaliseBase(raw,config=COMBAT_CANVAS_CONFIG){
     partyCardOrder:[...new Set((Array.isArray(source.partyCardOrder)?source.partyCardOrder:[])
       .filter(id=>typeof id==='string'&&id.length>0&&id.length<=180))].slice(0,200),
     groups,
+    minimapVisible:source.minimapVisible===true,
+    reduceOffscreenEffects:source.reduceOffscreenEffects!==false,
     windowSwitcher:source.windowSwitcher===true,
     focusMode:source.focusMode!==false,
     zoomTowardCursor:source.zoomTowardCursor!==false,

@@ -162,3 +162,23 @@ test('Optional window alignment has safe defaults and settings across all canvas
  assert.match(jsx,/styles.alignmentOverlay/);
  assert.doesNotMatch(jsx,/>Group with</);
 });
+
+test('Advanced canvas minimap and performance preferences remain independent of layout',()=>{
+ for(const [initial,normalize] of [
+  [defaultCombatWorkspaceLayout(),normalizeCombatWorkspace],
+  [defaultGMCanvasLayout(),normalizeGMCanvasLayout],
+  [defaultPlayerCanvasLayout(),normalizePlayerCanvasLayout]]){
+  assert.equal(initial.minimapVisible,false);
+  assert.equal(initial.reduceOffscreenEffects,true);
+  const next=normalize({...initial,minimapVisible:true,reduceOffscreenEffects:false});
+  assert.equal(next.minimapVisible,true);
+  assert.equal(next.reduceOffscreenEffects,false);
+  assert.deepEqual(next.freeform.positions,initial.freeform.positions);
+  assert.equal(normalize(next).minimapVisible,true);
+ }
+ const jsx=read('src/dashboards/combat/CombatCommandCentre.jsx');
+ assert.match(jsx,/Canvas overview minimap/);
+ assert.match(jsx,/Show canvas minimap/);
+ assert.match(jsx,/Reduce off-screen window effects/);
+ assert.match(jsx,/Recover off-screen windows \(Fit All\)/);
+});

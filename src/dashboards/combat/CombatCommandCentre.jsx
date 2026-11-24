@@ -558,6 +558,17 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
   };
   const gridStyle=combatCanvasGridStyle(camera,layout.gridSize);
   const detailLevel=combatCanvasDetailLevel(camera,layout.detailMode);
+  const minimapRects=visible.map(panel=>({
+    id:panel.props.id,rect:layout.freeform.positions[panel.props.id]
+  })).filter(item=>item.rect);
+  const miniBounds=minimapRects.reduce((bounds,item)=>({
+    minX:Math.min(bounds.minX,item.rect.x),
+    minY:Math.min(bounds.minY,item.rect.y),
+    maxX:Math.max(bounds.maxX,item.rect.x+item.rect.w),
+    maxY:Math.max(bounds.maxY,item.rect.y+item.rect.h)
+  }),{minX:0,minY:0,maxX:1000,maxY:600});
+  const miniWidth=Math.max(1,miniBounds.maxX-miniBounds.minX);
+  const miniHeight=Math.max(1,miniBounds.maxY-miniBounds.minY);
   return <section className={styles.centre} ref={root}
     aria-label={playerCanvas?'Player Main Dashboard Canvas':
       gmCanvas?'GM Main Dashboard Canvas':'GM Combat Command Centre'}
@@ -569,6 +580,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
       data-detail-mode={layout.detailMode}
       data-background={layout.canvasBackground}
       data-motion={layout.smoothAnimations?'on':'off'}
+      data-reduce-effects={layout.reduceOffscreenEffects?'on':'off'}
       data-editing={wide&&canEditCanvas&&!layout.canvasLocked}
       data-layout-mode={wide?'freeform':'stacked'}
       aria-label={playerCanvas?'Player dashboard freeform canvas':
@@ -754,6 +766,20 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
             className={styles.zoomValue}>{Math.round(camera.scale*100)}%</output>
         </>:null}
       </div>
+      {wide&&layout.minimapVisible?<div className={styles.canvasMinimap}
+        aria-label="Canvas overview minimap">
+        <div className={styles.minimapTitle}>Canvas overview</div>
+        <svg viewBox="0 0 200 120" role="img" aria-label="Visible window positions">
+          {minimapRects.map(item=><rect key={item.id}
+            x={((item.rect.x-miniBounds.minX)/miniWidth)*196+2}
+            y={((item.rect.y-miniBounds.minY)/miniHeight)*116+2}
+            width={Math.max(2,item.rect.w/miniWidth*196)}
+            height={Math.max(2,item.rect.h/miniHeight*116)}
+            rx="2" fill={frontWindow===item.id?'#b5dff1':'#54748a'}
+            stroke="#b9d3e3" strokeWidth=".6"/>)}
+        </svg>
+        <button type="button" onClick={fitAll}>Fit all windows</button>
+      </div>:null}
       {wide&&layout.windowSwitcher?<nav className={styles.navigationSwitcher}
         aria-label="Canvas window switcher">
         <input type="search" aria-label="Search canvas windows"
@@ -855,6 +881,19 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
                 disabled={!canEditCanvas}
                 onChange={event=>setPreference(previous=>({...previous,
                   keyboardShortcuts:event.target.checked}))}/> Keyboard shortcuts</label>
+            </fieldset>
+            <fieldset className={styles.appearanceGroup}>
+              <legend>Advanced</legend>
+              <label><input type="checkbox" checked={layout.minimapVisible}
+                disabled={!canEditCanvas}
+                onChange={event=>setPreference(previous=>({...previous,
+                  minimapVisible:event.target.checked}))}/> Show canvas minimap</label>
+              <label><input type="checkbox" checked={layout.reduceOffscreenEffects}
+                disabled={!canEditCanvas}
+                onChange={event=>setPreference(previous=>({...previous,
+                  reduceOffscreenEffects:event.target.checked}))}/> Reduce off-screen window effects</label>
+              <button type="button" className={styles.openingView}
+                disabled={!wide} onClick={fitAll}>Recover off-screen windows (Fit All)</button>
             </fieldset>
             <fieldset className={styles.appearanceGroup}>
               <legend>Appearance</legend>

@@ -239,3 +239,16 @@
 .navigationSwitcher input{width:100%;min-width:0;margin-bottom:8px}
 .navigationSwitcher>div{display:grid;gap:4px}
 .navigationSwitcher button{text-align:left;white-space:normal}
+
+/* Optional noninteractive overview: no layout mutation or extra gameplay subscriptions. */
+.canvasMinimap{position:absolute;bottom:12px;right:12px;z-index:108;
+ width:220px;max-width:calc(100% - 24px);padding:9px;
+ border:1px solid #647e90;border-radius:7px;background:rgba(11,23,34,.96);
+ box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.minimapTitle{font-size:.75rem;font-weight:600;margin-bottom:5px}
+.canvasMinimap svg{display:block;width:100%;height:120px;
+ background:rgba(36,54,68,.8);border:1px solid #4c6375;border-radius:3px}
+.canvasMinimap button{width:100%;margin-top:6px;min-height:30px}
+.canvas[data-reduce-effects='on'] .window:not(:hover):not(:focus-within){
+ filter:none;will-change:auto}
+@media(max-width:699px){.canvasMinimap{display:none}}
