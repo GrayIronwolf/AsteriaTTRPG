@@ -3,7 +3,7 @@
  * These probability presets are software suggestions, NOT canonical Asteria
  * climate rules. No numerical combat, travel, skill, rest or resource effects.
  */
-import {advanceAsteriaDate,validateCalendarDefinition,validateCalendarDate,formatAsteriaDate,effectiveCalendarDate}
+import {advanceAsteriaDate,validateCalendarDefinition,validateCalendarDate,formatAsteriaDate}
  from './asteriaCalendarModel.mjs';
 
 export const WEATHER_BIOMES=Object.freeze([
