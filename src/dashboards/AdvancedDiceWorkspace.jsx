@@ -38,6 +38,7 @@ export function AdvancedDiceWorkspace({role='player',ownedCharacterId=''}){
   const [immersive,setImmersive]=useState(false);
   const [showResult,setShowResult]=useState(true);
   const [rollPhase,setRollPhase]=useState('idle');
+  const rollPending=rollPhase==='requesting'||rollPhase==='animating';
   const [rollWarning,setRollWarning]=useState('');
   const rollInFlightRef=useRef(false);
   const [gmSharing,setGmSharing]=useState('private');
@@ -83,7 +84,8 @@ export function AdvancedDiceWorkspace({role='player',ownedCharacterId=''}){
       setImmersive(true);
     }catch{setImmersive(true);}
   };
-  const [animatedRoll,setAnimatedRoll]=useState(null);
+  const [visualRoll,setVisualRoll]=useState(null);
+  const animatedRoll=visualRoll?.record;
   const [replayToken,setReplayToken]=useState(0);
   const [diceStudio,setDiceStudio]=useState(()=>createDiceStudioState());
   const [appearanceLibrary,setAppearanceLibrary]=useState(null);
@@ -184,8 +186,8 @@ export function AdvancedDiceWorkspace({role='player',ownedCharacterId=''}){
     }catch(err){setError(readFailure(err));return null;}
     finally{setBusy(false);}
   };
-  const roll=async(override=null)=>{
-    if(rollInFlightRef.current)return;
+  const roll=async(override=null,hand=null)=>{
+    if(busy||rollPending||rollInFlightRef.current)return;
     let checked;
     try{checked=diceConfig(override||config);}catch(err){setError(readFailure(err));return;}
     // Preserve the request ID after a transient network failure to prevent
@@ -198,13 +200,14 @@ export function AdvancedDiceWorkspace({role='player',ownedCharacterId=''}){
     const response=await execute({action:'roll',...checked,requestId:lastRequest.current.requestId},
       'Digital roll recorded in your private history.');
     rollInFlightRef.current=false;
-    if(response?.ok){
+    if(response?.roll){
       lastRequest.current=null;
-      if(response.roll){
-        setRollPhase('animating');setAnimatedRoll(response.roll);
-        setReplayToken(token=>token+1);
-      }
-    }else{setRollPhase('error');setShowResult(true);}
+      setRollPhase('animating');setVisualRoll({record:response.roll,hand,newResult:true});
+      setReplayToken(token=>token+1);
+    }else{
+      if(response?.ok)setError('The server did not return a dice result.');
+      setRollPhase('error');setShowResult(true);
+    }
   };
   const savePreset=async()=>{
     let checked;
@@ -223,21 +226,24 @@ export function AdvancedDiceWorkspace({role='player',ownedCharacterId=''}){
   const clear=async()=>{
     if(!window.confirm('Permanently clear your private dice roll history? Saved presets will remain.'))return;
     const result=await execute({action:'clear-history',confirmed:true},'Private dice history cleared.');
-    if(result?.ok)setAnimatedRoll(null);
+    if(result?.ok){setVisualRoll(null);setRollPhase('idle');}
   };
   let expression='',validation='';
   try{expression=diceExpression(config);}catch(err){validation=readFailure(err);}
   const totalDice=config.pool.reduce((total,row)=>total+(Number(row.count)||0),0);
-  const latest=workspace.history?.[0];
-  const replayLast=()=>{
-    if(rollPhase==='requesting'||rollPhase==='animating')return;
-    const saved=latest||animatedRoll;
-    if(!saved)return;
+  const unrevealedId=rollPhase==='requesting'?lastRequest.current?.requestId:
+    rollPhase==='animating'&&visualRoll?.newResult?animatedRoll.id:null;
+  const history=unrevealedId?
+    workspace.history.filter(row=>row.id!==unrevealedId):workspace.history;
+  const latest=history[0];
+  const replayRecord=saved=>{
+    if(busy||rollPending||!saved)return;
     setShowResult(false);setRollWarning('');setRollPhase('animating');
-    setAnimatedRoll(saved);setReplayToken(token=>token+1);
+    setVisualRoll({record:saved,hand:null});setReplayToken(token=>token+1);
   };
-  const clearTray=()=>{if(busy||rollPhase==='animating')return;
-    setAnimatedRoll(null);setShowResult(false);setRollPhase('idle');};
+  const replayLast=()=>replayRecord(latest||animatedRoll);
+  const clearTray=()=>{if(busy||rollPending)return;
+    setVisualRoll(null);setShowResult(false);setRollPhase('idle');};
   const shareResult=async()=>{
     if(role!=='gm'||gmSharing!=='shareable'||!latest)return;
     try{
@@ -246,8 +252,8 @@ export function AdvancedDiceWorkspace({role='player',ownedCharacterId=''}){
     }catch{setShareStatus('Clipboard permission denied. Your roll remains private.');}
   };
   const currentResult=animatedRoll||latest;
-  const handleTrayLifecycle=state=>{
-    if(rollPhase!=='animating')return;
+  const handleTrayLifecycle=(state,token,recordId)=>{
+    if(rollPhase!=='animating'||token!==replayToken||recordId!==animatedRoll?.id)return;
     if(state==='settled'){setRollPhase('settled');setShowResult(true);}
     else if(['mismatch','unavailable','oversized','unsupported','paused'].includes(state)){
       setRollPhase('fallback');
@@ -258,7 +264,7 @@ export function AdvancedDiceWorkspace({role='player',ownedCharacterId=''}){
   useEffect(()=>{
     if(rollPhase!=='animating')return undefined;
     const timer=window.setTimeout(()=>{
-      setRollPhase('fallback');
+      setRollPhase('timed-out');
       setRollWarning('3D animation timed out. Showing the verified result instead.');
       setShowResult(true);
     },20000);
@@ -285,12 +291,13 @@ export function AdvancedDiceWorkspace({role='player',ownedCharacterId=''}){
     data-dice-window-version="4" aria-label="Advanced Dice Roller">
     <div className="asteria-dice-window">
       <div className="asteria-dice-window-surface">
-        <AsteriaDiceTray record={animatedRoll} enabled={animateDice}
+        <AsteriaDiceTray record={rollPhase==='timed-out'?null:animatedRoll} enabled={animateDice}
           onLifecycleStatus={handleTrayLifecycle}
+          handThrow={visualRoll?.hand} interactionDisabled={busy||rollPending}
           appearance={appearance} trayAppearance={trayAppearance}
           onTrayAppearanceChange={setTrayAppearance} studioManaged windowMode
           windowSettings={windowSettings}
-          onRollDie={sides=>roll({pool:[{count:1,sides}],modifier:0,label:''})}
+          onRollDie={(sides,hand)=>roll({pool:[{count:1,sides}],modifier:0,label:''},hand)}
           experimentalTowerAppearance={windowSettings.towerId!=='off'?
             towerAppearance:null}
           presentationPreferences={presentation} onPresentationPreferencesChange={setPresentation}
@@ -319,13 +326,13 @@ export function AdvancedDiceWorkspace({role='player',ownedCharacterId=''}){
         <button type="button" className="asteria-dice-window-edge-tab"
           aria-controls="asteria-dice-selection" aria-expanded={activePanel==='dice'}
           onClick={()=>openPanel('dice')}>Dice {activePanel==='dice'?'‹':'›'}</button>
-        {(rollPhase==='requesting'||rollPhase==='animating')?
+        {rollPending?
           <div className="asteria-dice-roll-progress" role="status" aria-live="polite"
             data-roll-phase={rollPhase}>
             <span className="asteria-dice-roll-progress-spinner" aria-hidden="true"/>
             {rollPhase==='requesting'?'Rolling dice…':'Dice tumbling…'}
           </div>:null}
-        {currentResult&&showResult&&rollPhase!=='requesting'&&rollPhase!=='animating'?
+        {currentResult&&showResult&&!rollPending?
           <div className="asteria-dice-window-result"
           aria-live="polite" data-result-visible="true">
           <button type="button" aria-label="Hide result overlay"
@@ -342,15 +349,15 @@ export function AdvancedDiceWorkspace({role='player',ownedCharacterId=''}){
             <span>{validation||expression||'Choose your dice'}</span>
             <small>{totalDice} of {MAX_DICE_PER_ROLL} selected</small>
           </div>
-          {currentResult&&!showResult?<button type="button"
+          {currentResult&&!showResult&&!rollPending?<button type="button"
             aria-label="Show latest dice result" onClick={()=>setShowResult(true)}>Result</button>:null}
           <button type="button" className="asteria-advanced-dice-primary"
-            disabled={busy||Boolean(validation)||!totalDice}
+            disabled={busy||rollPending||Boolean(validation)||!totalDice}
             onClick={()=>roll()}>{busy?'Rolling…':'Roll All'}</button>
-          <button type="button" disabled={!latest||busy}
+          <button type="button" disabled={!currentResult||busy||rollPending}
             title="Replay the last verified roll. No new official roll is created."
             onClick={replayLast}>Replay</button>
-          <button type="button" disabled={!animatedRoll||busy}
+          <button type="button" disabled={!animatedRoll||busy||rollPending}
             onClick={clearTray}>Clear tray</button>
         </div>
         {activePanel==='dice'?<aside id="asteria-dice-selection"
@@ -374,7 +381,7 @@ export function AdvancedDiceWorkspace({role='player',ownedCharacterId=''}){
                 <button type="button" disabled={busy||!count} aria-label={'Remove d'+sides}
                   onClick={()=>setConfig(old=>({...old,
                     pool:removeDiceFromPool(old.pool,sides)}))}>−</button>
-                <button type="button" disabled={busy} title={'Roll one d'+sides}
+                <button type="button" disabled={busy||rollPending} title={'Roll one d'+sides}
                   aria-label={'Roll one d'+sides}
                   onClick={()=>roll({pool:[{count:1,sides}],modifier:0,label:''})}>Roll</button>
               </div>;
@@ -395,7 +402,7 @@ export function AdvancedDiceWorkspace({role='player',ownedCharacterId=''}){
           <div className="asteria-advanced-dice-actions">
             <button type="button" disabled={busy}
               onClick={()=>setConfig(EMPTY)}>Reset builder</button>
-            <button type="button" disabled={busy||Boolean(validation)||!totalDice}
+            <button type="button" disabled={busy||rollPending||Boolean(validation)||!totalDice}
               onClick={()=>{setActivePanel(null);roll();}}>Roll selection</button>
           </div>
           <section className="asteria-advanced-dice-presets" aria-label="Quick dice presets">
@@ -412,7 +419,7 @@ export function AdvancedDiceWorkspace({role='player',ownedCharacterId=''}){
             <ul>{workspace.presets.map(preset=><li key={preset.id}>
               <span><b>{preset.name}</b><small>{diceExpression({pool:preset.pool,modifier:preset.modifier,label:preset.label})}</small></span>
               <button type="button" disabled={busy} onClick={()=>replaceConfig(preset)}>Load</button>
-              <button type="button" disabled={busy}
+              <button type="button" disabled={busy||rollPending}
                 onClick={()=>{setActivePanel(null);roll({
                   pool:preset.pool,modifier:preset.modifier,label:preset.label
                 });}}>Roll</button>
@@ -438,7 +445,7 @@ export function AdvancedDiceWorkspace({role='player',ownedCharacterId=''}){
           className="asteria-dice-window-drawer asteria-dice-window-drawer--right"
           aria-label="Private dice history">
           <div className="asteria-dice-window-drawer-heading">
-            <h3>Roll history ({workspace.history.length}/{MAX_DICE_HISTORY})</h3>
+            <h3>Roll history ({history.length}/{MAX_DICE_HISTORY})</h3>
             <button type="button" onClick={()=>setActivePanel(null)}
               aria-label="Close roll history">×</button>
           </div>
@@ -452,15 +459,14 @@ export function AdvancedDiceWorkspace({role='player',ownedCharacterId=''}){
             <small>{visibleTime(latest.at)} · Server digital dice</small>
           </article>:<p>No digital rolls recorded yet.</p>}
           <ol className="asteria-dice-window-history-list">
-            {workspace.history.map(row=><li key={row.id}>
+            {history.map(row=><li key={row.id}>
               <span><b>{row.label||row.expression}</b><small>{visibleTime(row.at)}</small></span>
               <strong>{row.total}</strong>
-              <button type="button" disabled={busy} title="Replay without creating a new roll"
-                onClick={()=>{setAnimatedRoll(row);setReplayToken(token=>token+1);
-                  setShowResult(true);}}>Replay</button>
+              <button type="button" disabled={busy||rollPending} title="Replay without creating a new roll"
+                onClick={()=>replayRecord(row)}>Replay</button>
             </li>)}
           </ol>
-          {workspace.history.length?<button type="button" disabled={busy}
+          {history.length?<button type="button" disabled={busy||rollPending}
             onClick={clear}>Clear private roll history</button>:null}
           <p className="asteria-advanced-dice-help">History is private to your account.
             Physical dice and Universal Check Requests use separate records.</p>
@@ -520,10 +526,9 @@ export function AdvancedDiceWorkspace({role='player',ownedCharacterId=''}){
               checked={windowSettings.autoHideResult}
               onChange={event=>setWindowPreference('autoHideResult',event.target.checked)}/>
               Automatically hide results after 7 seconds</label>
-            <p>Click a die to roll it. Drag it to reposition. Flick it to throw a new
-              server-confirmed roll. Right-drag or one-finger drag empty space to orbit;
-              middle-drag to pan; scroll or pinch to zoom. All gestures are visual
-              controls and never alter the official recorded result.</p>
+            <p>Tap a die for a new roll. Hold and drag to move it, then flick and release
+              to throw it. Right-drag or drag empty space to orbit. Middle-drag to pan.
+              Scroll or pinch to zoom. Results and history use server-confirmed rolls.</p>
           </div>:null}
           {settingsTab==='towers'?<div className="asteria-dice-window-options">
             <label>Experimental tower<select value={windowSettings.towerId}

@@ -3,12 +3,15 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {initializeTestEnvironment,assertFails,assertSucceeds} from '@firebase/rules-unit-testing';
 import {getDoc,getDocs,doc,collection,query,where,updateDoc,setDoc,deleteDoc,Timestamp} from 'firebase/firestore';
+import {battleMapProjectionHarness} from './helpers/battle-map-projection-harness.mjs';
 
 const projectId='demo-asteria-fog';
 const campaignId='camp-fog',mapId='cave';
 const mapPath='campaigns/'+campaignId+'/battleMaps/'+mapId;
+const publicCollection='campaigns/'+campaignId+'/battleMapsPublic';
+const publicPath=publicCollection+'/'+mapId;
 const privatePath=mapPath+'/gmNotes/private';
-let env;
+let env,projections;
 const fixture={
   id:mapId,campaignId,name:'Ruins',description:'Map',visibility:'players',
   kind:'video',contentType:'video/mp4',
@@ -28,8 +31,9 @@ before(async()=>{
     projectId,
     firestore:{rules:readFileSync('firestore.rules','utf8')}
   });
+  projections=battleMapProjectionHarness(projectId);
 });
-after(async()=>env?.cleanup());
+after(async()=>{await env?.cleanup();await projections?.close();});
 beforeEach(async()=>{
   await env.clearFirestore();
   await env.withSecurityRulesDisabled(async context=>{
@@ -46,18 +50,24 @@ beforeEach(async()=>{
     }
     await setDoc(doc(f,mapPath),fixture);
   });
+  await projections.sync(campaignId,mapId);
 });
 test('players read published fog with no secret notes; outsiders do not',async()=>{
-  const view=await assertSucceeds(getDoc(doc(db('alice'),mapPath)));
+  await assertSucceeds(setDoc(doc(db('gm'),privatePath),notes([samplePin])));
+  await assertFails(getDoc(doc(db('alice'),mapPath)));
+  const view=await assertSucceeds(getDoc(doc(db('alice'),publicPath)));
   assert.equal(view.data().fogCells,'0'.repeat(16));
   assert.equal(view.data().fogEnabled,true);
+  assert.deepEqual(view.data().tokens,[]);
   assert.equal('pins' in view.data(),false);
   assert.equal('privateNotes' in view.data(),false);
-  await assertSucceeds(getDocs(query(collection(db('alice'),'campaigns/'+campaignId+'/battleMaps'),
+  const published=await assertSucceeds(getDocs(query(collection(db('alice'),publicCollection),
     where('visibility','==','players'))));
-  await assertFails(getDoc(doc(db('gone'),mapPath)));
-  await assertFails(getDoc(doc(db('visitor'),mapPath)));
-  await assertFails(getDoc(doc(db(),mapPath)));
+  assert.deepEqual(published.docs.map(row=>row.id),[mapId]);
+  for(const uid of ['gone','visitor',null]){
+    await assertFails(getDoc(doc(db(uid),mapPath)));
+    await assertFails(getDoc(doc(db(uid),publicPath)));
+  }
 });
 test('GM and active co-GM can store private encounter/hazard pins; players never read them',async()=>{
   await assertSucceeds(setDoc(doc(db('gm'),privatePath),notes([samplePin])));
@@ -75,11 +85,15 @@ test('GM and active co-GM can store private encounter/hazard pins; players never
 test('GM fog reveal and hide updates are player-visible after Firestore save',async()=>{
   const ref=doc(db('gm'),mapPath);
   await assertSucceeds(updateDoc(ref,{fogCells:'1111000000000000'}));
-  const afterReveal=await assertSucceeds(getDoc(doc(db('alice'),mapPath)));
+  await projections.sync(campaignId,mapId);
+  const afterReveal=await assertSucceeds(getDoc(doc(db('alice'),publicPath)));
   assert.equal(afterReveal.data().fogCells,'1111000000000000');
+  assert.deepEqual(afterReveal.data().tokens.map(row=>row.id),['hero']);
   await assertSucceeds(updateDoc(ref,{fogCells:'0'.repeat(16)}));
-  const afterHide=await assertSucceeds(getDoc(doc(db('alice'),mapPath)));
+  await projections.sync(campaignId,mapId);
+  const afterHide=await assertSucceeds(getDoc(doc(db('alice'),publicPath)));
   assert.equal(afterHide.data().fogCells,'0'.repeat(16));
+  assert.deepEqual(afterHide.data().tokens,[]);
   await assertSucceeds(updateDoc(ref,{fogEnabled:false}));
   assert.equal((await assertSucceeds(getDoc(ref))).data().fogEnabled,false);
 });
@@ -122,9 +136,12 @@ test('older Phase 6.1 maps remain readable and can adopt fog without a data migr
     delete legacy.fogEnabled;delete legacy.fogCells;delete legacy.metresPerCell;
     await setDoc(doc(context.firestore(),mapPath),legacy);
   });
-  await assertSucceeds(getDoc(doc(db('alice'),mapPath)));
+  await projections.sync(campaignId,mapId);
+  await assertFails(getDoc(doc(db('alice'),mapPath)));
+  assert.equal((await assertSucceeds(getDoc(doc(db('alice'),publicPath)))).data().fogEnabled,false);
   await assertSucceeds(updateDoc(doc(db('gm'),mapPath),{
     fogEnabled:true,fogCells:'0'.repeat(16),metresPerCell:1
   }));
-  assert.equal((await assertSucceeds(getDoc(doc(db('alice'),mapPath)))).data().fogEnabled,true);
+  await projections.sync(campaignId,mapId);
+  assert.equal((await assertSucceeds(getDoc(doc(db('alice'),publicPath)))).data().fogEnabled,true);
 });

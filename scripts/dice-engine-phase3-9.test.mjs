@@ -101,11 +101,13 @@ test('shared adapter owns physics and all six visible meshes use physical box de
 test('a mismatched physical face is retried only as a visual throw, never a second official roll',()=>{
  const surface=readFileSync(new URL('../src/dice/AsteriaDiceTray.jsx',import.meta.url),'utf8');
  const rollEffect=surface.slice(surface.indexOf('const run=async()=>'),surface.indexOf('Promise.resolve(run()).then'));
- assert.match(rollEffect,/if\(towerActive\)\s*\{\s*let retries=0/);
+ assert.match(surface,/const guidedTower=towerActive&&!hand;/);
+ assert.match(rollEffect,/if\(guidedTower\)\s*\{\s*let retries=0/);
  assert.match(rollEffect,/while\(!cancelled&&retries<3\)/);
  assert.match(rollEffect,/matchesAsteriaDicePreview\(prepared,observed\)/);
  assert.match(rollEffect,/towerRef\.current\?\.getEvidence\(\)\?\.exitComplete===true/);
- assert.match(rollEffect,/await engine\.reset\(\)/);
+ assert.match(rollEffect,/await resetTable\(engine\)/);
+ assert.match(rollEffect,/if\(reset\?\.engine===engine\)await reset\.promise/);
  assert.match(rollEffect,/await engine\.roll\(diceToRoll\)/);
  assert.doesNotMatch(rollEffect,/firebaseService|advancedDiceAction|setStatus\('settled'\)/);
  assert.match(surface,/setStatus\(match&&physical\?'settled':'mismatch'\)/);

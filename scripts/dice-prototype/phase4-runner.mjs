@@ -85,9 +85,15 @@ try{
  await page.getByRole('combobox',{name:'Experimental tower'}).selectOption('off');
  await page.getByRole('button',{name:'Close customisation settings'}).click();
  await page.getByRole('button',{name:'Enter immersive dice mode'}).click();
- check('Immersive mode expands the existing window',
-  await page.locator('.asteria-advanced-dice--workspace.asteria-dice-immersive').count()===1);
+ const immersive=page.locator('.asteria-advanced-dice--workspace.asteria-dice-immersive');
+ await immersive.waitFor({state:'visible',timeout:5000});
+ const fullSize=await immersive.evaluate(node=>{
+  const bounds=node.getBoundingClientRect();
+  return Math.abs(bounds.width-innerWidth)<=2&&Math.abs(bounds.height-innerHeight)<=2;
+ });
+ check('Immersive mode expands the existing window',fullSize);
  await page.getByRole('button',{name:'Exit immersive dice mode'}).click();
+ await immersive.waitFor({state:'detached',timeout:5000});
  await page.getByRole('button',{name:'Open dice selection'}).click();
  await page.getByRole('combobox',{name:'Sharing mode'}).selectOption('shareable');
  check('GM share control is manual and does not publish private rolls',

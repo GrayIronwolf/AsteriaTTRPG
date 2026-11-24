@@ -12,7 +12,11 @@ import {defaultDiceTowerAppearance,getDiceTowerFamily,
 import {DiceTrayStudio} from './DiceTrayStudio.jsx';
 import {DiceEffectsControls} from './DiceEffectsControls.jsx';
 import {DiceOutcomeEffects} from './DiceOutcomeEffects.jsx';
-import {diceGesture,fitDieInsideTray} from './diceTrayInteraction.mjs';
+import {DICE_SIDES} from '../state/diceRollModel.mjs';
+import {createDiceGesture,sampleDiceGesture,releaseDiceGesture,fitDieInsideTray,
+  trayPointerRay,projectTrayPoint} from './diceTrayInteraction.mjs';
+import {holdTrayDie,moveHeldDie,releaseHeldDie,startHandRoll,trackDiceRest,
+  cancelPendingDiceRoll,handRollGroup} from './diceTrayPhysics.mjs';
 import {defaultDicePresentation,deviceDicePresentation,validateDicePresentation,
  diceGraphicsProfile,diceSoundAppearance,PRESENTATION_STORAGE_KEY}
  from './dicePresentationModel.mjs';
@@ -49,7 +53,8 @@ export function AsteriaDiceTray({
   onTrayAppearanceChange=null,studioManaged=false,
   experimentalCastleTower=false,experimentalTowerAppearance=null,
   presentationPreferences=null,onPresentationPreferencesChange=null,
-  windowMode=false,windowSettings=null,onRollDie=null,onLifecycleStatus=null
+  windowMode=false,windowSettings=null,onRollDie=null,onLifecycleStatus=null,
+  interactionDisabled=false,handThrow=null
 }){
   const containerRef=useRef(null),engineRef=useRef(null);
   const physicalTrayMemoRef=useRef(null);
@@ -83,13 +88,18 @@ export function AsteriaDiceTray({
     hardwareConcurrency:typeof navigator!=='undefined'?navigator.hardwareConcurrency:null
   });
   const effectiveEnabled=enabled&&!graphics.reducedMotion;
-  const [ready,setReady]=useState(false),[status,setStatus]=useState('loading');
+  const [ready,setReady]=useState(false),[engineStatus,setEngineStatus]=useState('loading');
+  const [preview,setPreview]=useState(null);
+  const status=!effectiveEnabled?'paused':!ready?engineStatus:
+    preview&&preview.record===record&&preview.replayToken===replayToken?preview.status:
+      record?'rolling':'loading';
   const lifecycleRef=useRef(onLifecycleStatus);
   useEffect(()=>{lifecycleRef.current=onLifecycleStatus;},[onLifecycleStatus]);
-  useEffect(()=>{lifecycleRef.current?.(status);},[status]);
+  useEffect(()=>{lifecycleRef.current?.(status,replayToken,record?.id);},
+    [status,replayToken,record?.id]);
   const [localTrayAppearance,setLocalTrayAppearance]=useState(()=>defaultDiceTrayAppearance());
   const trayAppearance=controlledTrayAppearance||localTrayAppearance;
-  // Explicit test-only tower props. No dashboard or Firebase setting enables them.
+  // The optional tower shares this tray's physics world.
   const activeTowerAppearance=experimentalTowerAppearance||
     (experimentalCastleTower?defaultDiceTowerAppearance('tower-castle'):null);
   const towerId=activeTowerAppearance?.designId||'off';
@@ -112,43 +122,53 @@ export function AsteriaDiceTray({
   const [cameraTilt,setCameraTilt]=useState(false);
   const [cameraZoom,setCameraZoom]=useState(1);
   const [cameraPan,setCameraPan]=useState({x:0,z:0});
-  const [cameraDragging,setCameraDragging]=useState(false);
+  const [pointerMode,setPointerMode]=useState(null);
+  const pointerFrameRef=useRef(0);
   const touchPointsRef=useRef(new Map());
   const pinchRef=useRef(null);
-  const cameraPointerRef=useRef(null);
-  const dicePointerRef=useRef(null);
-  const gestureRef=useRef(null);
-  const gestureTimeRef=useRef(0);
-  const interactionLockRef=useRef(false);
-  const pointerSessionRef=useRef(0);
+  const pointerRef=useRef(null);
   const windowPreset=windowSettings?.cameraPreset||'classic';
   const [sceneInteractionNotice,setSceneInteractionNotice]=useState('');
   const renderIdle=()=>{
     const engine=engineRef.current;
     if(engine&&!engine.isAnimating)engine.renderer?.render(engine.scene,engine.camera);
   };
+  const renderPointer=()=>{
+    if(pointerFrameRef.current)return;
+    pointerFrameRef.current=requestAnimationFrame(()=>{
+      pointerFrameRef.current=0;
+      renderIdle();
+    });
+  };
+  const releaseCapture=id=>{
+    const node=containerRef.current;
+    try{if(node?.hasPointerCapture?.(id))node.releasePointerCapture(id);}
+    catch{/* The browser ended the pointer session. */}
+  };
   const clearInteraction=()=>{
-    const drag=dicePointerRef.current;
-    if(drag?.die?.body){
-      drag.die.body.type=drag.oldType;
-      drag.die.body.collisionResponse=true;
-      drag.die.body.velocity.set(0,0,0);
-      drag.die.body.angularVelocity.set(0,0,0);
-      if(drag.dragged){
-        drag.die.body.sleep?.();
-        drag.die.mesh.position.copy(drag.die.body.position);
-      }
-    }
-    pointerSessionRef.current++;
-    dicePointerRef.current=null;
-    cameraPointerRef.current=null;
-    touchPointsRef.current.clear();pinchRef.current=null;
-    setCameraDragging(false);
-    interactionLockRef.current=false;
+    const pointer=pointerRef.current;
+    const captures=[...touchPointsRef.current.keys()];
+    if(pointer) captures.push(pointer.id);
+    pointerRef.current=null;
+    touchPointsRef.current.clear();
+    pinchRef.current=null;
+    releaseHeldDie(pointer?.hold,true);
+    if(pointer?.hold)renderIdle();
+    setPointerMode(null);
+    for(const id of new Set(captures))releaseCapture(id);
   };
   const trayAppearanceRef=useRef(physicalTrayAppearance);
   const trayRef=useRef(null),towerRef=useRef(null);
   const rollingRef=useRef(false);
+  const resetRef=useRef(null);
+  const resetTable=engine=>{
+    if(resetRef.current?.engine===engine)return resetRef.current.promise;
+    const reset={engine,promise:engine.reset().finally(()=>{
+      if(resetRef.current===reset)resetRef.current=null;
+    })};
+    resetRef.current=reset;
+    return reset.promise;
+  };
   const deferredTrayRef=useRef(null);
   useEffect(()=>{trayAppearanceRef.current=physicalTrayAppearance;},[physicalTrayAppearance]);
   const stableId=useId().replace(/[^a-z0-9]/gi,'').toLowerCase();
@@ -156,8 +176,18 @@ export function AsteriaDiceTray({
   const registryRef=useRef(null);
   const watcherRigsRef=useRef(new Map());
   const watcherFrameRef=useRef(0);
+  const discardWatcherRigs=keep=>{
+    for(const [mesh,{rig}] of watcherRigsRef.current){
+      if(keep?.has(mesh))continue;
+      rig.dispose();
+      watcherRigsRef.current.delete(mesh);
+    }
+  };
   const watcherPointerRef=useRef(null);
-  useEffect(()=>()=>{clearInteraction();},[]);
+  useEffect(()=>{
+    window.addEventListener('blur',clearInteraction);
+    return ()=>window.removeEventListener('blur',clearInteraction);
+  },[]);
   useEffect(()=>{appearanceRef.current=appearance;},[appearance]);
   useEffect(()=>{
     const node=containerRef.current;
@@ -179,10 +209,10 @@ export function AsteriaDiceTray({
   },[]);
 
   useEffect(()=>{
-    if(!effectiveEnabled){setReady(false);setStatus('paused');return undefined;}
-    if(!webGLAvailable()){setReady(false);setStatus('unsupported');return undefined;}
+    if(!effectiveEnabled){setReady(false);return undefined;}
+    if(!webGLAvailable()){setReady(false);setEngineStatus('unsupported');return undefined;}
     let cancelled=false;
-    setReady(false);setStatus('loading');
+    setReady(false);setEngineStatus('loading');
     import('open-dice-dnd').then(({DiceRoller})=>{
       if(cancelled)return;
       try{
@@ -205,19 +235,21 @@ export function AsteriaDiceTray({
           }
         }
         if(containerRef.current)containerRef.current.dataset.trayShape=tray.outline.shape;
-        setReady(true);setStatus('ready');
+        setReady(true);
       }catch{
-        if(!cancelled){setReady(false);setStatus('unavailable');}
+        if(!cancelled){setReady(false);setEngineStatus('unavailable');}
       }
     }).catch(()=>{
-      if(!cancelled){setReady(false);setStatus('unavailable');}
+      if(!cancelled){setReady(false);setEngineStatus('unavailable');}
     });
     return ()=>{
       cancelled=true;
+      clearInteraction();
+      cancelAnimationFrame(pointerFrameRef.current);
+      pointerFrameRef.current=0;
       if(watcherFrameRef.current)cancelAnimationFrame(watcherFrameRef.current);
       watcherFrameRef.current=0;
-      for(const rig of watcherRigsRef.current.values())rig.dispose();
-      watcherRigsRef.current.clear();
+      discardWatcherRigs();
       const instance=engineRef.current;
       towerRef.current?.dispose();towerRef.current=null;
       trayRef.current?.dispose();
@@ -275,13 +307,14 @@ export function AsteriaDiceTray({
       return;
     }
     try{
+      clearInteraction();
       towerRef.current?.dispose();towerRef.current=null;
       trayRef.current.dispose();
       trayRef.current=attachDiceTray(engine,config);
       if(activeTowerAppearance)towerRef.current=attachDiceTower(engine,trayRef.current.outline,activeTowerAppearance);
       if(containerRef.current)containerRef.current.dataset.trayShape=trayRef.current.outline.shape;
     }catch{
-      setStatus('unavailable');
+      setReady(false);setEngineStatus('unavailable');
     }
   },[ready,effectiveEnabled,physicalTrayAppearance,towerSignature]);
   const changeTrayConfig=config=>{
@@ -318,14 +351,17 @@ export function AsteriaDiceTray({
   useEffect(()=>{
     if(!effectiveEnabled||!ready||!engineRef.current)return undefined;
     const engine=engineRef.current;
+    clearInteraction();
+    const setStatus=status=>setPreview({record,replayToken,status});
     if(!record){
+      discardWatcherRigs();
       rollingRef.current=false;
       // Open Dice reset keeps visible dice physically active for a 500 ms fade.
       // Never offer Ready until those bodies have left the Cannon world:
       // a quick second normal-tray roll must not accidentally use live mode.
       let obsolete=false;
       setStatus('loading');
-      Promise.resolve(engine.reset()).then(()=>{
+      resetTable(engine).then(()=>{
         if(!obsolete)setStatus('ready');
       }).catch(()=>{
         if(!obsolete)setStatus('unavailable');
@@ -335,13 +371,15 @@ export function AsteriaDiceTray({
     let prepared;
     try{prepared=prepareAsteriaDicePreview(record);}
     catch{
+      discardWatcherRigs();
       setStatus('unavailable');
-      Promise.resolve(engine.reset()).catch(()=>{});
+      resetTable(engine).catch(()=>{});
       return undefined;
     }
     if(prepared.mode==='text'||towerActive&&prepared.meshCount>TOWER_MAX_VISIBLE_DICE){
+      discardWatcherRigs();
       setStatus('oversized');
-      Promise.resolve(engine.reset()).catch(()=>{});
+      resetTable(engine).catch(()=>{});
       return undefined;
     }
     let diceToRoll=prepared.dice;
@@ -355,10 +393,16 @@ export function AsteriaDiceTray({
     }catch{
       setStatus('unavailable');return undefined;
     }
-    let cancelled=false;
+    let cancelled=false,completed=false;
+    const controller=new AbortController();
+    const hand=handThrow&&prepared.dice.length===1&&
+      prepared.dice[0].dice===handThrow.die.type&&engine.dice.includes(handThrow.die)?handThrow:null;
+    const guidedTower=towerActive&&!hand;
     rollingRef.current=true;
     setStatus('rolling');
     const run=async()=>{
+      const reset=resetRef.current;
+      if(reset?.engine===engine)await reset.promise;
       const api=await import('open-dice-dnd');
       if(cancelled)return;
       const current=appearanceRef.current?
@@ -374,78 +418,93 @@ export function AsteriaDiceTray({
           throw Error('Familiar Dice artwork could not be loaded.');
         if(cancelled)return;
       }
-      if(current.familyId==='dice-watcher'){
-        const THREE=await import('three');
-        if(cancelled)return;
-        if(watcherFrameRef.current)cancelAnimationFrame(watcherFrameRef.current);
-        for(const rig of watcherRigsRef.current.values())rig.dispose();
-        watcherRigsRef.current.clear();
+      const oldMeshes=new Set(engine.dice.map(die=>die.mesh));
+      const picked=hand?handRollGroup(engine.dice,hand.die):[];
+      const retained=new Set(hand?engine.dice.filter(die=>!picked.includes(die)).map(die=>die.mesh):[]);
+      discardWatcherRigs(retained);
+      const THREE=current.familyId==='dice-watcher'?await import('three'):null;
+      if(cancelled)return;
+      if(THREE||watcherRigsRef.current.size){
         const measured=watcherVisualQuality({
           reducedMotion:graphics.reducedMotion,
           mobile:graphics.tier!=='high',
           deviceMemory:navigator.deviceMemory||null,
-          visibleDice:prepared.dice.length
+          visibleDice:prepared.meshCount+retained.size
         });
         const q={...measured,eyeLimit:Math.min(measured.eyeLimit,graphics.watcherLimit)};
         const reaction=watcherReactionForRecord(record);
-        const initial=performance.now();
         const tick=()=>{
           if(cancelled)return;
-          // The engine spawns each visual mesh after prediction; the eye is
-          // parented then, not inserted into the physics world.
-          const dice=engine.dice||[];
-          for(const die of dice.slice(0,q.eyeLimit)){
-            if(!die.mesh||watcherRigsRef.current.has(die.mesh))continue;
-            applyWatcherGelShell(die.mesh,current,q);
+          const meshes=engine.dice.map(die=>die.mesh);
+          const fresh=THREE?meshes.filter(mesh=>!oldMeshes.has(mesh)).slice(0,q.eyeLimit):[];
+          const existing=meshes.filter(mesh=>retained.has(mesh)&&watcherRigsRef.current.has(mesh));
+          // A hand throw keeps each bystander's look. Give the newly rolled
+          // dice priority within the device's existing eye-rendering limit.
+          discardWatcherRigs(new Set([...fresh,...existing].slice(0,graphics.watcherLimit)));
+          const now=performance.now();
+          for(const mesh of fresh){
+            if(watcherRigsRef.current.has(mesh))continue;
+            applyWatcherGelShell(mesh,current,q);
             const rig=createWatcherEyeRig(THREE,current,q);
-            die.mesh.add(rig.group);
-            watcherRigsRef.current.set(die.mesh,rig);
+            mesh.add(rig.group);
+            watcherRigsRef.current.set(mesh,{rig,reaction,started:now});
           }
-          const t=(performance.now()-initial)/1000;
-          for(const rig of watcherRigsRef.current.values())
-            rig.update(t,{rolling:Boolean(engine.isAnimating),
-              pointer:watcherPointerRef.current,
-              reducedMotion:graphics.reducedMotion,
-              reaction});
-          // Render idle blinks; while the dice tumble the engine already
-          // owns rendering and cannot be replaced without moving physics.
+          for(const item of watcherRigsRef.current.values())
+            item.rig.update((now-item.started)/1000,{
+              rolling:Boolean(engine.isAnimating),pointer:watcherPointerRef.current,
+              reducedMotion:graphics.reducedMotion,reaction:item.reaction});
           if(!engine.isAnimating&&watcherRigsRef.current.size)
             engine.renderer?.render(engine.scene,engine.camera);
           watcherFrameRef.current=requestAnimationFrame(tick);
         };
         watcherFrameRef.current=requestAnimationFrame(tick);
-      }else{
-        if(watcherFrameRef.current)cancelAnimationFrame(watcherFrameRef.current);
-        watcherFrameRef.current=0;
-        for(const rig of watcherRigsRef.current.values())rig.dispose();
-        watcherRigsRef.current.clear();
       }
-      await engine.roll(diceToRoll);
+      const play=async launch=>{
+        const handRoll=launch?startHandRoll(engine,diceToRoll,launch,
+          trayRef.current.outline,towerRef.current,controller.signal):null;
+        try{
+          const rest=trackDiceRest(engine,prepared.meshCount+(handRoll?.retainedCount??0),
+            controller.signal);
+          const playRecording=async()=>{
+            if(handRoll)await handRoll.completion;
+            else await engine.roll(diceToRoll);
+          };
+          // A stalled native batch may stay unresolved. A bounded rest
+          // failure can still retry, and a rejected prediction surfaces early.
+          const settled=await Promise.race([rest,playRecording().then(()=>rest)]);
+          if(!settled||cancelled)return null;
+          return handRoll?handRoll.results():engine.getCurrentResults();
+        }finally{
+          handRoll?.dispose();
+        }
+      };
+      let observed=await play(hand);
       // A tower's genuine replay may occasionally settle on a different
       // physical face than the server-authorised target. Retry the VISUAL
       // throw with the same immutable server result, never another callable
       // roll, and never fake the physical exit or visible face.
-      if(towerActive){
+      if(guidedTower){
         let retries=0;
         while(!cancelled&&retries<3){
-          const observed=engine.getCurrentResults();
           if(matchesAsteriaDicePreview(prepared,observed)&&
             towerRef.current?.getEvidence()?.exitComplete===true)break;
           retries++;
-          await engine.reset();
+          await resetTable(engine);
           if(cancelled)return;
-          await engine.roll(diceToRoll);
+          observed=await play(null);
         }
         if(containerRef.current)containerRef.current.dataset.towerVisualRetries=String(retries);
       }
+      return observed;
     };
-    Promise.resolve(run()).then(()=>{
+    Promise.resolve(run()).then(observed=>{
       if(cancelled)return;
+      completed=true;
       rollingRef.current=false;
       const next=deferredTrayRef.current;
       deferredTrayRef.current=null;
       const towerEvidence=towerRef.current?.getEvidence();
-      if(containerRef.current&&towerActive){
+      if(containerRef.current&&guidedTower){
         containerRef.current.dataset.towerExited=String(towerEvidence?.exited??0);
         containerRef.current.dataset.towerExitComplete=String(towerEvidence?.exitComplete===true);
         containerRef.current.dataset.towerSteps=String(towerEvidence?.steps??0);
@@ -464,21 +523,28 @@ export function AsteriaDiceTray({
         if(activeTowerAppearance)towerRef.current=attachDiceTower(engine,trayRef.current.outline,activeTowerAppearance);
         if(containerRef.current)containerRef.current.dataset.trayShape=trayRef.current.outline.shape;
       }
-      const observed=engine.getCurrentResults();
       const match=matchesAsteriaDicePreview(prepared,observed);
       if(containerRef.current){
         containerRef.current.dataset.visualFaceMatch=String(match);
         containerRef.current.dataset.visualFaces=JSON.stringify(observed).slice(0,1000);
       }
-      if(containerRef.current&&towerActive){
+      if(containerRef.current&&guidedTower){
         containerRef.current.dataset.towerFaceMatch=String(match);
         containerRef.current.dataset.towerObserved=JSON.stringify(observed).slice(0,1000);
       }
-      const physical=!towerActive||towerEvidence?.exitComplete===true;
+      const physical=!guidedTower||towerEvidence?.exitComplete===true;
       setStatus(match&&physical?'settled':'mismatch');
-      if(!match||!physical)Promise.resolve(engine.reset()).catch(()=>{});
+      if(!match||!physical){
+        discardWatcherRigs();
+        resetTable(engine).catch(()=>{});
+      }
     }).catch(error=>{
       if(cancelled)return;
+      completed=true;
+      controller.abort();
+      if(watcherFrameRef.current)cancelAnimationFrame(watcherFrameRef.current);
+      watcherFrameRef.current=0;
+      discardWatcherRigs();
       rollingRef.current=false;
       if(containerRef.current)containerRef.current.dataset.watcherError=
         String(error?.message||error||'Unknown render failure').slice(0,200);
@@ -486,194 +552,178 @@ export function AsteriaDiceTray({
     });
     return ()=>{
       cancelled=true;
+      if(!completed)cancelPendingDiceRoll(engine);
+      controller.abort();
       rollingRef.current=false;
       if(watcherFrameRef.current)cancelAnimationFrame(watcherFrameRef.current);
       watcherFrameRef.current=0;
-      for(const rig of watcherRigsRef.current.values())rig.dispose();
-      watcherRigsRef.current.clear();
+
     };
-  },[record,ready,effectiveEnabled,replayToken,stableId,towerId]);
+  },[record,ready,effectiveEnabled,replayToken,stableId,towerId,handThrow]);
 
   const canControl=effectiveEnabled&&ready&&status!=='rolling';
   const canInteract=windowMode&&canControl&&status==='settled'&&
-    Boolean(record)&&!engineRef.current?.isAnimating;
-  const pointerAt=event=>{
-    const node=containerRef.current,rect=node?.getBoundingClientRect();
-    if(!rect||!rect.width||!rect.height)return null;
-    return {x:((event.clientX-rect.left)/rect.width)*2-1,
-      y:-((event.clientY-rect.top)/rect.height)*2+1};
+    !interactionDisabled&&!engineRef.current?.isAnimating;
+  const pointerRay=event=>{
+    const engine=engineRef.current;
+    const bounds=engine?.renderer?.domElement.getBoundingClientRect();
+    return trayPointerRay(engine?.camera,bounds,event);
   };
-  const raycastDie=async(event)=>{
-    const engine=engineRef.current,coords=pointerAt(event);
-    if(!engine?.camera||!coords||!canInteract)return null;
-    const THREE=await import('three');
-    const ray=new THREE.Raycaster();
-    ray.setFromCamera(coords,engine.camera);
-    const dice=engine.dice||[];
-    const meshes=dice.map(d=>d.mesh).filter(Boolean);
-    const hit=ray.intersectObjects(meshes,true)[0];
-    if(!hit)return null;
-    // Child meshes are common on custom dice; getObjectById does not
-    // establish ancestry and can select the wrong die.
-    return dice.find(d=>{
-      let node=hit.object;
-      while(node){if(node===d.mesh)return true;node=node.parent;}
-      return false;
-    })||null;
+  const pickDie=ray=>{
+    const dice=engineRef.current?.dice||[];
+    const owners=new Map(dice.map(die=>[die.mesh,die]));
+    const hit=ray?.intersectObjects([...owners.keys()],true)[0];
+    for(let mesh=hit?.object;mesh;mesh=mesh.parent){
+      if(owners.has(mesh))return owners.get(mesh);
+    }
+    return null;
   };
-  const trayPoint=(event,die)=>{
-    const engine=engineRef.current,coords=pointerAt(event);
-    if(!engine?.camera||!coords||!die)return null;
-    const camera=engine.camera;
-    // Intersect the pointer's world ray with the plane at the current die height.
-    const direction=camera.getWorldDirection?.(new (camera.position.constructor)(0,0,-1));
-    if(!direction)return null;
-    const {x,y}=coords;
-    const fov=camera.fov*Math.PI/180;
-    const h=Math.tan(fov/2)*2;
-    const right=new (camera.position.constructor)(1,0,0).applyQuaternion(camera.quaternion);
-    const up=new (camera.position.constructor)(0,1,0).applyQuaternion(camera.quaternion);
-    const ray=direction.clone().addScaledVector(right,x*h*camera.aspect/2)
-      .addScaledVector(up,y*h/2).normalize();
-    if(Math.abs(ray.y)<.0001)return null;
-    const t=(die.body.position.y-camera.position.y)/ray.y;
-    if(t<=0)return null;
-    return fitDieInsideTray({
-      x:camera.position.x+ray.x*t,z:camera.position.z+ray.z*t
-    },trayRef.current?.outline);
+  const capture=id=>{
+    try{containerRef.current?.setPointerCapture?.(id);}catch{/* Pointer already released. */}
   };
+  const touchDistance=()=>{
+    const [a,b]=touchPointsRef.current.values();
+    return b?Math.hypot(a.x-b.x,a.y-b.y):null;
+  };
+  const zoomCamera=transform=>setCameraZoom(value=>Math.max(.65,Math.min(1.9,transform(value))));
   const pointerDown=event=>{
-    if(event.pointerType==='touch'){
-      touchPointsRef.current.set(event.pointerId,{x:event.clientX,y:event.clientY});
-      if(touchPointsRef.current.size===2){
-        const [a,b]=[...touchPointsRef.current.values()];
-        pinchRef.current=Math.hypot(a.x-b.x,a.y-b.y);
-        // Release the held die before switching to pinch navigation.
-        const held=dicePointerRef.current;
-        if(held?.die?.body){
-          held.die.body.type=held.oldType;
-          held.die.body.velocity.set(0,0,0);
-          held.die.body.angularVelocity.set(0,0,0);
-        }
-        dicePointerRef.current=null;
-        cameraPointerRef.current=null;
-        pointerSessionRef.current++;
-        gestureRef.current=null;
-        setCameraDragging(false);
+    if(!windowMode||!effectiveEnabled||!ready)return;
+    const touch=event.pointerType==='touch';
+    const current=pointerRef.current;
+    if(current&&(!touch||!current.touch)||!touch&&touchPointsRef.current.size)return;
+    if(!touch&&![0,1,2].includes(event.button))return;
+    const {pointerId:id,clientX:x,clientY:y,button,timeStamp:time}=event;
+    event.preventDefault();
+    capture(id);
+    if(touch){
+      touchPointsRef.current.set(id,{x,y});
+      if(touchPointsRef.current.size>1){
+        releaseHeldDie(current?.hold,true);
+        pointerRef.current=null;
+        pinchRef.current={distance:touchDistance()};
+        setPointerMode('pinch');
+        renderPointer();
         return;
       }
     }
-    if(!windowMode||!effectiveEnabled||!ready||rollingRef.current)return;
-    if(event.pointerType==='mouse'&&event.button!==0&&event.button!==1&&event.button!==2)return;
-    gestureTimeRef.current=performance.now();
-    gestureRef.current={x:event.clientX,y:event.clientY};
-    const session=++pointerSessionRef.current;
-    const pointerId=event.pointerId;
-    const hitPoint={clientX:event.clientX,clientY:event.clientY,
-      pointerType:event.pointerType,button:event.button};
-    // Capture synchronously: asynchronous raycasting must not lose a quick
-    // touch or mouse release before the die has been selected.
-    try{containerRef.current?.setPointerCapture?.(pointerId);}catch{}
-    const begin=async()=>{
-      if((event.button===0||hitPoint.pointerType==='touch')&&status==='settled'&&record){
-        const die=await raycastDie(hitPoint);
-        if(session!==pointerSessionRef.current)return;
-        if(die&&gestureRef.current){
-          dicePointerRef.current={die,oldType:die.body.type,
-            pointerId,x:hitPoint.clientX,y:hitPoint.clientY,
-            lastX:hitPoint.clientX,lastY:hitPoint.clientY,
-            lastTime:performance.now(),dragged:false};
-          containerRef.current?.setPointerCapture?.(pointerId);
-          return;
-        }
-      }
-      if(session!==pointerSessionRef.current||!gestureRef.current)return;
-      cameraPointerRef.current={x:event.clientX,y:event.clientY,
-        button:event.button,pointerId:event.pointerId};
-      setCameraDragging(true);
-      containerRef.current?.setPointerCapture?.(event.pointerId);
-    };
-    begin().catch(()=>{});
+    const ray=(touch||button===0)&&canInteract?pointerRay(event):null;
+    const die=pickDie(ray);
+    if(die){
+      const hold=holdTrayDie(die);
+      const planeY=die.body.position.y;
+      const point=projectTrayPoint(ray,planeY);
+      pointerRef.current={id,touch,hold,planeY,
+        offsetX:die.body.position.x-(point?.x??die.body.position.x),
+        offsetZ:die.body.position.z-(point?.z??die.body.position.z),
+        gesture:createDiceGesture({x,y,time,point})};
+      setPointerMode('die');
+      setSceneInteractionNotice('');
+      renderPointer();
+      return;
+    }
+    pointerRef.current={id,touch,button,x,y};
+    setPointerMode('camera');
+  };
+  const updateHeldPointer=(pointer,event)=>{
+    const {clientX:x,clientY:y,timeStamp:time}=event;
+    const point=projectTrayPoint(pointerRay(event),pointer.planeY);
+    sampleDiceGesture(pointer.gesture,{x,y,time,point});
+    if(!point||!pointer.gesture.dragged)return;
+    const outline=trayRef.current?.outline;
+    const margin=pointer.hold.die.body.boundingRadius+(outline?.thickness??0)/2+.015;
+    const placement=fitDieInsideTray({
+      x:point.x+pointer.offsetX,z:point.z+pointer.offsetZ
+    },outline,margin);
+    if(!placement)return;
+    const otherBodies=engineRef.current.dice.map(die=>die.body);
+    moveHeldDie(pointer.hold,placement,[...otherBodies,...(towerRef.current?.colliders||[])]);
+    renderPointer();
   };
   const pointerMove=event=>{
-    if(!windowMode)return;
-    if(event.pointerType==='touch'&&touchPointsRef.current.has(event.pointerId))
-      touchPointsRef.current.set(event.pointerId,{x:event.clientX,y:event.clientY});
-    if(touchPointsRef.current.size===2){
-      const [a,b]=[...touchPointsRef.current.values()];
-      const next=Math.hypot(a.x-b.x,a.y-b.y);
-      if(pinchRef.current){
-        setCameraZoom(v=>Math.max(.65,Math.min(1.9,v*next/pinchRef.current)));
+    const {pointerId:id,clientX:x,clientY:y}=event;
+    const touches=touchPointsRef.current;
+    if(touches.has(id))touches.set(id,{x,y});
+    const pinch=pinchRef.current;
+    if(pinch){
+      if(!touches.has(id))return;
+      const distance=touchDistance();
+      if(pinch.distance>0&&distance>0){
+        const ratio=distance/pinch.distance;
+        zoomCamera(value=>value*ratio);
       }
-      pinchRef.current=next;
+      pinch.distance=distance;
       return;
     }
-    const drag=dicePointerRef.current;
-    if(drag&&drag.pointerId===event.pointerId&&canInteract){
-      const delta=Math.hypot(event.clientX-drag.x,event.clientY-drag.y);
-      if(delta>=9)drag.dragged=true;
-      if(drag.dragged){
-        const point=trayPoint(event,drag.die);
-        if(point){
-          drag.die.body.type=4; // CANNON.Body.KINEMATIC; presentation-only while held
-          drag.die.body.velocity.set(0,0,0);
-          drag.die.body.angularVelocity.set(0,0,0);
-          drag.lastTime=performance.now();
-          drag.die.body.position.x=point.x;
-          drag.die.body.position.z=point.z;
-          drag.die.mesh.position.copy(drag.die.body.position);
-          renderIdle();
-        }
+    const pointer=pointerRef.current;
+    if(pointer?.id!==id)return;
+    if(pointer.hold){
+      if(!pointer.touch&&event.buttons!==1){
+        finishPointer(event,true);
+        return;
       }
-      drag.lastX=event.clientX;drag.lastY=event.clientY;
+      if(canInteract)updateHeldPointer(pointer,event);
       return;
     }
-    const camera=cameraPointerRef.current;
-    if(!camera||camera.pointerId!==event.pointerId)return;
-    const dx=event.clientX-camera.x,dy=event.clientY-camera.y;
-    if(camera.button===1){
-      setCameraPan(v=>({x:Math.max(-5,Math.min(5,v.x-dx*.012)),
-        z:Math.max(-5,Math.min(5,v.z+dy*.012))}));
+    const dx=x-pointer.x,dy=y-pointer.y;
+    if(pointer.button===1){
+      setCameraPan(value=>({x:Math.max(-5,Math.min(5,value.x-dx*.012)),
+        z:Math.max(-5,Math.min(5,value.z+dy*.012))}));
     }else{
-      setCameraAngle(v=>v-dx*.008);
+      setCameraAngle(value=>value-dx*.008);
       setCameraTilt(true);
     }
-    camera.x=event.clientX;camera.y=event.clientY;
+    pointer.x=x;pointer.y=y;
   };
-  const pointerUp=event=>{
-    const wasPinching=touchPointsRef.current.size>1;
-    touchPointsRef.current.delete(event.pointerId);
-    if(wasPinching){
-      pinchRef.current=null;clearInteraction();gestureRef.current=null;return;
+  const finishPointer=(event,cancelled=false)=>{
+    const id=event.pointerId;
+    const touches=touchPointsRef.current;
+    if(touches.delete(id)&&pinchRef.current){
+      pinchRef.current.distance=touchDistance();
+      if(!touches.size){pinchRef.current=null;setPointerMode(null);}
+      releaseCapture(id);
+      return;
     }
-    const drag=dicePointerRef.current;
-    const camera=cameraPointerRef.current;
-    if((drag&&drag.pointerId!==event.pointerId)||
-      (camera&&camera.pointerId!==event.pointerId))return;
-    const start=gestureRef.current;
-    const elapsed=performance.now()-gestureTimeRef.current;
-    const motion=start?diceGesture(start,{x:event.clientX,y:event.clientY},
-      elapsed,windowSettings?.interactionSpeed):null;
-    const canRoll=Boolean(drag&&drag.pointerId===event.pointerId&&canInteract&&onRollDie);
-    const sides=drag?.die?.type?.replace?.('d','');
-    clearInteraction();
-    gestureRef.current=null;
-    try{containerRef.current?.releasePointerCapture?.(event.pointerId);}catch{}
-    if(!canRoll||!motion)return;
-    if(motion.click||motion.flick){
-      if(Number(sides)===100||Number(sides)===4||Number(sides)===6||
-        Number(sides)===8||Number(sides)===10||Number(sides)===12||
-        Number(sides)===20){
-        onRollDie(Number(sides));
-        setSceneInteractionNotice(motion.click?'Single die roll requested.':
-          'Flick registered. Server-confirmed die roll requested.');
-      }
-    }else setSceneInteractionNotice('Die repositioned. Official result unchanged.');
+    const pointer=pointerRef.current;
+    if(pointer?.id!==id)return;
+    pointerRef.current=null;
+    setPointerMode(null);
+    releaseCapture(id);
+    if(!pointer.hold)return;
+    const canRelease=!cancelled&&canInteract&&(pointer.touch||event.button===0);
+    if(canRelease)updateHeldPointer(pointer,event);
+    const motion=canRelease?releaseDiceGesture(pointer.gesture,windowSettings?.interactionSpeed):null;
+    const {die}=pointer.hold;
+    const hand=motion?.kind==='throw'?{
+      position:die.body.position.clone(),quaternion:die.body.quaternion.clone(),
+      grabbedIsFirst:die.isFirst,die,vx:motion.vx,vz:motion.vz
+    }:null;
+    releaseHeldDie(pointer.hold,!canRelease);
+    renderPointer();
+    if(!motion)return;
+    const sides=Number(die.type.slice(1));
+    if((hand||motion.kind==='tap')&&DICE_SIDES.includes(sides)&&onRollDie){
+      onRollDie(sides,hand);
+    }else if(pointer.hold.moved){
+      setSceneInteractionNotice('Die repositioned.');
+    }
   };
-  const onWheel=event=>{
-    if(!windowMode)return;
-    event.preventDefault();
-    setCameraZoom(v=>Math.max(.65,Math.min(1.9,v+(event.deltaY>0?-.065:.065))));
+  useEffect(()=>{
+    if(!interactionDisabled||!pointerRef.current?.hold)return;
+    clearInteraction();
+  },[interactionDisabled]);
+  useEffect(()=>{
+    const node=containerRef.current;
+    if(!windowMode||!node)return undefined;
+    const onWheel=event=>{
+      event.preventDefault();
+      if(pointerRef.current?.hold||pinchRef.current)return;
+      zoomCamera(value=>value+(event.deltaY>0?-.065:.065));
+    };
+    node.addEventListener('wheel',onWheel,{passive:false});
+    return ()=>node.removeEventListener('wheel',onWheel);
+  },[windowMode]);
+  const adjustCamera=change=>{
+    if(!pointerRef.current?.hold&&!pinchRef.current)change();
   };
 
   const renderFallback=!effectiveEnabled||['unavailable','unsupported','oversized','mismatch'].includes(status);
@@ -738,23 +788,23 @@ export function AsteriaDiceTray({
       <div className="asteria-advanced-dice-scene" ref={containerRef} aria-hidden="true"
         data-interaction-mode={windowMode?'grab-and-camera':'disabled'}
         onPointerDown={pointerDown} onPointerMove={pointerMove}
-        onPointerUp={pointerUp} onPointerCancel={()=>{clearInteraction();gestureRef.current=null;}}
-        onLostPointerCapture={()=>{if(dicePointerRef.current||cameraPointerRef.current){
-          clearInteraction();gestureRef.current=null;
-        }}}
-        onWheel={onWheel} onContextMenu={event=>windowMode&&event.preventDefault()}
-        style={{cursor:cameraDragging?'grabbing':windowMode?'grab':'default',
+        data-pointer-mode={pointerMode||'idle'}
+        onPointerUp={event=>finishPointer(event)}
+        onPointerCancel={event=>finishPointer(event,true)}
+        onLostPointerCapture={event=>finishPointer(event,true)}
+        onContextMenu={event=>windowMode&&event.preventDefault()}
+        style={{cursor:pointerMode?'grabbing':windowMode?'grab':'default',
           touchAction:windowMode?'none':'auto'}}/>
       {status==='settled'?<DiceOutcomeEffects record={record} preferences={presentation}
         profile={graphics} replayToken={replayToken}/>:null}
       <div className="asteria-tray-view-controls" role="group" aria-label="3D tray camera controls">
-        <button type="button" aria-label="Rotate tray left" onClick={()=>{setCameraTilt(true);setCameraAngle(v=>v-.28);}}>↶</button>
-        <button type="button" aria-label="Rotate tray right" onClick={()=>{setCameraTilt(true);setCameraAngle(v=>v+.28);}}>↷</button>
-        <button type="button" aria-label="Zoom tray in" onClick={()=>setCameraZoom(v=>Math.min(1.65,v+.1))}>+</button>
-        <button type="button" aria-label="Zoom tray out" onClick={()=>setCameraZoom(v=>Math.max(.7,v-.1))}>−</button>
-        <button type="button" aria-label="Reset tray camera" onClick={()=>{
+        <button type="button" aria-label="Rotate tray left" onClick={()=>adjustCamera(()=>{setCameraTilt(true);setCameraAngle(v=>v-.28);})}>↶</button>
+        <button type="button" aria-label="Rotate tray right" onClick={()=>adjustCamera(()=>{setCameraTilt(true);setCameraAngle(v=>v+.28);})}>↷</button>
+        <button type="button" aria-label="Zoom tray in" onClick={()=>adjustCamera(()=>setCameraZoom(v=>Math.min(1.65,v+.1)))}>+</button>
+        <button type="button" aria-label="Zoom tray out" onClick={()=>adjustCamera(()=>setCameraZoom(v=>Math.max(.7,v-.1)))}>−</button>
+        <button type="button" aria-label="Reset tray camera" onClick={()=>adjustCamera(()=>{
           setCameraAngle(0);setCameraTilt(false);setCameraZoom(1);
-          setCameraPan({x:0,z:0});}}>Top</button>
+          setCameraPan({x:0,z:0});})}>Top</button>
       </div>
       {!windowMode&&!record&&enabled&&status==='ready'?<div className="asteria-advanced-dice-placeholder"
         aria-hidden="true">
