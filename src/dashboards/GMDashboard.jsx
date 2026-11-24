@@ -851,6 +851,7 @@ export function GMDashboard({ campaignId }) {
       campaignId={campaignId} campaign={live.campaign} characters={live.characters}
       members={live.members} rosterError={live.memberRosterError}
       membership={live.membership} uid={accountUid} presence={live.presence}
+      events={live.events} session={live.session} clock={{encounter:live.encounter,now:live.clock}}
       onOpenCharacter={character=>openGMCharacter(live.campaign,character,{tab,membership:live.membership})}
       onSelectCharacter={setSelectedId} onNavigate={openGMHubLink}/> : null}
     {tab === 'bestiary' ? <GMNpcCreatureLibrary key={campaignId+':'+accountUid+':bestiary'}
