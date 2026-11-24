@@ -2,7 +2,8 @@ import React,{useEffect,useState} from 'react';
 import {RestRequestsPanel} from './CharacterSystemsPanels.jsx';
 import {firebaseService} from '../firebase/asteriaFirebaseService.js';
 import {previewPreparedEncounterLoad} from '../state/preparedEncounterLoadModel.mjs';
-import {formatAsteriaDate,sortedCalendarEntries} from '../state/asteriaCalendarModel.mjs';
+import {formatAsteriaDate,sortedCalendarEntries,effectiveCalendarDate} from '../state/asteriaCalendarModel.mjs';
+import {publishedWeatherForDate} from '../state/calendarGameplayModel.mjs';
 import {orderWeatherReports,weatherLabel} from '../state/weatherEnvironmentModel.mjs';
 import {gmCampaignMemberSummary} from '../state/gmCampaignRosterModel.mjs';
 
@@ -109,6 +110,11 @@ export function GMQuickNotes({workspace={},saveSection,onNavigate}){
 export function GMQuickCalendarWeather({campaignId,onNavigate}){
   const [calendar,setCalendar]=useState(null),[entries,setEntries]=useState([]);
   const [reports,setReports]=useState([]),[error,setError]=useState('');
+  const [now,setNow]=useState(()=>Date.now());
+  useEffect(()=>{
+    const timer=window.setInterval(()=>setNow(Date.now()),30000);
+    return()=>window.clearInterval(timer);
+  },[]);
   useEffect(()=>{
     setCalendar(null);setEntries([]);setReports([]);setError('');
     if(!campaignId)return undefined;
@@ -122,14 +128,15 @@ export function GMQuickCalendarWeather({campaignId,onNavigate}){
   },[campaignId]);
   const ready=Boolean(calendar?.definition&&calendar?.date);
   const upcoming=ready?sortedCalendarEntries(entries,calendar.definition).slice(0,4):[];
+  const current=ready?effectiveCalendarDate(calendar,now):null;
   const reportsSorted=orderWeatherReports(reports);
-  const latest=reportsSorted.find(report=>report.status==='published')||null;
-  const weather=latest?.forecast?.[0]||null;
+  const daily=publishedWeatherForDate(reportsSorted,current);
+  const weather=daily?.day||null;
   return <div className="react-gm-quick-panel" data-testid="gm-quick-calendar-weather">
     <p><strong>Campaign date:</strong> {ready?
-      formatAsteriaDate(calendar.date,calendar.definition):'Calendar not configured'}</p>
+      formatAsteriaDate(current,calendar.definition):'Calendar not configured'}</p>
     <p><strong>Weather:</strong> {weather?
-      weatherLabel(weather.condition)+' · '+weatherLabel(weather.severity):
+      daily.report.zoneName+' · '+weatherLabel(weather.condition)+' · '+weatherLabel(weather.severity):
       'No published forecast'}</p>
     {upcoming.length?<ol className="react-gm-quick-events">
       {upcoming.map(row=><li key={row.id}>
