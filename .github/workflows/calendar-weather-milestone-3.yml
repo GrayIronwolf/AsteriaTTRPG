@@ -1,0 +1,34 @@
+name: Verify Calendar Weather Milestone 3 (test branch only)
+on:
+  push:
+    branches: [Website-Build-Test]
+    paths:
+      - 'src/state/weatherEnvironmentModel.mjs'
+      - 'functions/weatherEnvironmentCommands.mjs'
+      - 'src/dashboards/WeatherEnvironmentWorkspace.jsx'
+      - 'src/styles/weather-environment.css'
+      - 'scripts/calendar-weather-milestone3.test.mjs'
+      - 'scripts/digital-gm-phase8-2.test.mjs'
+      - 'package.json'
+      - '.github/workflows/calendar-weather-milestone-3.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  climate-weather:
+    name: Climate, weather, privacy and UI checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run test:weather-environment
+      - name: Parse shared and Firebase weather modules
+        run: |
+          node --check src/state/weatherEnvironmentModel.mjs
+          node --check functions/weatherEnvironmentCommands.mjs
+      - run: npm run lint
