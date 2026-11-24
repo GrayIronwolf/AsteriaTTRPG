@@ -59,6 +59,14 @@ export function gmPlayerManagerRoster({campaign={},characters={},members=null,ro
     Array.isArray(serverRoster.active)&&Array.isArray(serverRoster.inactive);
   let rows=server?[...serverRoster.active,...serverRoster.inactive]:local.members;
   const errors=[...local.issues];
+  // Presence may update every few seconds. Index it once rather than scanning
+  // every presence record for every member and every linked character.
+  const onlineUsers=new Set(),onlineCharacters=new Set();
+  for(const record of Object.values(obj(presence))){
+    if(record?.state!=='online')continue;
+    if(id(record.uid))onlineUsers.add(record.uid);
+    if(id(record.characterId))onlineCharacters.add(record.characterId);
+  }
   const seen=new Set();
   rows=rows.filter(member=>{
     if(!id(member?.uid)||seen.has(member.uid)||!roles.has(member.role)||!statuses.has(member.status)){
@@ -75,21 +83,10 @@ export function gmPlayerManagerRoster({campaign={},characters={},members=null,ro
     })),
     controls:server&&Array.isArray(member.controls)?member.controls.filter(x=>['suspend','restore','remove','ban'].includes(x)):[],
     roleEditable:server&&member.roleEditable===true&&member.uid!==campaign?.ownerUid,
-    online:Object.values(obj(presence)).some(item=>
-      item?.state==='online'&&(item.uid===member.uid ||
-        (Array.isArray(member.characters)&&member.characters.some(c=>c.id===item.characterId))))
+    online:onlineUsers.has(member.uid)||
+      (Array.isArray(member.characters)&&member.characters.some(c=>onlineCharacters.has(c.id)))
   }));
   const total=rows.length;
-  const filtered=rows.filter(item=>{
-    if(role!=='all'&&item.role!==role)return false;
-    if(status!=='all'&&item.status!==status)return false;
-    const needle=limited(query).toLocaleLowerCase();
-    return !needle||[item.displayName,item.uid,item.role,...item.characters.map(c=>c.name)]
-      .some(value=>String(value||'').toLocaleLowerCase().includes(needle));
-  });
-  const order={owner:0,'co-gm':1,player:2};
-  filtered.sort((a,b)=>order[a.role]-order[b.role]||
-    (a.displayName||a.uid).localeCompare(b.displayName||b.uid));
   const summary=server?{
     activePlayers:rows.filter(row=>row.role==='player'&&row.status==='active').length,
     activeGMs:rows.filter(row=>row.role!=='player'&&row.status==='active').length,
@@ -98,11 +95,47 @@ export function gmPlayerManagerRoster({campaign={},characters={},members=null,ro
     unverifiedCharacters:local.summary?.unverifiedCharacters||0,
     pending:Number(serverRoster?.summary?.pending)||0
   }:local.summary;
-  return {
+  return gmPlayerManagerFilter({
     source:server?'server':local.source,state:server?'ready':local.state,
-    message:server?'':local.message,rows:filtered,total,summary,
+    message:server?'':local.message,rows,total,summary,
     issues:errors,server:!!server
-  };
+  },{query,role,status});
+}
+
+/** Presentation-only filters: never determine membership or permissions. */
+export function gmPlayerManagerFilter(report={},{query='',role='all',status='all',onlyOnline=false}={}){
+  const needle=limited(query).toLocaleLowerCase();
+  const source=Array.isArray(report.rows)?report.rows:[];
+  const allowedRoles=new Set(['all','owner','co-gm','player']);
+  const allowedStatuses=new Set(['all','active','suspended','removed','banned']);
+  const chosenRole=allowedRoles.has(role)?role:'all';
+  const chosenStatus=allowedStatuses.has(status)?status:'all';
+  const rows=source.filter(member=>
+    (chosenRole==='all'||member.role===chosenRole)&&
+    (chosenStatus==='all'||member.status===chosenStatus)&&
+    (!onlyOnline||member.online===true)&&
+    (!needle||[member.displayName,member.uid,member.role,
+      ...(Array.isArray(member.characters)?member.characters.map(c=>c.name):[])]
+      .some(value=>String(value||'').toLocaleLowerCase().includes(needle)))
+  );
+  const order={owner:0,'co-gm':1,player:2};
+  rows.sort((a,b)=>order[a.role]-order[b.role]||
+    (a.displayName||a.uid).localeCompare(b.displayName||b.uid));
+  return {...report,rows,total:report.total??source.length,matchCount:rows.length};
+}
+
+/** Render only a bounded card slice; all data stays inside this view model. */
+export function gmPlayerManagerPage(report={},requestedPage=1,requestedSize=12){
+  const source=Array.isArray(report.rows)?report.rows:[];
+  const pageSize=[8,12,24].includes(Number(requestedSize))?Number(requestedSize):12;
+  const pages=Math.max(1,Math.ceil(source.length/pageSize));
+  const rawPage=Number(requestedPage);
+  const page=Number.isSafeInteger(rawPage)?
+    Math.max(1,Math.min(pages,rawPage)):1;
+  const start=(page-1)*pageSize;
+  return {page,pages,pageSize,rows:source.slice(start,start+pageSize),
+    matchCount:source.length,from:source.length?start+1:0,
+    to:Math.min(start+pageSize,source.length)};
 }
 
 export function gmPlayerManagerCapacity(campaign={},joinList=null){
