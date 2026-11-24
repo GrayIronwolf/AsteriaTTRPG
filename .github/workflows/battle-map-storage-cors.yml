@@ -1,0 +1,90 @@
+name: Battle map Storage CORS
+on:
+  pull_request:
+    paths:
+      - 'config/battle-map-storage-cors.json'
+      - 'scripts/storage_cors_plan.py'
+      - 'scripts/test_storage_cors_plan.py'
+      - '.github/workflows/battle-map-storage-cors.yml'
+  workflow_dispatch:
+    inputs:
+      operation:
+        type: choice
+        required: true
+        default: audit
+        options: [audit, repair]
+      confirmation:
+        type: string
+        required: false
+permissions:
+  contents: read
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m unittest discover -s scripts -p test_storage_cors_plan.py
+  production:
+    if: github.event_name == 'workflow_dispatch' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/Website-Build-Test')
+    needs: tests
+    environment: firebase-production
+    concurrency:
+      group: firebase-production
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate requested operation
+        env:
+          OPERATION: ${{ inputs.operation }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          case "$OPERATION" in
+            audit) ;;
+            repair) test "$CONFIRMATION" = "REPAIR-ASTERIA-STORAGE-CORS" ;;
+            *) exit 1 ;;
+          esac
+      - uses: google-github-actions/auth@v3
+        with:
+          project_id: asteria-ttrpg
+          workload_identity_provider: ${{ vars.FIREBASE_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.FIREBASE_DEPLOY_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Read current bucket CORS and prepare additive repair
+        run: |
+          set -euo pipefail
+          curl -fsS -H "Authorization: Bearer $(gcloud auth print-access-token)" 'https://storage.googleapis.com/storage/v1/b/asteria-ttrpg.firebasestorage.app?fields=name,cors,metageneration' > "$RUNNER_TEMP/before.json"
+          python3 scripts/storage_cors_plan.py "$RUNNER_TEMP/before.json" config/battle-map-storage-cors.json "$RUNNER_TEMP/desired.json"
+          jq '.cors // []' "$RUNNER_TEMP/before.json" > "$RUNNER_TEMP/original.json"
+          echo '### Existing CORS rules' >> "$GITHUB_STEP_SUMMARY"
+          jq -c '.cors // []' "$RUNNER_TEMP/before.json" >> "$GITHUB_STEP_SUMMARY"
+          echo '### Proposed CORS rules' >> "$GITHUB_STEP_SUMMARY"
+          jq -c . "$RUNNER_TEMP/desired.json" >> "$GITHUB_STEP_SUMMARY"
+      - name: Save original configuration
+        uses: actions/upload-artifact@v4
+        with:
+          name: original-bucket-cors
+          path: ${{ runner.temp }}/original.json
+      - name: Apply only CORS with concurrency precondition
+        if: inputs.operation == 'repair'
+        run: |
+          set -euo pipefail
+          if diff -q <(jq -S . "$RUNNER_TEMP/original.json") <(jq -S . "$RUNNER_TEMP/desired.json"); then
+            echo 'CORS already matches reviewed configuration.'
+          else
+            generation=$(jq -er '.metageneration' "$RUNNER_TEMP/before.json")
+            jq '{cors: .}' "$RUNNER_TEMP/desired.json" > "$RUNNER_TEMP/patch.json"
+            curl -fsS -X PATCH -H "Authorization: Bearer $(gcloud auth print-access-token)" -H 'Content-Type: application/json' --data-binary @"$RUNNER_TEMP/patch.json" "https://storage.googleapis.com/storage/v1/b/asteria-ttrpg.firebasestorage.app?ifMetagenerationMatch=$generation&fields=name,cors" > "$RUNNER_TEMP/updated.json"
+          fi
+      - name: Verify effective configuration
+        if: inputs.operation == 'repair'
+        run: |
+          set -euo pipefail
+          curl -fsS -H "Authorization: Bearer $(gcloud auth print-access-token)" 'https://storage.googleapis.com/storage/v1/b/asteria-ttrpg.firebasestorage.app?fields=name,cors' > "$RUNNER_TEMP/after.json"
+          python3 scripts/storage_cors_plan.py "$RUNNER_TEMP/after.json" config/battle-map-storage-cors.json "$RUNNER_TEMP/verified.json"
+          diff <(jq -S '.cors // []' "$RUNNER_TEMP/after.json") <(jq -S . "$RUNNER_TEMP/verified.json")
+          echo 'Reviewed CORS rule verified; no Storage rules, IAM or object changes.' >> "$GITHUB_STEP_SUMMARY"
