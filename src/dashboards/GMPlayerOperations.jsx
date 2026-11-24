@@ -194,7 +194,8 @@ export function GMPlayerLiveActions({campaignId,selected=null,characters={},acce
       {message?<p role="status" className="react-gm-player-feedback">{message}</p>:null}
       <details className="react-gm-player-expand-section">
         <summary>Full group, opposed and custom check manager</summary>
-        <GMUniversalCheckManager campaignId={campaignId} characters={characters}/>
+        {permitted?<GMUniversalCheckManager campaignId={campaignId} characters={characters}/>:
+          <p>Group and opposed requests require an editable session and active membership.</p>}
       </details>
     </Panel>
   </div>;
