@@ -138,7 +138,7 @@ function CharacterDashboardContent({campaignId,characterId,live}) {
   const uid = firebaseService.currentUser()?.uid;
   const isOwner = window.AsteriaCharacterAccess.owns(character, uid);
   const editable = Boolean(campaignId && isOwner && live.session?.editable);
-  const combat=useCombatPanel(campaignId,character||{id:characterId},live.encounter,editable);
+  const combat=useCombatPanel(campaignId,character||{id:characterId},live.encounter,editable && live.online && !live.error);
   const gmReturn = gmReturnContext(live.campaign, character, uid, window, live.membership);
   useEffect(()=>{
     setAcknowledged(new Set());
