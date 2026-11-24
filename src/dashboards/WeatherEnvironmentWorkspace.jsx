@@ -98,7 +98,9 @@ export function GMWeatherEnvironmentWorkspace({campaignId}){
       onChange={e=>setDraft(x=>({...x,name:e.target.value}))}/></label>
      <label>Region<input maxLength={100} disabled={busy} value={draft.region}
       onChange={e=>setDraft(x=>({...x,region:e.target.value}))}/></label>
-     <label>Biome<select value={draft.biome} disabled={busy} onChange={e=>setDraft(x=>({...x,biome:e.target.value}))}>
+     <label>Biome<select value={draft.biome} disabled={busy} onChange={e=>setDraft(x=>({...x,biome:e.target.value,
+      latitudeBand:WEATHER_CLIMATE_PRESETS[e.target.value]?.band||'temperate',
+      coastal:['coast','ocean'].includes(e.target.value)}))}>
       {WEATHER_BIOMES.map(x=><option key={x} value={x}>{weatherLabel(x)}</option>)}</select></label>
      <label>Variability<select value={draft.volatility} disabled={busy}
       onChange={e=>setDraft(x=>({...x,volatility:e.target.value}))}>
