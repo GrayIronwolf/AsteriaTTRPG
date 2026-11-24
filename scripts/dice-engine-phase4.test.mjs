@@ -69,7 +69,8 @@ test('single existing workspace owns fullscreen, drawers, settings and server ro
  assert.match(tray,/onPointerDown/);
  assert.match(tray,/onPointerMove/);
  assert.match(tray,/onWheel/);
- assert.match(tray,/diceGesture/);
+ assert.match(tray,/sampleDiceGesture/);
+ assert.match(tray,/releaseDiceGesture/);
  assert.match(tray,/engine\.roll\(diceToRoll\)/);
  assert.match(css,/asteria-dice-window-drawer/);
  assert.doesNotMatch(read('src/dice/diceWindowModel.mjs'),/firebaseService|Math\.random/);

@@ -34,10 +34,12 @@ export function attachDiceTower(engine,outline,input=defaultDiceTowerAppearance(
  engine.scene.add(group);
  const applyBefore=engine._applyDiePhysics,replayBefore=engine._startReplay;
  const predictBefore=engine._predict,finishBefore=engine._finishReplay;
- let evidence=null,attempts=0,cleaned=false;
+ let evidence=null,attempts=0,cleaned=false,handThrow=false;
  // Reject hidden physics candidates that never leave the tower. The worker
  // really simulates each candidate; none creates a new official Firebase roll.
  engine._predict=async function(diceConfig){
+  if(handThrow)return predictBefore.call(this,diceConfig);
+  this.world.gravity.x=8;
   // Larger percentile pairs and d4 can need additional genuine Cannon throws.
   // The acceptance gate still demands a real exit; no fake exit or value changes.
   const maxAttempts=48;
@@ -54,24 +56,13 @@ export function attachDiceTower(engine,outline,input=defaultDiceTowerAppearance(
   }
   throw Error('Dice Tower physics could not complete an exit within forty-eight physical attempts.');
  };
- // The worker already simulated the throw until rest and recorded the true
- // final orientation. Stop any unrecorded late physical drift after replay,
- // instead of allowing angled feed gravity to alter the visible number.
+ // Guide the throw through the tower. Once the recording ends on the tray,
+ // allow the actual bodies to settle with the tray's usual vertical gravity.
  engine._finishReplay=function(...args){
   const replay=this._replay;
   const complete=Boolean(replay&&replay.cursor>=replay.recording.steps);
   const result=finishBefore.apply(this,args);
-  if(complete){
-   for(const die of replay.dice){
-    if(!die?.body?.world)continue;
-    die.body.velocity.setZero();die.body.angularVelocity.setZero();
-    die.body.sleep();
-    // Synchronise to the exact final pose already recorded by the same
-    // physical worker, not a newly guessed or cosmetic orientation.
-    die.mesh?.position?.copy(die.body.position);
-    die.mesh?.quaternion?.copy(die.body.quaternion);
-   }
-  }
+  if(complete&&!handThrow)this.world.gravity.copy(previousGravity);
   return result;
  };
  engine._applyDiePhysics=function(die,seed){
@@ -88,12 +79,21 @@ export function attachDiceTower(engine,outline,input=defaultDiceTowerAppearance(
  engine._startReplay=function(recording,dice){
   // This recording was generated from the SAME Cannon bodies including
   // the static tower; sample actual physics, not a visual animation estimate.
-  evidence=inspectDiceTowerRecording(layout,recording);
+  if(!handThrow)evidence=inspectDiceTowerRecording(layout,recording);
   return replayBefore.call(this,recording,dice);
  };
  engine.renderer?.render(engine.scene,engine.camera);
  return {layout,group,colliders,config,previewMode:'actual-physics',
   getEvidence:()=>evidence,getAttempts:()=>attempts,
+  suspendGuidance(){
+   const restoreGravity=engine.world.gravity.clone();
+   handThrow=true;
+   engine.world.gravity.copy(previousGravity);
+   return ()=>{
+    handThrow=false;
+    if(!cleaned)engine.world.gravity.copy(restoreGravity);
+   };
+  },
   dispose(){
    if(cleaned)return;cleaned=true;
    engine._applyDiePhysics=applyBefore;engine._startReplay=replayBefore;
