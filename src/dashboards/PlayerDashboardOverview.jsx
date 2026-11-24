@@ -162,7 +162,7 @@ function QuickItemsPanel({ campaignId, character, editable, busy, onNavigate, ru
     if(result?.ok) setPendingItem(null);
   };
   return <DashboardPanel icon="quick" title="Quick Items" variant="equipment" className="react-overview-quick" style={style} action={<button type="button" onClick={() => onNavigate('inventory')}>Open Inventory</button>}>
-    <div className="react-quick-slot-grid">{[0, 1, 2, 3].map(index => <LoadoutSlot key={index} label={`Quick ${index + 1}`} shortcut={String(index + 1)} item={quickSlots[index]} icon="quick" disabled={busy} onOpen={() => onNavigate('inventory')} onUse={quickSlots[index]?.id ? item => setPendingItem(item) : undefined} />)}</div>
+    <div className="react-quick-slot-grid">{[0, 1, 2, 3].map(index => <LoadoutSlot key={index} label={`Quick ${index + 1}`} shortcut={String(index + 1)} item={quickSlots[index]} icon="quick" disabled={busy || !editable} onOpen={() => onNavigate('inventory')} onUse={editable && quickSlots[index]?.id ? item => setPendingItem(item) : undefined} />)}</div>
     {pendingItem ? <Modal title={`Use ${itemName(pendingItem)}?`} eyebrow="Quick Item" busy={busy} onClose={() => setPendingItem(null)} footer={<><button type="button" disabled={busy} onClick={() => setPendingItem(null)}>Cancel</button><button type="button" className="primary" disabled={busy || !editable || !itemStillEquipped} onClick={confirmUse}>Use Item</button></>}>
       <p>Review your selection before using this item. It may be consumed or change your character's resources.</p>
       {!editable ? <p role="status">Start an editable campaign session to use this item. You can still open Inventory to inspect it.</p> : null}
