@@ -21,6 +21,7 @@ import {AdvancedDiceWorkspace} from './AdvancedDiceWorkspace.jsx';
 import {GMRandomTableWorkspace} from './GMRandomTableWorkspace.jsx';
 import {GMEncounterRewardWorkspace} from './GMEncounterRewardWorkspace.jsx';
 import {AsteriaCalendarWorkspace} from './AsteriaCalendarWorkspace.jsx';
+import {CalendarWeatherQuickPanel} from './CalendarWeatherQuickPanel.jsx';
 import {GMWeatherEnvironmentWorkspace} from './WeatherEnvironmentWorkspace.jsx';
 import {GMWorldAtlasWorkspace} from './WorldAtlasWorkspace.jsx';
 import {GMSessionLibraryWorkspace} from './SessionLibraryWorkspace.jsx';
@@ -787,6 +788,8 @@ export function GMDashboard({ campaignId }) {
         saveSection={saveSection} onNavigate={setTab}/>;
       case 'calendarWeather':return <GMQuickCalendarWeather campaignId={campaignId}
         onNavigate={setTab}/>;
+      case 'worldContext':return <CalendarWeatherQuickPanel campaignId={campaignId}
+        role="gm" onNavigate={setTab}/>;
       case 'sessionOverview':return <GMQuickSession session={live.session}
         presence={live.presence} events={live.events} characters={live.characters}
         onNavigate={setTab}/>;
