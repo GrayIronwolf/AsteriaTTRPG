@@ -4,6 +4,7 @@ on:
   push:
     branches: [Website-Build-Test]
     paths:
+      - 'src/dice/**'
       - 'src/dashboards/AdvancedDiceWorkspace.jsx'
       - 'src/dashboards/combat/**'
       - 'scripts/combat-command-centre-replacement.test.mjs'
