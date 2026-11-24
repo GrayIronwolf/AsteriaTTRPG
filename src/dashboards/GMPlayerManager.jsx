@@ -1,11 +1,11 @@
-import React,{useEffect,useMemo,useRef,useState} from 'react';
+import React,{useDeferredValue,useEffect,useMemo,useRef,useState} from 'react';
 import {Panel,StatusPill} from '../components/WorkspaceUI.jsx';
 import {firebaseService} from '../firebase/asteriaFirebaseService.js';
 import {GMPlayerTools,GMPlayerLiveActions,GMPlayerActivity} from './GMPlayerOperations.jsx';
 import {gmVerifiedPlayerCharacters} from '../state/gmPlayerOperationsModel.mjs';
 import {
   GM_PLAYER_MANAGER_VIEWS,GM_PLAYER_MANAGER_DELEGATIONS,
-  gmPlayerManagerAccess,gmPlayerManagerRoster,gmPlayerManagerCapacity,
+  gmPlayerManagerAccess,gmPlayerManagerRoster,gmPlayerManagerFilter,gmPlayerManagerPage,gmPlayerManagerCapacity,
   gmPlayerManagerApprovalAllowed,gmPlayerManagerLifecycleAllowed
 } from '../state/gmPlayerManagerModel.mjs';
 import '../styles/gm-player-manager.css';
@@ -39,6 +39,10 @@ export function GMPlayerManager({campaignId,campaign={},characters={},members=nu
   const [query,setQuery]=useState('');
   const [roleFilter,setRoleFilter]=useState('all');
   const [statusFilter,setStatusFilter]=useState('all');
+  const [onlyOnline,setOnlyOnline]=useState(false);
+  const [rosterPage,setRosterPage]=useState(1);
+  const [rosterPageSize,setRosterPageSize]=useState(12);
+  const deferredQuery=useDeferredValue(query);
   const [serverRoster,setServerRoster]=useState(null);
   const [joinData,setJoinData]=useState(null);
   const [linksData,setLinksData]=useState(null);
@@ -60,13 +64,15 @@ export function GMPlayerManager({campaignId,campaign={},characters={},members=nu
   const qrHost=useRef(null);
   const flags=typeof window!=='undefined'?window.AsteriaFeatureFlags||{}:{};
   const access=gmPlayerManagerAccess({campaign,actorUid:uid,membership,flags});
-  const report=useMemo(()=>gmPlayerManagerRoster({
-    campaign,characters,members,rosterError,serverRoster,query,role:roleFilter,
-    status:statusFilter,presence
-  }),[campaign,characters,members,rosterError,serverRoster,query,roleFilter,statusFilter,presence]);
+  // Membership reconciliation is independent of UI filters and search typing.
   const fullReport=useMemo(()=>gmPlayerManagerRoster({
     campaign,characters,members,rosterError,serverRoster,presence
   }),[campaign,characters,members,rosterError,serverRoster,presence]);
+  const report=useMemo(()=>gmPlayerManagerFilter(fullReport,{
+    query:deferredQuery,role:roleFilter,status:statusFilter,onlyOnline
+  }),[fullReport,deferredQuery,roleFilter,statusFilter,onlyOnline]);
+  const page=useMemo(()=>gmPlayerManagerPage(report,rosterPage,rosterPageSize),
+    [report,rosterPage,rosterPageSize]);
   const verifiedCharacters=useMemo(()=>gmVerifiedPlayerCharacters({
     campaign,characters,report:fullReport
   }),[campaign,characters,fullReport]);
@@ -74,6 +80,8 @@ export function GMPlayerManager({campaignId,campaign={},characters={},members=nu
   const verifiedCharacterMap=useMemo(()=>Object.fromEntries(
     verifiedCharacters.map(row=>[row.id,row.character])
   ),[verifiedCharacters]);
+  const verifiedIds=useMemo(()=>new Set(verifiedCharacters.map(row=>row.id)),
+    [verifiedCharacters]);
   const capacity=gmPlayerManagerCapacity(campaign,joinData);
   const pendingJoins=Array.isArray(joinData?.requests)?joinData.requests:[];
   const pendingLinks=Array.isArray(linksData?.requests)?linksData.requests:[];
@@ -183,6 +191,7 @@ export function GMPlayerManager({campaignId,campaign={},characters={},members=nu
     setFocusedCharacterId('');setChecks([]);setCheckError('');
   },[scope]);
 
+  useEffect(()=>{setRosterPage(1);},[scope,deferredQuery,roleFilter,statusFilter,onlyOnline,rosterPageSize]);
   const refresh=()=>setRevision(value=>value+1);
   const focusCharacter=(characterId,nextView='player-tools')=>{
     if(!verifiedCharacters.some(row=>row.id===characterId))return;
@@ -386,7 +395,7 @@ export function GMPlayerManager({campaignId,campaign={},characters={},members=nu
     {feedback?<p className="react-gm-player-feedback" role="status">{feedback}</p>:null}
     {loading?<p className="react-gm-player-loading" role="status">Refreshing {GM_PLAYER_MANAGER_VIEWS.find(item=>item.id===view)?.label}...</p>:null}
     {view==='players'?<Panel title="Campaign Players" eyebrow="Accounts, Online Presence & Linked Characters"
-      action={<span>{report.rows.length} / {report.total} accounts</span>}>
+      action={<span>{report.matchCount} / {report.total} accounts</span>}>
       <div className="react-gm-player-filters">
         <label>Search accounts or characters<input type="search" value={query} onChange={e=>setQuery(e.target.value)}
           placeholder="Name, account or character" autoComplete="off"/></label>
@@ -399,12 +408,21 @@ export function GMPlayerManager({campaignId,campaign={},characters={},members=nu
           <option value="suspended">Suspended</option><option value="removed">Removed</option>
           <option value="banned">Banned</option>
         </select></label>
+        <label className="react-gm-player-online-filter">
+          <input type="checkbox" checked={onlyOnline} onChange={e=>setOnlyOnline(e.target.checked)}/>
+          Online presence only
+        </label>
+        <label>Cards per page<select value={rosterPageSize}
+          onChange={e=>setRosterPageSize(Number(e.target.value))}>
+          <option value={8}>8 cards</option><option value={12}>12 cards</option>
+          <option value={24}>24 cards</option>
+        </select></label>
       </div>
       {report.state!=='ready'?<ReadOnlyNotice>{report.message}</ReadOnlyNotice>:null}
       {report.issues.length?<ReadOnlyNotice>{report.issues.length} membership record issue(s) require review; no unverified account is granted access.</ReadOnlyNotice>:null}
       {counts?.unverifiedCharacters?<ReadOnlyNotice>{counts.unverifiedCharacters} character record(s) were excluded because ownership links could not be verified.</ReadOnlyNotice>:null}
-      <div className="react-gm-player-roster">
-        {report.rows.map(row=><article key={row.uid} className="react-gm-player-account">
+      <div className="react-gm-player-roster" aria-live="polite">
+        {page.rows.map(row=><article key={row.uid} className="react-gm-player-account">
           <div className="react-gm-player-account-title">
             <div><h3>{row.displayName||row.uid}</h3><small>Account: {row.uid}</small></div>
             <div className="react-gm-player-badges"><RecordStatus status={row.status}/>
@@ -416,9 +434,9 @@ export function GMPlayerManager({campaignId,campaign={},characters={},members=nu
             {row.characters.map(character=><div className="react-gm-player-character" key={character.id}>
               <div><strong>{character.name}</strong><small>{character.level!=null?'Level '+character.level:'Level not recorded'}</small></div>
               <div className="react-gm-player-actions">
-                <ActionButton disabled={!verifiedCharacters.some(row=>row.id===character.id)}
+                <ActionButton disabled={!verifiedIds.has(character.id)}
                   onClick={()=>focusCharacter(character.id)}>Player tools</ActionButton>
-                <ActionButton disabled={!verifiedCharacters.some(row=>row.id===character.id)}
+                <ActionButton disabled={!verifiedIds.has(character.id)}
                   onClick={()=>focusCharacter(character.id,'live-actions')}>Request check</ActionButton>
                 <ActionButton disabled={!characters[character.id]} onClick={()=>gotoCharacter(character.id,'character')}>View sheet</ActionButton>
                 <ActionButton disabled={!characters[character.id]} onClick={()=>gotoCharacter(character.id,'tools')}>GM tools</ActionButton>
@@ -429,7 +447,14 @@ export function GMPlayerManager({campaignId,campaign={},characters={},members=nu
           </div>
         </article>)}
       </div>
-      {report.state==='ready'&&!report.rows.length?<ReadOnlyNotice>No accounts match the current filters.</ReadOnlyNotice>:null}
+      {report.state==='ready'&&!report.matchCount?<ReadOnlyNotice>No accounts match the current filters.</ReadOnlyNotice>:null}
+      {report.matchCount>0?<div className="react-gm-player-pagination" aria-label="Player roster pages">
+        <span>Showing {page.from}–{page.to} of {report.matchCount} accounts · Page {page.page} of {page.pages}</span>
+        <div className="react-gm-player-actions">
+          <ActionButton disabled={page.page<=1} onClick={()=>setRosterPage(p=>p-1)}>Previous</ActionButton>
+          <ActionButton disabled={page.page>=page.pages} onClick={()=>setRosterPage(p=>p+1)}>Next</ActionButton>
+        </div>
+      </div>:null}
       {readOnly?<p className="react-gm-player-hint">Account administration requires an activated canonical server roster. This overview is read-only; online presence does not grant membership.</p>:null}
     </Panel>:null}
 
