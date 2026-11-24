@@ -4,6 +4,7 @@ import {firebaseService} from '../firebase/asteriaFirebaseService.js';
 import {previewPreparedEncounterLoad} from '../state/preparedEncounterLoadModel.mjs';
 import {formatAsteriaDate,sortedCalendarEntries} from '../state/asteriaCalendarModel.mjs';
 import {orderWeatherReports,weatherLabel} from '../state/weatherEnvironmentModel.mjs';
+import {gmCampaignMemberSummary} from '../state/gmCampaignRosterModel.mjs';
 
 /** Live, campaign-authorized summaries of existing systems; no second data store. */
 export function GMQuickRequests({campaignId,characters={},editable=false,onNavigate}){
@@ -167,5 +168,22 @@ export function GMQuickReference({title,description,onNavigate,target,extra=null
     {description?<p>{description}</p>:null}
     {extra}
     <button type="button" onClick={()=>onNavigate(target)}>Open {title}</button>
+  </div>;
+}
+
+/** Permission-safe canvas entry point, no independent membership listener. */
+export function GMQuickPlayerManager({campaign={},characters={},members=null,rosterError='',onNavigate}){
+  const report=gmCampaignMemberSummary({campaign,characters,members,rosterError});
+  const summary=report.summary;
+  return <div className="react-gm-quick-panel" data-testid="gm-quick-player-manager">
+    <p className="react-help">Open the full Player Manager for accounts, approvals, linked characters and GM actions.</p>
+    {report.state==='ready'?<div className="react-gm-quick-stats">
+      <div><span>Active players</span><strong>{summary.activePlayers}</strong></div>
+      <div><span>Active GMs</span><strong>{summary.activeGMs}</strong></div>
+      <div><span>Linked characters</span><strong>{summary.linkedCharacters}</strong></div>
+    </div>:<p role="status">{report.message||'Verifying membership...'}</p>}
+    {summary?.unverifiedCharacters?<p role="status" className="react-help">
+      {summary.unverifiedCharacters} character link(s) require verification.</p>:null}
+    <button type="button" onClick={()=>onNavigate('player-manager')}>Open Player Manager</button>
   </div>;
 }
