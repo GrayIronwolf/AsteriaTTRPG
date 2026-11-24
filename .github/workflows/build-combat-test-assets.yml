@@ -20,8 +20,10 @@ on:
       - 'src/dashboards/GMDashboard.jsx'
       - 'src/dashboards/GMPlayerManager.jsx'
       - 'src/dashboards/GMPlayerOperations.jsx'
+      - 'src/dashboards/GMDashboardQuickPanels.jsx'
       - 'src/state/gmPlayerOperationsModel.mjs'
       - 'scripts/gm-player-operations.test.mjs'
+      - 'scripts/gm-player-manager-phase11-12.test.mjs'
       - 'src/state/gmPlayerManagerModel.mjs'
       - 'src/state/gmCampaignRosterModel.mjs'
       - 'src/styles/gm-player-manager.css'
@@ -66,6 +68,7 @@ jobs:
           node --test scripts/combat-command-centre-replacement.test.mjs
           node --test scripts/gm-player-manager.test.mjs
           node --test scripts/gm-player-operations.test.mjs
+          node --test scripts/gm-player-manager-phase11-12.test.mjs
       - name: Build current Combat and Share & Present React/Vite assets without publishing
         run: npm run build
       - name: Commit only compiled website artifacts on test branch
