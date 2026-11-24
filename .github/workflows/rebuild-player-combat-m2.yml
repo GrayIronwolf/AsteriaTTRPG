@@ -1,0 +1,34 @@
+name: Rebuild player combat milestone 2 assets
+on:
+  push:
+    branches: [fix/player-combat-ap-m2]
+    paths:
+      - 'src/**'
+      - 'functions/**'
+      - 'scripts/**'
+      - '.github/workflows/rebuild-player-combat-m2.yml'
+permissions:
+  contents: write
+jobs:
+  build:
+    if: github.ref == 'refs/heads/fix/player-combat-ap-m2' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run test:combat
+      - run: npm run test:ownership
+      - run: npm run build
+      - name: Commit generated assets
+        run: |
+          git add -A -- react-dist data/compendium.js data/compendium-handbook.js data/compendium-index.js data/compendium-parts
+          if git diff --cached --quiet; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "build: synchronize combat milestone 2 assets"
+          git push origin HEAD:fix/player-combat-ap-m2

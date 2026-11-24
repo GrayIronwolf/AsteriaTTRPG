@@ -4,7 +4,7 @@ import { firebaseService } from '../firebase/asteriaFirebaseService.js';
 import { useAsyncAction } from '../components/useAsyncAction.js';
 import { activeConditions, conditionDurationLabel } from '../state/conditionModel.mjs';
 import { resourceDefinitions, resourceSnapshot } from '../state/resourceEngine.mjs';
-import { apState, combatActive, combatOptions, currentCombatant, optionProblem, participantFor, rows } from '../state/combatRules.mjs';
+import { activeReactionWindow, apState, basicReactionProblem, combatActionScope, combatActive, combatOptions, currentCombatant, manualAPProblem, optionProblem, participantFor, rows } from '../state/combatRules.mjs';
 import '../styles/combat.css';
 
 const costsText=costs=>Object.entries(costs||{}).filter(([,n])=>n>0).map(([key,n])=>`${n} ${key.toUpperCase()}`).join(' · ')||'No resource cost';
@@ -13,21 +13,40 @@ export function useCombatPanel(campaignId,character,encounter={},editable=true,a
   const active=actorOverride?encounter.status==='active'&&encounter.combat?.version===1&&encounter.combatants?.some(row=>row.id===actorOverride):combatActive(encounter,character.id);
   const [selector,setSelector]=useState(''),[selected,setSelected]=useState(null),[selectedSpendId,setSelectedSpendId]=useState('');
   const action=useAsyncAction();
+  const scope=combatActionScope(encounter,actorId);
+  const revision=Number(encounter.combat?.revision||0);
+  const [awaitingRevision,setAwaitingRevision]=useState(null);
+  const commandLock=useRef(false);
+  const awaiting=awaitingRevision!==null&&revision<awaitingRevision;
+  useEffect(()=>{setAwaitingRevision(null);},[campaignId,actorId,encounter.combatId]);
   const options=useMemo(()=>combatOptions(character,window.ASTERIA_UNIVERSAL_COMPENDIUM_INDEX?.entries||[]),[character]);
-  useEffect(()=>{setSelector('');setSelected(null);setSelectedSpendId('');},[active,actorId,encounter.combatId]);
+  useEffect(()=>{setSelector('');setSelected(null);setSelectedSpendId('');},[active,scope]);
   useEffect(()=>{if(!selector&&!selected)return undefined;const close=e=>{if(e.key==='Escape'){setSelector('');setSelected(null);}};window.addEventListener('keydown',close);return()=>window.removeEventListener('keydown',close);},[selector,selected]);
-  const select=(option,spendId='')=>{setSelected(option);setSelectedSpendId(spendId);setSelector('');};
-  const command=(input,id=actorId)=>action.run(()=>firebaseService.combatCommand(campaignId,id,{...input,revision:Number(encounter.combat?.revision||0)}));
-  const spend=async option=>{const result=await command({operation:'spend-ap',...(option.id?{optionId:option.id}:{ap:option.ap})});if(result?.ok){setSelected(null);setSelectedSpendId('');setSelector('');}return result;};
-  return {spend,selectedSpendId,active,actorId,character,encounter,options,selector,setSelector,selected,setSelected,select,command,...action,editable};
+  const select=(option,spendId='')=>{if(!option||!editable||awaiting)return;setSelected(option);setSelectedSpendId(spendId);setSelector('');};
+  const command=async(input,id=actorId)=>{
+    if(!editable||!active||!campaignId||!id||awaiting||commandLock.current)return {ok:false,error:'Combat controls are unavailable until live sync completes.'};
+    commandLock.current=true;
+    try{
+      const result=await action.run(()=>firebaseService.combatCommand(campaignId,id,{...input,revision}));
+      if(result?.ok&&Number.isSafeInteger(result.revision)&&result.revision>revision)setAwaitingRevision(result.revision);
+      return result;
+    }finally{commandLock.current=false;}
+  };
+  const spend=async option=>{
+    if(!option)return {ok:false};
+    const problem=option.id?optionProblem(option,character,encounter,actorId):manualAPProblem(character,encounter,actorId,option.ap);
+    if(problem||encounter.combat?.pending){action.setMessage(problem||'Resolve the pending action before continuing.');return {ok:false,error:problem};}
+    const result=await command({operation:'spend-ap',...(option.id?{optionId:option.id}:{ap:option.ap})});if(result?.ok){setSelected(null);setSelectedSpendId('');setSelector('');}return result;};
+  return {spend,selectedSpendId,active,actorId,character,encounter,options,selector,setSelector,selected,setSelected,select,command,...action,busy:action.busy||awaiting,message:awaiting?'Waiting for live combat sync…':action.message,editable};
 }
 
 // Delay pointer preview just long enough for a double-click to spend once.
 // Keyboard activation opens the explicit, touch-friendly Spend AP control.
 export function CombatActionButton({combat,option,children,className='',disabled=false,title}) {
   const preview=useRef(null);
-  useEffect(()=>()=>window.clearTimeout(preview.current),[]);
-  const reaction=combat.encounter.combat?.pending?.reactionWindow&&combat.encounter.combat.pending.reactorId===combat.actorId;
+  const scope=combatActionScope(combat.encounter,combat.actorId);
+  useEffect(()=>()=>window.clearTimeout(preview.current),[scope,combat.editable,combat.busy,option.id]);
+  const reaction=Boolean(activeReactionWindow(combat.encounter,combat.actorId));
   const blocked=optionProblem(option,combat.character,combat.encounter,combat.actorId,{reaction});
   return <button type="button" className={className} disabled={disabled||combat.busy||!combat.editable||Boolean(blocked)||Boolean(combat.encounter.combat?.pending&&!reaction)} title={blocked||title||'Double-click to spend AP; select to review'} onClick={event=>{
     window.clearTimeout(preview.current);
@@ -41,7 +60,7 @@ function CombatBadge({kind,label,value}) {
   return <div className={`combat-badge combat-badge--${kind}`}><small>{label}</small><div><svg viewBox="0 0 90 76" aria-hidden="true"><path d={paths[kind]}/></svg><strong>{value}</strong></div></div>;
 }
 function Resources({character}) {
-  return <div className="combat-resources">{resourceDefinitions(character).map(def=>{try{const r=resourceSnapshot(character,def.id);return <ResourceBar key={def.id} label={r.name} kind={def.id} value={r.current} maximum={r.maximum}/>;}catch{return null;}})}</div>;
+  return <div className="combat-resources">{resourceDefinitions(character).map(def=>{try{const r=resourceSnapshot(character,def.id);return <ResourceBar key={def.id} label={r.name} kind={def.id} value={r.current} maximum={r.maximum} reserved={def.id==='hp'?r.maximum-r.cap:0}/>;}catch{return null;}})}</div>;
 }
 function Conditions({character,encounter}) {
   const conditions=activeConditions(character,{encounter});
@@ -50,13 +69,15 @@ function Conditions({character,encounter}) {
 export function CombatPanel({combat,onOpen=combat.setSelector,standalone=false}) {
   const {active,actorId,character,encounter,options,selected,select,setSelected,command,spend,selectedSpendId,busy,message,editable}=combat;
   const [group,setGroup]=useState('1'),[targetIds,setTargetIds]=useState([]),[note,setNote]=useState(''),[prepare,setPrepare]=useState(false),[trigger,setTrigger]=useState(''),[response,setResponse]=useState(''),[choice,setChoice]=useState(''),[itemId,setItemId]=useState(''),[slot,setSlot]=useState(''),[swapItemId,setSwapItemId]=useState('');
+  const scope=combatActionScope(encounter,actorId);
+  useEffect(()=>{setTargetIds([]);setNote('');setPrepare(false);setTrigger('');setResponse('');setChoice('');setItemId('');setSlot('');setSwapItemId('');},[scope,selected?.id,selectedSpendId]);
   if(!active)return null;
   const state=apState(encounter,actorId),current=currentCombatant(encounter),ownTurn=current?.id===actorId&&!state.turnComplete,pending=encounter.combat?.pending;
-  const reaction=pending?.reactionWindow&&pending.reactorId===actorId;
+  const reaction=Boolean(activeReactionWindow(encounter,actorId));
   const prepaid=(state.apSpends||[]).find(row=>row.id===selectedSpendId&&!row.linked);
   const blocked=selected?optionProblem(selected,character,encounter,actorId,{reaction,prepaid}):'';
   const visible=options.filter(row=>(standalone||row.kind==='basic'||['item','scroll'].includes(row.kind))&&(group==='reaction'?row.reaction:group==='0'?row.ap===0:row.ap===Number(group)));
-  const commit=async()=>{const result=await command({operation:reaction?'react-ability':prepare?'prepare':'declare',optionId:selected.id,targetIds,note,trigger,response,choice,itemId,slot,swapItemId,...(prepaid?{spendId:prepaid.id}:{})});if(result?.ok){setSelected(null);setPrepare(false);}};
+  const commit=async()=>{if(!selected||!editable||busy||blocked||(pending&&!reaction))return;const result=await command({operation:reaction?'react-ability':prepare?'prepare':'declare',optionId:selected.id,targetIds,note,trigger,response,choice,itemId,slot,swapItemId,...(prepaid?{spendId:prepaid.id}:{})});if(result?.ok){setSelected(null);setPrepare(false);}};
   const timer=encounter.turnTimer||encounter.timer;
   const remaining=timer?.enabled&&timer.endsAt?`${Math.max(0,Math.ceil((Number(timer.endsAt)-Date.now())/1000))}s`:'Off';
   return <DashboardPanel icon="weapons" title="Combat" className={`combat-panel ${ownTurn?'is-own-turn':''}`} action={<StatusPill tone={ownTurn?'success':'pending'}>{ownTurn?'YOUR TURN':state.turnComplete?'TURN COMPLETE · Waiting for GM':`Waiting · ${current?.name||'GM'}`}</StatusPill>}>
@@ -65,12 +86,12 @@ export function CombatPanel({combat,onOpen=combat.setSelector,standalone=false})
     {standalone?<Resources character={character}/>:null}<Conditions character={character} encounter={encounter}/>
     {state.pendingDeathSave?<button className="primary" disabled={busy||!editable} onClick={()=>command({operation:'death-save'})}>Roll turn-start death save · unmodified d20</button>:null}
     {state.prepared?<div className="combat-pending"><b>Prepared: {state.prepared.name}</b><p>{state.prepared.trigger}</p><small>{state.prepared.ap} held AP required · {state.ap} remaining · expires next own turn</small></div>:null}
-    {pending?<div className="combat-pending" role="status"><b>{pending.actorName}: {pending.name}</b><p>{pending.status.replaceAll('-',' ')}{pending.reactorId?` · ${encounter.combatants.find(row=>row.id===pending.reactorId)?.name}'s reaction`:''}</p><small>{pending.ap} AP · {costsText(pending.costs)}</small>{pending.actorId===actorId&&pending.status==='awaiting-approval'?<button disabled={busy} onClick={()=>command({operation:'cancel'})}>{pending.apPaid?'Cancel resolution · keep AP spent':'Cancel unbegun action'}</button>:null}</div>:null}
-    {reaction?<div className="combat-reactions"><b>Reaction window · before the roll</b><div>{(pending.reactionChoices||[]).filter(key=>['dodge','block','parry','opportunity','prepared'].includes(key)).map(key=><button key={key} disabled={busy||!editable||state.ap<1} onClick={()=>command({operation:'react',reaction:key})}>{key} · {key==='prepared'?`${state.prepared?.ap??'Normal'} AP`:`1 AP${key!=='opportunity'?' + 10 SP':''}`}</button>)}{pending.reactionChoices?.some(key=>['counterspell','ability'].includes(key))?<><button onClick={()=>onOpen('spell')}>Reaction spell</button><button onClick={()=>onOpen('talent')}>Reaction talent</button><button onClick={()=>onOpen('technique')}>Reaction technique</button></>:null}<button disabled={busy||!editable} onClick={()=>command({operation:'pass'})}>Pass reaction</button></div></div>:null}
-    <div className="combat-action-tabs" aria-label="Action point costs">{[['0','BONUS / 0 AP'],['1','1 AP'],['2','2 AP'],['3','3 AP'],['reaction','REACTIONS / HELD AP']].map(([key,label])=><button key={key} aria-pressed={group===key} className={group===key?'active':''} onClick={()=>setGroup(key)} onDoubleClick={()=>{if(key!=='reaction'&&ownTurn&&!busy&&editable&&!pending)spend({ap:Number(key)});}}>{label}</button>)}</div>
+    {pending?<div className="combat-pending" role="status"><b>{pending.actorName}: {pending.name}</b><p>{pending.status.replaceAll('-',' ')}{pending.reactorId?` · ${encounter.combatants.find(row=>row.id===pending.reactorId)?.name}'s reaction`:''}</p><small>{pending.ap} AP · {costsText(pending.costs)}</small>{pending.actorId===actorId&&pending.status==='awaiting-approval'?<button disabled={busy||!editable} onClick={()=>command({operation:'cancel'})}>{pending.apPaid?'Cancel resolution · keep AP spent':'Cancel unbegun action'}</button>:null}</div>:null}
+    {reaction?<div className="combat-reactions"><b>Reaction window · before the roll</b><div>{(pending.reactionChoices||[]).filter(key=>['dodge','block','parry','opportunity','prepared'].includes(key)).map(key=><button key={key} disabled={busy||!editable||Boolean(basicReactionProblem(character,encounter,actorId,key))} title={basicReactionProblem(character,encounter,actorId,key)||undefined} onClick={()=>command({operation:'react',reaction:key})}>{key} · {key==='prepared'?`${state.prepared?.ap??'Normal'} AP`:`1 AP${key!=='opportunity'?' + 10 SP':''}`}</button>)}{pending.reactionChoices?.some(key=>['counterspell','ability'].includes(key))?<><button disabled={busy||!editable} onClick={()=>onOpen('spell')}>Reaction spell</button><button disabled={busy||!editable} onClick={()=>onOpen('talent')}>Reaction talent</button><button disabled={busy||!editable} onClick={()=>onOpen('technique')}>Reaction technique</button></>:null}<button disabled={busy||!editable} onClick={()=>command({operation:'pass'})}>Pass reaction</button></div></div>:null}
+    <div className="combat-action-tabs" aria-label="Action point costs">{[['0','BONUS / 0 AP'],['1','1 AP'],['2','2 AP'],['3','3 AP'],['reaction','REACTIONS / HELD AP']].map(([key,label])=><button key={key} aria-pressed={group===key} className={group===key?'active':''} onClick={()=>setGroup(key)} onDoubleClick={()=>{if(key!=='reaction'&&!busy&&editable&&!manualAPProblem(character,encounter,actorId,Number(key)))spend({ap:Number(key)});}}>{label}</button>)}</div>
     <div className="combat-source-buttons">{['spell','talent','skill','technique'].map(kind=><button key={kind} onClick={()=>onOpen(kind)} disabled={!editable||busy}>{kind==='technique'?'SKILL TECHNIQUE':kind.toUpperCase()}</button>)}</div>
     <p className="react-help">Double-click an action or AP cost to spend it. On touch or keyboard, select an action and use Spend AP.</p>
-    <div className="combat-actions">{visible.map(option=>{const reason=optionProblem(option,character,encounter,actorId,{reaction:group==='reaction'});return <CombatActionButton key={option.id} combat={combat} option={option} title={reason||`${option.ap} AP · ${costsText(option.costs)} · Double-click to spend`}><b>{option.name}</b><small>{reason||`${option.ap} AP${option.bonus?' · Bonus':''} · ${costsText(option.costs)}`}</small></CombatActionButton>;})}{!visible.length?<p>{group==='reaction'?'Reactions require a permitted trigger and owned ability.':'No applicable actions in this group.'}</p>:null}</div>
+    <div className="combat-actions">{visible.map(option=>{const reason=optionProblem(option,character,encounter,actorId,{reaction});return <CombatActionButton key={option.id} combat={combat} option={option} title={reason||`${option.ap} AP · ${costsText(option.costs)} · Double-click to spend`}><b>{option.name}</b><small>{reason||`${option.ap} AP${option.bonus?' · Bonus':''} · ${costsText(option.costs)}`}</small></CombatActionButton>;})}{!visible.length?<p>{group==='reaction'?'Reactions require a permitted trigger and owned ability.':'No applicable actions in this group.'}</p>:null}</div>
     {selected?<div className="combat-preview"><div className="combat-preview-title"><h3>{selected.name}</h3><button onClick={()=>setSelected(null)} aria-label="Close action preview">Cancel</button></div><p>{selected.ap} AP{selected.bonus?' + shared bonus use':''} · {costsText(selected.costs)}</p><p>{selected.description}</p>{selected.fields?<dl className="combat-source-facts">{['range','target','area','duration','castingTime','check','damage','healing'].filter(key=>selected.fields[key]).map(key=><React.Fragment key={key}><dt>{key}</dt><dd>{String(selected.fields[key])}</dd></React.Fragment>)}</dl>:null}
       <div className="react-form-grid"><label>Targets<select multiple value={targetIds} onChange={e=>setTargetIds([...e.target.selectedOptions].map(row=>row.value))}>{encounter.combatants.map(row=><option key={row.id} value={row.id}>{row.name}</option>)}</select></label><label>Declared approach / target conditions<textarea value={note} maxLength={1000} onChange={e=>setNote(e.target.value)} placeholder="Range, movement, source options or effect…"/></label>
       {selected.key==='shove'?<label>Shove outcome<select value={choice} onChange={e=>setChoice(e.target.value)}><option value="">Choose before rolling</option><option value="push">Push up to 2 m</option><option value="prone">Knock prone</option></select></label>:null}

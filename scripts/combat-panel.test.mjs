@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {executeAction} from '../functions/handler.mjs';
-import {tierBonus,spellAP,rollD20,checkResult,attackResult,counterspellResult,feedback,deathSave,changeCombatHP,mixedDamage,combatOptions,skillCheck,combatActive,currentCombatant} from '../src/state/combatRules.mjs';
+import {tierBonus,spellAP,rollD20,checkResult,attackResult,counterspellResult,feedback,deathSave,changeCombatHP,mixedDamage,combatOptions,skillCheck,combatActive,currentCombatant,activeReactionWindow,basicReactionProblem,combatActionScope,manualAPProblem,optionProblem} from '../src/state/combatRules.mjs';
 import compendium from '../data/compendium.js';
 
 const sheet=(id,ownerUid,patch={})=>({id,ownerUid,sourceCharacterId:id,sharedCampaignId:'c',name:id,klass:'Warrior',hp:[100,100],sp:[100,100],mp:[100,100],characteristics:{agility:20,strength:40,wisdom:20},skills:[{name:'Athletics',rank:3},{name:'Dodging',rank:3}],inventory:[],...patch});
@@ -204,7 +204,7 @@ test('direct AP spending enforces ownership, turn, whole costs, shared bonus and
   const h=database();await h.setup();const actor=currentCombatant(h.encounter()),waiting=h.encounter().combatants.find(row=>row.id!==actor.id),uid=actor.characterId==='a'?'alice':'bob',other=uid==='alice'?'bob':'alice';
   assert.match((await h.command(other,actor.id,'spend-ap',{ap:1})).error,/control/);
   assert.match((await h.command(other,waiting.id,'spend-ap',{ap:1})).error,/own turn/);
-  for(const ap of [-1,.5,4])assert.equal((await h.command(uid,actor.id,'spend-ap',{ap})).ok,false);
+  for(const ap of [-1,.5,4,null,'1',false,''])assert.equal((await h.command(uid,actor.id,'spend-ap',{ap})).ok,false);
   assert.equal((await h.command(uid,actor.id,'spend-ap',{ap:0})).ok,true);assert.equal(h.encounter().combat.participants[actor.id].bonus,false);
   assert.match((await h.command(uid,actor.id,'spend-ap',{optionId:'basic:command'})).error,/bonus/i);
   await h.command(uid,actor.id,'end-turn');assert.match((await h.command(uid,actor.id,'spend-ap',{ap:1})).error,/completed/);
@@ -248,4 +248,33 @@ test('creature AP receipts keep source identities in the private GM workspace',a
   const privateReceipt=h.store.get('campaigns/c/systems/gmWorkspace').combatState.apSpends.creature[0];assert.equal(privateReceipt.optionId,'basic:dash');
   assert.equal((await h.command('gm','creature','declare',{optionId:'basic:dash',spendId:privateReceipt.id})).ok,true);
   assert.equal((await h.command('gm','creature','approve',{approval:{checkType:'none',feasible:true}})).ok,true);assert.equal(h.encounter().combat.participants.creature.ap,1);
+});
+
+test('dashboard AP controls follow turn state, shared bonus, restrictions and pending actions',()=>{
+  const character=sheet('a','alice');
+  const encounter={status:'active',combatId:'fight',turnIndex:0,combatants:[{id:'a'},{id:'b'}],combat:{participants:{a:{ap:1,bonus:false,turns:1},b:{ap:3,bonus:true,turns:1}}}};
+  assert.equal(manualAPProblem(character,encounter,'a',1),'');
+  assert.match(manualAPProblem(character,encounter,'a',2),/Not enough AP/);
+  assert.match(manualAPProblem(character,encounter,'a',0),/bonus/);
+  assert.match(manualAPProblem(character,encounter,'b',1),/own turn/);
+  assert.match(manualAPProblem(character,encounter,'a',null),/whole AP/);
+  assert.match(manualAPProblem({...character,hp:[0,100]},encounter,'a',1),/Downed/);
+  const before=combatActionScope(encounter,'a');
+  encounter.combat.participants.a.turnComplete=true;
+  assert.notEqual(combatActionScope(encounter,'a'),before);
+  assert.match(manualAPProblem(character,encounter,'a',1),/own turn/);
+});
+test('reaction controls require the assigned open window and sufficient held resources',()=>{
+  const character=sheet('a','alice');
+  const encounter={status:'active',turnIndex:0,combatants:[{id:'b'},{id:'a'}],combat:{participants:{a:{ap:1,bonus:true,turns:1}},pending:{id:'p',reactionWindow:true,reactorId:'a',reactionChoices:['dodge','block','prepared']}}};
+  assert.equal(basicReactionProblem(character,encounter,'a','dodge'),'');
+  assert.match(basicReactionProblem({...character,sp:[5,100]},encounter,'a','dodge'),/Not enough SP/);
+  assert.match(basicReactionProblem(character,encounter,'a','block'),/shield/);
+  assert.match(basicReactionProblem(character,encounter,'b','dodge'),/window/);
+  assert.match(basicReactionProblem(character,encounter,'a','prepared'),/prepared/);
+  const option={id:'talent:test',ap:2,costs:{},reaction:true};
+  assert.equal(optionProblem(option,character,encounter,'a',{reaction:true}),'');
+  encounter.combat.pending.reaction={actorId:'a'};
+  assert.equal(activeReactionWindow(encounter,'a'),null);
+  assert.match(optionProblem(option,character,encounter,'a',{reaction:true}),/window/);
 });

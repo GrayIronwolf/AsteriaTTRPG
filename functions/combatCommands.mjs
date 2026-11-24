@@ -490,7 +490,7 @@ export function createCombatCommands(context) {
         const option=input.optionId?findOption(actorId,input.optionId):null;
         let ap,bonus;
         if(option){const problem=optionProblem(option,character,encounter,actorId);if(problem)throw new Error(problem);ap=option.ap;bonus=Boolean(option.bonus);}
-        else{ap=bounded(input.ap,0,3);bonus=ap===0;}
+        else{ap=input.ap;bonus=ap===0;}
         if(!Number.isInteger(ap)||ap<0||ap>3)throw new Error('Choose a whole AP cost from 0 to 3.');
         if(s.ap<ap)throw new Error('Not enough AP.');
         if(bonus&&!s.bonus)throw new Error('The shared bonus action has already been used.');
