@@ -24,6 +24,7 @@ on:
       - 'src/state/gmPlayerOperationsModel.mjs'
       - 'scripts/gm-player-operations.test.mjs'
       - 'scripts/gm-player-manager-phase11-12.test.mjs'
+      - 'docs/gm-player-manager-phases11-12-acceptance-2026-11-24.md'
       - 'src/state/gmPlayerManagerModel.mjs'
       - 'src/state/gmCampaignRosterModel.mjs'
       - 'src/styles/gm-player-manager.css'
