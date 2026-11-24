@@ -7,7 +7,7 @@ import { resolveRosterSelection } from '../state/dashboardNavigation.mjs';
 import {CanvasWorkspace,CombatCommandPanel} from './combat/CombatCommandCentre.jsx';
 import {
   GMQuickRequests,GMQuickPreparedEncounters,GMQuickNotes,
-  GMQuickCalendarWeather,GMQuickSession,GMQuickReference
+  GMQuickCalendarWeather,GMQuickSession,GMQuickReference,GMQuickPlayerManager
 } from './GMDashboardQuickPanels.jsx';
 import { GMCombatOverview, GMExplorationOverview, GMQuestTracker, GMInventoryOverview } from './DashboardFocusPanels.jsx';
 import { GMToolkitHub } from './GMToolkitHub.jsx';
@@ -803,6 +803,9 @@ export function GMDashboard({ campaignId }) {
       case 'playerDisplayQuick':return <GMQuickReference title="Player Display"
         description="Manage the existing live presentation screen."
         target="presentation" onNavigate={setTab}/>;
+      case 'playerManagerQuick':return <GMQuickPlayerManager
+        campaign={live.campaign} characters={live.characters} members={live.members}
+        rosterError={live.memberRosterError} onNavigate={setTab}/>;
       case 'restRequests':return <RestRequestsPanel campaignId={campaignId} characters={live.characters} editable={live.session?.editable}/>;
       case 'encounter':return <Panel title="Combat Command Centre"><p className="react-help">Encounters, initiative, turns and prepared combat now live in the dedicated Combat menu.</p><button type="button" onClick={()=>setTab('combat')}>Open Combat Command Centre</button></Panel>;
       case 'xp':return <XPDistribution campaignId={campaignId} characters={live.characters} events={live.events}/>;
