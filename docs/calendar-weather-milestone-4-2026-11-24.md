@@ -45,3 +45,10 @@ Target branch: `Website-Build-Test`. The update extends existing React/Vite dash
 - A separate dice-workspace regression was repaired by rendering saved presets using only the dice expression's allowed configuration fields. The strict validator still rejects extraneous preset metadata, and Phase 4 regression coverage was added.
 - The React/Vite bundle compilation workflow has committed the synchronized tracked assets to Website-Build-Test. The final Firebase and website workflow is required to pass against this updated branch state before release sign-off.
 - This verification does not merge into main or deploy Firebase production.
+
+## Combined branch verification — dice render and physical tower fixes
+
+- Repaired the dice preset display to pass only validated roll fields to `diceExpression`; added regression coverage.
+- Addressed a sporadic real-physics tower face mismatch with up to three additional visual attempts of the same server-confirmed result. No extra server roll is permitted, and the final face/exit verification remains strict.
+- React/Vite compilation is triggered on every dice workspace or dice-engine source change, independently of slow Chromium physics acceptance tests.
+- Generated website artifacts are synchronized on `Website-Build-Test`; the full website checks must pass against the combined commit before final approval. No merge to `main` or Firebase production deployment is requested.
