@@ -1,0 +1,23 @@
+[
+  {
+    "origin": [
+      "https://asteriattrpg.com"
+    ],
+    "method": [
+      "GET",
+      "HEAD"
+    ],
+    "responseHeader": [
+      "Content-Type",
+      "Authorization",
+      "Content-Length",
+      "Range",
+      "Content-Range",
+      "Accept-Ranges",
+      "X-Firebase-AppCheck",
+      "X-Firebase-Storage-Version",
+      "X-Goog-Upload-Protocol"
+    ],
+    "maxAgeSeconds": 3600
+  }
+]
