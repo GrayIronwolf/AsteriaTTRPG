@@ -3,7 +3,7 @@ import { activeConditions } from './conditionModel.mjs';
 import { applyResourceChanges, parseResourceCosts, resourceSnapshot, writeResource } from './resourceEngine.mjs';
 import { resourcePair } from './resourceValues.mjs';
 import { buildTalentCatalog, ownedTalents, talentMeta } from './talentModel.mjs';
-import { talentRules } from './talentMechanics.mjs';
+import { talentRules, talentUsageState } from './talentMechanics.mjs';
 import { characterClasses } from './characterClasses.mjs';
 import { skillRankNumber, slug } from './liveWorkspaceModel.mjs';
 
@@ -174,6 +174,7 @@ export function ownedSpellCosts(record,{combat=false}={}) {
   return parseResourceCosts(raw,'mp',true);
 }
 export function spellPaymentProblem(character,spell) {
+  const restriction=combatRestriction(character);if(restriction)return restriction;
   if(spell.costProblem)return spell.costProblem;
   try{applyResourceChanges(character,{costs:spell.costs});}catch(error){return error.message;}
   return '';
@@ -181,6 +182,7 @@ export function spellPaymentProblem(character,spell) {
 export function combatOptions(character,catalog=[]) {
   const result=DEFAULT_COMBAT_ACTIONS.map(row=>({...row,checks:manoeuvres[row.key]?.join(' vs ')||'None / GM-defined task'}));
   const talents=ownedTalents(character,buildTalentCatalog(character,catalog));
+  const wovenSpells=()=>ownedSpellRecords(character).map(owned=>describeOwnedSpell(owned,catalog));
   for(const talent of talents) {
     const rules=talentRules(talent,talent.rank);
     if(!rules.activation) continue;
@@ -190,7 +192,18 @@ export function combatOptions(character,catalog=[]) {
       const bonus=/bonus action/i.test(String(talentMeta(talent,'actionType')||''));
       const reaction=/reaction/i.test(String(talentMeta(talent,'actionType')||talent.type||''));
       const ap=explicit!==undefined?Number(explicit):bonus?0:/ultimate/i.test(String(talent.type))?3:2;
-      result.push({id:`talent:${talent.id}${choice?`:${choice.id}`:''}`,kind:'talent',sourceId:talent.id,name:`${talent.name} · Rank ${talent.rank}${choice?` · ${choice.label}`:''}`,rank:talent.rank,ap,bonus,reaction,costs:choice?.costs||rules.costs,choice:choice?.id||'',blocked:rules.blocked,description:choice?.description||rules.effects,talent,rules});
+      const option={id:`talent:${talent.id}${choice?`:${choice.id}`:''}`,kind:'talent',sourceId:talent.id,name:`${talent.name} · Rank ${talent.rank}${choice?` · ${choice.label}`:''}`,rank:talent.rank,ap,bonus,reaction,costs:choice?.costs||rules.costs,choice:choice?.id||'',blocked:rules.blocked,description:choice?.description||rules.effects,talent,rules};
+      if(!rules.needsSpell)result.push(option);
+      else{
+        const spells=wovenSpells();
+        if(!spells.length)result.push({...option,blocked:option.blocked||'Choose a known spell to weave.'});
+        for(const spell of spells){
+          let spellCosts={},blocked=option.blocked;
+          try{spellCosts=ownedSpellCosts(spell,{combat:true});}catch(error){blocked=blocked||error.message;}
+          const costs={...option.costs};for(const [key,value] of Object.entries(spellCosts))costs[key]=(costs[key]||0)+value;
+          result.push({...option,id:`${option.id}:${spell.key}`,name:`${option.name} · ${spell.name}${spell.rank?` (${spell.rank})`:''}`,costs,blocked,wovenSpellKey:spell.key,spellCosts});
+        }
+      }
     }
   }
   for(const owned of ownedSpellRecords(character)) {
@@ -216,7 +229,7 @@ export function combatOptions(character,catalog=[]) {
   }
   return result;
 }
-export function optionProblem(option,character,encounter,actorId,{reaction=false,prepaid=null}={}) {
+export function optionProblem(option,character,encounter,actorId,{reaction=false,prepaid=null,sessionId}={}) {
   if(option.blocked)return option.blocked;
   const restriction=combatRestriction(character,{encounter});if(restriction)return restriction;
   if(encounter?.status!=='active')return 'Combat is not active.';
@@ -234,7 +247,10 @@ export function optionProblem(option,character,encounter,actorId,{reaction=false
   if(!reaction&&option.ap>state.ap+(prepaid?.ap||0))return 'Not enough held AP.';
   if(option.bonus&&!state.bonus&&!prepaid?.bonus)return 'Bonus action already used.';
   if(state.pendingDeathSave)return 'Resolve the turn-start death save.';
-  try{applyResourceChanges(character,{costs:option.costs});}catch(error){return error.message;}
+  try{
+    if(option.kind==='talent'&&option.talent&&option.rules)talentUsageState(character,option.talent,option.rules,{encounter,sessionId,preview:true});
+    applyResourceChanges(character,{costs:option.costs,keepAlive:option.kind==='talent'});
+  }catch(error){return error.message;}
   return '';
 }
 export function wieldedItems(character) {

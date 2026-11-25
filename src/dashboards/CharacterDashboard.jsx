@@ -138,7 +138,7 @@ function CharacterDashboardContent({campaignId,characterId,live}) {
   const uid = firebaseService.currentUser()?.uid;
   const isOwner = window.AsteriaCharacterAccess.owns(character, uid);
   const editable = Boolean(campaignId && isOwner && live.session?.editable);
-  const combat=useCombatPanel(campaignId,character||{id:characterId},live.encounter,editable && live.online && !live.error);
+  const combat=useCombatPanel(campaignId,character||{id:characterId},live.encounter,editable && live.online && !live.error,'',live.session?.id);
   const gmReturn = gmReturnContext(live.campaign, character, uid, window, live.membership);
   useEffect(()=>{
     setAcknowledged(new Set());
@@ -204,11 +204,11 @@ function CharacterDashboardContent({campaignId,characterId,live}) {
     {campaignId?<PlayerRecordingNotice key={campaignId} campaignId={campaignId}/>:null}
     <DashboardNavigation role="player" storageScope={characterId+":"+uid} tabs={tabs} active={activeTab} onChange={navigate} ariaLabel="Character Dashboard menu" />
     <CombatDashboardLayout combat={combat}>
-    {activeTab === 'dashboard' ? <><PlayerDashboardOverview combat={combat} isGM={window.AsteriaCharacterAccess.isGM(live.campaign,uid,live.membership)} sessionEditable={live.session?.editable} clock={{encounter:live.encounter,now:live.clock}} campaignId={campaignId} campaign={live.campaign || {}} character={character} characters={live.characters} partyWorkspace={live.partyWorkspace} editable={editable} canEditLayout={isOwner} onNavigate={navigate} /></> : null}
+    {activeTab === 'dashboard' ? <><PlayerDashboardOverview combat={combat} isGM={window.AsteriaCharacterAccess.isGM(live.campaign,uid,live.membership)} sessionEditable={live.session?.editable} clock={{encounter:live.encounter,now:live.clock,sessionId:live.session?.id}} abilityEditable={editable && live.online && !live.error} campaignId={campaignId} campaign={live.campaign || {}} character={character} characters={live.characters} partyWorkspace={live.partyWorkspace} editable={editable} canEditLayout={isOwner} onNavigate={navigate} /></> : null}
     {activeTab === 'character' ? <CharacterTab campaignId={campaignId} character={character} editable={editable} /> : null}
-    {activeTab === 'talents' ? <TalentsTab campaignId={campaignId} character={character} editable={editable} characters={live.characters} encounter={live.encounter} /> : null}
+    {activeTab === 'talents' ? <TalentsTab campaignId={campaignId} character={character} editable={editable && live.online && !live.error} characters={live.characters} encounter={live.encounter} combat={combat} clock={{encounter:live.encounter,now:live.clock,sessionId:live.session?.id}} /> : null}
     {activeTab === 'skills' ? <SkillsTab clock={{encounter:live.encounter,now:live.clock}} campaignId={campaignId} character={character} editable={editable} /> : null}
-    {activeTab === 'spells' ? <SpellsTab campaignId={campaignId} character={character} editable={editable} /> : null}
+    {activeTab === 'spells' ? <SpellsTab campaignId={campaignId} character={character} editable={editable && live.online && !live.error} combat={combat} /> : null}
     {activeTab === 'crafting' && campaignId ? <div className="react-crafting-workspace">
       <PlayerCraftingRecipes campaignId={campaignId} character={character} editable={editable}/>
       <PlayerEnhancementWorkshop campaignId={campaignId} character={character} editable={editable}/>

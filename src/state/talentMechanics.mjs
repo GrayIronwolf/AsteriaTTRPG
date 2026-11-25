@@ -77,6 +77,22 @@ export function talentRules(talent,rank=1) {
     selfAC:talent.id==='bloodhunter:blood-shield'?[2,2,3,4,5][rank-1]:talent.id==='cleric:sacred-aegis'?rank+1:0,targetChoice:talent.id==='cleric:sacred-aegis'};
 }
 
+export function talentUsageState(character,talent,rules,clock={}) {
+  const now=clock.now ?? Date.now(), encounter=clock.encounter?.status==='active'?clock.encounter:null,combatId=encounter?(encounter.combatId || 'legacy-combat'):'';
+  const previous=character.talentUsage?.[talent.id], scope=rules.reset==='combat'?combatId:rules.reset==='session'?String(clock.sessionId || 'current'):rules.reset;
+  if((rules.reset==='combat' || ['paladin:paladin-s-zeal','paladin:zeal'].includes(talent.id)) && !combatId) throw new Error('Start an encounter before using this talent.');
+  const count=previous?.scope===scope?previous.count || 0:0;
+  if(rules.uses && count>=rules.uses && !(rules.reset==='session'&&clock.preview&&!clock.sessionId)) throw new Error(`No uses remaining until the next ${rules.reset.replaceAll('-',' ')}.`);
+  if(previous?.encounterId && previous.encounterId===combatId && Number(encounter?.round)<previous.readyRound) throw new Error(`Available in round ${previous.readyRound}.`);
+  if((!previous?.encounterId || (previous.encounterId!==combatId&&rules.cooldownMs>0)) && now<Number(previous?.readyAt || 0)) throw new Error('This talent is cooling down.');
+  return {now,encounter,combatId,scope,count};
+}
+
+export function talentActivationProblem(character,talent,selection={},clock={}) {
+  try {useLearnedTalent(character,talent,selection,{...clock,preview:true,deferEffects:true});return '';}
+  catch(error){return error.message||String(error);}
+}
+
 export function useLearnedTalent(character,talent,selection={},clock={}) {
   const rank=talentRank(character,talent,clock.catalog || [talent]);
   if(!rank) throw new Error('Learn this talent before using it.');
@@ -91,13 +107,7 @@ export function useLearnedTalent(character,talent,selection={},clock={}) {
     if(!clock.spellCosts) throw new Error('Choose a known spell to weave.');
     for(const [key,value] of Object.entries(clock.spellCosts)) costs[key]=(costs[key] || 0)+value;
   }
-  const now=clock.now || Date.now(), encounter=clock.encounter?.status==='active'?clock.encounter:null,combatId=encounter?(encounter.combatId || 'legacy-combat'):'';
-  const previous=character.talentUsage?.[talent.id], scope=rules.reset==='combat'?combatId:rules.reset==='session'?String(clock.sessionId || 'current'):rules.reset;
-  if((rules.reset==='combat' || ['paladin:paladin-s-zeal','paladin:zeal'].includes(talent.id)) && !combatId) throw new Error('Start an encounter before using this talent.');
-  const count=previous?.scope===scope?previous.count || 0:0;
-  if(rules.uses && count>=rules.uses) throw new Error(`No uses remaining until the next ${rules.reset.replaceAll('-',' ')}.`);
-  if(previous?.encounterId && previous.encounterId===combatId && Number(encounter?.round)<previous.readyRound) throw new Error(`Available in round ${previous.readyRound}.`);
-  if(!previous?.encounterId && now<Number(previous?.readyAt || 0)) throw new Error('This talent is cooling down.');
+  const {now,encounter,combatId,scope,count}=talentUsageState(character,talent,rules,clock);
   if(choice?.id==='holy-restoration') restored.hp=2*Number(character.level || 0)+Math.min(5,Math.max(0,Math.floor(effectiveCharacteristicValue(character,'charisma',clock)/20)));
   const next=applyResourceChanges(character,{costs,restore:clock.deferEffects?{}:{...restored,...(bpGain?{bp:bpGain}:{})},keepAlive:true});
   next.talentUsage={...next.talentUsage,[talent.id]:{count:count+1,scope,reset:rules.reset,encounterId:combatId,readyRound:encounter?Number(encounter.round || 1)+Math.max(rules.cooldownRounds,Math.ceil(rules.cooldownMs/6000)):0,readyAt:now+Math.max(rules.cooldownMs,rules.cooldownRounds*6000),usedAt:now}};

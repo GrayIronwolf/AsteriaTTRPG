@@ -8,7 +8,7 @@ import { activeReactionWindow, apState, basicReactionProblem, combatActionScope,
 import '../styles/combat.css';
 
 const costsText=costs=>Object.entries(costs||{}).filter(([,n])=>n>0).map(([key,n])=>`${n} ${key.toUpperCase()}`).join(' · ')||'No resource cost';
-export function useCombatPanel(campaignId,character,encounter={},editable=true,actorOverride='') {
+export function useCombatPanel(campaignId,character,encounter={},editable=true,actorOverride='',sessionId=undefined) {
   const actorId=actorOverride||participantFor(encounter,character.id)?.id;
   const active=actorOverride?encounter.status==='active'&&encounter.combat?.version===1&&encounter.combatants?.some(row=>row.id===actorOverride):combatActive(encounter,character.id);
   const [selector,setSelector]=useState(''),[selected,setSelected]=useState(null),[selectedSpendId,setSelectedSpendId]=useState('');
@@ -34,10 +34,10 @@ export function useCombatPanel(campaignId,character,encounter={},editable=true,a
   };
   const spend=async option=>{
     if(!option)return {ok:false};
-    const problem=option.id?optionProblem(option,character,encounter,actorId):manualAPProblem(character,encounter,actorId,option.ap);
+    const problem=option.id?optionProblem(option,character,encounter,actorId,{sessionId}):manualAPProblem(character,encounter,actorId,option.ap);
     if(problem||encounter.combat?.pending){action.setMessage(problem||'Resolve the pending action before continuing.');return {ok:false,error:problem};}
     const result=await command({operation:'spend-ap',...(option.id?{optionId:option.id}:{ap:option.ap})});if(result?.ok){setSelected(null);setSelectedSpendId('');setSelector('');}return result;};
-  return {spend,selectedSpendId,active,actorId,character,encounter,options,selector,setSelector,selected,setSelected,select,command,...action,busy:action.busy||awaiting,message:awaiting?'Waiting for live combat sync…':action.message,editable};
+  return {spend,selectedSpendId,active,actorId,character,encounter,sessionId,options,selector,setSelector,selected,setSelected,select,command,...action,busy:action.busy||awaiting,message:awaiting?'Waiting for live combat sync…':action.message,editable};
 }
 
 // Delay pointer preview just long enough for a double-click to spend once.
@@ -47,7 +47,7 @@ export function CombatActionButton({combat,option,children,className='',disabled
   const scope=combatActionScope(combat.encounter,combat.actorId);
   useEffect(()=>()=>window.clearTimeout(preview.current),[scope,combat.editable,combat.busy,option.id]);
   const reaction=Boolean(activeReactionWindow(combat.encounter,combat.actorId));
-  const blocked=optionProblem(option,combat.character,combat.encounter,combat.actorId,{reaction});
+  const blocked=optionProblem(option,combat.character,combat.encounter,combat.actorId,{reaction,sessionId:combat.sessionId});
   return <button type="button" className={className} disabled={disabled||combat.busy||!combat.editable||Boolean(blocked)||Boolean(combat.encounter.combat?.pending&&!reaction)} title={blocked||title||'Double-click to spend AP; select to review'} onClick={event=>{
     window.clearTimeout(preview.current);
     if(event.detail===0)combat.select(option);
@@ -75,7 +75,7 @@ export function CombatPanel({combat,onOpen=combat.setSelector,standalone=false})
   const state=apState(encounter,actorId),current=currentCombatant(encounter),ownTurn=current?.id===actorId&&!state.turnComplete,pending=encounter.combat?.pending;
   const reaction=Boolean(activeReactionWindow(encounter,actorId));
   const prepaid=(state.apSpends||[]).find(row=>row.id===selectedSpendId&&!row.linked);
-  const blocked=selected?optionProblem(selected,character,encounter,actorId,{reaction,prepaid}):'';
+  const blocked=selected?optionProblem(selected,character,encounter,actorId,{reaction,prepaid,sessionId:combat.sessionId}):'';
   const visible=options.filter(row=>(standalone||row.kind==='basic'||['item','scroll'].includes(row.kind))&&(group==='reaction'?row.reaction:group==='0'?row.ap===0:row.ap===Number(group)));
   const commit=async()=>{if(!selected||!editable||busy||blocked||(pending&&!reaction))return;const result=await command({operation:reaction?'react-ability':prepare?'prepare':'declare',optionId:selected.id,targetIds,note,trigger,response,choice,itemId,slot,swapItemId,...(prepaid?{spendId:prepaid.id}:{})});if(result?.ok){setSelected(null);setPrepare(false);}};
   const timer=encounter.turnTimer||encounter.timer;
@@ -91,7 +91,7 @@ export function CombatPanel({combat,onOpen=combat.setSelector,standalone=false})
     <div className="combat-action-tabs" aria-label="Action point costs">{[['0','BONUS / 0 AP'],['1','1 AP'],['2','2 AP'],['3','3 AP'],['reaction','REACTIONS / HELD AP']].map(([key,label])=><button key={key} aria-pressed={group===key} className={group===key?'active':''} onClick={()=>setGroup(key)} onDoubleClick={()=>{if(key!=='reaction'&&!busy&&editable&&!manualAPProblem(character,encounter,actorId,Number(key)))spend({ap:Number(key)});}}>{label}</button>)}</div>
     <div className="combat-source-buttons">{['spell','talent','skill','technique'].map(kind=><button key={kind} onClick={()=>onOpen(kind)} disabled={!editable||busy}>{kind==='technique'?'SKILL TECHNIQUE':kind.toUpperCase()}</button>)}</div>
     <p className="react-help">Double-click an action or AP cost to spend it. On touch or keyboard, select an action and use Spend AP.</p>
-    <div className="combat-actions">{visible.map(option=>{const reason=optionProblem(option,character,encounter,actorId,{reaction});return <CombatActionButton key={option.id} combat={combat} option={option} title={reason||`${option.ap} AP · ${costsText(option.costs)} · Double-click to spend`}><b>{option.name}</b><small>{reason||`${option.ap} AP${option.bonus?' · Bonus':''} · ${costsText(option.costs)}`}</small></CombatActionButton>;})}{!visible.length?<p>{group==='reaction'?'Reactions require a permitted trigger and owned ability.':'No applicable actions in this group.'}</p>:null}</div>
+    <div className="combat-actions">{visible.map(option=>{const reason=optionProblem(option,character,encounter,actorId,{reaction,sessionId:combat.sessionId});return <CombatActionButton key={option.id} combat={combat} option={option} title={reason||`${option.ap} AP · ${costsText(option.costs)} · Double-click to spend`}><b>{option.name}</b><small>{reason||`${option.ap} AP${option.bonus?' · Bonus':''} · ${costsText(option.costs)}`}</small></CombatActionButton>;})}{!visible.length?<p>{group==='reaction'?'Reactions require a permitted trigger and owned ability.':'No applicable actions in this group.'}</p>:null}</div>
     {selected?<div className="combat-preview"><div className="combat-preview-title"><h3>{selected.name}</h3><button onClick={()=>setSelected(null)} aria-label="Close action preview">Cancel</button></div><p>{selected.ap} AP{selected.bonus?' + shared bonus use':''} · {costsText(selected.costs)}</p><p>{selected.description}</p>{selected.fields?<dl className="combat-source-facts">{['range','target','area','duration','castingTime','check','damage','healing'].filter(key=>selected.fields[key]).map(key=><React.Fragment key={key}><dt>{key}</dt><dd>{String(selected.fields[key])}</dd></React.Fragment>)}</dl>:null}
       <div className="react-form-grid"><label>Targets<select multiple value={targetIds} onChange={e=>setTargetIds([...e.target.selectedOptions].map(row=>row.value))}>{encounter.combatants.map(row=><option key={row.id} value={row.id}>{row.name}</option>)}</select></label><label>Declared approach / target conditions<textarea value={note} maxLength={1000} onChange={e=>setNote(e.target.value)} placeholder="Range, movement, source options or effect…"/></label>
       {selected.key==='shove'?<label>Shove outcome<select value={choice} onChange={e=>setChoice(e.target.value)}><option value="">Choose before rolling</option><option value="push">Push up to 2 m</option><option value="prone">Knock prone</option></select></label>:null}

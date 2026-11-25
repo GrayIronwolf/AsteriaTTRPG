@@ -278,3 +278,17 @@ test('reaction controls require the assigned open window and sufficient held res
   assert.equal(activeReactionWindow(encounter,'a'),null);
   assert.match(optionProblem(option,character,encounter,'a',{reaction:true}),/window/);
 });
+
+test('learned spell rank selection rejects ambiguity and resolves only owned costs',async()=>{
+  const {resolveOwnedSpell,ownedSpellCosts,describeOwnedSpell,spellPaymentProblem}=await import('../src/state/combatRules.mjs');
+  const spells=[{name:'Flare',rank:'Weak',cost:'3 MP'},{name:'Flare',rank:'Minor',cost:'9 MP'},{name:'Unknown cost',rank:'Weak'}];
+  const c={spells,mp:[5,10],hp:[10,10]};
+  assert.throws(()=>resolveOwnedSpell(c,{name:'Flare'}),/exact learned spell rank/);
+  const weak=resolveOwnedSpell(c,{key:describeOwnedSpell(spells[0]).key});
+  const minor=resolveOwnedSpell(c,{name:'Flare',rank:'Minor'});
+  assert.deepEqual(ownedSpellCosts(weak),{mp:3});
+  assert.deepEqual(ownedSpellCosts(minor),{mp:9});
+  assert.match(spellPaymentProblem(c,{costs:ownedSpellCosts(minor)}),/MP/);
+  assert.throws(()=>ownedSpellCosts(resolveOwnedSpell(c,{name:'Unknown cost'})),/missing/);
+  assert.throws(()=>resolveOwnedSpell(c,{name:'Other'}),/not on the character sheet/);
+});

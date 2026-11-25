@@ -3,7 +3,7 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {buildTalentCatalog,characterClasses,ownedTalents,talentRank,saveTalentRank,reconcileTalentEffects,resetTalentRest,talentEffectActive,prepareForgeTalents,rankDefined} from '../src/state/talentModel.mjs';
-import {talentRules,useLearnedTalent} from '../src/state/talentMechanics.mjs';
+import {talentRules,useLearnedTalent,talentActivationProblem} from '../src/state/talentMechanics.mjs';
 import {applyCharacteristicPoints,talentRankCost} from '../src/state/liveWorkspaceModel.mjs';
 import {applyRest} from '../src/state/specialDamageModel.mjs';
 import {calculateCharacterAC} from '../src/systems/armour/armourSystem.mjs';
@@ -136,4 +136,13 @@ test('disks rotate and conceal tiers independently, retain rank selection, and s
     if(view)await Renderer.act(async()=>view.unmount());
     await server.close();globalThis.ResizeObserver=originalObserver;
   }
+});
+
+test('talent activation preview shares the authoritative cooldown and resource checks without mutating the sheet',()=>{
+  const t=talent('bloodhunter:blood-shield'),c=sheet(t.id,2),before=JSON.stringify(c);
+  assert.equal(talentActivationProblem(c,t,{},clock),'');
+  assert.equal(JSON.stringify(c),before);
+  const used=useLearnedTalent(c,t,{},clock);
+  assert.match(talentActivationProblem(used.character,t,{},clock),/round/);
+  assert.match(talentActivationProblem({...c,hp:[1,100]},t,{},clock),/1 HP/);
 });
