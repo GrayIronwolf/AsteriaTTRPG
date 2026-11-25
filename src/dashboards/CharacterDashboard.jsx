@@ -160,7 +160,7 @@ function CharacterDashboardContent({campaignId,characterId,live}) {
         .catch(() => {});
     }
   }, [rawCharacter, isOwner, campaignId]);
-  const coreSyncError=useCharacterSystemsSync(campaignId,isOwner&&rawCharacter?{[characterId]:rawCharacter}:{},live.encounter,live.session?.editable);
+  const coreSyncError=useCharacterSystemsSync(campaignId,isOwner&&rawCharacter?{[characterId]:rawCharacter}:{},live.encounter,live.session?.editable,live.online&&!live.error);
   const xpEvent = xpNoticeEvent(live.events.filter(event => !event.targetCharacterId || event.targetCharacterId === characterId), acknowledged);
   const questEvent = questNoticeEvent(live.events.filter(event => !event.targetCharacterId || event.targetCharacterId === characterId), acknowledged);
   const lootEvent = pendingLootEvent(live.events.filter(event => (!event.targetCharacterId || event.targetCharacterId === characterId) && !processedLoot.current.has(event.id)));

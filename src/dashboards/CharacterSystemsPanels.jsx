@@ -9,18 +9,19 @@ import { resourceDefinitions, storedResource } from '../state/resourceEngine.mjs
 import { resourcePair } from '../state/resourceValues.mjs';
 
 const effectText=effect=>`${effect.target}: ${effect.operation || 'ADD'} ${['ADVANTAGE','DISADVANTAGE'].includes(effect.operation)?'':effect.value}`;
-export function ConditionsPanel({campaignId,character,isGM=false,editable=false,clock={},style}) {
-  const action=useAsyncAction(),conditions=activeConditions(character,clock);
+export function ConditionsPanel({campaignId,character,isGM=false,editable=false,online=true,clock={},style}) {
+  const action=useAsyncAction(),conditions=activeConditions(character,clock),canEdit=editable&&online;
   return <Panel title="Conditions" className="react-dashboard-panel react-core-conditions react-overview-conditions" style={style} action={<StatusPill>{conditions.length} active</StatusPill>}>
+    {!online?<p role="status">Offline — condition changes are unavailable until synchronization resumes.</p>:null}
     {!conditions.length?<p className="react-quiet-state">No active conditions.</p>:conditions.map(condition=><details className="react-core-condition" key={condition.id}>
       <summary><b>{condition.name}</b><small>{conditionDurationLabel(condition,clock)}</small></summary>
       <p>{condition.description}</p><small>Source: {condition.source || 'Character sheet'}</small>
       <ul>{(condition.effects || []).map((effect,index)=><li key={effect.id || index}>{effectText(effect)}</li>)}</ul>
       <p>{condition.allowPlayerRemoval?'Owner may remove this condition.':'GM controls removal.'}</p>
-      {editable && (isGM || condition.allowPlayerRemoval)?<button disabled={action.busy} onClick={()=>action.run(()=>firebaseService.manageCondition(campaignId,character.id,{action:'remove',id:condition.id}))}>Remove {condition.name}</button>:null}
+      {canEdit && (isGM || condition.allowPlayerRemoval)?<button disabled={action.busy} onClick={()=>action.run(()=>firebaseService.manageCondition(campaignId,character.id,{action:'remove',id:condition.id}))}>Remove {condition.name}</button>:null}
     </details>)}
     <p role="status">{action.message}</p>
-    {isGM?<GMConditionEditor key={character.id} campaignId={campaignId} character={character} editable={editable}/>:null}
+    {isGM?<GMConditionEditor key={character.id} campaignId={campaignId} character={character} editable={canEdit}/>:null}
   </Panel>;
 }
 function GMConditionEditor({campaignId,character,editable}) {
@@ -56,7 +57,7 @@ export function EffectsSummary({character,clock={},style}) {
   const effects=collectCharacterEffects(character,clock).filter(effect=>effectIsActive(effect,clock) && (effect.value!==0 || ['SET','ADVANTAGE','DISADVANTAGE'].includes(effect.operation)) && !(effect.operation==='MULTIPLY'&&effect.value===1));
   const check=characterCheck(character,'skills',0,clock);
   return <Panel title="Character Effects" className="react-dashboard-panel react-core-effects" style={style}>
-    <p>Skill check modifier: {check.value>=0?'+':''}{check.value}{check.advantage?' · Advantage':check.disadvantage?' · Disadvantage':''}</p>
+    <p>Global skill effect modifier: {check.value>=0?'+':''}{check.value}{check.advantage?' · Advantage':check.disadvantage?' · Disadvantage':''}</p>
     {effects.length?<ul className="react-core-effect-list">{effects.map(effect=><li key={effect.id}><b>{effect.name}</b><span>{effectText(effect)}{effect.conditional?' · Conditional':''}</span></li>)}</ul>:<p>No mechanical modifiers are active.</p>}
   </Panel>;
 }
@@ -64,18 +65,19 @@ const recoveryText=rule=>!rule || rule.mode==='none'?'No recovery':rule.mode==='
 export function RestRules({character}) {
   return <div className="react-core-table"><table><caption>Resource recovery rules</caption><thead><tr><th>Resource</th><th>Short Rest</th><th>Long Rest</th></tr></thead><tbody>{resourceDefinitions(character).map(row=><tr key={row.id}><th>{row.name}</th><td>{recoveryText(row.recovery?.short)}</td><td>{recoveryText(row.recovery?.long)}</td></tr>)}</tbody></table>{character.talentRestBonus>0?<small>Mystic Recovery increases percentage recovery by {Math.round(character.talentRestBonus*100)}%.</small>:null}</div>;
 }
-export function RestRequestsPanel({campaignId,characters,editable}) {
+export function RestRequestsPanel({campaignId,characters,editable,online=true}) {
   const action=useAsyncAction(),pending=Object.values(characters || {}).filter(character=>character.restState?.request?.status==='pending');
   return <Panel title="Long Rest Requests" className="react-core-rest-requests" action={<StatusPill>{pending.length} pending</StatusPill>}>
-    {!pending.length?<p>No pending requests.</p>:pending.map(character=><RestRequest key={character.restState.request.id} character={character} campaignId={campaignId} editable={editable} action={action}/>)}<p role="status">{action.message}</p>
+    {!online?<p role="status">Offline — rest approval is unavailable until synchronization resumes.</p>:null}
+    {!pending.length?<p>No pending requests.</p>:pending.map(character=><RestRequest key={character.restState.request.id} character={character} campaignId={campaignId} editable={editable&&online} action={action}/>)}<p role="status">{action.message}</p>
   </Panel>;
 }
 function RestRequest({character,campaignId,editable,action}) {
   const request=character.restState.request,[note,setNote]=useState(''),[soul,setSoul]=useState(String(request.soulRecovery || 0));
   const review=status=>action.run(()=>firebaseService.reviewRest(campaignId,character.id,{id:request.id,status,note,soulRecovery:Number(soul)}));
-  return <article className="react-core-rest-request"><b>{character.name}</b><label>Review note<input value={note} onChange={event=>setNote(event.target.value)}/></label><label>Soul recovery approved<ManualNumberInput min="0" value={soul} onChange={event=>setSoul(event.target.value)}/></label><div className="react-rest-actions"><button className="primary" disabled={!editable||action.busy||soul===''} onClick={()=>review('approved')}>Approve Long Rest</button><button disabled={!editable||action.busy} onClick={()=>review('denied')}>Deny</button></div></article>;
+  return <article className="react-core-rest-request"><b>{character.name}</b><label>Review note<input value={note} onChange={event=>setNote(event.target.value)}/></label><label>Soul recovery approved<ManualNumberInput min="0" value={soul} onChange={event=>setSoul(event.target.value)}/></label><div className="react-rest-actions"><button className="primary" disabled={!editable||action.busy||!Number.isSafeInteger(Number(soul))||Number(soul)<0||soul===''} onClick={()=>review('approved')}>Approve Long Rest</button><button disabled={!editable||action.busy} onClick={()=>review('denied')}>Deny</button></div></article>;
 }
-export function ResourceRulesPanel({campaignId,character,editable}) {
+export function ResourceRulesPanel({campaignId,character,editable,online=true}) {
   const action=useAsyncAction(),[draft,setDraft]=useState(null);
   const choose=id=>{
     const rule=resourceDefinitions(character).find(row=>row.id===id);
@@ -84,8 +86,8 @@ export function ResourceRulesPanel({campaignId,character,editable}) {
   const set=(key,value)=>setDraft(previous=>({...previous,[key]:value}));
   const submit=async event=>{event.preventDefault();await action.run(()=>firebaseService.configureResource(campaignId,character.id,draft));};
   return <Panel title={`${character.name || 'Character'} Resource Rules`} className="react-core-resources">
-    <RestRules character={character}/><label>Configure resource<select value={draft?.id || ''} onChange={event=>choose(event.target.value)}><option value="">New resource…</option>{resourceDefinitions(character).map(row=><option key={row.id} value={row.id}>{row.name}</option>)}</select></label><button disabled={!editable||action.busy} onClick={()=>choose('')}>Add resource</button>
-    {draft?<form onSubmit={submit}><fieldset className="react-core-form" disabled={!editable||action.busy}>
+    <RestRules character={character}/><label>Configure resource<select value={draft?.id || ''} onChange={event=>choose(event.target.value)}><option value="">New resource…</option>{resourceDefinitions(character).map(row=><option key={row.id} value={row.id}>{row.name}</option>)}</select></label><button disabled={!editable||!online||action.busy} onClick={()=>choose('')}>Add resource</button>
+    {draft?<form onSubmit={submit}><fieldset className="react-core-form" disabled={!editable||!online||action.busy}>
       <label>Resource ID<input required pattern="[a-z][a-z0-9-]{0,39}" value={draft.id} onChange={event=>set('id',event.target.value)}/></label><label>Name<input required value={draft.name} onChange={event=>set('name',event.target.value)}/></label>
       <label>Minimum<ManualNumberInput min="0" required value={draft.minimum} onChange={event=>set('minimum',event.target.value)}/></label><label>Base maximum<ManualNumberInput min="0" required value={draft.maximum} onChange={event=>set('maximum',event.target.value)}/></label>
       {['short','long'].map(type=><div key={type}><label>{type==='short'?'Short Rest':'Long Rest'}<select value={draft.recovery?.[type]?.mode || 'none'} onChange={event=>set('recovery',{...draft.recovery,[type]:{mode:event.target.value,value:0}})}>{['none','full','amount','fraction','reduce-fraction','set'].map(mode=><option key={mode}>{mode}</option>)}</select></label><label>Recovery amount or fraction<ManualNumberInput step="any" min="0" value={draft.recovery?.[type]?.value ?? ''} onChange={event=>set('recovery',{...draft.recovery,[type]:{mode:draft.recovery?.[type]?.mode || 'none',value:event.target.value}})}/></label></div>)}

@@ -342,10 +342,10 @@ export function PlayerDashboardOverview({ campaignId, campaign, character, chara
       case 'talents':return <TalentSummary combat={combat} talents={talents} campaignId={campaignId} character={character} characters={characters} clock={clock} editable={abilityEditable} onNavigate={onNavigate}/>;
       case 'spells':return <SpellSummary combat={combat} campaignId={campaignId} character={character} spells={spells} editable={abilityEditable} busy={busy} onNavigate={onNavigate} run={run}/>;
       case 'skills':return <SkillsSummary combat={combat} skills={skills} onNavigate={onNavigate}/>;
-      case 'conditions':return <ConditionsPanel campaignId={campaignId} character={character} isGM={isGM} editable={isGM?sessionEditable:editable} clock={clock}/>;
+      case 'conditions':return <ConditionsPanel campaignId={campaignId} character={character} isGM={isGM} editable={abilityEditable} online={abilityEditable} clock={clock}/>;
       case 'effects':return <EffectsSummary character={character} clock={clock}/>;
       case 'specialDamage':return <SpecialDamagePanel character={character}/>;
-      case 'rest':return <RestRecoveryPanel campaignId={campaignId} character={character} editable={editable} busy={busy} run={run}/>;
+      case 'rest':return <RestRecoveryPanel campaignId={campaignId} character={character} editable={abilityEditable} busy={busy} run={run}/>;
       case 'currency':return <CurrencyPanel character={character} campaign={campaign} editable={editable} onCurrencyChange={(currency,amount)=>run(()=>firebaseService.updateCurrency(campaignId,character.id,currency,amount,{source:'Character Dashboard Currency'}))} className="react-overview-currency"/>;
       case 'quests':case 'journal':case 'party':return summary(id);
       case 'combatOverview':return <PlayerCombatOverview character={character} combat={combat} onNavigate={onNavigate}/>;
