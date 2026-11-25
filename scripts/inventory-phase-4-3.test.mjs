@@ -66,3 +66,19 @@ test('Phase 4.3: inventory touch actions stay on trusted Firebase commands',()=>
   assert.match(css,/@media \(hover:none\),\(pointer:coarse\)/);
   assert.match(css,/safe-area-inset-bottom/);
 });
+
+test('Milestone 4 inventory actions remain connected to trusted combat and transaction systems',()=>{
+  const workspace=read('../src/dashboards/InventoryWorkspace.jsx');
+  const player=read('../src/dashboards/PlayerDashboardOverview.jsx');
+  const server=read('../functions/commands.mjs');
+  const handler=read('../functions/handler.mjs');
+  assert.match(workspace,/useAsyncAction\(\)/);
+  assert.match(workspace,/combat\?\.active/);
+  assert.match(workspace,/quickSlotItem\(character, items, index\)/);
+  assert.match(workspace,/type:'clear-quick',index/);
+  assert.match(player,/liveQuickSlots\(character,inventoryItems\(character\)\)/);
+  assert.match(server,/unequipCharacterInventoryItem\(character,liveItemId\(item\)\)/);
+  assert.match(server,/inventoryRecoveryProblem\(item\)/);
+  assert.match(server,/quickSlotIndex\(operation.index\)/);
+  assert.match(handler,/clear-quick/);
+});
