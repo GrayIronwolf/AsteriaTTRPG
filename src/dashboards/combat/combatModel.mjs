@@ -1,4 +1,4 @@
-import {enemyProfileSnapshot} from '../../../src/state/enemyProfileModel.mjs';
+import {enemyProfileSnapshot,enemyCombatOptions} from '../../../src/state/enemyProfileModel.mjs';
 import {customEncounterCreature,encounterResourcePair,encounterSourceResources} from '../../../src/state/encounterResourceModel.mjs';
 import {gmSessionState} from './combatAccess.mjs';
 import {liveCombatTimerState} from '../../../src/state/liveCombatCommandModel.mjs';
@@ -200,10 +200,12 @@ export function validateCombatCommand(mode,actorId,input){
     !validId(input.eventId)||input.confirmation!=='trigger-event'
   ))throw Error('Choose and confirm a valid encounter event.');
   if(input.operation==='declare'&&(
-    !COMBAT_BASIC_DECLARATIONS.some(row=>row.id===input.optionId)||
+    !(COMBAT_BASIC_DECLARATIONS.some(row=>row.id===input.optionId)||
+      (mode==='gm'&&/^enemy:(attacks|spells|abilities):[A-Za-z0-9_-]{1,100}$/.test(input.optionId||'')))||
     !Array.isArray(input.targetIds)||input.targetIds.length>1||
     input.targetIds.some(id=>!validId(id))||
-    (COMBAT_BASIC_DECLARATIONS.find(row=>row.id===input.optionId)?.requiresTarget&&
+    ((COMBAT_BASIC_DECLARATIONS.find(row=>row.id===input.optionId)?.requiresTarget||
+      String(input.optionId).startsWith('enemy:attacks:'))&&
       input.targetIds.length!==1)
   ))throw Error('Choose an approved basic action and its required target.');
   if(input.operation==='spend-ap'&&(!Number.isInteger(input.ap)||input.ap<0||input.ap>3))
