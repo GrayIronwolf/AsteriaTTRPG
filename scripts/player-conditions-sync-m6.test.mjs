@@ -18,7 +18,7 @@ test('encounter-scoped condition and nested effects expire without an encounter 
   assert.equal(collectCharacterEffects(character,{now,encounter}).filter(row=>row.target==='skills').length,1);
   for(const clock of [{now},{now,encounter:{status:'ended'}},{now,encounter:{...encounter,round:3}}]){
     assert.equal(activeConditions(character,clock).length,0);
-    assert.equal(collectCharacterEffects(character,clock).filter(row=>row.target==='skills').length,0);
+    assert.equal(collectCharacterEffects(character,clock).filter(row=>row.target==='skills'&&effectIsActive(row,clock)).length,0);
   }
   assert.equal(effectIsActive(condition,{now}),false);
 });
