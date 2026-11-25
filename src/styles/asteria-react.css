@@ -4496,3 +4496,26 @@ html[data-asteria-dashboard-header='expanded'] .topbar.core-v2-topbar{
   .react-gm-dashboard:not(.asteria-canvas-workspace-mode) .react-workspace-main
     :where(.react-form-grid,.react-settings-grid){grid-template-columns:minmax(0,1fr)}
 }
+
+
+/* The older fixed site shell reserves the entire header height in main.
+   Release that space when the new dashboard fold owns header visibility. */
+html[data-asteria-dashboard-header] body .main,
+html[data-asteria-dashboard-header] body main.main,
+html[data-asteria-dashboard-header] body.workspace-active .main{
+  top:0!important;left:0!important;right:0!important;
+  width:100%!important;padding:0!important;
+  scroll-padding-top:12px;
+}
+html[data-asteria-dashboard-header] #reactDashboard,
+html[data-asteria-dashboard-header] #asteriaReactRoot{
+  width:100%!important;max-width:none!important;
+  margin-inline:0!important;box-sizing:border-box;
+}
+html[data-asteria-dashboard-header] #reactDashboard{
+  padding:clamp(3px,.45vw,8px)!important;
+}
+html[data-asteria-dashboard-header='expanded'] .asteria-dashboard-header-fold button{
+  position:fixed;top:var(--core-header-height,150px);left:50%;
+  transform:translateX(-50%);z-index:4500;
+}
