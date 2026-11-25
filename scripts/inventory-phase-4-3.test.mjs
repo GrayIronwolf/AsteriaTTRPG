@@ -61,7 +61,7 @@ test('Phase 4.3: inventory touch actions stay on trusted Firebase commands',()=>
   assert.match(file,/type:'quick',itemId:selected.id,index/);
   assert.match(file,/type:'equip',itemId:selected.id,slot/);
   assert.match(file,/aria-label=\{\`Assign/);
-  assert.match(character,/editable=\{editable\} events=\{live\.events\}/);
+  assert.match(character,/editable=\{editable\} events=\{live\.events\} partyLoot=\{live\.partyLoot\} combat=\{combat\} online=\{live\.online&&!live\.error\}/);
   assert.match(merchant,/Check inventory and merchant history before retrying/);
   assert.match(css,/@media \(hover:none\),\(pointer:coarse\)/);
   assert.match(css,/safe-area-inset-bottom/);
