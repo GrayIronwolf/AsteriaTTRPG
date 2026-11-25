@@ -537,6 +537,93 @@ async function metrics(page) {
       'Reordered party resources must persist across a reload');
     await p.screenshot({path:path.join(root,'10-gm-combat-camera-and-player-resources.png'),fullPage:true});
   });
+
+  // Milestone 1: browser viewport and canvas interaction evidence on the
+  // CURRENT source tree. The fixture never connects to production Firebase.
+  await scenario('11-player-viewport-and-low-zoom',{width:1440,height:900},async p=>{
+    await player(p);
+    const matrix=[];
+    for(const width of [320,360,390,768,1280,1920]){
+      await p.setViewportSize({width,height:900});
+      await p.waitForTimeout(180);
+      const reading=await p.getByTestId('site-player-main-canvas').evaluate(host=>{
+        const surface=host.querySelector('[data-layout-mode]');
+        return {
+          viewport:innerWidth,hostWidth:Math.round(host.getBoundingClientRect().width),
+          mode:surface?.dataset.layoutMode,
+          windows:host.querySelectorAll('[data-canvas-window]').length,
+          overflowPx:Math.max(0,document.documentElement.scrollWidth-innerWidth)
+        };
+      });
+      matrix.push(reading);
+      assert.equal(reading.windows,15,'Missing Player windows at '+width+'px');
+      assert.ok(reading.hostWidth>0,'Player canvas has zero width at '+width+'px');
+      if(reading.hostWidth<700)assert.equal(reading.mode,'stacked',
+        'Player canvas should stack in a narrow container at '+width+'px');
+    }
+    console.log('MILESTONE-1 PLAYER VIEWPORT MATRIX',JSON.stringify(matrix));
+    await p.setViewportSize({width:1440,height:900});
+    await p.waitForFunction(()=>document.querySelector(
+      '[data-testid="site-player-main-canvas"] [data-layout-mode="freeform"]'));
+    const canvas=p.getByTestId('site-player-main-canvas');
+    const readout=p.locator('output[aria-label="Canvas zoom"]');
+    assert.equal((await readout.textContent()).trim(),'50%',
+      'New Player canvas should open at 50% zoom');
+    for(let i=0;i<5;i++)await p.getByRole('button',{name:'Zoom out of canvas'}).click();
+    assert.equal(await canvas.locator('[data-detail-level]').getAttribute('data-detail-level'),
+      'preview','Adaptive low zoom must deliberately enter preview mode');
+    assert.notEqual(await canvas.locator('[data-canvas-window="armour"] [data-combat-scroll]')
+      .getAttribute('inert'),null,'Preview should not expose unclickable controls');
+    for(let i=0;i<5;i++)await p.getByRole('button',{name:'Zoom into canvas'}).click();
+    assert.equal(await canvas.locator('[data-canvas-window="armour"] [data-combat-scroll]')
+      .getAttribute('inert'),null,'Returning to readable zoom should restore interactions');
+    await p.screenshot({path:path.join(root,'11-player-viewport-and-low-zoom.png'),fullPage:true});
+  });
+  await scenario('12-gm-viewport-matrix',{width:1440,height:900},async p=>{
+    await gm(p);
+    const matrix=[];
+    for(const width of [320,360,390,768,1280,1920]){
+      await p.setViewportSize({width,height:900});
+      await p.waitForTimeout(180);
+      const reading=await p.getByTestId('site-gm-main-canvas').evaluate(host=>{
+        const surface=host.querySelector('[data-layout-mode]');
+        return {
+          viewport:innerWidth,hostWidth:Math.round(host.getBoundingClientRect().width),
+          mode:surface?.dataset.layoutMode,
+          windows:host.querySelectorAll('[data-canvas-window]').length,
+          overflowPx:Math.max(0,document.documentElement.scrollWidth-innerWidth)
+        };
+      });
+      matrix.push(reading);
+      assert.equal(reading.windows,8,'Missing GM windows at '+width+'px');
+      assert.ok(reading.hostWidth>0,'GM canvas has zero width at '+width+'px');
+      if(reading.hostWidth<700)assert.equal(reading.mode,'stacked',
+        'GM canvas should stack in a narrow container at '+width+'px');
+    }
+    console.log('MILESTONE-1 GM VIEWPORT MATRIX',JSON.stringify(matrix));
+    await p.setViewportSize({width:390,height:844});
+    await p.screenshot({path:path.join(root,'12-gm-viewport-matrix.png'),fullPage:true});
+  });
+  await scenario('13-gm-player-manager-legacy-gates',{width:1440,height:900},async p=>{
+    await gm(p);
+    await p.getByTestId('asteria-gm-hybrid-menu')
+      .getByRole('button',{name:'Campaign',exact:true}).click();
+    await p.getByTestId('asteria-dashboard-card-dropdown')
+      .getByRole('button',{name:'Open Player Manager',exact:true}).click();
+    const manager=p.getByTestId('gm-player-manager');
+    await manager.waitFor();
+    assert.match(await manager.innerText(),/Legacy Membership/,
+      'Fixture campaign must not be portrayed as activated canonical membership');
+    await manager.getByRole('button',{name:'Invitations',exact:true}).click();
+    assert.match(await manager.innerText(),/legacy campaign uses its existing membership system/i,
+      'Invitations should explain why a legacy campaign cannot use v2 controls');
+    assert.equal(await manager.getByRole('button',{name:'Create secure invitation'}).count(),0,
+      'Fixture must not expose disabled secure invitation mutation');
+    await manager.getByRole('button',{name:'Roles & Access',exact:true}).click();
+    assert.equal(await manager.getByRole('button',{name:'Remove',exact:true}).count(),0,
+      'Fixture must not expose disabled canonical member removal');
+    await p.screenshot({path:path.join(root,'13-gm-player-manager-legacy-gates.png'),fullPage:true});
+  });
   console.log('PHASE 1.2 RESULT:',results.filter(r=>r.status==='pass').length,'passed,',failures.length,'failed.');
   save();
   await browser.close();
