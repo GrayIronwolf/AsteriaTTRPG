@@ -3,7 +3,7 @@ import { activeConditions } from './conditionModel.mjs';
 import { applyResourceChanges, parseResourceCosts, resourceSnapshot, writeResource } from './resourceEngine.mjs';
 import { resourcePair } from './resourceValues.mjs';
 import { buildTalentCatalog, ownedTalents, talentMeta } from './talentModel.mjs';
-import { talentRules } from './talentMechanics.mjs';
+import { talentRules, talentUsageState } from './talentMechanics.mjs';
 import { characterClasses } from './characterClasses.mjs';
 import { skillRankNumber, slug } from './liveWorkspaceModel.mjs';
 
@@ -130,10 +130,59 @@ export function spellFields(entry={}) {
   for(const match of body.matchAll(/^\s*(?:-\s*)?\*\*([^*]+):\*\*\s*(.+)$/gm)) {const key=labels[match[1].trim().toLowerCase()];if(key&&fields[key]===undefined)fields[key]=match[2].trim();}
   return fields;
 }
-const sourceFor=(catalog,type,record)=>catalog.find(entry=>entry.type?.toLowerCase()===type&&(entry.id===record.id||entry.slug===record.slug||slug(entry.title)===slug(record.name||record.title)));
+// Prefer an exact saved identity, then an unambiguous title/rank match.
+// Missing IDs and slugs must never match unrelated catalogue entries.
+const sourceFor=(catalog,type,record)=>{
+  const candidates=catalog.filter(entry=>entry.type?.toLowerCase()===type);
+  const eligible=type==='spell'?candidates.filter(entry=>{
+    const fields=spellFields(entry),rank=fields.spellRank??fields.rank;
+    return !record.rank||!rank||slug(record.rank)===slug(rank);
+  }):candidates;
+  const exact=eligible.filter(entry=>(record.id&&entry.id===record.id)||(record.slug&&entry.slug===record.slug));
+  if(exact.length===1)return exact[0];
+  const name=slug(record.name||record.title);
+  const named=eligible.filter(entry=>name&&slug(entry.title||entry.name)===name);
+  return named.length===1?named[0]:undefined;
+};
+export const ownedSpellRecords=character=>rows(character.spells||character.activeSpells||character.knownSpells).filter(record=>record&&(record.name||record.title));
+export function describeOwnedSpell(owned,catalog=[]) {
+  const source=sourceFor(catalog,'spell',owned),fields=spellFields(source||owned);
+  const name=String(owned.name||owned.title),rank=owned.rank||fields.spellRank||fields.rank||'';
+  const identity=owned.id||owned.slug||slug(name);
+  return {source,fields,name,rank,identity,key:`spell:${identity}:${slug(rank)}`,owned};
+}
+export function resolveOwnedSpell(character,reference,catalog=[]) {
+  const input=typeof reference==='string'?{name:reference}:reference||{};
+  const name=slug(input.name||input.title),rank=slug(input.rank);
+  if(!name&&!input.id&&!input.key)throw new Error('Choose a known spell.');
+  let matches=ownedSpellRecords(character).map(row=>describeOwnedSpell(row,catalog)).filter(row=>
+    (!name||slug(row.name)===name)&&(!rank||slug(row.rank)===rank));
+  if(input.key)matches=matches.filter(row=>row.key===input.key);
+  else if(input.id)matches=matches.filter(row=>row.identity===input.id||row.source?.id===input.id||row.key===input.id);
+  if(matches.length!==1)throw new Error(matches.length?'Choose the exact learned spell rank.':'This spell is not on the character sheet.');
+  return matches[0];
+}
+export function ownedSpellCosts(record,{combat=false}={}) {
+  const {owned,fields}=record;
+  const saved=owned.costs??owned.resourceCosts??owned.cost??owned.manaCost;
+  const printed=fields.manaCost??fields.cost;
+  // In combat the printed base cost is adjudicated by the GM. Outside combat
+  // retain the saved, trusted character-specific cost when present.
+  const raw=combat?printed??saved:saved??printed;
+  if(raw===undefined||raw===null||typeof raw==='string'&&!raw.trim())throw new Error('Spell cost is missing. Ask the GM to correct it.');
+  if(typeof raw==='boolean')throw new Error('Invalid spell resource cost.');
+  return parseResourceCosts(raw,'mp',true);
+}
+export function spellPaymentProblem(character,spell) {
+  const restriction=combatRestriction(character);if(restriction)return restriction;
+  if(spell.costProblem)return spell.costProblem;
+  try{applyResourceChanges(character,{costs:spell.costs});}catch(error){return error.message;}
+  return '';
+}
 export function combatOptions(character,catalog=[]) {
   const result=DEFAULT_COMBAT_ACTIONS.map(row=>({...row,checks:manoeuvres[row.key]?.join(' vs ')||'None / GM-defined task'}));
   const talents=ownedTalents(character,buildTalentCatalog(character,catalog));
+  const wovenSpells=()=>ownedSpellRecords(character).map(owned=>describeOwnedSpell(owned,catalog));
   for(const talent of talents) {
     const rules=talentRules(talent,talent.rank);
     if(!rules.activation) continue;
@@ -143,13 +192,26 @@ export function combatOptions(character,catalog=[]) {
       const bonus=/bonus action/i.test(String(talentMeta(talent,'actionType')||''));
       const reaction=/reaction/i.test(String(talentMeta(talent,'actionType')||talent.type||''));
       const ap=explicit!==undefined?Number(explicit):bonus?0:/ultimate/i.test(String(talent.type))?3:2;
-      result.push({id:`talent:${talent.id}${choice?`:${choice.id}`:''}`,kind:'talent',sourceId:talent.id,name:`${talent.name} · Rank ${talent.rank}${choice?` · ${choice.label}`:''}`,rank:talent.rank,ap,bonus,reaction,costs:choice?.costs||rules.costs,choice:choice?.id||'',blocked:rules.blocked,description:choice?.description||rules.effects,talent,rules});
+      const option={id:`talent:${talent.id}${choice?`:${choice.id}`:''}`,kind:'talent',sourceId:talent.id,name:`${talent.name} · Rank ${talent.rank}${choice?` · ${choice.label}`:''}`,rank:talent.rank,ap,bonus,reaction,costs:choice?.costs||rules.costs,choice:choice?.id||'',blocked:rules.blocked,description:choice?.description||rules.effects,talent,rules};
+      if(!rules.needsSpell)result.push(option);
+      else{
+        const spells=wovenSpells();
+        if(!spells.length)result.push({...option,blocked:option.blocked||'Choose a known spell to weave.'});
+        for(const spell of spells){
+          let spellCosts={},blocked=option.blocked;
+          try{spellCosts=ownedSpellCosts(spell,{combat:true});}catch(error){blocked=blocked||error.message;}
+          const costs={...option.costs};for(const [key,value] of Object.entries(spellCosts))costs[key]=(costs[key]||0)+value;
+          result.push({...option,id:`${option.id}:${spell.key}`,name:`${option.name} · ${spell.name}${spell.rank?` (${spell.rank})`:''}`,costs,blocked,wovenSpellKey:spell.key,spellCosts});
+        }
+      }
     }
   }
-  for(const owned of rows(character.spells||character.activeSpells||character.knownSpells)) {
-    const source=sourceFor(catalog,'spell',owned),fields=spellFields(source||owned),rank=owned.rank||fields.spellRank||fields.rank;
-    let costs={},blocked='',ap=1;try{costs=parseResourceCosts(fields.manaCost??owned.costs??owned.resourceCosts??owned.cost??owned.manaCost,'mp',true);if(fields.manaCost===undefined&&owned.costs===undefined&&owned.cost===undefined&&owned.manaCost===undefined)throw new Error('Printed Base MP is missing.');ap=fields.apCost===undefined?spellAP(rank):Number(fields.apCost);}catch(error){blocked=error.message;}
-    result.push({id:`spell:${owned.id||owned.slug||slug(owned.name||owned.title)}:${slug(rank)}`,kind:'spell',sourceId:owned.id||owned.slug||slug(owned.name||owned.title),name:owned.name||owned.title,rank,element:owned.element||fields.magicalElement||fields.element,ap,costs,baseMP:costs.mp||0,description:source?.summary||owned.summary||'',fields,owned,blocked,reaction:fields.reaction===true||fields.spellType==='Counterspell'});
+  for(const owned of ownedSpellRecords(character)) {
+    const record=describeOwnedSpell(owned,catalog),{source,fields,rank,name,key,identity}=record;
+    let costs={},blocked='',ap=1;
+    try{costs=ownedSpellCosts(record,{combat:true});ap=fields.apCost===undefined?spellAP(rank):Number(fields.apCost);}
+    catch(error){blocked=error.message;}
+    result.push({id:key,kind:'spell',sourceId:identity,name,rank,element:owned.element||owned.magicType||fields.magicalElement||fields.element,ap,costs,baseMP:costs.mp||0,description:source?.summary||owned.summary||'',fields,owned,blocked,reaction:fields.reaction===true||fields.spellType==='Counterspell'});
   }
   for(const skill of rows(character.skills||character.selectedSkills)) {
     const source=sourceFor(catalog,'skill',skill);
@@ -167,7 +229,7 @@ export function combatOptions(character,catalog=[]) {
   }
   return result;
 }
-export function optionProblem(option,character,encounter,actorId,{reaction=false,prepaid=null}={}) {
+export function optionProblem(option,character,encounter,actorId,{reaction=false,prepaid=null,sessionId}={}) {
   if(option.blocked)return option.blocked;
   const restriction=combatRestriction(character,{encounter});if(restriction)return restriction;
   if(encounter?.status!=='active')return 'Combat is not active.';
@@ -185,7 +247,10 @@ export function optionProblem(option,character,encounter,actorId,{reaction=false
   if(!reaction&&option.ap>state.ap+(prepaid?.ap||0))return 'Not enough held AP.';
   if(option.bonus&&!state.bonus&&!prepaid?.bonus)return 'Bonus action already used.';
   if(state.pendingDeathSave)return 'Resolve the turn-start death save.';
-  try{applyResourceChanges(character,{costs:option.costs});}catch(error){return error.message;}
+  try{
+    if(option.kind==='talent'&&option.talent&&option.rules)talentUsageState(character,option.talent,option.rules,{encounter,sessionId,preview:true});
+    applyResourceChanges(character,{costs:option.costs,keepAlive:option.kind==='talent'});
+  }catch(error){return error.message;}
   return '';
 }
 export function wieldedItems(character) {

@@ -234,7 +234,7 @@ export function createCombatCommands(context) {
           if(!p.channelResult.success){const available=resourceSnapshot(character,'mp').current;if(available>=option.baseMP)costs.mp=option.baseMP;else{const fee=Math.ceil(option.baseMP/2);costs.mp=Math.min(available,fee);p.paymentShortfall=Math.max(0,fee-available);p.failedBeforeManifestation=true;if(p.paymentShortfall)p.publicMessage='Failed casting: remaining payment needs GM resolution.';}}
         }
         if(option.kind==='talent'){
-          const used=useLearnedTalent(character,option.talent,{choice:option.choice,triggerConfirmed:approval.triggerConfirmed},{catalog:buildTalentCatalog(character,context.catalog),encounter,now,sessionId:session.id,deferEffects:true});
+          const used=useLearnedTalent(character,option.talent,{choice:option.choice,triggerConfirmed:approval.triggerConfirmed},{catalog:buildTalentCatalog(character,context.catalog),encounter,now,sessionId:session.id,spellCosts:option.spellCosts,deferEffects:true});
           character=used.character;p.costs=used.costs;p.deferred={restore:{...used.restored,...(used.bpGain?{bp:used.bpGain}:{})},effect:used.effect};
         }else{const paid=payCombatCosts(character,costs,approval.hpPayment===true);character=paid.character;p.paid=paid.paid;}
         const consumptions=[...(approval.consume||[])];
@@ -489,7 +489,7 @@ export function createCombatCommands(context) {
         if(restriction||s.pendingDeathSave)throw new Error(restriction||'Resolve the turn-start death save first.');
         const option=input.optionId?findOption(actorId,input.optionId):null;
         let ap,bonus;
-        if(option){const problem=optionProblem(option,character,encounter,actorId);if(problem)throw new Error(problem);ap=option.ap;bonus=Boolean(option.bonus);}
+        if(option){const problem=optionProblem(option,character,encounter,actorId,{sessionId:session.id});if(problem)throw new Error(problem);ap=option.ap;bonus=Boolean(option.bonus);}
         else{ap=input.ap;bonus=ap===0;}
         if(!Number.isInteger(ap)||ap<0||ap>3)throw new Error('Choose a whole AP cost from 0 to 3.');
         if(s.ap<ap)throw new Error('Not enough AP.');

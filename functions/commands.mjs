@@ -1,13 +1,14 @@
 import { createInformationCommands } from './informationCommands.mjs';
 import { isCampaignGM, readCampaignMember } from './characterPermissions.mjs';
 import { createCombatCommands } from './combatCommands.mjs';
+import { resolveOwnedSpell, ownedSpellCosts, combatRestriction } from '../src/state/combatRules.mjs';
 import {createEncounterCompletionCommands} from './encounterCompletionCommands.mjs';
 import {assertApprovedEncounterDelivery,encounterDeliveryPatch} from '../src/state/encounterCompletionModel.mjs';
 import {grantXP as grantServerXP} from '../src/state/combatProgressionCore.mjs';
 import { isDeepStrictEqual } from 'node:util';
 import { createCoreCommands } from './coreCommands.mjs';
 import { reconcileCharacterSystems } from '../src/state/characterSystems.mjs';
-import { applyResourceChanges, parseResourceCosts, resourceId, resourceSnapshot } from '../src/state/resourceEngine.mjs';
+import { applyResourceChanges, resourceId, resourceSnapshot } from '../src/state/resourceEngine.mjs';
 import { buildTalentCatalog, prerequisiteProblem, rankDefined, reconcileTalentEffects, saveTalentRank, talentRank } from '../src/state/talentModel.mjs';
 import { talentRules, useLearnedTalent } from '../src/state/talentMechanics.mjs';
 import { changeQuestProgress, changeQuestStatus } from '../src/state/questWorkflowModel.mjs';
@@ -554,13 +555,7 @@ const commands = {
     if(input.expectedRank!==undefined && input.expectedRank!==rank) throw new Error('Talent rank changed. Reopen the talent before using it.');
     let spellCosts;
     if(talentRules(talent,rank).needsSpell){
-      const source=character.spells||character.activeSpells||character.knownSpells||[];
-      const rows=Array.isArray(source)?source:Object.entries(source).map(([name,value])=>({name,...(typeof value==='object'?value:{})}));
-      const known=rows.find(row=>liveSlug(row.name||row.title||row)===liveSlug(selection.spell));
-      const entry=context.catalog.find(row=>row.type==='spell' && liveSlug(row.title)===liveSlug(selection.spell));
-      const cost=known && (known.costs??known.resourceCosts??known.cost??known.manaCost??entry?.metadata?.manaCost??entry?.metadata?.cost);
-      if(cost===undefined || cost===false) throw new Error('Choose a known spell with a recorded resource cost.');
-      spellCosts=parseResourceCosts(cost,'mp',true);
+      spellCosts=ownedSpellCosts(resolveOwnedSpell(character,selection.spellKey?{key:selection.spellKey}:selection.spell,context.catalog));
     }
     const used=useLearnedTalent(character,talent,selection,{catalog,encounter:refs.encounter,sessionId:session.id||String(timestampMs(session.startedAt)),spellCosts});
     if(selection.targetId && selection.targetId!==characterId){
@@ -628,17 +623,12 @@ const commands = {
         if(!snapshot.exists()) throw new Error('Character not found.');
         const character=Object.assign({id:characterId},snapshot.data());
         await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
-        const spellSource=character.spells||character.activeSpells||character.knownSpells||[];
-        const spellRows=Array.isArray(spellSource)?spellSource:Object.entries(spellSource).map(([name,value])=>typeof value==='object'?{name,...value}:{name});
-        const known=spellRows.find(value=>liveSlug(value?.name||value?.title||value)===liveSlug(spell.name));
-        if(!known) throw new Error('This spell is not on the character sheet.');
-        const canonical=context.catalog.find(entry=>entry.type==='spell' && liveSlug(entry.title)===liveSlug(spell.name));
-        const savedCost=known.costs??known.resourceCosts??known.cost??known.manaCost??canonical?.metadata?.manaCost??canonical?.metadata?.cost;
-        if(savedCost===undefined) throw new Error('Spell cost is missing from this character sheet. Ask the GM to correct it.');
-        costs=parseResourceCosts(savedCost,'mp',true);
+        const restriction=combatRestriction(character);if(restriction)throw new Error(restriction);
+        const resolved=resolveOwnedSpell(character,spell,context.catalog),known=resolved.owned;
+        costs=ownedSpellCosts(resolved);
         const paid=costs;
         Object.assign(character,applyResourceChanges(character,{costs,restore:known.restoreResources || known.resourceRestoration || {}}));
-        appendActivity(character,{type:'spell-cast',message:`Cast ${spell.name}.`,costs:paid});
+        appendActivity(character,{type:'spell-cast',message:`Cast ${resolved.name}${resolved.rank?' · '+resolved.rank:''}.`,costs:paid});
         writeLiveCharacter(transaction,refs,character);
         return paid;
       });

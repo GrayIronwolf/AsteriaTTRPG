@@ -17,7 +17,8 @@ import {ActivityLog} from './CharacterWorkspaceTabs.jsx';
 import { PlayerCombatOverview, PlayerExplorationOverview, PlayerQuestTracker, PlayerInventoryOverview } from './DashboardFocusPanels.jsx';
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
 import {CalendarWeatherQuickPanel} from './CalendarWeatherQuickPanel.jsx';
-import { normalizeDashboardPreferences, parseResourceCost } from '../state/liveWorkspaceModel.mjs';
+import { spellPaymentProblem } from '../state/combatRules.mjs';
+import { normalizeDashboardPreferences } from '../state/liveWorkspaceModel.mjs';
 import { resourcePair, soulDamageValue, soulHealingCap } from '../state/specialDamageModel.mjs';
 import { useArmourClass } from '../systems/armour/useArmourClass.js';
 import { knownSpells, quests as selectQuests, unlockedClassTalents } from './characterWorkspaceData.js';
@@ -191,33 +192,37 @@ function AbilityCard({ ability, type, disabled = false, onActivate }) {
   </Tooltip>;
 }
 
-function TalentSummary({ talents, onNavigate, style, campaignId, character, editable, combat }) {
+function TalentSummary({ talents, onNavigate, style, campaignId, character, editable, combat, characters, clock }) {
   const [selected,setSelected]=useState(null);
+  useEffect(()=>setSelected(null),[character.id,combat?.active]);
   return <DashboardPanel icon="talents" title="Class Talents" action={<button type="button" onClick={() => onNavigate('talents')}>Open Talent Tree</button>} className={`react-overview-talents ${combat?.selector==='talent'?'combat-selector-open':''}`} style={style}>
     {combat?.selector==='talent'?<SelectorHeading combat={combat}/>:null}
     {combat?.active?<div className="react-ability-grid">{combat.options.filter(option=>option.kind==='talent').map(option=><CombatActionButton className="combat-selection-card" key={option.id} combat={combat} option={option}><b>{option.name}</b><small>{option.ap} AP · {costText(option.costs)}</small></CombatActionButton>)}{!combat.options.some(option=>option.kind==='talent')?<p>No unlocked active talents.</p>:null}</div>:talents.length ? <div className="react-ability-grid">{talents.map((talent, index) => <AbilityCard key={talent.id || talent.name || index} ability={talent} type="talent" onActivate={()=>setSelected(talent)} />)}</div> : <DashboardEmpty title="No Talents Unlocked" description="Spend Talent Points in the Class/Talent Tree to unlock talents." actionLabel="Open Talent Tree" onAction={() => onNavigate('talents')} />}
-    {selected?<TalentDetails campaignId={campaignId} character={character} talent={selected} editable={editable} onClose={()=>setSelected(null)}/>:null}
+    {selected&&!combat?.active?<TalentDetails campaignId={campaignId} character={character} talent={selected} editable={editable} characters={characters} clock={clock} combat={combat} onClose={()=>setSelected(null)}/>:null}
   </DashboardPanel>;
 }
 
 function SpellSummary({ campaignId, character, spells, editable, busy, onNavigate, run, style, combat }) {
   const elements = useMemo(() => [...new Set(spells.map(spell => record(spell).element || record(spell).magicType).filter(Boolean))], [spells]);
   const [filter, setFilter] = useState('All');
-  const [pendingSpell, setPendingSpell] = useState(null);
+  const [pendingKey, setPendingSpell] = useState(null);
+  useEffect(()=>setPendingSpell(null),[character.id,combat?.active]);
+  const pendingSpell=spells.find(row=>row.key===pendingKey),problem=pendingSpell?spellPaymentProblem(character,pendingSpell):'';
   const visible = filter === 'All' ? spells : spells.filter(spell => (record(spell).element || record(spell).magicType) === filter);
-  const cast = spell => combat?.active?combat.select(combat.options.find(row=>row.kind==='spell'&&row.name===spell.name)):run(() => firebaseService.castSpell(campaignId, character.id, {...spell,expectedCoreRevision:Number(character.coreRevision || 0)}, parseResourceCost(spell.costs || spell.cost)));
+  const cast = spell => run(() => firebaseService.castSpell(campaignId, character.id, {name:spell.name,key:spell.key,rank:spell.rank,expectedCoreRevision:Number(character.coreRevision||0)}, spell.costs));
   const confirmCast = async () => {
-    if(!pendingSpell || !editable || busy || combat?.active) return;
+    if(!pendingSpell || !editable || busy || combat?.active || problem) return;
     const result = await cast(pendingSpell);
     if(result?.ok) setPendingSpell(null);
   };
   return <DashboardPanel icon="spells" title="Active Spells" action={<button type="button" onClick={() => onNavigate('spells')}>Open Spell Menu</button>} className={`react-overview-spells ${combat?.selector==='spell'?'combat-selector-open':''}`} style={style}>
     {combat?.selector==='spell'?<SelectorHeading combat={combat}/>:null}
     {elements.length ? <div className="react-ability-filters" aria-label="Spell element filters">{['All', ...elements].map(element => <button className={filter === element ? 'active' : ''} aria-pressed={filter === element} key={element} onClick={() => setFilter(element)} type="button">{element}</button>)}</div> : null}
-    {combat?.active?<div className="react-ability-grid">{combat.options.filter(row=>row.kind==='spell'&&(filter==='All'||row.element===filter)).map(option=><CombatActionButton className="combat-selection-card" key={option.id} combat={combat} option={option} disabled={!editable||busy}><b>{option.name}</b><small>{option.rank} · {option.ap} AP · {costText(option.costs)}</small></CombatActionButton>)}</div>:visible.length ? <div className="react-ability-grid">{visible.slice(0, 8).map((spell, index) => <AbilityCard key={spell.id || spell.name || index} ability={spell} type="spell" disabled={!editable || busy} onActivate={spell => setPendingSpell(spell)} />)}</div> : <DashboardEmpty title="No Active Spells" description="Known spells will appear here after they are added to this character." actionLabel="Open Spell Menu" onAction={() => onNavigate('spells')} />}
-    {pendingSpell && !combat?.active ? <Modal title={`Cast ${pendingSpell.name || pendingSpell.title || 'spell'}?`} eyebrow="Spell Confirmation" busy={busy} onClose={() => setPendingSpell(null)} footer={<><button type="button" disabled={busy} onClick={() => setPendingSpell(null)}>Cancel</button><button type="button" className="primary" disabled={!editable || busy} onClick={confirmCast}>Cast Spell</button></>}>
+    {combat?.active?<div className="react-ability-grid">{combat.options.filter(row=>row.kind==='spell'&&(filter==='All'||row.element===filter)).map(option=><CombatActionButton className="combat-selection-card" key={option.id} combat={combat} option={option} disabled={!editable||busy}><b>{option.name}</b><small>{option.rank} · {option.ap} AP · {costText(option.costs)}</small></CombatActionButton>)}</div>:visible.length ? <div className="react-ability-grid">{visible.slice(0, 8).map((spell, index) => <AbilityCard key={spell.id || spell.name || index} ability={spell} type="spell" disabled={!editable || busy} onActivate={spell => setPendingSpell(spell.key)} />)}</div> : <DashboardEmpty title="No Active Spells" description="Known spells will appear here after they are added to this character." actionLabel="Open Spell Menu" onAction={() => onNavigate('spells')} />}
+    {pendingSpell && !combat?.active ? <Modal title={`Cast ${pendingSpell.name || pendingSpell.title || 'spell'}?`} eyebrow="Spell Confirmation" busy={busy} onClose={() => setPendingSpell(null)} footer={<><button type="button" disabled={busy} onClick={() => setPendingSpell(null)}>Cancel</button><button type="button" className="primary" disabled={!editable || busy || Boolean(problem)} onClick={confirmCast}>Cast Spell</button></>}>
       <p>Confirm this spell before spending its resources.</p>
-      <p><strong>Cost:</strong> {costText(pendingSpell.costs || pendingSpell.cost) || 'Refer to spell rules'}</p>
+      <p><strong>Cost:</strong> {pendingSpell.costProblem||costText(pendingSpell.costs)||'No resource cost'}</p>
+      {problem?<p role="status">{problem}</p>:null}
       {!editable ? <p role="status">Spell casting is unavailable until your campaign session permits edits.</p> : null}
     </Modal> : null}
   </DashboardPanel>;
@@ -288,7 +293,7 @@ function SummaryPanels({ character, characters, partyWorkspace, onNavigate, only
   return <div className="react-dashboard-summary-grid">{panels.quests}{panels.journal}{panels.party}</div>;
 }
 
-export function PlayerDashboardOverview({ campaignId, campaign, character, characters, partyWorkspace, editable, canEditLayout=editable, isGM=false, sessionEditable=editable, clock={}, onNavigate, combat }) {
+export function PlayerDashboardOverview({ campaignId, campaign, character, characters, partyWorkspace, editable, abilityEditable=editable, canEditLayout=editable, isGM=false, sessionEditable=editable, clock={}, onNavigate, combat }) {
   const {message,busy,run}=useAsyncAction();
   const talents = unlockedClassTalents(character);
   const spells = knownSpells(character);
@@ -321,8 +326,8 @@ export function PlayerDashboardOverview({ campaignId, campaign, character, chara
       case 'armour':return <ArmourPanel character={character} onNavigate={onNavigate}/>;
       case 'weapons':return <WeaponsPanel character={character} onNavigate={onNavigate}/>;
       case 'quick':return <QuickItemsPanel campaignId={campaignId} character={character} editable={editable} busy={busy} onNavigate={onNavigate} run={run}/>;
-      case 'talents':return <TalentSummary combat={combat} talents={talents} campaignId={campaignId} character={character} editable={editable} onNavigate={onNavigate}/>;
-      case 'spells':return <SpellSummary combat={combat} campaignId={campaignId} character={character} spells={spells} editable={editable} busy={busy} onNavigate={onNavigate} run={run}/>;
+      case 'talents':return <TalentSummary combat={combat} talents={talents} campaignId={campaignId} character={character} characters={characters} clock={clock} editable={abilityEditable} onNavigate={onNavigate}/>;
+      case 'spells':return <SpellSummary combat={combat} campaignId={campaignId} character={character} spells={spells} editable={abilityEditable} busy={busy} onNavigate={onNavigate} run={run}/>;
       case 'skills':return <SkillsSummary combat={combat} skills={skills} onNavigate={onNavigate}/>;
       case 'conditions':return <ConditionsPanel campaignId={campaignId} character={character} isGM={isGM} editable={isGM?sessionEditable:editable} clock={clock}/>;
       case 'effects':return <EffectsSummary character={character} clock={clock}/>;
