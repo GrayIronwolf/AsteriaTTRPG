@@ -79,9 +79,18 @@ const painted=page=>page.evaluate(()=>new Promise(resolve=>requestAnimationFrame
   const select=panel.locator('select[aria-label^="Content layout for"]');
   await select.selectOption('fixed');await options.click();await painted(page);
   const body=panel.locator('[data-combat-scroll]>div');
+  await page.waitForFunction(id=>parseFloat(getComputedStyle(document.querySelector(
+   '[data-canvas-window="'+id+'"] [data-combat-scroll]')).getPropertyValue('--combat-design-width'))>0,id);
   const fixedWidth=await body.evaluate(el=>parseFloat(getComputedStyle(el).width));
+  for(const overflow of ['scroll','hidden','auto']){
+   await panel.locator('[data-combat-scroll]').evaluate((el,value)=>{el.style.overflowY=value;},overflow);
+   await painted(page);
+   assert.ok(Math.abs((await body.evaluate(el=>parseFloat(getComputedStyle(el).width)))-fixedWidth)<2,
+    'scrollbar changes do not alter the fixed design width');
+  }
   await resize('se',40,30);
-  assert.ok(Math.abs((await body.evaluate(el=>parseFloat(getComputedStyle(el).width)))-fixedWidth)<2,'fixed content keeps its width while the window grows');
+  const afterFixedWidth=await body.evaluate(el=>parseFloat(getComputedStyle(el).width));
+  assert.ok(Math.abs(afterFixedWidth-fixedWidth)<2,'fixed content keeps its width while the window grows '+JSON.stringify({fixedWidth,afterFixedWidth,role,scale}));
   await options.click();await select.selectOption('proportional');await options.click();await painted(page);
   const fitted=await body.evaluate(el=>({body:el.getBoundingClientRect().width,viewport:el.parentElement.getBoundingClientRect().width}));
   assert.ok(fitted.body<=fitted.viewport+3,'proportional content fits its scroll viewport');

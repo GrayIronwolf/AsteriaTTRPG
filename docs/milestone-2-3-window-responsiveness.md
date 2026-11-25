@@ -15,6 +15,7 @@ Corrected existing code rather than adding another canvas or persistence layer:
 - Corner grips retain approximately 22 screen pixels across 50%, 75% and 100% zoom; coarse pointer styles provide larger targets. Grips extend mainly outside the bezel so they do not cover title controls. As with overlapping windows, select the intended window before using adjacent outer grips.
 - A named canvas container query fixes a bug where a narrow window incorrectly activated the mobile overflow rules on desktop. Window content now scrolls within its proper bounds, including on small screens.
 - Responsive content reflows grids, wraps labels and table cells, constrains inputs and resource tracks, and wraps action rows.
+- Fixed/proportional design widths exclude transient scrollbars, so content remains stable when vertical overflow appears or clears.
 - Competing gesture starts and wheel input cannot change the interaction's coordinate space mid-drag/resize. A viewport-width change cancels an active geometry gesture, clears queued work and restores its original geometry.
 - Magnetic alignment excludes companions in the same moving group, preventing self-snapping.
 
@@ -62,6 +63,6 @@ The new Chromium matrix covers each role at all three zoom levels, southeast/nor
 
 The added emulator test writes and reloads the real normalized content preferences/geometry through the existing private dashboard and owned-character mirror paths, verifies another account cannot access the private layout, and checks HP/ownership remain unchanged.
 
-The first PR verification exposed an existing timing race in the physical dice browser test: it read the camera immediately after a middle-button gesture, before the camera effect ran. The check now waits for camera mode and the observable camera change, retaining the assertions that the camera moves and dice remain unchanged. No dice implementation or required check was bypassed.
+The first PR verification exposed an existing timing race in the physical dice browser test: it read the camera immediately after a middle-button gesture, before the camera effect ran. The check now waits for camera mode and the observable camera change, retaining the assertions that the camera moves and dice remain unchanged. The runtime harness counts layout saves separately from the independent camera debounce, preventing a slow test from mistaking camera persistence for a second layout edit. No dice implementation or required check was bypassed.
 
 No Firebase Functions, Firestore/Storage rules or collection paths changed. No Firebase backend deployment or data migration is required. Live frontend publication is explicitly deferred to the user.

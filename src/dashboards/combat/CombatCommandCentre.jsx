@@ -113,7 +113,10 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
       for(const [node,width] of pending){
         const id=node.closest('[data-canvas-window]')?.dataset.canvasWindow;
         if(!id)continue;
-        const inset=node.offsetWidth-width+6;
+        // offsetWidth - contentRect.width includes a transient scrollbar.
+        // Fixed design geometry must depend only on the window border/padding.
+        const style=getComputedStyle(node);
+        const inset=parseFloat(style.paddingLeft)+parseFloat(style.paddingRight)+6;
         const reference=Math.max(100,(defaults.freeform.positions[id]?.w||490)-inset);
         node.style.setProperty('--combat-design-width',reference+'px');
         node.style.setProperty('--combat-fit-scale',String(Math.min(4,Math.max(.1,

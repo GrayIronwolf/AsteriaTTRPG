@@ -44,7 +44,10 @@ function fixture(config=null,preferences={},options={}){
  globalThis.window={addEventListener:noop,removeEventListener:noop,matchMedia:()=>({matches:false})};
  globalThis.document={addEventListener:noop,removeEventListener:noop};
  globalThis.localStorage={getItem:key=>key.endsWith(':camera')?JSON.stringify({x:0,y:0,scale:options.scale||1}):JSON.stringify(layout),
-  setItem:(key,value)=>{storage.set(key,value);saves.push(JSON.parse(value));}};
+  setItem:(key,value)=>{storage.set(key,value);
+   // Camera persistence is independent of the layout save under test. Its
+   // debounce may fire during a slow CI run without creating a layout edit.
+   if(!key.endsWith(':camera'))saves.push(JSON.parse(value));}};
  globalThis.requestAnimationFrame=callback=>{frames.set(++nextFrame,callback);return nextFrame;};
  globalThis.cancelAnimationFrame=key=>frames.delete(key);
  let renderer;
