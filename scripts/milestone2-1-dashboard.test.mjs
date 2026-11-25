@@ -69,7 +69,7 @@ test('canvas viewport is wide, taller on desktop and does not resize windows',()
   const canvas=source('src/dashboards/combat/CombatCommandCentre.jsx');
   const css=source('src/dashboards/combat/CombatCommandCentre.module.css');
   const siteCss=source('src/styles/asteria-react.css');
-  assert.match(canvas,/Math\.max\(800,Math\.floor\(scrollArea\.clientHeight/);
+  assert.match(canvas,/Math\.max\(800,Math\.floor\(window\.innerHeight\*\.8\)\)/);
   assert.match(canvas,/--combat-edge-left','0px'/);
   assert.match(canvas,/restoredCamera=storedCamera&&storedCamera\.scale>=\.25/);
   assert.match(canvas,/Apply Recommended Arrangement \(keep window sizes\)/);
