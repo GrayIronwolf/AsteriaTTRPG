@@ -11,7 +11,8 @@ const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 
 test('Player Main canvas preserves every existing panel and the Action / Resource Log',()=>{
  const defaults=DASHBOARD_PANEL_REGISTRY.player.filter(row=>!row.optional).map(row=>row.id);
- assert.deepEqual([...PLAYER_DASHBOARD_CANVAS_CONFIG.ids].sort(),[...defaults,'activityLog'].sort());
+ assert.deepEqual([...PLAYER_DASHBOARD_CANVAS_CONFIG.ids].sort(),
+   [...DASHBOARD_PANEL_REGISTRY.player.map(row=>row.id),'activityLog'].sort());
  const layout=defaultPlayerCanvasLayout();
  assert.deepEqual(PLAYER_DASHBOARD_CANVAS_CONFIG.ids.filter(id=>!layout.hidden.includes(id)),
    PLAYER_CANVAS_DEFAULT_IDS);
