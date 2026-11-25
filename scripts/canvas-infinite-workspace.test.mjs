@@ -62,7 +62,7 @@ test('Adaptive previews and the proportional option preserve canvas preferences'
  assert.match(renderer,/Show infinite dot grid/);
  assert.match(renderer,/Adaptive previews/);
  assert.match(renderer,/Proportional at every zoom/);
- assert.match(renderer,/inert=\{isMinimised\|\|/);
+ assert.match(renderer,/inert=\{isMinimised\?/);
  assert.match(renderer,/viewport.dataset.detailLevel=combatCanvasDetailLevel/);
 });
 
