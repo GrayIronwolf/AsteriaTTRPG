@@ -356,7 +356,19 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
     }
   };
   const setPreference=change;
-  const [alignmentLines,setAlignmentLines]=useState([]);
+  const alignmentOverlay=useRef(null);
+  const setAlignmentLines=lines=>{
+    const overlay=alignmentOverlay.current;
+    if(!overlay)return;
+    for(const node of overlay.children){
+      const line=lines.find(item=>item.axis===node.dataset.axis);
+      node.hidden=!line;
+      if(line){const cam=cameraRef.current;
+        const offset=line.line*(gesture.current?.width||canvas.current?.clientWidth||0)/1000*cam.scale;
+        node.style.transform=line.axis==='x'?`translateX(${offset+cam.x}px)`:`translateY(${offset+cam.y+60}px)`;
+      }
+    }
+  };
   const undo=()=>{
     if(!canEditCanvas||!undoStack.length)return;
     const previous=undoStack[undoStack.length-1];
@@ -404,8 +416,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
     const dy=Math.round((y-g.y)*1000/(g.width*g.scale));
     if(g.kind==='move'){
       const position={x:g.initial.x+dx,y:g.initial.y+dy};
-      return g.layout.magneticSnap?combatWindowAlignment(g.layout,g.id,position,{
-        snap:true,strength:g.layout.snapStrength}).position:position;
+      return position;
     }
     const values={...g.initial};
     if(g.edge.includes('e'))values.w+=dx;
@@ -434,12 +445,10 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
       drawCamera(candidate);
       return;
     }
-    const candidate=editCombatWindow(g.layout,g.id,g.kind,g.pending,canvasConfig||undefined);
-    if(g.kind==='move'&&g.layout.alignmentGuides){
-      const guides=combatWindowAlignment(g.layout,g.id,g.pending,{
-        strength:g.layout.snapStrength}).guides;
-      setAlignmentLines(previous=>JSON.stringify(previous)===JSON.stringify(guides)?previous:guides);
-    }
+    const alignment=g.kind==='move'&&(g.layout.alignmentGuides||g.layout.magneticSnap)?
+      combatWindowAlignment(g.layout,g.id,g.pending,{snap:g.layout.magneticSnap,strength:g.layout.snapStrength}):null;
+    const candidate=editCombatWindow(g.layout,g.id,g.kind,alignment?.position||g.pending,canvasConfig||undefined);
+    if(g.layout.alignmentGuides&&alignment)setAlignmentLines(alignment.guides);
     // A rejected strict-collision proposal retains the last valid frame.
     // Normal freeform mode accepts overlapping positions immediately.
     const atOrigin=Object.entries(g.pending).every(([key,value])=>
@@ -464,10 +473,12 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
       Math.abs(event.clientY-press.y)>6))lastTitlePress.current=null;
     const g=gesture.current;
     if(!g||g.pointer!==event.pointerId)return;
-    g.pending=g.kind==='pan'?{x:event.clientX,y:event.clientY}:
-      proposal(g,event.clientX,event.clientY);
+    g.latestPointer={x:event.clientX,y:event.clientY};
     if(!g.frame)g.frame=requestAnimationFrame(()=>{
-      g.frame=0;paintGesture(g);
+      g.frame=0;
+      const point=g.latestPointer;
+      g.pending=g.kind==='pan'?point:proposal(g,point.x,point.y);
+      paintGesture(g);
     });
   };
   const end=event=>{
@@ -586,6 +597,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
         gmCanvas?'GM dashboard freeform canvas':'Combat freeform canvas'}
       onPointerDown={startPan}
       onPointerMove={move} onPointerUp={end} onPointerCancel={end}
+      onLostPointerCapture={end}
       onAuxClick={event=>{if(event.button===1)event.preventDefault();}}>
       <div ref={stage} className={styles.stage}
         data-stage="combat-canvas-stage"
@@ -701,14 +713,10 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
         </article>;
       })}
       </div>
-      {wide&&alignmentLines.length>0?<div className={styles.alignmentOverlay}
-        aria-hidden="true">{alignmentLines.map(line=><i key={line.axis}
-          className={line.axis==='x'?styles.alignmentVertical:styles.alignmentHorizontal}
-          style={line.axis==='x'?{
-            left:'calc('+line.line/10+'cqw * '+camera.scale+' + '+camera.x+'px)'
-          }:{
-            top:'calc('+line.line/10+'cqw * '+camera.scale+' + '+(camera.y+60)+'px)'
-          }}/>)}</div>:null}
+      {wide?<div ref={alignmentOverlay} className={styles.alignmentOverlay} aria-hidden="true">
+        <i hidden data-axis="x" className={styles.alignmentVertical} style={{left:0}}/>
+        <i hidden data-axis="y" className={styles.alignmentHorizontal} style={{top:0}}/>
+      </div>:null}
       <div className={styles.canvasActions} role="toolbar"
         aria-label={playerCanvas?'Player dashboard canvas controls':
           gmCanvas?'GM dashboard canvas controls':'Combat canvas controls'}>
