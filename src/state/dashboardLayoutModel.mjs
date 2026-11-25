@@ -78,15 +78,16 @@ const GM_CANVAS_NEW_OPTIONALS=Object.freeze([
   'diceQuick','npcQuick','soundboardQuick','worldQuick','playerDisplayQuick','focusModes','playerManagerQuick','worldContext'
 ]);
 const GM_CORE_POSITIONS=Object.freeze({
-  // Balanced columns, readable overview heights, 20-unit gutters.
-  gmResources:{x:0,y:0,w:490,h:620},
-  combatOverview:{x:510,y:0,w:490,h:300},
-  requestsOverview:{x:510,y:320,w:490,h:300},
-  preparedOverview:{x:510,y:640,w:490,h:350},
-  quickNotes:{x:0,y:640,w:490,h:420},
-  questTracker:{x:510,y:1010,w:490,h:420},
-  calendarWeather:{x:0,y:1080,w:490,h:350},
-  sessionOverview:{x:510,y:1450,w:490,h:350}
+  // Four compact desktop columns; the party-resource monitor occupies a double
+  // width, double-height block. Existing saved positions are never overwritten.
+  gmResources:{x:0,y:0,w:490,h:670},
+  combatOverview:{x:510,y:0,w:235,h:320},
+  requestsOverview:{x:765,y:0,w:235,h:320},
+  preparedOverview:{x:510,y:340,w:235,h:330},
+  quickNotes:{x:765,y:340,w:235,h:330},
+  questTracker:{x:0,y:690,w:235,h:330},
+  calendarWeather:{x:255,y:690,w:235,h:330},
+  sessionOverview:{x:510,y:690,w:490,h:330}
 });
 const GM_CANVAS_LABEL_EXTRAS=Object.freeze({
   gmResources:'GM Player Resources',
@@ -171,28 +172,21 @@ export function normalizeGMCanvasLayout(raw,oldGrid=null){
 /** Player Main uses the same canvas geometry/interaction engine as GM and
  * Combat. The original registry remains the permission-safe panel allowlist. */
 export const PLAYER_CANVAS_DEFAULT_IDS=Object.freeze([
-  ...DASHBOARD_PANEL_REGISTRY.player.filter(item=>!item.optional).map(item=>item.id),
-  'activityLog'
+  'armour','weapons','quick','talents','spells','conditions','quests','party'
 ]);
 const PLAYER_CANVAS_DEFAULT_POSITIONS=Object.freeze({
-  armour:{x:0,y:0,w:490,h:510},
-  weapons:{x:510,y:0,w:490,h:340},
-  quick:{x:510,y:360,w:490,h:350},
-  talents:{x:0,y:530,w:490,h:480},
-  spells:{x:510,y:730,w:490,h:500},
-  skills:{x:0,y:1030,w:490,h:420},
-  conditions:{x:510,y:1250,w:490,h:400},
-  effects:{x:0,y:1470,w:490,h:370},
-  specialDamage:{x:510,y:1670,w:490,h:330},
-  rest:{x:0,y:1860,w:490,h:380},
-  currency:{x:510,y:2020,w:490,h:350},
-  quests:{x:0,y:2260,w:490,h:360},
-  journal:{x:510,y:2390,w:490,h:360},
-  party:{x:0,y:2640,w:490,h:400},
-  activityLog:{x:510,y:2770,w:490,h:370}
+  armour:{x:0,y:0,w:235,h:360},
+  weapons:{x:255,y:0,w:235,h:360},
+  quick:{x:510,y:0,w:235,h:360},
+  talents:{x:765,y:0,w:235,h:360},
+  spells:{x:0,y:380,w:235,h:360},
+  conditions:{x:255,y:380,w:235,h:360},
+  quests:{x:510,y:380,w:235,h:360},
+  party:{x:765,y:380,w:235,h:360}
 });
 const playerCanvasIds=[...PLAYER_CANVAS_DEFAULT_IDS,
-  ...DASHBOARD_PANEL_REGISTRY.player.filter(item=>item.optional).map(item=>item.id)];
+  ...DASHBOARD_PANEL_REGISTRY.player.map(item=>item.id)
+    .filter(id=>!PLAYER_CANVAS_DEFAULT_IDS.includes(id)),'activityLog'];
 const playerOptional=playerCanvasIds.filter(id=>!PLAYER_CANVAS_DEFAULT_IDS.includes(id));
 const playerCategories=['Character','Equipment','Abilities','Combat','Adventures',
   'Social','Focus Panels','Shortcuts'].map(category=>({
