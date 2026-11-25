@@ -18,6 +18,8 @@ export {
 export const DASHBOARD_PANEL_REGISTRY = {
   player: [
     {id:'armour',label:'Equipment & Armour',category:'Character',size:'3x3'},
+    // Legacy grid identifier: kept for saved layout compatibility only.
+    {id:'weapons',label:'Equipped Weapons',category:'Equipment',size:'3x3'},
     {id:'quick',label:'Quick Items',category:'Equipment',size:'3x3'},
     {id:'talents',label:'Class Talents',category:'Abilities',size:'3x3'},
     {id:'spells',label:'Active Spells',category:'Abilities',size:'3x3'},
@@ -184,14 +186,14 @@ const PLAYER_CANVAS_DEFAULT_POSITIONS=Object.freeze({
 });
 const playerCanvasIds=[...PLAYER_CANVAS_DEFAULT_IDS,
   ...DASHBOARD_PANEL_REGISTRY.player.map(item=>item.id)
-    .filter(id=>!PLAYER_CANVAS_DEFAULT_IDS.includes(id)),'activityLog'];
+    .filter(id=>id!=='weapons'&&!PLAYER_CANVAS_DEFAULT_IDS.includes(id)),'activityLog'];
 const playerOptional=playerCanvasIds.filter(id=>!PLAYER_CANVAS_DEFAULT_IDS.includes(id));
 const playerCategories=['Character','Equipment','Abilities','Combat','Adventures',
   'Social','Focus Panels','Shortcuts'].map(category=>({
     id:category.toLowerCase().replace(/[^a-z0-9]+/g,'-'),
     label:category==='Focus Panels'?'Quick Views':category==='Shortcuts'?'Page Shortcuts':category,
     panels:[
-      ...DASHBOARD_PANEL_REGISTRY.player.filter(item=>item.category===category).map(item=>item.id),
+      ...DASHBOARD_PANEL_REGISTRY.player.filter(item=>item.category===category&&item.id!=='weapons').map(item=>item.id),
       ...(category==='Social'?['activityLog']:[])
     ]
   }));
