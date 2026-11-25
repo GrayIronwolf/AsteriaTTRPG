@@ -4314,3 +4314,151 @@ body #asteriaReactRoot [data-canvas-window] [data-combat-scroll]>div>
   .asteria-react-panel.asteria-royal-relic::before,
 body #asteriaReactRoot [data-canvas-window] [data-combat-scroll]>div>
   .asteria-react-panel.asteria-royal-relic::after{content:none!important}
+
+
+/* Milestone 2.1 - one shared Obsidian-inspired canvas shell.
+   No changes to canvas window coordinates or dimensions. */
+html[data-asteria-dashboard-header='collapsed'] .topbar.core-v2-topbar{
+  display:none!important;
+}
+html[data-asteria-dashboard-header='expanded'] .topbar.core-v2-topbar{
+  position:fixed!important;top:0;left:0;right:0;z-index:4000;
+  margin:0;max-width:none;width:100%;
+  box-shadow:0 15px 36px rgba(0,0,0,.65);
+}
+.asteria-dashboard-header-fold{
+  grid-column:1/-1;display:flex;justify-content:center;align-items:start;
+  height:26px;min-height:26px;position:relative;z-index:300;
+}
+.asteria-dashboard-header-fold button{
+  display:flex;align-items:center;gap:7px;justify-content:center;
+  min-height:26px;padding:3px 13px;cursor:pointer;
+  color:#dcecf5;background:rgba(36,62,81,.74);
+  border:1px solid #7894a5;border-top:0;border-radius:0 0 9px 9px;
+  backdrop-filter:blur(12px);font-size:.73rem;line-height:1;
+}
+.asteria-dashboard-header-fold button:focus-visible{
+  outline:2px solid #b3dcf5;outline-offset:2px;
+}
+.asteria-canvas-workspace-mode .react-workspace-main{
+  grid-template-columns:56px minmax(0,1fr);
+  column-gap:8px;row-gap:8px;align-content:start;
+}
+.asteria-canvas-workspace-mode .react-workspace-main > *{grid-column:1/-1;min-width:0}
+.asteria-canvas-workspace-mode .react-workspace-main >
+  nav[data-testid^='asteria-']{
+  grid-column:1;grid-row:auto;
+  align-self:stretch;position:relative;z-index:170;
+}
+.asteria-canvas-workspace-mode .react-workspace-main >
+  [data-testid='site-gm-main-canvas'],
+.asteria-canvas-workspace-mode .react-workspace-main >
+  :has(> [data-testid='site-gm-combat-command-centre']),
+.asteria-canvas-workspace-mode .react-workspace-main >
+  :has([data-testid='site-player-main-canvas']){
+  grid-column:2;min-width:0;
+}
+/* GM combat uses a wrapper which may be nested in one additional section.
+   Keep the navigation and selected view aligned in one grid row. */
+.asteria-canvas-workspace-mode .react-workspace-main >
+  nav[data-testid^='asteria-'] + *:has([data-testid*='canvas']),
+.asteria-canvas-workspace-mode .react-workspace-main >
+  nav[data-testid^='asteria-'] + *:has([data-testid='site-gm-combat-command-centre']){
+  grid-column:2;
+}
+.asteria-canvas-workspace-mode .react-workspace-header{
+  min-height:52px;padding:8px 12px;gap:12px;
+}
+.asteria-canvas-workspace-mode .react-workspace-header h1{font-size:1.3rem}
+.asteria-canvas-workspace-mode .react-workspace-header p{margin:2px 0 0}
+.asteria-canvas-workspace-mode .react-player-topbar.react-player-cinematic-hud,
+.asteria-canvas-workspace-mode .react-player-cinematic-hud.react-player-hud-no-portrait{
+  width:100%;min-height:185px;height:auto;
+  grid-template-columns:minmax(0,24fr) minmax(0,52fr) minmax(0,24fr);
+}
+.asteria-canvas-workspace-mode .react-player-cinematic-hud > .react-player-hud-art{
+  height:190px;min-height:190px;
+}
+.asteria-canvas-workspace-mode .react-player-portrait-caption,
+.asteria-canvas-workspace-mode .react-player-campaign-caption{
+  padding:9px 12px;
+}
+.asteria-canvas-workspace-mode .react-player-cinematic-hud .react-identity-copy strong,
+.asteria-canvas-workspace-mode .react-player-cinematic-hud .react-player-identity-copy strong,
+.asteria-canvas-workspace-mode .react-player-cinematic-hud .react-player-campaign-title strong{
+  font-size:clamp(1rem,1.25vw,1.45rem);
+}
+.asteria-canvas-workspace-mode .react-player-cinematic-hud .react-player-hud-information{
+  gap:5px 10px;padding:7px 12px;
+}
+.asteria-canvas-workspace-mode .react-player-hud-information .react-player-characteristic-grid{
+  grid-template-columns:repeat(9,minmax(0,1fr));
+  gap:3px;
+}
+.asteria-canvas-workspace-mode .react-player-characteristic-grid article{
+  min-height:27px;padding:2px;
+}
+.asteria-canvas-workspace-mode .react-player-cinematic-hud .react-level-shield{
+  width:44px;height:56px;padding:10px 4px 7px;
+}
+.asteria-canvas-workspace-mode .react-player-cinematic-hud .react-player-xp-content{
+  grid-template-columns:44px minmax(0,1fr);gap:5px;
+}
+.asteria-canvas-workspace-mode .react-player-hud-information .react-player-topbar-section{
+  padding:1px 2px;gap:3px;
+}
+.asteria-canvas-workspace-mode .react-player-hud-information .react-player-topbar-heading{
+  min-height:0;margin:0 0 2px;padding:0 0 2px;
+}
+.asteria-canvas-workspace-mode .react-player-resource-list{gap:1px}
+.asteria-canvas-workspace-mode .react-player-resource-controls input,
+.asteria-canvas-workspace-mode .react-player-resource-controls button{min-height:20px;height:20px}
+.asteria-canvas-workspace-mode .react-player-resources .react-resource.compact .react-resource-track{height:7px}
+/* Keep forms and tables outside the canvas constrained to readable measures. */
+.react-character-dashboard:not(.asteria-canvas-workspace-mode) .react-workspace-main
+  > .asteria-react-panel:not(.react-player-topbar),
+.react-gm-dashboard:not(.asteria-canvas-workspace-mode) .react-workspace-main
+  > .asteria-react-panel:not(.react-player-topbar){
+  min-width:0;max-width:100%;box-sizing:border-box;
+}
+.react-character-dashboard:not(.asteria-canvas-workspace-mode) .react-form-grid,
+.react-gm-dashboard:not(.asteria-canvas-workspace-mode) .react-form-grid{
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));
+}
+.react-overview-combined-weapons{margin-top:10px;padding-top:9px;border-top:1px solid #466073}
+.react-overview-combined-weapons h3{font-size:.85rem;margin:0 0 7px}
+.react-overview-combined-weapons .react-weapon-slot-grid{
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,140px),1fr));gap:6px;
+}
+@container (max-width:1100px){
+  .asteria-canvas-workspace-mode .react-player-topbar.react-player-cinematic-hud,
+  .asteria-canvas-workspace-mode .react-player-cinematic-hud.react-player-hud-no-portrait{
+    grid-template-columns:minmax(0,22fr) minmax(0,56fr) minmax(0,22fr);
+    min-height:185px;
+  }
+  .asteria-canvas-workspace-mode .react-player-cinematic-hud > .react-player-hud-art{
+    grid-row:1;min-height:185px;height:185px;
+  }
+  .asteria-canvas-workspace-mode .react-player-cinematic-hud > .react-player-hud-information{
+    grid-column:2;grid-row:1;
+  }
+}
+@media(max-width:800px){
+ .asteria-canvas-workspace-mode .react-workspace-main{grid-template-columns:1fr}
+ .asteria-canvas-workspace-mode .react-workspace-main > *{grid-column:1/-1!important}
+ .asteria-canvas-workspace-mode .react-workspace-main > nav[data-testid^='asteria-']{
+   grid-column:1/-1!important;
+ }
+ .asteria-canvas-workspace-mode .react-player-topbar.react-player-cinematic-hud{
+   height:auto;min-height:0;grid-template-columns:repeat(2,minmax(0,1fr));
+ }
+ .asteria-canvas-workspace-mode .react-player-cinematic-hud > .react-player-hud-art{
+   grid-row:1;min-height:115px;height:115px;
+ }
+ .asteria-canvas-workspace-mode .react-player-cinematic-hud > .react-player-hud-information{
+   grid-column:1/-1;grid-row:2;padding:10px;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+  .asteria-dashboard-header-fold *{transition:none!important}
+}
