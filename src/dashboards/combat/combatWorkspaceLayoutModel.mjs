@@ -301,20 +301,22 @@ export function combatWindowAlignment(layout,id,position,{snap=false,strength='m
  if(!current||!position||!Number.isFinite(position.x)||!Number.isFinite(position.y))
   return {position,guides:[]};
  const threshold={gentle:8,medium:16,strong:28}[strength]??16;
- const candidates={x:[],y:[]};
+ const nearest={x:null,y:null};
+ const own={x:[position.x,position.x+current.w/2,position.x+current.w],
+  y:[position.y,position.y+current.h/2,position.y+current.h]};
  for(const [otherId,rect] of Object.entries(layout.freeform.positions)){
   if(otherId===id||layout.hidden.includes(otherId))continue;
   for(const [axis,size] of [['x','w'],['y','h']]){
-   const own=[position[axis],position[axis]+current[size]/2,position[axis]+current[size]];
    const other=[rect[axis],rect[axis]+rect[size]/2,rect[axis]+rect[size]];
-   for(const source of own)for(const target of other){
+   for(const source of own[axis])for(const target of other){
     const delta=target-source;
-    if(Math.abs(delta)<=threshold)candidates[axis].push({delta,line:target});
+    if(Math.abs(delta)<=threshold&&
+      (!nearest[axis]||Math.abs(delta)<Math.abs(nearest[axis].delta)))
+      nearest[axis]={delta,line:target};
    }
   }
  }
- const nearest=axis=>candidates[axis].sort((a,b)=>Math.abs(a.delta)-Math.abs(b.delta))[0];
- const x=nearest('x'),y=nearest('y');
+ const {x,y}=nearest;
  return {position:{x:position.x+(snap&&x?x.delta:0),y:position.y+(snap&&y?y.delta:0)},
   guides:[...(x?[{axis:'x',line:x.line}]:[]),...(y?[{axis:'y',line:y.line}]:[])]};
 }

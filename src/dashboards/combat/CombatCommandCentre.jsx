@@ -597,6 +597,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
         gmCanvas?'GM dashboard freeform canvas':'Combat freeform canvas'}
       onPointerDown={startPan}
       onPointerMove={move} onPointerUp={end} onPointerCancel={end}
+      onLostPointerCapture={end}
       onAuxClick={event=>{if(event.button===1)event.preventDefault();}}>
       <div ref={stage} className={styles.stage}
         data-stage="combat-canvas-stage"
