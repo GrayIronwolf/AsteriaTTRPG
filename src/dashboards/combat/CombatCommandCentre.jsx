@@ -104,8 +104,11 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
     setSaved(gmCanvas?normalizeLayout(layoutValue):readLayout(storageKey));
     setUndoStack([]);setRedoStack([]);
     const storedCamera=readCamera(storageKey);
-    openingCameraPending.current=!storedCamera;
-    const freshCamera=storedCamera||DEFAULT_CAMERA;
+    // Migrate legacy near-invisible camera positions (4-10% in older layouts)
+    // to the approved 50% opening view; keep ordinary saved zoom settings.
+    const restoredCamera=storedCamera&&storedCamera.scale>=.25?storedCamera:null;
+    openingCameraPending.current=!restoredCamera;
+    const freshCamera=restoredCamera||DEFAULT_CAMERA;
     cameraRef.current=freshCamera;setCameraState({scope:storageKey,view:freshCamera});
     setFocused(null);setFrontWindow('');setMessage('');
     setSidebarExpanded(false);
@@ -141,17 +144,11 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
       // Measure in one coordinate space. The former viewport-top + scrollTop
       // mix left an unintended gap below the GM/Player/Combat canvases.
       const contentTop=viewportRect.top-scrollRect.top+scrollArea.scrollTop;
-      const height=Math.max(380,Math.floor(scrollArea.clientHeight-contentTop-2));
-      const parentRect=host.parentElement?.getBoundingClientRect();
-      const expandHorizontally=window.innerWidth>=900&&
-        (host.parentElement?.clientWidth||0)>=700;
-      // Expand into page gutters, not into player combat sidebars or dialogs.
-      const left=expandHorizontally&&parentRect
-        ?Math.min(36,Math.max(0,parentRect.left-scrollRect.left)):0;
-      const right=expandHorizontally&&parentRect
-        ?Math.min(36,Math.max(0,scrollRect.right-parentRect.right)):0;
-      host.style.setProperty('--combat-edge-left',left+'px');
-      host.style.setProperty('--combat-edge-right',right+'px');
+      const height=window.innerWidth>=900?Math.max(800,Math.floor(scrollArea.clientHeight-contentTop-2)):
+        Math.max(380,Math.floor(scrollArea.clientHeight-contentTop-2));
+      // Canvas fills its own content column; never extend over the left rail.
+      host.style.setProperty('--combat-edge-left','0px');
+      host.style.setProperty('--combat-edge-right','0px');
       viewport.style.setProperty('--combat-viewport-height',height+'px');
     };
     const schedule=()=>{
