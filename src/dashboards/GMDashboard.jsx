@@ -845,7 +845,7 @@ export function GMDashboard({ campaignId }) {
     subtitle="Live campaign control, party resources, rewards, encounters, and session tools."
     actions={<><SessionActions campaignId={campaignId} session={live.session} busy={busy} run={run} /><LiveSyncStatus online={live.online} connectionState={live.connectionState} error={live.error || actionError || coreSyncError} loading={live.loading} session={live.session} /></>}
   >
-    {['main','combat'].includes(tab)?<DashboardHeaderFold scope="gm"/>:null}
+    <DashboardHeaderFold scope="gm"/>
     {tab!=='combat'&&tab!=='main'?<section className="react-gm-party-strip" aria-label="GM Player Resources"
       data-testid="gm-player-resources-strip">
       <PartySidebar campaign={live.campaign || { id: campaignId }}
