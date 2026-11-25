@@ -16,7 +16,8 @@ test('Player seven-window default combines weapons and armour without changing w
   assert.deepEqual(PLAYER_CANVAS_DEFAULT_IDS,
     ['armour','quick','talents','spells','conditions','quests','party']);
   assert.equal(PLAYER_DASHBOARD_CANVAS_CONFIG.ids.includes('weapons'),false);
-  assert.equal(DASHBOARD_PANEL_REGISTRY.player.some(row=>row.id==='weapons'),true,\n    'Retain the old identifier for legacy grid preferences only');
+  assert.equal(DASHBOARD_PANEL_REGISTRY.player.some(row=>row.id==='weapons'),true,
+    'Retain the old identifier for legacy grid preferences only');
   assert.deepEqual(layout.freeform.positions.armour,
     {x:0,y:0,w:235,h:360});
   assert.equal(Object.keys(layout.freeform.positions)
