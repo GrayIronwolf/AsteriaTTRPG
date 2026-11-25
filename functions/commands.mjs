@@ -12,11 +12,12 @@ import { applyResourceChanges, resourceId, resourceSnapshot } from '../src/state
 import { buildTalentCatalog, prerequisiteProblem, rankDefined, reconcileTalentEffects, saveTalentRank, talentRank } from '../src/state/talentModel.mjs';
 import { talentRules, useLearnedTalent } from '../src/state/talentMechanics.mjs';
 import { changeQuestProgress, changeQuestStatus } from '../src/state/questWorkflowModel.mjs';
-import { applyCharacteristicAllocations, applyCharacteristicPoints, characterKnowsIdentify, firstFreeStorageSlot, nextSkillProgress, normalizeCharacterStorages, normalizeInventoryItems, normalizeLiveItem, parseResourceCost, slug as liveSlug, stableInventoryItemId, stackableStorageItem, unidentifiedItemName, structuredCloneSafe, talentRankCost, talentTierUnlocked, timestampMs } from '../src/state/liveWorkspaceModel.mjs';
+import { applyCharacteristicAllocations, applyCharacteristicPoints, characterKnowsIdentify, firstFreeStorageSlot, nextSkillProgress, normalizeCharacterStorages, normalizeInventoryItems, normalizeLiveItem, slug as liveSlug, stableInventoryItemId, stackableStorageItem, unidentifiedItemName, structuredCloneSafe, talentRankCost, talentTierUnlocked, timestampMs } from '../src/state/liveWorkspaceModel.mjs';
 import { createAsteriaItem, marketPricingStatus, normalizeMarketPricing } from '../src/systems/items/marketPricing.mjs';
 import { shopStockCompatible, shopVariantKey, merchantPriceCopper } from '../src/state/shopTransactionModel.mjs';
 import { validateMerchantProposal, assertMerchantDealMatches } from '../src/state/merchantDealModel.mjs';
-import { equipCharacterInventoryItem, stageDirectEquipReward } from './rewardDelivery.mjs';
+import { inventoryItemPresent, inventoryRecoveryProblem, itemRecoveryEffect, liveQuickSlots, quickSlotIndex } from '../src/state/inventoryQuickActions.mjs';
+import { equipCharacterInventoryItem, unequipCharacterInventoryItem, stageDirectEquipReward } from './rewardDelivery.mjs';
 import { createItemStoreCommands } from './itemStoreCommands.mjs';
 import { createCraftingCommands } from './craftingCommands.mjs';
 import { createEnhancementCommands } from './enhancementCommands.mjs';
@@ -140,6 +141,7 @@ function repairLegacyTradeMirror(transaction,refs,character){
 function writeLiveCharacter(transaction,refs,character){
   const clean=reconcileCharacterSystems(character,buildTalentCatalog(character,context.catalog),{encounter:refs.encounter});
   clean.inventory=normalizeInventoryItems(clean.inventory,clean);
+  if(Array.isArray(clean.quickSlots))clean.quickSlots=liveQuickSlots(clean,clean.inventory);
   if(clean.equipment&&typeof clean.equipment==='object') clean.equipment=Object.fromEntries(Object.entries(clean.equipment).map(([slot,item],index)=>[
     slot,
     item&&typeof item==='object'?normalizeLiveItem(Object.assign({},item,{equipped:true,equippedSlot:item.equippedSlot||slot}),index,clean):item
@@ -847,8 +849,15 @@ const commands = {
           writeLiveCharacter(transaction,refs,character);
           return;
         }
+        if(operation.type==='clear-quick'){
+          const index=quickSlotIndex(operation.index);
+          character.quickSlots=liveQuickSlots(character,inventory);character.quickSlots[index]=null;
+          character.inventory=inventory;writeLiveCharacter(transaction,refs,character);
+          return {index};
+        }
         const item=inventory.find((value,index)=>liveItemId(value,index)===String(operation.itemId||''));
         if(!item) throw new Error('Inventory item not found.');
+        if(operation.type!=='set-quantity'&&!inventoryItemPresent(item))throw new Error('This item is no longer available.');
         if(operation.type==='split-stack'){
           if(item.equipped || item.stackable===false || item.unique===true || item.bound===true ||
              item.questItem===true || Number(item.maxStack||0)===1)
@@ -899,23 +908,26 @@ const commands = {
           writeLiveCharacter(transaction,refs,character);
           return;
         }else if(operation.type==='unequip'){
-          const slot=item.equippedSlot||item.slot;
-          item.equipped=false;item.equippedSlot='';item.location='inventory';
-          if(slot&&character.equipment) delete character.equipment[slot];
+          unequipCharacterInventoryItem(character,liveItemId(item));
           appendActivity(character,{type:'item-unequipped',message:`Unequipped ${item.name}.`});
+          writeLiveCharacter(transaction,refs,character);
+          return;
         }else if(operation.type==='quick'){
-          const index=Math.max(0,Math.min(3,Number(operation.index||0)));
-          character.quickSlots=Array.isArray(character.quickSlots)?character.quickSlots.slice(0,4):[];
-          while(character.quickSlots.length<4) character.quickSlots.push(null);
+          const index=quickSlotIndex(operation.index);
+          character.quickSlots=liveQuickSlots(character,inventory);
           character.quickSlots[index]=item;
           appendActivity(character,{type:'quick-slot',message:`Assigned ${item.name} to Quick Slot ${index+1}.`});
         }else if(operation.type==='use'){
-          const effect=item.effect||item.effects||{};
-          const parsed=effect.resource ? {[String(effect.resource).toLowerCase()]:Number(effect.amount||0)} : parseResourceCost(effect);
-          const changes=Object.entries(parsed).filter(([,amount])=>Number(amount)>0);
-          if(!changes.length) throw new Error('This item does not have a usable resource effect.');
+          const restriction=combatRestriction(character,{encounter:refs.encounter});if(restriction)throw new Error(restriction);
+          const problem=inventoryRecoveryProblem(item);if(problem)throw new Error(problem);
+          const changes=Object.entries(itemRecoveryEffect(item));
           Object.assign(character,applyResourceChanges(character,{restore:Object.fromEntries(changes)}));
-          item.qty=Math.max(0,Number(item.qty||1)-1);
+          if(item.charges!==undefined)item.charges=Number(item.charges)-1;
+          else item.qty=Number(item.qty??item.quantity??1)-1;
+          if(character.equipment)for(const [slot,entry] of Object.entries(character.equipment)){
+            if(String(entry?.instanceId||entry?.id||'')!==String(item.id))continue;
+            if(Number(item.qty??item.quantity??1)<=0)delete character.equipment[slot];else character.equipment[slot]={...item};
+          }
           appendActivity(character,{type:'item-used',message:`Used ${item.name}: ${changes.map(([resource,amount])=>`+${amount} ${resource.toUpperCase()}`).join(', ')}.`});
         }else if(operation.type==='move-storage'){
           if(item.equipped) throw new Error('Unequip this item before moving it between containers.');
