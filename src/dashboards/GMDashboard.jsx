@@ -5,6 +5,7 @@ import { useCharacterSystemsSync } from '../sessions/useCharacterSystemsSync.js'
 import { reconcileCharacterSystems } from '../state/characterSystems.mjs';
 import { resolveRosterSelection } from '../state/dashboardNavigation.mjs';
 import {CanvasWorkspace,CombatCommandPanel} from './combat/CombatCommandCentre.jsx';
+import {DashboardHeaderFold} from '../components/DashboardHeaderFold.jsx';
 import {
   GMQuickRequests,GMQuickPreparedEncounters,GMQuickNotes,
   GMQuickCalendarWeather,GMQuickSession,GMQuickReference,GMQuickPlayerManager
@@ -838,12 +839,13 @@ export function GMDashboard({ campaignId }) {
   if(live.membershipLoading) return <div className="react-route-state">Verifying GM campaign membership...</div>;
   if(!window.AsteriaCharacterAccess.isGM(live.campaign,accountUid,live.membership)) return <div className="react-route-state" role="alert">{live.membershipError||'You do not have GM access to this campaign.'}</div>;
   return <AsteriaAppShell
-    className="react-gm-dashboard"
+    className={['main','combat'].includes(tab)?'react-gm-dashboard asteria-canvas-workspace-mode':'react-gm-dashboard'}
     eyebrow="GM Dashboard"
     title={live.campaign?.name || 'Campaign'}
     subtitle="Live campaign control, party resources, rewards, encounters, and session tools."
     actions={<><SessionActions campaignId={campaignId} session={live.session} busy={busy} run={run} /><LiveSyncStatus online={live.online} connectionState={live.connectionState} error={live.error || actionError || coreSyncError} loading={live.loading} session={live.session} /></>}
   >
+    {['main','combat'].includes(tab)?<DashboardHeaderFold scope="gm"/>:null}
     {tab!=='combat'&&tab!=='main'?<section className="react-gm-party-strip" aria-label="GM Player Resources"
       data-testid="gm-player-resources-strip">
       <PartySidebar campaign={live.campaign || { id: campaignId }}
