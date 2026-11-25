@@ -199,7 +199,7 @@ function CharacterDashboardContent({campaignId,characterId,live}) {
     className={activeTab==='dashboard'?'react-character-dashboard asteria-canvas-workspace-mode':'react-character-dashboard'}
     showHeader={false}
   >
-    {activeTab==='dashboard'?<DashboardHeaderFold scope="player"/>:null}
+    <DashboardHeaderFold scope="player"/>
     {gmReturn ? <button type="button" className="react-gm-return" onClick={() => returnToGM(gmReturn)}>← Back to GM Dashboard</button> : null}
     {campaignId?<SessionGate session={live.session} />:<div className="react-unassigned-dashboard" role="status"><b>Unassigned character</b><p>You can inspect this character now. Link a campaign and join an active session to use gameplay actions.</p><div className="react-action-row"><button onClick={()=>openLegacyView('workspace',()=>window.AsteriaWorkspace?.openDashboard?.('campaigns'))}>Link a campaign</button><button onClick={()=>openLegacyView('workspace',()=>window.AsteriaGameplay?.openCharacterForgeHub?.())}>Back to Character Forge</button></div></div>}
     <DashboardInformationRow campaign={live.campaign || {}} session={live.session} character={character} partyWorkspace={live.partyWorkspace} editable={resourceEditable} onResourceChange={updateResource} online={live.online} connectionState={live.connectionState} error={live.error || coreSyncError} loading={live.loading} />
