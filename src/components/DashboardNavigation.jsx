@@ -83,6 +83,7 @@ export function DashboardNavigation({tabs=[],active,onChange,ariaLabel='Dashboar
           aria-current={direct&&current?'page':undefined}
           aria-haspopup={direct?undefined:'true'}
           aria-expanded={direct?undefined:opened===group.id}
+          title={group.label}
           onClick={()=>toggle(group.id)}>
           <AsteriaIcon name={group.icon}/><span>{group.label}</span>
           {!direct?<span aria-hidden="true" className={styles.chevron}>▾</span>:null}
@@ -90,7 +91,7 @@ export function DashboardNavigation({tabs=[],active,onChange,ariaLabel='Dashboar
       })}
       <button type="button" className={'asteria-menu-button '+styles.searchButton}
         data-asteria-button-size="standard"
-        aria-label="Find dashboard page" aria-expanded={opened==='search'}
+        aria-label="Find dashboard page" title="Find dashboard page" aria-expanded={opened==='search'}
         onClick={()=>{setOpened(value=>value==='search'?'':'search');setQuery('');}}>
         <AsteriaIcon name="search"/><span className={styles.searchText}>Find</span>
       </button>
