@@ -20,7 +20,7 @@ function entries(value,kind){
     if(!name||seen.has(key))throw Error('Each '+kind+' entry needs a unique name/ID.');
     seen.add(key);
     const entry={id:key,name};
-    for(const field of ['description','range','damage','requirement','effect','rank','category']){
+    for(const field of ['description','range','damage','requirement','effect','rank','category','skill']){
       if(item[field]!==undefined){
         if(typeof item[field]!=='string'||item[field].length>500)
           throw Error('Invalid '+kind+' '+field+'.');
@@ -87,4 +87,31 @@ export function refreshEnemyProfile(saved,latest,fields=[]){
     else next[field]=structuredClone(snapshot[field]);
   }
   return next;
+}
+
+/**
+ * Commands are derived only from the canonical stored encounter creature.
+ * These identifiers never grant a player access to GM creature actions.
+ */
+export function enemyCombatOptions(source={}){
+  let profile;
+  try{profile=enemyProfileSnapshot(source);}catch{return [];}
+  const groups=['attacks','spells','abilities'];
+  return groups.flatMap(group=>(profile[group]||[]).filter(item=>
+    group!=='abilities'||item.category!=='passive'
+  ).map(item=>{
+    const ap=item.ap??(group==='spells'?2:1);
+    const costs={...(item.mp?{mp:item.mp}:{}),...(item.sp?{sp:item.sp}:{})};
+    return {
+      id:'enemy:'+group+':'+item.id,
+      name:item.name,kind:group==='spells'?'spell':'creature-action',
+      key:group==='attacks'?'creature-attack':
+        group==='spells'?'creature-spell':'creature-ability',
+      creatureAction:true,group,ap,costs,bonus:false,reaction:false,
+      requiresTarget:group==='attacks',rank:item.rank||'',
+      baseMP:costs.mp||0,description:item.description||'',
+      fields:{...item},blocked:group==='spells'&&!item.rank?
+        'This creature spell needs an explicit rank.':''
+    };
+  }));
 }
