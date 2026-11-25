@@ -1,3 +1,4 @@
+import { ownedSpellRecords, describeOwnedSpell, ownedSpellCosts } from '../state/combatRules.mjs';
 import { buildTalentCatalog, characterClasses, ownedTalents, talentRank as savedTalentRank } from '../state/talentModel.mjs';
 import { SKILL_RANKS, normalizeLiveItem, skillRankNumber, slug } from '../state/liveWorkspaceModel.mjs';
 import { getMarketPrice, getMarketValue } from '../systems/items/marketPricing.mjs';
@@ -40,18 +41,19 @@ export function knownMagic(character = {}) {
 }
 
 export function knownSpells(character = {}) {
-  const source=list(character.spells || character.activeSpells || character.knownSpells);
-  return source.map((spell,index)=>{
-    const name=spell.name || spell.title || String(spell);
-    const entry=universalEntries('spell').find(value=>slug(value.title||value.name)===slug(name));
-    const element=spell.element || spell.magicType || entry?.metadata?.magicalElement || entry?.metadata?.element || entry?.metadata?.magicType || 'Unaligned';
+  const catalog=universalEntries('spell');
+  return ownedSpellRecords(character).map(spell=>{
+    const record=describeOwnedSpell(spell,catalog),{source:entry,fields,name,rank,key}=record;
+    const element=spell.element||spell.magicType||fields.magicalElement||fields.element||fields.magicType||'Unaligned';
+    let costs={},costProblem='';
+    try{costs=ownedSpellCosts(record);}catch(error){costProblem=error.message;}
     return {
-      id:spell.id || entry?.id || slug(name) || `spell-${index}`, name, image:spell.image || entry?.imagePath || entry?.metadata?.image || magicElementImage(element),
-      element,
-      rank:spell.rank || entry?.metadata?.rank || 'Rank I', cost:spell.cost ?? spell.manaCost ?? entry?.metadata?.manaCost ?? entry?.metadata?.cost ?? 0,
-      costs:spell.costs || spell.resourceCosts || null, summary:spell.summary || entry?.summary || 'Spell information coming soon.', body:entry?.body || entry?.content || ''
+      id:key,key,name,rank,element,costs,cost:costs,costProblem,
+      image:spell.image||entry?.imagePath||entry?.metadata?.image||magicElementImage(element),
+      summary:spell.summary||entry?.summary||'Spell information coming soon.',
+      body:entry?.body||entry?.content||'',fields
     };
-  }).filter(spell=>spell.name);
+  });
 }
 
 export function inventoryItems(character = {}) {
