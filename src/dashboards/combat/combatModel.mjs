@@ -162,9 +162,16 @@ export function libraryEnemy(source,id){
   if(!validId(id)||!validId(source?.id))throw Error('Invalid creature source.');
   const name=title(source.name,120).trim();
   if(!name)throw Error('Creature name is missing.');
-  const next={id,sourceId:source.id,name,kind:'enemy',type:title(source.type,80),
-    defeated:false,...encounterSourceResources(source),...safeEnemyProfile(source),
-    sourceSnapshot:safeEnemyProfile(source),
+  const resources=encounterSourceResources(source);
+  const profile=safeEnemyProfile(source);
+  const stats={
+    name,type:title(source.type,80)||'Creature',...resources,
+    ...(Number.isSafeInteger(source.ac)?{ac:source.ac}:{}),
+    ...(Number.isSafeInteger(source.xpReward)?{xpReward:source.xpReward}:{})
+  };
+  const next={id,sourceId:source.id,name,kind:'enemy',...stats,
+    defeated:false,...profile,
+    sourceSnapshot:{...structuredClone(stats),...structuredClone(profile)},
     sourceRef:validId(source.sourceRef)?source.sourceRef:'',
     sourceVersion:title(source.sourceVersion,40)};
   if(source.initiative!==undefined&&source.initiative!==''&&
