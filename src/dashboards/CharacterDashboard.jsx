@@ -112,9 +112,9 @@ function MagicRewardModal({ campaignId, character, event, onResolved }) {
   </Modal>;
 }
 
-export function CharacterDashboard({ campaignId, characterId }) {
+export function CharacterDashboard({ campaignId, characterId, embedded=false }) {
   const live = useCampaignLiveData(campaignId, { mode: 'character', characterId });
-  return <CharacterDashboardContent campaignId={campaignId} characterId={characterId} live={live}/>;
+  return <CharacterDashboardContent campaignId={campaignId} characterId={characterId} live={live} embedded={embedded}/>;
 }
 
 export function OwnedCharacterDashboard({characterId}) {
@@ -126,7 +126,7 @@ export function OwnedCharacterDashboard({characterId}) {
   return <CharacterDashboardContent campaignId="" characterId={characterId} live={live}/>;
 }
 
-function CharacterDashboardContent({campaignId,characterId,live}) {
+function CharacterDashboardContent({campaignId,characterId,live,embedded=false}) {
   const [tab, setTab] = useState('dashboard');
   const [acknowledged, setAcknowledged] = useState(() => new Set());
   const processedLoot = useRef(new Set());
@@ -196,10 +196,10 @@ function CharacterDashboardContent({campaignId,characterId,live}) {
   const resourceEditable = editable && live.online && !live.error && !combat.active;
   const updateResource = (resource, amount) => firebaseService.updateResource(campaignId, character.id, resource, amount, { source:'Character Dashboard HUD',expectedCoreRevision:Number(character.coreRevision || 0) });
   return <AsteriaAppShell
-    className={activeTab==='dashboard'?'react-character-dashboard asteria-canvas-workspace-mode':'react-character-dashboard'}
+    className={activeTab==='dashboard'&&!embedded?'react-character-dashboard asteria-canvas-workspace-mode':'react-character-dashboard'}
     showHeader={false}
   >
-    <DashboardHeaderFold scope="player"/>
+    {!embedded?<DashboardHeaderFold scope="player"/>:null}
     {gmReturn ? <button type="button" className="react-gm-return" onClick={() => returnToGM(gmReturn)}>← Back to GM Dashboard</button> : null}
     {campaignId?<SessionGate session={live.session} />:<div className="react-unassigned-dashboard" role="status"><b>Unassigned character</b><p>You can inspect this character now. Link a campaign and join an active session to use gameplay actions.</p><div className="react-action-row"><button onClick={()=>openLegacyView('workspace',()=>window.AsteriaWorkspace?.openDashboard?.('campaigns'))}>Link a campaign</button><button onClick={()=>openLegacyView('workspace',()=>window.AsteriaGameplay?.openCharacterForgeHub?.())}>Back to Character Forge</button></div></div>}
     <DashboardInformationRow campaign={live.campaign || {}} session={live.session} character={character} partyWorkspace={live.partyWorkspace} editable={resourceEditable} onResourceChange={updateResource} online={live.online} connectionState={live.connectionState} error={live.error || coreSyncError} loading={live.loading} />
