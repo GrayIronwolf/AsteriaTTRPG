@@ -207,7 +207,7 @@ function CharacterDashboardContent({campaignId,characterId,live}) {
     {activeTab === 'dashboard' ? <><PlayerDashboardOverview combat={combat} isGM={window.AsteriaCharacterAccess.isGM(live.campaign,uid,live.membership)} sessionEditable={live.session?.editable} clock={{encounter:live.encounter,now:live.clock,sessionId:live.session?.id}} abilityEditable={editable && live.online && !live.error} campaignId={campaignId} campaign={live.campaign || {}} character={character} characters={live.characters} partyWorkspace={live.partyWorkspace} editable={editable} canEditLayout={isOwner} onNavigate={navigate} /></> : null}
     {activeTab === 'character' ? <CharacterTab campaignId={campaignId} character={character} editable={editable} /> : null}
     {activeTab === 'talents' ? <TalentsTab campaignId={campaignId} character={character} editable={editable && live.online && !live.error} characters={live.characters} encounter={live.encounter} combat={combat} clock={{encounter:live.encounter,now:live.clock,sessionId:live.session?.id}} /> : null}
-    {activeTab === 'skills' ? <SkillsTab clock={{encounter:live.encounter,now:live.clock}} campaignId={campaignId} character={character} editable={editable} /> : null}
+    {activeTab === 'skills' ? <SkillsTab clock={{encounter:live.encounter,now:live.clock}} campaignId={campaignId} character={character} editable={editable} online={live.online&&!live.error} /> : null}
     {activeTab === 'spells' ? <SpellsTab campaignId={campaignId} character={character} editable={editable && live.online && !live.error} combat={combat} /> : null}
     {activeTab === 'crafting' && campaignId ? <div className="react-crafting-workspace">
       <PlayerCraftingRecipes campaignId={campaignId} character={character} editable={editable}/>
@@ -229,7 +229,7 @@ function CharacterDashboardContent({campaignId,characterId,live}) {
     {activeTab === 'session-recordings' && campaignId ? <PlayerSessionRecordingWorkspace campaignId={campaignId}/> : null}
     {activeTab === 'settings' ? <DashboardSettingsTab campaignId={campaignId} character={character} editable={isOwner}
       onNavigate={navigate} /> : null}
-    {campaignId&&isOwner?<PlayerUniversalCheckPopup campaignId={campaignId} characterId={characterId}/>:null}
+    {campaignId&&isOwner?<PlayerUniversalCheckPopup campaignId={campaignId} characterId={characterId} online={live.online&&!live.error}/>:null}
     {campaignId?<PlayerItemRequestCenter campaignId={campaignId} character={character} characters={live.characters} ecosystem={live.itemEcosystem} editable={editable} />:null}
     </CombatDashboardLayout>
     {noticeError?<p className="react-action-message" role="alert">{noticeError}</p>:null}

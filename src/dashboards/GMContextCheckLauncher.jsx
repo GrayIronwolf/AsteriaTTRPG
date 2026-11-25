@@ -36,6 +36,7 @@ export function GMContextCheckLauncher({campaignId,characters={},context,title='
   const [rankOverride,setRankOverride]=useState('');
   const [dc,setDc]=useState('15');
   const [modifier,setModifier]=useState('0');
+  const [requiredSuccesses,setRequiredSuccesses]=useState('');
   const [advantage,setAdvantage]=useState(false);
   const [disadvantage,setDisadvantage]=useState(false);
   const [instructions,setInstructions]=useState('');
@@ -51,6 +52,7 @@ export function GMContextCheckLauncher({campaignId,characters={},context,title='
     setType(context?.kind==='merchant-deal'?'social':'skill');
     setPreset(context?.kind==='merchant-deal'?'haggling':context?.kind==='gameplay'?'perception':'persuasion');
     setStat(context?.kind==='gameplay'?'wisdom':'charisma');setExpanded(false);setNotice('');setError('');
+    setRequiredSuccesses('');
     operation.current=null;
   },[campaignId,contextKey,initialCharacterId,context?.kind]);
   useEffect(()=>{
@@ -70,8 +72,11 @@ export function GMContextCheckLauncher({campaignId,characters={},context,title='
   const skill=preset==='custom'?customSkill:chosen?.[1]||'';
   const chosenStat=stat||chosen?.[2]||'';
   const multi=type==='group'||type==='opposed';
-  const valid=Number.isInteger(Number(dc))&&dc.trim()!==''&&Number(dc)>=0&&Number(dc)<=1000&&
-    Number.isInteger(Number(modifier))&&modifier.trim()!==''&&Math.abs(Number(modifier))<=100;
+  const valid=(type==='opposed'||(Number.isInteger(Number(dc))&&dc.trim()!==''&&Number(dc)>=0&&Number(dc)<=1000))&&
+    Number.isInteger(Number(modifier))&&modifier.trim()!==''&&Math.abs(Number(modifier))<=100 &&
+    (type!=='group'||requiredSuccesses.trim()===''||(
+      Number.isSafeInteger(Number(requiredSuccesses))&&Number(requiredSuccesses)>=1&&
+      Number(requiredSuccesses)<=participantIds.length));
   const roster=Object.values(characters).filter(row=>row?.id&&row?.ownerUid);
   const send=async event=>{
     event.preventDefault();
@@ -80,6 +85,7 @@ export function GMContextCheckLauncher({campaignId,characters={},context,title='
     const payload={campaignId,action:'create',type,characterId:ids[0],
       ...(multi?{characterIds:ids}:{}),
       characteristic:chosenStat,skill:skill.trim(),dc:type==='opposed'?0:Number(dc),rankOverride,
+      requiredSuccesses:type==='group'&&requiredSuccesses.trim()!==''?Number(requiredSuccesses):0,
       context,description:instructions.slice(0,500),
       modifiers:[{label:'Situational modifier',value:Number(modifier)}],
       advantage,disadvantage};
@@ -103,7 +109,7 @@ export function GMContextCheckLauncher({campaignId,characters={},context,title='
       {expanded?'Close check composer':'Request player check'}
     </button>
     {expanded?<form onSubmit={send}>
-      {context.kind!=='merchant-deal'?<label>Check type<select value={type} onChange={event=>{setType(event.target.value);setParticipantIds([]);}}>
+      {context.kind!=='merchant-deal'?<label>Check type<select value={type} onChange={event=>{setType(event.target.value);setParticipantIds([]);setRequiredSuccesses('');}}>
         {UNIVERSAL_CHECK_TYPES.filter(value=>!['characteristic','saving'].includes(value)).map(value=><option key={value} value={value}>{value}</option>)}
       </select></label>:null}
       {multi?<fieldset><legend>Choose participants</legend>
@@ -134,6 +140,9 @@ export function GMContextCheckLauncher({campaignId,characters={},context,title='
         {Object.keys(UNIVERSAL_CHECK_RANKS).map(name=><option key={name}>{name}</option>)}
       </select></label>
       {type!=='opposed'?<label>DC<input type="number" min="0" max="1000" required value={dc} onChange={event=>setDc(event.target.value)}/></label>:<p>Opposed checks compare participant results.</p>}
+      {type==='group'?<label>Successes required (blank = half rounded up)<input type="number" min="1"
+        max={participantIds.length||10} value={requiredSuccesses}
+        onChange={event=>setRequiredSuccesses(event.target.value)}/></label>:null}
       <label>Situational modifier<input type="number" min="-100" max="100" required value={modifier}
         onChange={event=>setModifier(event.target.value)}/></label>
       <label><input type="checkbox" checked={advantage} onChange={event=>setAdvantage(event.target.checked)}/> Advantage</label>

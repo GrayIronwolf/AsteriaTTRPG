@@ -1,7 +1,7 @@
 import { spellPaymentProblem } from '../state/combatRules.mjs';
 import { CombatActionButton } from './CombatPanel.jsx';
 import { questType } from '../state/questWorkflowModel.mjs';
-import { characterCheck } from '../state/effectsEngine.mjs';
+import { universalSkillPreview } from '../state/universalCheckModel.mjs';
 import { useAsyncAction as useAction } from '../components/useAsyncAction.js';
 import { QuestDetails, QuestObjectives } from '../components/QuestDetails.jsx';
 import { QUEST_STATUSES, questIsClosed, questProgress } from '../state/questWorkflowModel.mjs';
@@ -162,15 +162,57 @@ export function CharacterTab({ campaignId, character, editable }) {
 
 export { TalentsTab } from './ClassTalentTree.jsx';
 
-export function SkillsTab({ campaignId, character, editable, clock={} }) {
+export function SkillsTab({ campaignId, character, editable, online=true, clock={} }) {
   const skills=selectedSkills(character);
   const [details,setDetails]=useState(null);
   const [query,setQuery]=useState('');
   const [category,setCategory]=useState('All');
+  const [pending,setPending]=useState(null);
   const action=useAction();
+  useEffect(()=>{setPending(null);setDetails(null);},[campaignId,character.id]);
   const categories=['All',...new Set(skills.map(skill=>skill.category).filter(Boolean))];
-  const visible=skills.filter(skill=>(category==='All'||skill.category===category)&&`${skill.name} ${skill.rankName} ${skill.category} ${skill.description||''}`.toLowerCase().includes(query.toLowerCase()));
-  return <Panel title="Character Skills" action={<StatusPill>{visible.length} of {skills.length}</StatusPill>}><div className="react-content-toolbar"><SearchField value={query} onChange={setQuery} placeholder="Search selected skills..."/><FilterControl label="Category" value={category} onChange={setCategory}>{categories.map(value=><option key={value}>{value}</option>)}</FilterControl></div><div className="react-card-gallery">{visible.map(skill=><article key={skill.id} className="react-skill-card" onDoubleClick={()=>setDetails(skill)}><b>{skill.name}</b><strong>{skill.rankName}</strong><small>Check modifier {characterCheck(character,`skills.${skill.id}`,0,clock).value}{characterCheck(character,`skills.${skill.id}`,0,clock).advantage?' · Advantage':characterCheck(character,`skills.${skill.id}`,0,clock).disadvantage?' · Disadvantage':''}</small><small>{skill.category}</small><div className="react-skill-meter"><i style={{width:`${skill.target?Math.min(100,skill.successes/skill.target*100):100}%`}}/></div><small>{skill.target?`${skill.successes}/${skill.target} successful checks`:'Maximum rank'}</small><button disabled={!editable||action.busy||!skill.target} onClick={()=>action.run(()=>firebaseService.recordSkillSuccess(campaignId,character.id,skill),`${skill.name} success recorded.`)}>Successful Check</button><button onClick={()=>setDetails(skill)}>Techniques</button></article>)}{!visible.length?<EmptyState title={skills.length?'No matching skills':'No selected skills'}/>:null}</div><p>{action.message}</p><InfoModal record={details} eyebrow={`${details?.rankName||''} Skill Techniques`} onClose={()=>setDetails(null)}/></Panel>;
+  const visible=skills.filter(skill=>(category==='All'||skill.category===category)&&
+    `${skill.name} ${skill.rankName} ${skill.category} ${skill.description||''}`.toLowerCase().includes(query.toLowerCase()));
+  const selected=skills.find(skill=>skill.id===pending);
+  const recordTraining=async()=>{
+    if(!selected||!editable||!online||action.busy||!selected.target)return;
+    const result=await action.run(()=>firebaseService.recordSkillSuccess(campaignId,character.id,selected),
+      `${selected.name} training success recorded.`);
+    if(result?.ok)setPending(null);
+  };
+  return <Panel title="Character Skills" action={<StatusPill>{visible.length} of {skills.length}</StatusPill>}>
+    <div className="react-content-toolbar">
+      <SearchField value={query} onChange={setQuery} placeholder="Search selected skills..."/>
+      <FilterControl label="Category" value={category} onChange={setCategory}>
+        {categories.map(value=><option key={value}>{value}</option>)}
+      </FilterControl>
+    </div>
+    <p className="react-help">GM-requested checks use the Universal Check popup and approved eight-rank modifiers.
+      Recording a training success is separate from submitting a GM check.</p>
+    <div className="react-card-gallery">{visible.map(skill=>{
+      const preview=universalSkillPreview(character,skill,clock);
+      return <article key={skill.id} className="react-skill-card" onDoubleClick={()=>setDetails(skill)}>
+        <b>{skill.name}</b><strong>{skill.rankName}</strong>
+        <small>{preview.available?
+          `GM check modifier ${preview.total>=0?'+':''}${preview.total}${preview.advantage?' · Advantage':preview.disadvantage?' · Disadvantage':''}`:
+          `GM check modifier unavailable: ${preview.reason}`}</small>
+        <small>{skill.category}</small>
+        <div className="react-skill-meter"><i style={{width:`${skill.target?Math.min(100,skill.successes/skill.target*100):100}%`}}/></div>
+        <small>{skill.target?`${skill.successes}/${skill.target} training successes`:'Maximum rank'}</small>
+        <button disabled={!editable||!online||action.busy||!skill.target} onClick={()=>setPending(skill.id)}>Record training success</button>
+        <button onClick={()=>setDetails(skill)}>Techniques</button>
+      </article>;
+    })}{!visible.length?<EmptyState title={skills.length?'No matching skills':'No selected skills'}/>:null}</div>
+    <p role="status">{action.message}</p>
+    <InfoModal record={details} eyebrow={`${details?.rankName||''} Skill Techniques`} onClose={()=>setDetails(null)}/>
+    {selected?<Modal title={`Record ${selected.name} training success?`} eyebrow="Training Progress"
+      busy={action.busy} onClose={()=>setPending(null)}
+      footer={<><button type="button" onClick={()=>setPending(null)} disabled={action.busy}>Cancel</button>
+      <button className="primary" type="button" disabled={!editable||!online||action.busy||!selected.target}
+        onClick={recordTraining}>Confirm training success</button></>}>
+      <p>This records training progress. It does not roll dice or submit a GM check result.</p>
+    </Modal>:null}
+  </Panel>;
 }
 
 export function SpellsTab({ campaignId, character, editable, combat }) {

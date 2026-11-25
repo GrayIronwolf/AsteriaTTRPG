@@ -3,6 +3,7 @@ import {firebaseService} from '../firebase/asteriaFirebaseService.js';
 import {UNIVERSAL_CHECK_TYPES,UNIVERSAL_CHECK_RANKS,UNIVERSAL_CHARACTERISTICS} from '../state/universalCheckModel.mjs';
 
 const timestamp=value=>value?.toDate?.()?.toLocaleString?.()||'';
+const checkEpoch=value=>Number(value?.seconds||0)*1000||Number(value?.toMillis?.()||0);
 const modifierLabel=value=>Number(value)>=0?'+'+value:String(value);
 const sourceLabel=row=>row.context?(row.context.label+(row.context.detail?' · '+row.context.detail:'')):'';
 function useRequests(campaignId,gm){
@@ -55,7 +56,7 @@ function Result({row}){
     {row.groupId?<p>Group: {row.groupOutcome?row.groupOutcome.outcome+(row.groupOutcome.winnerId?' · Winning request: '+row.groupOutcome.winnerId:''):'Awaiting other participants'}</p>:null}
   </div>;
 }
-export function GMUniversalCheckManager({campaignId,characters={}}){
+export function GMUniversalCheckManager({campaignId,characters={},online=true}){
   const rows=useRequests(campaignId,true),{send,busy,error}=useAction(campaignId);
   const [characterIds,setCharacterIds]=useState([]),[type,setType]=useState('skill'),
     [skill,setSkill]=useState(''),[characteristic,setCharacteristic]=useState(''),
@@ -69,6 +70,7 @@ export function GMUniversalCheckManager({campaignId,characters={}}){
   const chosen=characterIds.filter(id=>roster.some(([key])=>key===id));
   const submit=async event=>{
     event.preventDefault();
+    if(!online)return;
     const chosenIds=multi?chosen:chosen.slice(0,1);
     const result=await send({action:'create',type,characterId:chosenIds[0],
       ...(multi?{characterIds:chosenIds}:{}),skill,characteristic,rankOverride,
@@ -78,6 +80,7 @@ export function GMUniversalCheckManager({campaignId,characters={}}){
   };
   return <section className="react-panel" aria-label="Universal check manager">
     <h3>Universal Check Requests</h3>
+    {!online?<p role="status">Reconnect to create or manage check requests.</p>:null}
     <form onSubmit={submit}>
       <label>Check type <select value={type} onChange={event=>{setType(event.target.value);setCharacterIds([]);}}>
         {UNIVERSAL_CHECK_TYPES.map(value=><option key={value} value={value}>{value}</option>)}
@@ -108,7 +111,7 @@ export function GMUniversalCheckManager({campaignId,characters={}}){
       <label><input type="checkbox" checked={disadvantage} onChange={event=>setDisadvantage(event.target.checked)}/> GM disadvantage</label>
       <label>NPC (optional) <input value={npcName} onChange={event=>setNpcName(event.target.value)}/></label>
       <label>Instructions <textarea value={description} onChange={event=>setDescription(event.target.value)}/></label>
-      <button disabled={busy||!characteristic||(multi?chosen.length<(type==='opposed'?2:2)||type==='opposed'&&chosen.length!==2:chosen.length!==1)}>
+      <button disabled={!online||busy||!characteristic||(multi?chosen.length<2||type==='opposed'&&chosen.length!==2:chosen.length!==1)}>
         {busy?'Submitting…':'Send Check Request'}
       </button>
     </form>
@@ -124,17 +127,17 @@ export function GMUniversalCheckManager({campaignId,characters={}}){
       <details><summary>Frozen modifiers</summary><Breakdown row={row}/></details>
       <Result row={row}/>
       {row.status==='pending'?<>
-        <button type="button" disabled={busy} onClick={()=>send({action:'resend',requestId:row.id})}>Resend notification</button>
-        <button type="button" disabled={busy} onClick={()=>send({action:'cancel',requestId:row.id})}>Cancel{row.groupId?' group':''}</button>
+        <button type="button" disabled={!online||busy} onClick={()=>send({action:'resend',requestId:row.id})}>Resend notification</button>
+        <button type="button" disabled={!online||busy} onClick={()=>send({action:'cancel',requestId:row.id})}>Cancel{row.groupId?' group':''}</button>
       </>:null}
-      {row.status==='submitted'?<button type="button" disabled={busy} onClick={()=>send({action:'acknowledge',requestId:row.id})}>Acknowledge</button>:null}
+      {row.status==='submitted'?<button type="button" disabled={!online||busy} onClick={()=>send({action:'acknowledge',requestId:row.id})}>Acknowledge</button>:null}
       {['submitted','acknowledged'].includes(row.status)?<>
-        <button type="button" disabled={busy} onClick={()=>send({action:'reroll',requestId:row.id})}>Request reroll{row.groupId?' for group':''}</button>
+        <button type="button" disabled={!online||busy} onClick={()=>send({action:'reroll',requestId:row.id})}>Request reroll{row.groupId?' for group':''}</button>
         <label>Override reason <input value={overrideReasons[row.id]||''}
           onChange={event=>setOverrideReasons(previous=>({...previous,[row.id]:event.target.value}))}/></label>
-        <button type="button" disabled={busy||(overrideReasons[row.id]||'').trim().length<3}
+        <button type="button" disabled={!online||busy||(overrideReasons[row.id]||'').trim().length<3}
           onClick={()=>send({action:'override',requestId:row.id,outcome:'success',reason:overrideReasons[row.id]})}>Override success</button>
-        <button type="button" disabled={busy||(overrideReasons[row.id]||'').trim().length<3}
+        <button type="button" disabled={!online||busy||(overrideReasons[row.id]||'').trim().length<3}
           onClick={()=>send({action:'override',requestId:row.id,outcome:'failure',reason:overrideReasons[row.id]})}>Override failure</button>
       </>:null}
       {(row.history||[]).length?<details><summary>Previous attempts ({row.history.length})</summary>
@@ -165,8 +168,9 @@ export function GMUniversalCheckNotification({campaignId,onOpen}){
     {onOpen?<button type="button" onClick={onOpen}>Open check manager</button>:null}
   </aside>;
 }
-export function PlayerUniversalCheckPopup({campaignId,characterId}){
-  const rows=useRequests(campaignId,false).filter(row=>row.characterId===characterId);
+export function PlayerUniversalCheckPopup({campaignId,characterId,online=true}){
+  const rows=useRequests(campaignId,false).filter(row=>row.characterId===characterId)
+    .sort((a,b)=>checkEpoch(b.createdAt)-checkEpoch(a.createdAt)||String(b.id).localeCompare(String(a.id)));
   const {send,busy,error}=useAction(campaignId);
   const [first,setFirst]=useState(''),[second,setSecond]=useState(''),[reported,setReported]=useState('success');
   const [hidden,setHidden]=useState([]),[showHistory,setShowHistory]=useState(false);
@@ -174,11 +178,13 @@ export function PlayerUniversalCheckPopup({campaignId,characterId}){
   const row=pending.find(item=>!hidden.includes(item.id+':'+item.attempt+':'+item.notificationRevision));
   const hasDouble=row?.advantage||row?.disadvantage;
   const submit=async data=>{
+    if(!online||!row)return;
     const result=await send({action:'submit',requestId:row.id,...data});
     if(result){setFirst('');setSecond('');}
   };
   return <section aria-label="Player check requests">
     {pending.length?<button type="button" onClick={()=>setHidden([])}>Pending GM check requests: {pending.length}</button>:null}
+    {!online?<p role="status">Offline — check requests are read-only until synchronization resumes.</p>:null}
     <button type="button" onClick={()=>setShowHistory(!showHistory)}>Check history ({rows.length})</button>
     {showHistory?<div className="react-panel">
       <h4>My Check History</h4>
@@ -195,11 +201,11 @@ export function PlayerUniversalCheckPopup({campaignId,characterId}){
       <p>{row.npcName?row.npcName+' — ':''}{row.type}: {row.skill||row.characteristic}
         {row.dc!=null?', DC '+row.dc:', opposed total'} · Attempt {row.attempt}</p>
       <Breakdown row={row}/>
-      <button type="button" disabled={busy} onClick={()=>submit({mode:'digital'})}>Roll digital dice (server)</button>
+      <button type="button" disabled={!online||busy} onClick={()=>submit({mode:'digital'})}>Roll digital dice (server)</button>
       <fieldset><legend>Physical dice — player-reported</legend>
         <label>First d20 <input type="number" min="1" max="20" value={first} onChange={event=>setFirst(event.target.value)}/></label>
         {hasDouble?<label>Second d20 <input type="number" min="1" max="20" value={second} onChange={event=>setSecond(event.target.value)}/></label>:null}
-        <button type="button" disabled={busy||!Number.isInteger(Number(first))||Number(first)<1||Number(first)>20||
+        <button type="button" disabled={!online||busy||!Number.isInteger(Number(first))||Number(first)<1||Number(first)>20||
           hasDouble&&(!Number.isInteger(Number(second))||Number(second)<1||Number(second)>20)}
           onClick={()=>submit({mode:'physical',die:Number(first),...(hasDouble?{secondDie:Number(second)}:{})})}>
           Submit physical roll
@@ -209,7 +215,7 @@ export function PlayerUniversalCheckPopup({campaignId,characterId}){
         <select value={reported} onChange={event=>setReported(event.target.value)}>
           <option value="success">Success</option><option value="failure">Failure</option>
         </select>
-        <button type="button" disabled={busy} onClick={()=>submit({mode:'manual',reported})}>Self-report result</button>
+        <button type="button" disabled={!online||busy} onClick={()=>submit({mode:'manual',reported})}>Self-report result</button>
       </label>:null}
       <button type="button" onClick={()=>setHidden(previous=>[...previous,row.id+':'+row.attempt+':'+row.notificationRevision])}>Dismiss popup (keep pending)</button>
       {error?<p role="alert">{error}</p>:null}

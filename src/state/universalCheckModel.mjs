@@ -68,9 +68,11 @@ export function universalAutomaticModifiers(character,{type='skill',skill='',cha
   const tier=universalCharacteristicTier(effective);
   entries.push({label:'Characteristic ('+stat+', tier '+tier+')',value:tier});
   if(skillName&&type!=='characteristic'&&type!=='saving'){
-    const rank=rankOverride?approvedRank(rankOverride):record.rank;
-    if(rankOverride&&!rank)throw new Error('Invalid approved skill rank override.');
+    const conversion=rankOverride?approvedRank(rankOverride):null;
+    if(rankOverride&&!conversion)throw new Error('Invalid approved skill rank override.');
+    const rank=record.rank||(record.legacy?conversion:null);
     if(!rank&&record.legacy)throw new Error('This skill has a legacy numeric rank. GM must select its approved rank.');
+    // Never overwrite an approved named skill rank with a legacy conversion.
     const selected=rank||'Untrained';
     entries.push({label:'Skill rank ('+selected+')',value:universalSkillRankModifier(selected)});
   }
@@ -138,4 +140,22 @@ export function universalGroupAdjudication(type,rows,requiredSuccesses=0){
   else if(a.result.total!==b.result.total)winnerId=a.result.total>b.result.total?a.id:b.id;
   return {status:'resolved',outcome:winnerId?'winner':'tie',winnerId,participants:2,
     tie:!winnerId};
+}
+
+/** Read-only check preview. This never converts ambiguous ranks or awards training progress. */
+export function universalSkillPreview(character={},skill={},clock={}) {
+  const name=typeof skill==='string'?skill:skill.name||skill.title||'';
+  const progress=universalSkillProgress(character,name);
+  const characteristic=typeof skill==='object'
+    ?skill.primaryStat||skill.characteristic||skill.stat||progress.owned.primaryStat||
+      progress.owned.characteristic||progress.owned.stat||progress.progress.primaryStat
+    :progress.owned.primaryStat||progress.owned.characteristic||progress.owned.stat||progress.progress.primaryStat;
+  if(!characteristic)return {available:false,rank:progress.rank,
+    reason:'Governing characteristic is not defined; the GM selects it when requesting a check.'};
+  try{
+    const result=universalAutomaticModifiers(character,{type:'skill',skill:name,characteristic},clock);
+    return {available:true,rank:progress.rank||'Untrained',...result};
+  }catch(error){
+    return {available:false,rank:progress.rank,reason:error.message||'Check modifier is unavailable.'};
+  }
 }

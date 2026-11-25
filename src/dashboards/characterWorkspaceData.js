@@ -28,6 +28,8 @@ export function selectedSkills(character = {}) {
     const rank=skillRankNumber(progress.rank || progress.rankName || skill.rank || skill.rankName || 1);
     return {
       id:skill.id || entry?.id || slug(name) || `skill-${index}`, name, rank, rankName:SKILL_RANKS[rank-1],
+      primaryStat:skill.primaryStat||skill.characteristic||skill.stat||entry?.metadata?.primaryStat||
+        entry?.metadata?.characteristic||entry?.primaryStat||entry?.characteristic||'',
       successes:Number(progress.successes || 0), target:Number(progress.target ?? (rank>=7?0:rank*5)),
       category:entry?.metadata?.category || entry?.category || skill.category || 'Skill',
       summary:entry?.summary || entry?.metadata?.summary || skill.summary || 'Skill information coming soon.',
