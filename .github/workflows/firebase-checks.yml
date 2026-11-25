@@ -21,6 +21,8 @@ jobs:
           distribution: temurin
           java-version: '21'
       - run: npm ci
+      - name: Verify Milestone 2.1 visual HUD refinements
+        run: node --test scripts/milestone2-1-visual-refinement.test.mjs
       - name: Verify Milestone 2.1 dashboard shell and equipment layout
         run: node --test scripts/milestone2-1-dashboard.test.mjs
       - name: Verify Milestone 2 dashboard and creature profile regressions
