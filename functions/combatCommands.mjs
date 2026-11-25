@@ -1,3 +1,4 @@
+import {enemyCombatOptions} from '../src/state/enemyProfileModel.mjs';
 import { isDeepStrictEqual } from 'node:util';
 import { randomInt, randomUUID } from 'node:crypto';
 import { isCampaignGM, isLinkedCharacter, readCampaignMember, isCampaignMember } from './characterPermissions.mjs';
@@ -155,7 +156,16 @@ export function createCombatCommands(context) {
         log(`${current.name}'s turn · round ${encounter.round}. AP refreshed to 3; bonus available.`);
       };
       const validateTargets=p=>{for(const id of p.targetIds)if(!entry(id))throw new Error('A selected target has left the encounter.');};
-      const findOption=(id,optionId)=>{const option=combatOptions(get(id),context.catalog).find(row=>row.id===optionId);if(!option)throw new Error('Choose an owned action or a defined combat action.');return option;};
+      const findOption=(id,optionId)=>{
+        const actor=get(id),creature=entry(id)?.kind==='enemy';
+        if(String(optionId).startsWith('enemy:')&&(!gm||!creature))
+          throw new Error('Creature-only actions require the campaign GM.');
+        const options=combatOptions(actor,context.catalog);
+        if(gm&&creature)options.push(...enemyCombatOptions(actor));
+        const option=options.find(row=>row.id===optionId);
+        if(!option)throw new Error('Choose an owned action or a defined combat action.');
+        return option;
+      };
       const validateAction=(id,option,p,approval={})=>{
         const character=get(id),s=state(id),restriction=combatRestriction(character,{now,encounter});
         if(restriction)throw new Error(`${restriction}: voluntary actions are unavailable.`);
@@ -182,6 +192,17 @@ export function createCombatCommands(context) {
           if(get(p.targetIds[0]).downed?.dead)throw new Error('First aid cannot resurrect a dead target.');
           if(encounter.combat.firstAid?.[`${id}:${p.targetIds[0]}`]===encounter.round)throw new Error('This helper already attempted first aid on this target this round.');
           if(!approval.skill||!Number.isFinite(approval.dc))throw new Error('First aid needs an appropriate skill and a numeric GM DC.');
+        }
+        if(option.creatureAction){
+          if(!gm||entry(id)?.kind!=='enemy')
+            throw new Error('Only the GM can use a stored creature action.');
+          if(!approval.feasible)throw new Error('Confirm the creature action, its range and target feasibility.');
+          if(option.requiresTarget&&p.targetIds.length!==1)
+            throw new Error('This creature attack requires one valid target.');
+          if(option.group==='attacks'&&approval.checkType!=='attack')
+            throw new Error('Creature attacks require a named attack skill and AC check.');
+          if(option.group==='spells'&&!option.rank)
+            throw new Error('A creature spell must have a defined spell rank.');
         }
         if(option.key==='attack'){
           const weapon=rows(character.inventory).find(row=>row.id===p.itemId);
@@ -213,7 +234,7 @@ export function createCombatCommands(context) {
       };
       const begin=(p,approval)=>{
         const option=findOption(p.actorId,p.optionId),s=state(p.actorId),ap=validateAction(p.actorId,option,p,approval);
-        if(option.key==='attack'&&approval.checkType!=='attack')throw new Error('Weapon attacks use a named weapon skill against AC.');
+        if(['attack','creature-attack'].includes(option.key)&&approval.checkType!=='attack')throw new Error('Weapon attacks use a named weapon skill against AC.');
         const opposed={grapple:[['grappling'],['grappling','acrobatics']],escape:[['grappling','acrobatics'],['grappling']],shove:[['athletics'],['athletics','acrobatics']],hide:[['stealth','stealth-combat'],['perception']]};
         if(opposed[option.key]){const [acting,defending]=opposed[option.key];if(approval.checkType!=='opposed'||!acting.includes(slug(approval.skill))||!defending.includes(slug(approval.opposedSkill)))throw new Error(`Use ${acting.join(' / ')} vs ${defending.join(' / ')}.`);}
         if(option.key==='disarm'&&approval.checkType!=='opposed')throw new Error('Disarm requires the opposing weapon skill / Athletics contest.');
@@ -245,7 +266,7 @@ export function createCombatCommands(context) {
         if(!p.ambush)setState(p.actorId,{ap:Math.min(3,s.ap-ap+(p.prepaidAP?.ap||0)),bonus:option.bonus?false:s.bonus,prepared:p.prepared?null:s.prepared});
         if(option.key==='first-aid')encounter.combat.firstAid={...encounter.combat.firstAid,[`${p.actorId}:${p.targetIds[0]}`]:encounter.round};
         put(p.actorId,character);
-        p.status=['attack','spell','scroll'].includes(option.key||option.kind)||approval.voluntaryLeavesReach?'reactions':'awaiting-roll';p.window=[];p.windowIndex=0;
+        p.status=['attack','spell','scroll','creature-attack','creature-spell'].includes(option.key||option.kind)||approval.voluntaryLeavesReach?'reactions':'awaiting-roll';p.window=[];p.windowIndex=0;
         if(p.failedBeforeManifestation){p.status='awaiting-resolution';p.result={success:false,channel:p.channelResult};}
         log(`${p.actorName} begins ${p.actorKind==='player'?p.name:'an action'} · ${p.ap} AP${p.bonus?' · bonus used':''}.`);
       };
