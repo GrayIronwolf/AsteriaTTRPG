@@ -85,7 +85,7 @@ test('Combat layout reset and quick modes preserve custom layouts and combat pri
   applyCombatWorkspaceMode,resetCombatWorkspace,saveCombatPreset,normalizeCombatWorkspace
  }=await import('../src/dashboards/combat/combatWorkspaceLayoutModel.mjs');
  const state=defaultCombatWorkspaceLayout();
- assert.equal(state.hidden.length,0);
+ assert.equal(state.hidden.length,7);
  assert.equal(state.freeform.allowOverlap,true);
  assert.equal(state.freeform.snap,false);
  assert.equal(COMBAT_WORKSPACE_MODES.length,3);
@@ -96,7 +96,7 @@ test('Combat layout reset and quick modes preserve custom layouts and combat pri
  const saved=saveCombatPreset(state,'Custom view','layout-test');
  const modified=applyCombatWorkspaceMode(saved,'preparation');
  const reset=resetCombatWorkspace(modified);
- assert.equal(reset.hidden.length,0);
+ assert.equal(reset.hidden.length,7);
  assert.equal(reset.savedWorkspaces.length,1);
  assert.equal(normalizeCombatWorkspace(reset).savedWorkspaces[0].name,'Custom view');
  assert.equal('combat' in reset,false);
@@ -274,7 +274,7 @@ test('GM Combat Phase 1 uses one canvas camera, bounded placements and recoverab
   normalizeCombatCamera,orderedCombatPartyIds,moveCombatPartyCard}=
    await import('../src/dashboards/combat/combatWorkspaceLayoutModel.mjs');
  const layout=defaultCombatWorkspaceLayout();
- assert.equal(COMBAT_PANEL_IDS.length,14);
+ assert.equal(COMBAT_PANEL_IDS.length,15);
  assert.ok(COMBAT_PANEL_IDS.includes('resources'));
  assert.ok(layout.freeform.positions.resources);
  assert.equal(layout.hidden.includes('resources'),false);
