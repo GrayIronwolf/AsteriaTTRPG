@@ -1,7 +1,9 @@
 import React,{useEffect,useState} from 'react';
 import {customEnemy,libraryEnemy} from './combatModel.mjs';
+import {CreatureProfileEditor} from '../CreatureProfileEditor.jsx';
 import {
   validatePreparedEncounterInput,normalizePreparedEnemy,
+  comparePreparedEnemySource,refreshPreparedEnemyFields,
   PREPARED_ENCOUNTER_MAX_ENEMIES,PREPARED_ENCOUNTER_MAX_PLANS
 } from '../../../src/state/preparedEncounterModel.mjs';
 import {
@@ -19,7 +21,7 @@ const enemyBlank={name:'',type:'Creature',hp:'20',sp:'',mp:'',xpReward:'0',ac:''
 const draftFrom=plan=>plan?{
   name:plan.name,notes:plan.notes||'',mapId:plan.mapId||'',
   folder:plan.folder||'',tags:[...(plan.tags||[])],archived:plan.archived===true,
-  enemies:plan.enemies.map(row=>({...row, hp:Array.isArray(row.hp)?[...row.hp]:row.hp})),
+  enemies:structuredClone(plan.enemies),
   waves:structuredClone(plan.waves||[]),events:structuredClone(plan.events||[])
 }:({...blank,enemies:[]});
 const displayHP=row=>Array.isArray(row.hp)?row.hp[1]:row.hp||0;
@@ -38,6 +40,46 @@ export function PreparedEncounterLibrary({
   const [loadReview,setLoadReview]=useState(null);
   const [fullMaps,setFullMaps]=useState([]),[mapError,setMapError]=useState('');
   const [placingEnemy,setPlacingEnemy]=useState('');
+  const [refreshEnemyId,setRefreshEnemyId]=useState('');
+  const [refreshFields,setRefreshFields]=useState([]);
+  const [editingEnemyId,setEditingEnemyId]=useState('');
+  const refreshEnemy=draft.enemies.find(row=>row.preparedEnemyId===refreshEnemyId);
+  const refreshSource=refreshEnemy?.sourceRef?
+    library.find(row=>row.id===refreshEnemy.sourceRef):null;
+  const differences=refreshEnemy&&refreshSource?
+    comparePreparedEnemySource(refreshEnemy,refreshSource):null;
+  const updateEnemy=(index,field,value)=>setDraft(previous=>({...previous,
+    enemies:previous.enemies.map((row,i)=>i===index?{...row,[field]:value}:row)
+  }));
+  const saveVariant=async row=>{
+    if(busy)return;
+    setBusy(true);setError('');setMessage('');
+    try{
+      if(typeof api.saveCreatureVariant!=='function')
+        throw Error('The authenticated creature variant service is unavailable.');
+      const saved=await api.saveCreatureVariant(campaignId,row);
+      setMessage('Saved '+saved.name+' as an independent campaign creature.');
+    }catch(failure){setError(failure?.message||'Creature variant could not be saved.');}
+    finally{setBusy(false);}
+  };
+  const startRefresh=row=>{
+    const source=row.sourceRef?library.find(candidate=>candidate.id===row.sourceRef):null;
+    const changes=source?comparePreparedEnemySource(row,source):null;
+    setRefreshEnemyId(row.preparedEnemyId||'');
+    setRefreshFields((changes||[]).filter(change=>!change.customized)
+      .map(change=>change.field));
+  };
+  const applyRefresh=()=>{
+    if(!refreshEnemy||!refreshSource||!refreshFields.length)return;
+    try{
+      setDraft(previous=>({...previous,enemies:previous.enemies.map(row=>
+        row.preparedEnemyId===refreshEnemyId?
+          refreshPreparedEnemyFields(row,refreshSource,refreshFields):row)}));
+      setRefreshEnemyId('');setRefreshFields([]);
+      setMessage('Selected source fields updated in the draft. Save Encounter to persist.');
+      setError('');
+    }catch(failure){setError(failure.message);}
+  };
   useEffect(()=>{
     if(!mediaApi){setFullMaps([]);return undefined;}
     setFullMaps([]);setMapError('');
@@ -63,14 +105,14 @@ export function PreparedEncounterLibrary({
     setEditId('');setRevision(0);setDraft(draftFrom(null));
     setError('');setMessage('');setSearch('');setStatus('active');
     setFolderFilter('');setSort('recent');setPreviewId('');setTagInput('');
-    setLoadReview(null);setPlacingEnemy('');
+    setLoadReview(null);setPlacingEnemy('');setRefreshEnemyId('');setEditingEnemyId('');
   },[campaignId]);
   const reset=()=>{
-    setEditId('');setRevision(0);setDraft(draftFrom(null));setError('');setTagInput('');setPlacingEnemy('');
+    setEditId('');setRevision(0);setDraft(draftFrom(null));setError('');setTagInput('');setPlacingEnemy('');setRefreshEnemyId('');setEditingEnemyId('');
   };
   const loadEditor=plan=>{
     setEditId(plan.id);setRevision(plan.revision);setDraft(draftFrom(plan));setPlacingEnemy('');
-    setTagInput((plan.tags||[]).join(', '));
+    setTagInput((plan.tags||[]).join(', '));setRefreshEnemyId('');setEditingEnemyId('');
     setError('');setMessage('');
   };
   const addEnemy=row=>{
@@ -85,7 +127,7 @@ export function PreparedEncounterLibrary({
       for(const key of ['hp','sp','mp','xpReward','ac','initiative'])
         if(values[key]!=='')values[key]=Number(values[key]);
       const next=customEnemy(values,'enemy-draft');
-      const clean=normalizePreparedEnemy(next);
+      const clean=normalizePreparedEnemy({...next,preparedEnemyId:'prepared-enemy-'+crypto.randomUUID()});
       if(!clean)throw Error('Invalid enemy statistics.');
       addEnemy(clean);setEnemy(enemyBlank);setError('');
     }catch(failure){setError(failure.message);}
@@ -95,7 +137,7 @@ export function PreparedEncounterLibrary({
       const source=library.find(row=>row.id===sourceId);
       if(!source)throw Error('Choose a campaign creature or NPC.');
       const next=libraryEnemy({...source,id:source.sourceId},'enemy-source');
-      const clean=normalizePreparedEnemy(next);
+      const clean=normalizePreparedEnemy({...next,preparedEnemyId:'prepared-enemy-'+crypto.randomUUID()});
       if(!clean)throw Error('Source has no usable HP.');
       addEnemy(clean);setError('');
     }catch(failure){setError(failure.message);}
@@ -317,11 +359,62 @@ export function PreparedEncounterLibrary({
       </div>:null}
       <div className={styles.entries}>
         <h4>Enemy Roster ({draft.enemies.length}/{PREPARED_ENCOUNTER_MAX_ENEMIES})</h4>
-        {draft.enemies.map((row,index)=><div key={index}>
-          <span>{index+1}. {row.name} · HP {displayHP(row)}{row.spawn?' · Positioned':' · Auto placement'}</span>
+        {draft.enemies.map((row,index)=><div key={row.preparedEnemyId||index}>
+          <span>{index+1}. {row.name} · HP {displayHP(row)}
+            {row.spawn?' · Positioned':' · Auto placement'}</span>
+          <button type="button" disabled={busy}
+            aria-expanded={editingEnemyId===(row.preparedEnemyId||'legacy-'+index)}
+            onClick={()=>setEditingEnemyId(editingEnemyId===(row.preparedEnemyId||'legacy-'+index)?
+              '':(row.preparedEnemyId||'legacy-'+index))}>Customize</button>
+          <button type="button" disabled={busy||!row.preparedEnemyId||!row.sourceRef||!row.sourceSnapshot}
+            onClick={()=>startRefresh(row)}>Compare with Library</button>
+          <button type="button" disabled={busy||!Array.isArray(row.hp)}
+            onClick={()=>saveVariant(row)}>Save as New Creature</button>
           <button type="button" disabled={busy} aria-label={'Remove '+row.name+' '+(index+1)}
             onClick={()=>setDraft(previous=>({...previous,
               enemies:previous.enemies.filter((_,i)=>i!==index)}))}>Remove</button>
+          {editingEnemyId===(row.preparedEnemyId||'legacy-'+index)?<div>
+            <p>Encounter-only overrides; the Library source is never changed.</p>
+            <label>Name<input value={row.name} maxLength={120}
+              onChange={event=>updateEnemy(index,'name',event.target.value)}/></label>
+            <label>Creature type<input value={row.type||''} maxLength={80}
+              onChange={event=>updateEnemy(index,'type',event.target.value)}/></label>
+            {['hp','sp','mp'].map(key=><label key={key}>{key.toUpperCase()} maximum
+              <input type="number" min={key==='hp'?1:0} max="1000000000"
+                value={Array.isArray(row[key])?row[key][1]:''}
+                onChange={event=>{
+                  const max=Number(event.target.value);
+                  updateEnemy(index,key,
+                    Number.isSafeInteger(max)&&max>=(key==='hp'?1:0)?
+                      [Math.min(Array.isArray(row[key])?row[key][0]:max,max),max]:undefined);
+                }}/>
+            </label>)}
+            {['ac','initiative','xpReward'].map(key=><label key={key}>{key}
+              <input type="number" value={row[key]??''}
+                onChange={event=>updateEnemy(index,key,
+                  event.target.value===''?undefined:Number(event.target.value))}/>
+            </label>)}
+            <CreatureProfileEditor draft={row}
+              setField={(field,value)=>updateEnemy(index,field,value)} disabled={busy}/>
+          </div>:null}
+          {refreshEnemyId&&row.preparedEnemyId===refreshEnemyId?<div>
+            <h5>Selective Library Refresh · {row.name}</h5>
+            {!refreshSource?<p role="alert">The saved source is unavailable. Match the creature manually.</p>:
+              differences===null?<p role="alert">No historical source snapshot exists. Manual matching required.</p>:
+              differences.length===0?<p>No changes in this Library source.</p>:
+              <div>{differences.map(change=><label key={change.field}>
+                <input type="checkbox" checked={refreshFields.includes(change.field)}
+                  onChange={event=>setRefreshFields(previous=>event.target.checked?
+                    [...previous,change.field]:previous.filter(field=>field!==change.field))}/>
+                Refresh {change.field}{change.customized?' (encounter override will be replaced)':''}
+              </label>)}</div>}
+            <button type="button" disabled={busy||!refreshFields.length}
+              onClick={applyRefresh}>Apply Selected Fields to Draft</button>
+            <button type="button" onClick={()=>{setRefreshEnemyId('');setRefreshFields([]);}}>Cancel Comparison</button>
+          </div>:null}
+          {!row.preparedEnemyId||!row.sourceSnapshot?<small>
+            Legacy/custom enemy: no verified historical Library snapshot for automatic refresh.
+          </small>:null}
         </div>)}
       </div>
       <div className={styles.source}>

@@ -1,3 +1,4 @@
+import {enemyProfileSnapshot} from '../../../src/state/enemyProfileModel.mjs';
 import {customEncounterCreature,encounterResourcePair,encounterSourceResources} from '../../../src/state/encounterResourceModel.mjs';
 import {gmSessionState} from './combatAccess.mjs';
 import {liveCombatTimerState} from '../../../src/state/liveCombatCommandModel.mjs';
@@ -6,6 +7,10 @@ const validId=value=>typeof value==='string'&&/^[A-Za-z0-9_-]{1,160}$/.test(valu
 const array=value=>Array.isArray(value)?value:[];
 const obj=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 const title=(value,max=100)=>typeof value==='string'?value.slice(0,max):'';
+const safeEnemyProfile=value=>{
+  try{return enemyProfileSnapshot(value);}
+  catch{return {};} // Legacy records must never break the combat stream.
+};
 const whole=(value,defaultValue=0)=>Number.isFinite(Number(value))?Math.trunc(Number(value)):defaultValue;
 const revision=value=>Number.isSafeInteger(Number(value))&&Number(value)>=0?Number(value):0;
 export const COMBAT_AP_ACTIONS=Object.freeze([
@@ -57,13 +62,26 @@ export function projectCombat(encounter={},session=null,{role='player',character
       initiative:Number.isFinite(Number(row.initiative))?Number(row.initiative):null,
       initiativeSet:row.initiativeSet===true,defeated:row.defeated===true,
       current:false,turnComplete:p.turnComplete===true,
-      ...(allowed?{
+      ...(allowed&&!player?{
+        ...safeEnemyProfile(saved||{}),
+        conditions:array(saved?.conditions).slice(0,24).map(condition=>({
+          id:title(condition?.id,100),name:title(condition?.name||condition?.type,100)
+        })),
+        ac:Number.isFinite(Number(saved?.ac))?Number(saved.ac):null,
         ap:Math.max(0,Math.min(3,whole(p.ap))),
         bonus:p.bonus===true,pendingDeathSave:p.pendingDeathSave===true,
         hp:encounterResourcePair(saved||{},'hp'),
         sp:encounterResourcePair(saved||{},'sp'),
         mp:encounterResourcePair(saved||{},'mp')
-      }:{})
+      }:{
+        ...(allowed?{
+          ap:Math.max(0,Math.min(3,whole(p.ap))),
+          bonus:p.bonus===true,pendingDeathSave:p.pendingDeathSave===true,
+          hp:encounterResourcePair(saved||{},'hp'),
+          sp:encounterResourcePair(saved||{},'sp'),
+          mp:encounterResourcePair(saved||{},'mp')
+        }:{})
+      })
     };
     return Object.freeze(result);
   });
@@ -144,11 +162,22 @@ export function libraryEnemy(source,id){
   if(!validId(id)||!validId(source?.id))throw Error('Invalid creature source.');
   const name=title(source.name,120).trim();
   if(!name)throw Error('Creature name is missing.');
-  const next={id,sourceId:source.id,name,kind:'enemy',type:title(source.type,80),
-    defeated:false,...encounterSourceResources(source)};
+  const resources=encounterSourceResources(source);
+  const profile=safeEnemyProfile(source);
+  const stats={
+    name,type:title(source.type,80)||'Creature',...resources,
+    ...(Number.isSafeInteger(source.ac)?{ac:source.ac}:{}),
+    ...(Number.isSafeInteger(source.xpReward)?{xpReward:source.xpReward}:{})
+  };
+  const next={id,sourceId:source.id,name,kind:'enemy',...stats,
+    defeated:false,...profile,
+    sourceSnapshot:{...structuredClone(stats),...structuredClone(profile)},
+    sourceRef:validId(source.sourceRef)?source.sourceRef:'',
+    sourceVersion:title(source.sourceVersion,40)};
   if(source.initiative!==undefined&&source.initiative!==''&&
     Number.isFinite(Number(source.initiative))){
     next.initiative=Number(source.initiative);next.initiativeSet=true;
+    next.sourceSnapshot.initiative=next.initiative;
   }
   return next;
 }
@@ -158,7 +187,12 @@ export function gmEncounterCandidates(world){
       id:prefix+row.id,name:title(row.name||row.title,120),
       type:prefix==='npc-'?'NPC':'Creature',initiative:row.initiative,
       hp:encounterResourcePair(row,'hp'),sp:encounterResourcePair(row,'sp'),
-      mp:encounterResourcePair(row,'mp'),sourceId:row.id
+      mp:encounterResourcePair(row,'mp'),sourceId:row.id,
+      sourceRef:prefix+row.id,sourceVersion:title(row.updatedAt,40),
+      ac:row.ac!==undefined&&row.ac!==null&&Number.isFinite(Number(row.ac))?
+        Number(row.ac):undefined,
+      xpReward:Number.isFinite(Number(row.xpReward))?Number(row.xpReward):undefined,
+      ...safeEnemyProfile(row)
     })).filter(row=>row.name&&row.hp);
   return Object.freeze([...from(world?.npcs,'npc-'),...from(world?.creatures,'creature-')].slice(0,100));
 }
@@ -175,10 +209,12 @@ export function validateCombatCommand(mode,actorId,input){
     !validId(input.eventId)||input.confirmation!=='trigger-event'
   ))throw Error('Choose and confirm a valid encounter event.');
   if(input.operation==='declare'&&(
-    !COMBAT_BASIC_DECLARATIONS.some(row=>row.id===input.optionId)||
+    !(COMBAT_BASIC_DECLARATIONS.some(row=>row.id===input.optionId)||
+      (mode==='gm'&&/^enemy:(attacks|spells|abilities):[A-Za-z0-9_-]{1,100}$/.test(input.optionId||'')))||
     !Array.isArray(input.targetIds)||input.targetIds.length>1||
     input.targetIds.some(id=>!validId(id))||
-    (COMBAT_BASIC_DECLARATIONS.find(row=>row.id===input.optionId)?.requiresTarget&&
+    ((COMBAT_BASIC_DECLARATIONS.find(row=>row.id===input.optionId)?.requiresTarget||
+      String(input.optionId).startsWith('enemy:attacks:'))&&
       input.targetIds.length!==1)
   ))throw Error('Choose an approved basic action and its required target.');
   if(input.operation==='spend-ap'&&(!Number.isInteger(input.ap)||input.ap<0||input.ap>3))

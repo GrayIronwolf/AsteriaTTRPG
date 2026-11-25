@@ -43,20 +43,18 @@
 .window[data-combat-panel]{position:absolute;display:flex;flex-direction:column;box-sizing:border-box;min-width:0;min-height:0;
  left:var(--combat-x);top:var(--combat-y);width:var(--combat-w);height:var(--combat-h);container-type:inline-size;container-name:combatWindow;
  background-color:var(--asteria-panel-background,#090e14);
- background-image:linear-gradient(160deg,rgba(182,202,211,.065),transparent 35%,rgba(0,0,0,.16) 78%),
-  var(--asteria-panel-backdrop,url("../../../assets/ui/royal-relic-obsidian.svg"));
- background-size:cover,512px 512px;background-position:center;background-repeat:no-repeat,repeat;
- border:1px solid #87939e;border-radius:4px;color:var(--asteria-text);
+ background-image:linear-gradient(160deg,rgba(182,202,211,.035),transparent 38%,rgba(0,0,0,.11) 80%);
+ background-size:cover;background-position:center;
+ border:3px ridge #647582;border-radius:6px;color:var(--asteria-text);
  box-shadow:0 0 0 1px #111920,0 6px 17px rgba(0,0,0,.48),
   inset 0 1px 0 rgba(244,248,249,.45),inset 1px 0 0 rgba(194,209,218,.2),
   inset -1px 0 0 rgba(10,19,25,.9),inset 0 -2px 0 rgba(0,0,0,.8);
  isolation:isolate;pointer-events:auto;text-rendering:optimizeLegibility}
-.window[data-combat-panel]::before{content:"";pointer-events:none;position:absolute;inset:1px;
- border:1px solid rgba(169,186,195,.29);border-radius:2px;z-index:0}
+.window[data-combat-panel]::before{content:none}
 .window.dragging{will-change:transform;cursor:grabbing;
   border-color:var(--asteria-border-active);box-shadow:0 18px 48px rgb(0 0 0 / .55)}
 .windowBar{position:relative;z-index:2;display:flex;align-items:center;gap:var(--asteria-space-2);
- min-height:40px;padding:5px 8px 5px 12px;border-bottom:1px solid rgba(162,174,179,.46);
+ min-height:36px;padding:4px 7px 4px 10px;border-bottom:1px solid rgba(162,174,179,.46);
  background:linear-gradient(180deg,#394b58 0%,#253442 48%,#101d2a 100%);
  box-shadow:inset 0 1px 0 rgba(224,241,252,.23),0 1px 0 rgba(0,0,0,.68);
  border-radius:3px 3px 0 0;cursor:grab;touch-action:none;user-select:none}
@@ -68,7 +66,7 @@
 .windowActions button,.options summary,.resizeHandle{font:inherit;color:var(--asteria-text);cursor:pointer;border:1px solid #627482;border-radius:3px;background:linear-gradient(180deg,#394b58,#111e2b 54%,#1b2a36);box-shadow:inset 0 1px 0 rgb(224 240 246 / .18);padding:var(--asteria-space-1) var(--asteria-space-2);min-height:29px}
 .windowActions button{min-width:29px;min-height:29px;padding:3px 6px}
 .windowContent{position:relative;z-index:1;flex:1;min-width:0;min-height:0;overflow:auto;
- overscroll-behavior:contain;padding:var(--asteria-space-3);background:transparent;scrollbar-width:thin}
+ overscroll-behavior:contain;padding:var(--asteria-space-3);background:#101820;scrollbar-width:thin}
 .windowBody{min-width:0;display:flow-root;zoom:var(--combat-content-scale,1)}
 .windowBody>section{padding:0;border:0;background:transparent;box-shadow:none}
 .windowBody :where(h3,p){margin-top:0}
@@ -83,13 +81,7 @@
  font-size:calc(13px / var(--combat-scale));overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .canvas[data-detail-level='preview'] .windowBar strong::before{
  width:calc(7px / var(--combat-scale));height:calc(7px / var(--combat-scale))}
-.canvas[data-detail-level='preview'] .windowActions,
-.canvas[data-detail-level='preview'] .resizeHandle{display:none}
-.canvas[data-detail-level='preview'] .windowContent{opacity:0;pointer-events:none}
-.canvas[data-detail-level='preview'] .window:not(.minimised)::after{
- content:'Zoom in to interact';position:absolute;z-index:3;
- top:calc(43px / var(--combat-scale));left:calc(12px / var(--combat-scale));
- color:var(--asteria-text-muted);font-size:calc(11px / var(--combat-scale));pointer-events:none}
+.canvas[data-detail-level='preview'] .windowContent{opacity:1;pointer-events:auto}
 .canvas[data-detail-mode='proportional'] .windowContent{opacity:1;pointer-events:auto}
 @container combatWindow (min-width:520px){
   .windowBody :where(.react-form-grid,.react-gm-resources-grid){
@@ -226,7 +218,7 @@
  border-color:rgba(125,206,237,.85);filter:drop-shadow(0 0 3px rgba(45,153,210,.6))}
 .alignmentVertical{top:60px;bottom:0;border-left:1px dashed}
 .alignmentHorizontal{left:0;right:0;border-top:1px dashed}
-.canvas[data-editing='true'] .resizeHandle{opacity:.45;transition:opacity 140ms ease}
+.canvas[data-editing='true'] .resizeHandle{transition:opacity 140ms ease}
 .canvas[data-editing='true'] .window:hover .resizeHandle,
 .canvas[data-editing='true'] .resizeHandle:focus-visible{opacity:1}
 @media(prefers-reduced-motion:reduce){.canvas[data-editing='true'] .resizeHandle{transition:none}}
@@ -252,3 +244,18 @@
 .canvas[data-reduce-effects='on'] .window:not(:hover):not(:focus-within){
  filter:none;will-change:auto}
 @media(max-width:699px){.canvasMinimap{display:none}}
+
+/* Milestone 2: accessible content-responsive windows and a restrained metal bezel. */
+.window[data-combat-panel]:hover{border-color:#8ba5b5}
+.windowContent :where(button,input,select,textarea){min-width:0}
+@container combatWindow (max-width:480px){
+ .windowBody :where(.react-form-grid,.react-gm-resources-grid){grid-template-columns:minmax(0,1fr)}
+ .windowContent{padding:8px}
+}
+@media (pointer:coarse){
+ .resizeHandle[data-resize-edge='n'],.resizeHandle[data-resize-edge='s']{height:20px;top:auto}
+ .resizeHandle[data-resize-edge='n']{top:-8px}
+ .resizeHandle[data-resize-edge='s']{bottom:-8px}
+ .resizeHandle[data-resize-edge='e'],.resizeHandle[data-resize-edge='w']{width:20px}
+ .resizeHandle[data-resize-edge='se']{width:26px;height:26px}
+}

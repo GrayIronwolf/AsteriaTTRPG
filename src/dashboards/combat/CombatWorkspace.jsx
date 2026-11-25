@@ -4,6 +4,7 @@ import {CombatCommandCentre,CombatCommandPanel} from './CombatCommandCentre.jsx'
 import {COMBAT_PANEL_IDS} from './combatWorkspaceLayoutModel.mjs';
 import {PreparedEncounterLibrary} from './PreparedEncounterLibrary.jsx';
 import {CombatBattleMapPanel} from './CombatBattleMapPanel.jsx';
+import {EnemyCombatTracker} from './EnemyCombatTracker.jsx';
 import {GMLiveCombatPanel} from './GMLiveCombatPanel.jsx';
 import {GMEncounterWavesPanel} from './GMEncounterWavesPanel.jsx';
 import {GMEncounterHistoryPanel} from './GMEncounterHistoryPanel.jsx';
@@ -201,6 +202,10 @@ export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigat
       </CombatCommandPanel>
       <CombatCommandPanel id="history">
         <GMEncounterHistoryPanel api={api} campaignId={campaignId} busy={busy}/>
+      </CombatCommandPanel>
+      <CombatCommandPanel id="enemyTracker">
+        <EnemyCombatTracker combat={combat} onCommand={submit}
+          busy={busy||Boolean(stream.data.pending)}/>
       </CombatCommandPanel>
       <CombatCommandPanel id="initiative">
         <CombatRoster combat={combat} gm selected={current?.id} onSelect={setSelected}/>

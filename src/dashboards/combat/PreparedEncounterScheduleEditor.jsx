@@ -2,7 +2,8 @@ import React,{useState} from 'react';
 import {
   ENCOUNTER_MAX_WAVES,ENCOUNTER_MAX_EVENTS,ENCOUNTER_MAX_WAVE_ENEMIES
 } from '../../../src/state/encounterWaveModel.mjs';
-import {normalizePreparedEnemy} from '../../../src/state/preparedEncounterModel.mjs';
+import {normalizePreparedEnemy,comparePreparedEnemySource,refreshPreparedEnemyFields} from '../../../src/state/preparedEncounterModel.mjs';
+import {CreatureProfileEditor} from '../CreatureProfileEditor.jsx';
 import styles from './PreparedEncounterScheduleEditor.module.css';
 
 const blankEnemy={name:'',hp:'20',type:'Creature'};
@@ -16,6 +17,9 @@ export function PreparedEncounterScheduleEditor({
   const [enemyInput,setEnemyInput]=useState(blankEnemy);
   const [editingWave,setEditingWave]=useState('');
   const [editingEvent,setEditingEvent]=useState('');
+  const [refreshId,setRefreshId]=useState('');
+  const [selectedFields,setSelectedFields]=useState([]);
+  const [editingEnemyId,setEditingEnemyId]=useState('');
   const candidateEnemies=[
     ...baseEnemies.map((enemy,index)=>({
       id:'base-'+index,label:'Opening roster: '+enemy.name,enemy
@@ -23,7 +27,13 @@ export function PreparedEncounterScheduleEditor({
     ...sources.filter(row=>row.hp).map(row=>({
       id:'source-'+row.id,label:'Creature / NPC: '+row.name,
       enemy:{name:row.name,type:row.type||'Creature',hp:row.hp,sp:row.sp,
-        mp:row.mp,sourceId:row.sourceId}
+        mp:row.mp,ac:row.ac,initiative:row.initiative,xpReward:row.xpReward,
+        sourceId:row.sourceId,sourceRef:row.sourceRef,sourceVersion:row.sourceVersion,
+        sourceSnapshot:{...structuredClone(row)},
+        attacks:row.attacks,spells:row.spells,abilities:row.abilities,
+        equipment:row.equipment,portrait:row.portrait,nac:row.nac,
+        characteristics:row.characteristics,resistances:row.resistances,
+        immunities:row.immunities}
     }))
   ];
   const updateWave=(id,patch)=>onChange('waves',waves.map(row=>
@@ -31,11 +41,18 @@ export function PreparedEncounterScheduleEditor({
   const updateEvent=(id,patch)=>onChange('events',events.map(row=>
     row.id===id?{...row,...patch}:row));
   const addToWave=(id,value)=>{
-    const clean=normalizePreparedEnemy(value);
+    const clean=normalizePreparedEnemy({...structuredClone(value),preparedEnemyId:randomId('prepared-enemy')});
     if(!clean)return;
     onChange('waves',waves.map(row=>row.id===id&&
       row.enemies.length<ENCOUNTER_MAX_WAVE_ENEMIES?
       {...row,enemies:[...row.enemies,clean]}:row));
+  };
+  const updateWaveEnemy=(waveId,enemyId,index,transform)=>{
+    onChange('waves',waves.map(wave=>wave.id===waveId?{
+      ...wave,enemies:wave.enemies.map((row,i)=>
+        (row.preparedEnemyId||'legacy-'+i)===enemyId&&i===index?
+          transform(row):row)
+    }:wave));
   };
   return <section className={styles.root} data-testid="site-prepared-wave-editor">
     <header><h4>Reinforcement Waves &amp; Events</h4>
@@ -73,12 +90,57 @@ export function PreparedEncounterScheduleEditor({
           value={wave.round} onChange={e=>updateWave(wave.id,{
             round:round(e.target.value)})}/></label>
         <strong>Wave enemies ({wave.enemies.length}/{ENCOUNTER_MAX_WAVE_ENEMIES})</strong>
-        {wave.enemies.map((enemy,index)=><div className={styles.enemy} key={index}>
-          <span>{enemy.name} · HP {Array.isArray(enemy.hp)?enemy.hp[1]:enemy.hp}</span>
-          <button type="button" disabled={disabled} onClick={()=>updateWave(
-            wave.id,{enemies:wave.enemies.filter((_,i)=>i!==index)})}>
-            Remove</button>
-        </div>)}
+        {wave.enemies.map((enemy,index)=>{
+          const identity=wave.id+':'+(enemy.preparedEnemyId||'legacy-'+index);
+          const source=enemy.sourceRef?sources.find(row=>row.id===enemy.sourceRef):null;
+          const differences=source?comparePreparedEnemySource(enemy,source):null;
+          const editing=editingEnemyId===identity,comparing=refreshId===identity;
+          return <div className={styles.enemy} key={identity}>
+            <span>{enemy.name} · HP {Array.isArray(enemy.hp)?enemy.hp[1]:enemy.hp}</span>
+            <button type="button" disabled={disabled}
+              onClick={()=>setEditingEnemyId(editing?'':identity)}>Customize</button>
+            <button type="button" disabled={disabled||!source||!enemy.sourceSnapshot}
+              onClick={()=>{
+                setRefreshId(comparing?'':identity);
+                setSelectedFields((differences||[]).filter(change=>!change.customized)
+                  .map(change=>change.field));
+              }}>Compare with Library</button>
+            <button type="button" disabled={disabled} onClick={()=>updateWave(
+              wave.id,{enemies:wave.enemies.filter((_,i)=>i!==index)})}>Remove</button>
+            {editing?<div className={styles.fields}>
+              <label>Name<input value={enemy.name} maxLength={120} disabled={disabled}
+                onChange={e=>updateWaveEnemy(wave.id,enemy.preparedEnemyId||'legacy-'+index,index,
+                  row=>({...row,name:e.target.value}))}/></label>
+              {['hp','sp','mp'].map(key=><label key={key}>{key.toUpperCase()} maximum
+                <input type="number" min={key==='hp'?1:0} max="1000000000"
+                  value={Array.isArray(enemy[key])?enemy[key][1]:''} disabled={disabled}
+                  onChange={e=>updateWaveEnemy(wave.id,enemy.preparedEnemyId||'legacy-'+index,index,
+                    row=>({...row,[key]:[Math.min(row[key]?.[0]??Number(e.target.value),
+                      Number(e.target.value)),Number(e.target.value)]}))}/>
+              </label>)}
+              <CreatureProfileEditor draft={enemy} disabled={disabled}
+                setField={(field,value)=>updateWaveEnemy(wave.id,
+                  enemy.preparedEnemyId||'legacy-'+index,index,
+                  row=>({...row,[field]:value}))}/>
+            </div>:null}
+            {comparing&&differences?<div className={styles.fields}>
+              <strong>Selective Library Refresh</strong>
+              {differences.map(change=><label key={change.field}>
+                <input type="checkbox" checked={selectedFields.includes(change.field)}
+                  onChange={e=>setSelectedFields(values=>e.target.checked?
+                    [...values,change.field]:values.filter(field=>field!==change.field))}/>
+                {change.field}{change.customized?' (replaces encounter override)':''}
+              </label>)}
+              <button type="button" disabled={disabled||!selectedFields.length}
+                onClick={()=>{
+                  updateWaveEnemy(wave.id,enemy.preparedEnemyId,index,
+                    row=>refreshPreparedEnemyFields(row,source,selectedFields));
+                  setRefreshId('');setSelectedFields([]);
+                }}>Apply Selected Fields to Draft</button>
+              <button type="button" onClick={()=>setRefreshId('')}>Cancel Comparison</button>
+            </div>:null}
+          </div>;
+        })}
         <label>Add existing enemy<select value={selectedEnemy}
           onChange={e=>setSelectedEnemy(e.target.value)}>
           <option value="">Choose existing enemy or creature</option>

@@ -11,11 +11,12 @@ const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 
 test('Player Main canvas preserves every existing panel and the Action / Resource Log',()=>{
  const defaults=DASHBOARD_PANEL_REGISTRY.player.filter(row=>!row.optional).map(row=>row.id);
- assert.deepEqual([...PLAYER_CANVAS_DEFAULT_IDS],[...defaults,'activityLog']);
+ assert.deepEqual([...PLAYER_DASHBOARD_CANVAS_CONFIG.ids].sort(),
+   [...DASHBOARD_PANEL_REGISTRY.player.map(row=>row.id),'activityLog'].sort());
  const layout=defaultPlayerCanvasLayout();
  assert.deepEqual(PLAYER_DASHBOARD_CANVAS_CONFIG.ids.filter(id=>!layout.hidden.includes(id)),
    PLAYER_CANVAS_DEFAULT_IDS);
- assert.equal(PLAYER_CANVAS_DEFAULT_IDS.length,15);
+ assert.equal(PLAYER_CANVAS_DEFAULT_IDS.length,8);
  assert.equal(PLAYER_DASHBOARD_CANVAS_CONFIG.ids.length,DASHBOARD_PANEL_REGISTRY.player.length+1);
  assert.equal(new Set(PLAYER_DASHBOARD_CANVAS_CONFIG.ids).size,PLAYER_DASHBOARD_CANVAS_CONFIG.ids.length);
  const library=PLAYER_DASHBOARD_CANVAS_CONFIG.categories.flatMap(group=>group.panels);
@@ -39,8 +40,8 @@ test('Player canvas remains independent of GM and Combat panel allowlists',()=>{
  assert.equal(edited.freeform.positions.weapons.w,720);
  assert.equal(edited.freeform.positions.weapons.h,490);
  assert.equal(normalizePlayerCanvasLayout(JSON.parse(JSON.stringify(edited))).freeform.positions.weapons.w,720);
- assert.deepEqual(normalizeCombatWorkspace(null).hidden,[],
-   'Combat defaults must still show all tools');
+ assert.equal(normalizeCombatWorkspace(null).hidden.length,7,
+   'Combat defaults show eight windows; other tools remain in the library');
 });
 
 test('Legacy Player grid migration keeps hide/show, lock and desktop arrangement',()=>{
