@@ -32,7 +32,7 @@ function EnemyCard({enemy,combat,disabled,onCommand}){
   const targets=combat.combatants.filter(row=>row.id!==enemy.id&&!row.defeated);
   const canAct=!disabled&&combat.isActive&&combat.sessionEditable&&
     enemy.current&&!enemy.turnComplete&&!enemy.defeated&&
-    !combat.pending&&Number(enemy.ap)>0;
+    !combat.pending;
   const toggle=name=>{setSection(current=>current===name?'':name);setActionId('');setTarget('');};
   const declaration=()=>{
     if(!option||!canAct)return;
@@ -101,7 +101,7 @@ function EnemyCard({enemy,combat,disabled,onCommand}){
               </label>
               {action.blocked?<p role="alert">{action.blocked}</p>:null}
               <button type="button" disabled={!canAct||Boolean(action.blocked)||
-                (action.requiresTarget&&!target)||enemy.ap<action.ap}
+                (action.requiresTarget&&!target)||(action.ap===0?!enemy.bonus:enemy.ap<action.ap)}
                 onClick={declaration}>Confirm Declaration for GM Review</button>
               <small>Declaration does not spend resources. The existing GM action
                 approval, reactions, dice and resolution process is authoritative.</small>
