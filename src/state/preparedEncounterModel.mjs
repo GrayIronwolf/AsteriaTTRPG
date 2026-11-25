@@ -1,3 +1,4 @@
+import {enemyProfileSnapshot} from './enemyProfileModel.mjs';
 import {encounterResourcePair} from './encounterResourceModel.mjs';
 import {preparedEnemySpawn} from './preparedBattleMapModel.mjs';
 import {validatePreparedWaves,validatePreparedEvents} from './encounterWaveModel.mjs';
@@ -36,6 +37,13 @@ export function normalizePreparedEnemy(row){
     result.initiative=val;
   }
   if(id(row.sourceId))result.sourceId=row.sourceId;
+  if(id(row.preparedEnemyId))result.preparedEnemyId=row.preparedEnemyId;
+  if(typeof row.sourceVersion==='string'&&row.sourceVersion.length<=40)
+    result.sourceVersion=row.sourceVersion;
+  try{
+    Object.assign(result,enemyProfileSnapshot(row));
+    if(object(row.sourceSnapshot))result.sourceSnapshot=enemyProfileSnapshot(row.sourceSnapshot);
+  }catch{return null;}
   try{
     const spawn=preparedEnemySpawn(row.spawn);
     if(spawn)result.spawn=spawn;
