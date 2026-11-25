@@ -7,6 +7,10 @@ const validId=value=>typeof value==='string'&&/^[A-Za-z0-9_-]{1,160}$/.test(valu
 const array=value=>Array.isArray(value)?value:[];
 const obj=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 const title=(value,max=100)=>typeof value==='string'?value.slice(0,max):'';
+const safeEnemyProfile=value=>{
+  try{return enemyProfileSnapshot(value);}
+  catch{return {};} // Legacy records must never break the combat stream.
+};
 const whole=(value,defaultValue=0)=>Number.isFinite(Number(value))?Math.trunc(Number(value)):defaultValue;
 const revision=value=>Number.isSafeInteger(Number(value))&&Number(value)>=0?Number(value):0;
 export const COMBAT_AP_ACTIONS=Object.freeze([
@@ -59,7 +63,7 @@ export function projectCombat(encounter={},session=null,{role='player',character
       initiativeSet:row.initiativeSet===true,defeated:row.defeated===true,
       current:false,turnComplete:p.turnComplete===true,
       ...(allowed&&!player?{
-        ...enemyProfileSnapshot(saved||{}),
+        ...safeEnemyProfile(saved||{}),
         conditions:array(saved?.conditions).slice(0,24).map(condition=>({
           id:title(condition?.id,100),name:title(condition?.name||condition?.type,100)
         })),
@@ -159,8 +163,8 @@ export function libraryEnemy(source,id){
   const name=title(source.name,120).trim();
   if(!name)throw Error('Creature name is missing.');
   const next={id,sourceId:source.id,name,kind:'enemy',type:title(source.type,80),
-    defeated:false,...encounterSourceResources(source),...enemyProfileSnapshot(source),
-    sourceSnapshot:enemyProfileSnapshot(source)};
+    defeated:false,...encounterSourceResources(source),...safeEnemyProfile(source),
+    sourceSnapshot:safeEnemyProfile(source)};
   if(source.initiative!==undefined&&source.initiative!==''&&
     Number.isFinite(Number(source.initiative))){
     next.initiative=Number(source.initiative);next.initiativeSet=true;
