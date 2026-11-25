@@ -49,3 +49,11 @@ Tested the rebuilt bundle in Chromium 158 at 1440 × 1000 with loopback-only `?r
 All three passed visible drag displacement, final release-coordinate accuracy, transform cleanup, guide cleanup, undo restoration, middle-button panning and wheel zoom. No browser runtime errors occurred. These are synthetic headless event-dispatch measurements, not an end-user frame-rate guarantee.
 
 No live deployment, production data change, recovery/archive branch change or merge into `main` is part of this milestone.
+
+## Post-merge browser audit correction
+
+The additional test-branch-only browser baseline exposed stale expectations from before the combined Armour/Weapons window, current optional Combat tools and interactive low-zoom content. Its older assertions expected 15 legacy Player windows, 14 initially mounted Combat windows and inert low-zoom controls. The current migrated fixture correctly contains 14 Player windows (including the combined equipment window); Combat opens eight approved windows and exposes optional tools through its library.
+
+The existing audit now asserts the exact expected window IDs, exercises opening/hiding/restoring the optional Encounter Setup window, measures unscaled window bounds, grabs the actual centre of scaled title bars and checks that low-zoom content remains interactive. All 14 browser scenarios pass locally, including 320/360/390/768/1280/1920px viewport matrices and persistent overlap geometry. The same browser workflow now also runs on relevant PRs targeting `Website-Build-Test`, before merge.
+
+This correction changes only verification code, its workflow trigger and this evidence document. It does not change application defaults or layout behaviour. The repository's separately triggered GitHub Pages deployment returned HTTP 500; no deployment retry was requested because live deployment is outside this task.

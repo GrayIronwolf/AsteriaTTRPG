@@ -19,6 +19,13 @@ on:
       - 'react-dist/asteria-react-content-v2.js'
       - 'scripts/react-migration-parity-contract.test.cjs'
       - '.github/workflows/phase1-2-browser-audit.yml'
+  pull_request:
+    branches: [Website-Build-Test]
+    paths:
+      - 'scripts/phase1-2-browser-audit.cjs'
+      - 'src/dashboards/combat/**'
+      - 'react-dist/asteria-react-content-v2.js'
+      - '.github/workflows/phase1-2-browser-audit.yml'
   workflow_dispatch:
 
 permissions:
@@ -30,7 +37,7 @@ concurrency:
 
 jobs:
   recovered-site-browser-audit:
-    if: github.ref == 'refs/heads/Website-Build-Test'
+    if: github.ref == 'refs/heads/Website-Build-Test' || github.base_ref == 'Website-Build-Test'
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:

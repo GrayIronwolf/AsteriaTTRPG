@@ -12,6 +12,12 @@ require('./local-static-server.js');
 const root = path.resolve('artifacts/phase-1-2-browser');
 fs.mkdirSync(root, {recursive:true});
 const base='http://127.0.0.1:8123/';
+// The fixture migrates a legacy Player grid: Weapons is now inside Armour.
+const PLAYER_FIXTURE_IDS=['armour','quick','talents','spells','skills','conditions',
+  'effects','specialDamage','rest','currency','quests','journal','party','activityLog'];
+// Optional Combat tools start hidden and are opened through the existing library.
+const COMBAT_INITIAL_IDS=['resources','controls','initiative','actor','map','queue',
+  'prepared','enemyTracker'];
 const results=[];
 const failures=[];
 let browser;
@@ -120,7 +126,8 @@ async function metrics(page) {
   }));
 }
 (async()=>{
-  browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+  browser=await chromium.launch({headless:true,args:['--no-sandbox'],
+    ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH?{executablePath:process.env.PLAYWRIGHT_EXECUTABLE_PATH}:{})});
   await scenario('01-public-home',{width:1440},async p=>{
     await p.goto(base,{waitUntil:'domcontentloaded'});
     await p.locator('#home.show').waitFor();
@@ -150,13 +157,14 @@ async function metrics(page) {
     await canvas.waitFor();
     const ids=await canvas.locator('[data-canvas-window]').evaluateAll(nodes=>
       nodes.map(node=>node.dataset.canvasWindow));
-    assert.equal(ids.length,15,'Player Main must show all original core panels and the Action Log');
+    assert.deepEqual([...ids].sort(),[...PLAYER_FIXTURE_IDS].sort(),
+      'The migrated Player fixture must retain core panels and combine Weapons with Armour');
     assert.ok(ids.includes('activityLog')&&ids.includes('rest')&&ids.includes('currency'),
       'Player core windows or original Action Log disappeared');
     assert.equal(await p.locator('.react-character-dashboard .react-dashboard-freeform-grid').count(),0,
       'The Player grid editor must be replaced, not left beneath the canvas');
     const m=await metrics(p);
-    assert.equal(m.panels,15,'Missing Player canvas panels: '+JSON.stringify(m));
+    assert.equal(m.panels,PLAYER_FIXTURE_IDS.length,'Missing Player canvas panels: '+JSON.stringify(m));
     await p.screenshot({path:path.join(root,'03-player-dashboard.png'),fullPage:true});
     console.log('PLAYER METRICS',JSON.stringify(m));
   });
@@ -169,7 +177,7 @@ async function metrics(page) {
     const m=await metrics(p);
     await p.screenshot({path:path.join(root,'04-player-mobile.png'),fullPage:true});
     assert.ok(m.scrollWidth<=m.viewport,'Player dashboard horizontal overflow: '+JSON.stringify(m));
-    assert.equal(m.panels,15,'Player panels missing on mobile: '+JSON.stringify(m));
+    assert.equal(m.panels,PLAYER_FIXTURE_IDS.length,'Player panels missing on mobile: '+JSON.stringify(m));
     console.log('PLAYER MOBILE METRICS',JSON.stringify(m));
   });
   await scenario('04b-player-canvas-window-management',{width:1440},async p=>{
@@ -184,17 +192,17 @@ async function metrics(page) {
     const toggle=library.getByRole('button',{name:/Combat Overview/});
     assert.equal(await toggle.getAttribute('aria-pressed'),'false');
     await toggle.click();
-    assert.equal(await canvas.locator('[data-canvas-window]').count(),16,
+    assert.equal(await canvas.locator('[data-canvas-window]').count(),PLAYER_FIXTURE_IDS.length+1,
       'Adding Player Combat Overview must mount a real canvas window');
     await toggle.click();
-    assert.equal(await canvas.locator('[data-canvas-window]').count(),15,
+    assert.equal(await canvas.locator('[data-canvas-window]').count(),PLAYER_FIXTURE_IDS.length,
       'Removing an optional Player window must restore the original set');
     await library.getByRole('button',{name:'Close Dashboard Windows menu'}).click();
     assert.equal(await p.getByRole('button',{name:'Undo canvas change'}).isEnabled(),true);
     await p.getByRole('button',{name:'Undo canvas change'}).click();
-    assert.equal(await canvas.locator('[data-canvas-window]').count(),16);
+    assert.equal(await canvas.locator('[data-canvas-window]').count(),PLAYER_FIXTURE_IDS.length+1);
     await p.getByRole('button',{name:'Redo canvas change'}).click();
-    assert.equal(await canvas.locator('[data-canvas-window]').count(),15);
+    assert.equal(await canvas.locator('[data-canvas-window]').count(),PLAYER_FIXTURE_IDS.length);
     await p.screenshot({path:path.join(root,'04b-player-canvas-window-management.png'),fullPage:true});
   });
   await scenario('05-gm-dashboard-canvas',{width:1440},async p=>{
@@ -267,8 +275,9 @@ async function metrics(page) {
     assert.equal(await drawerToggle.getAttribute('aria-expanded'),'false',
       'The Combat Tools drawer should start closed');
     await p.screenshot({path:path.join(root,'08-gm-combat-command-centre.png'),fullPage:true});
-    const panels=await p.locator('[data-combat-panel]').count();
-    assert.equal(panels,14,'All 13 combat systems and the GM Player Resources window must be present');
+    const panels=await p.locator('[data-combat-panel]').evaluateAll(nodes=>nodes.map(node=>node.dataset.combatPanel));
+    assert.deepEqual([...panels].sort(),[...COMBAT_INITIAL_IDS].sort(),
+      'Combat must show the approved default windows, including GM resources and enemy tracking');
     const appearance=await p.locator('[data-combat-panel="controls"]').evaluate(panel=>{
       const shell=getComputedStyle(panel),bar=getComputedStyle(panel.querySelector('header'));
       const colour=value=>value.replaceAll(' ','');
@@ -276,6 +285,7 @@ async function metrics(page) {
         display:shell.display,visibility:shell.visibility,
         width:Math.round(panel.getBoundingClientRect().width),
         height:Math.round(panel.getBoundingClientRect().height),
+        layoutWidth:parseFloat(shell.width),layoutHeight:parseFloat(shell.height),
         background:colour(shell.backgroundColor),border:colour(shell.borderTopColor),
         borderWidth:shell.borderTopWidth,
         headerBackground:colour(bar.backgroundColor),
@@ -283,7 +293,8 @@ async function metrics(page) {
         headerBorderWidth:bar.borderBottomWidth
       };
     });
-    assert.ok(appearance.width>=150&&appearance.height>=100,
+    assert.ok(appearance.width>0&&appearance.height>0&&
+      appearance.layoutWidth>=150&&appearance.layoutHeight>=100,
       'Combat panel has no physical window bounds: '+JSON.stringify(appearance));
     assert.notEqual(appearance.background,'rgba(0,0,0,0)',
       'Combat window background is invisible: '+JSON.stringify(appearance));
@@ -307,7 +318,12 @@ async function metrics(page) {
     const tools=p.getByRole('complementary',{name:'Combat Command Centre tools'});
     await tools.waitFor({state:'visible'});
     await tools.getByRole('button',{name:'Encounter Builder',exact:true}).click();
-    await tools.getByRole('button',{name:/Encounter Setup/}).click();
+    const setupToggle=tools.getByRole('button',{name:/Encounter Setup/});
+    assert.equal(await setupToggle.getAttribute('aria-pressed'),'false');
+    await setupToggle.click();
+    assert.equal(await p.locator('[data-combat-panel="setup"]').count(),1,
+      'The optional Encounter Setup window must open from the library');
+    await setupToggle.click();
     assert.equal(await p.locator('[data-combat-panel="setup"]').count(),0,
       'Panel Library must hide a window without deleting its data');
     await tools.getByRole('button',{name:/Encounter Setup/}).click();
@@ -327,9 +343,9 @@ async function metrics(page) {
     const initialLocked=await p.locator('[data-combat-panel="controls"]').evaluate(el=>
       el.style.getPropertyValue('--combat-x'));
     const lockedDrag=await lockedHeader.boundingBox();
-    await p.mouse.move(lockedDrag.x+35,lockedDrag.y+20);
+    await p.mouse.move(lockedDrag.x+35,lockedDrag.y+lockedDrag.height/2);
     await p.mouse.down();
-    await p.mouse.move(lockedDrag.x+85,lockedDrag.y+20,{steps:5});
+    await p.mouse.move(lockedDrag.x+85,lockedDrag.y+lockedDrag.height/2,{steps:5});
     await p.mouse.up();
     assert.equal(await p.locator('[data-combat-panel="controls"]').evaluate(el=>
       el.style.getPropertyValue('--combat-x')),initialLocked,
@@ -349,10 +365,10 @@ async function metrics(page) {
     const hit=await p.evaluate(({x,y})=>{
       const el=document.elementFromPoint(x,y);
       return {tag:el?.tagName,classes:String(el?.className||''),text:el?.textContent?.slice(0,100)};
-    },{x:drag.x+35,y:drag.y+20});
-    await p.mouse.move(drag.x+35,drag.y+20);
+    },{x:drag.x+35,y:drag.y+drag.height/2});
+    await p.mouse.move(drag.x+35,drag.y+drag.height/2);
     await p.mouse.down();
-    await p.mouse.move(drag.x+85,drag.y+20,{steps:5});
+    await p.mouse.move(drag.x+85,drag.y+drag.height/2,{steps:5});
     await p.mouse.up();
     console.log('COMBAT CANVAS DRAG HIT',JSON.stringify(hit));
     await p.locator('[data-combat-panel="controls"]').waitFor();
@@ -365,12 +381,12 @@ async function metrics(page) {
     // synthetic mouse release is platform-dependent and is not a fair
     // acceptance test for window-to-window canvas overlap.
     await header.evaluate(el=>el.scrollIntoView({block:'center',inline:'nearest'}));
-    await header.hover({position:{x:35,y:20}});
+    await header.hover({position:{x:35,y:drag.height/2}});
     const second=await header.boundingBox();
     const nextHit=await p.evaluate(({x,y})=>({
       tag:document.elementFromPoint(x,y)?.tagName,
       panel:document.elementFromPoint(x,y)?.closest('[data-combat-panel]')?.dataset.combatPanel
-    }),{x:second.x+35,y:second.y+20});
+    }),{x:second.x+35,y:second.y+second.height/2});
     assert.equal(nextHit.panel,'controls',
       'The second drag must begin over Encounter Controls, not the canvas background');
     console.log('SECOND DRAG HIT',JSON.stringify(nextHit));
@@ -389,17 +405,17 @@ async function metrics(page) {
     const current=await p.locator('[data-combat-panel="controls"]').boundingBox();
     const dx=Math.round(target.x-current.x);
     const dy=Math.round(target.y-current.y);
-    const releaseY=second.y+20+dy;
+    const releaseY=second.y+second.height/2+dy;
     assert.ok(releaseY>0&&releaseY<(p.viewportSize()?.height||900)-10,
       'Canvas overlap test needs a visible release location: '+JSON.stringify({second,target,current,releaseY}));
-    await header.hover({position:{x:35,y:20}});
+    await header.hover({position:{x:35,y:drag.height/2}});
     await p.mouse.down();
     console.log('SECOND DRAG EVENTS',JSON.stringify(await p.evaluate(()=>
       window.__combatDragEvents)));
     assert.equal(await canvas.getAttribute('data-dragging-window'),'controls',
       'Direct header pointer must start a combat drag');
     // Aim directly at the initiative panel, rather than assuming its position.
-    await p.mouse.move(second.x+35+dx,second.y+20+dy,{steps:20});
+    await p.mouse.move(second.x+35+dx,second.y+second.height/2+dy,{steps:20});
     await p.waitForFunction(()=>document.querySelector('[data-combat-panel="controls"]')
       ?.style.transform.includes('translate3d('),null,{timeout:2500});
     const preview=await p.locator('[data-combat-panel="controls"]').evaluate(panel=>({
@@ -458,7 +474,8 @@ async function metrics(page) {
     await p.getByTestId('asteria-dashboard-card-dropdown').getByRole('button',{name:'Open Combat Command Centre',exact:true}).click();
     const windows=p.locator('[data-combat-panel]');
     await windows.first().waitFor();
-    assert.equal(await windows.count(),14,'Mobile combat windows or GM resources disappeared');
+    assert.deepEqual((await windows.evaluateAll(nodes=>nodes.map(node=>node.dataset.combatPanel))).sort(),
+      [...COMBAT_INITIAL_IDS].sort(),'Mobile combat windows or GM resources disappeared');
     const layout=await p.locator('[data-testid="site-gm-combat-command-centre"]').evaluate(el=>({
       mode:el.querySelector('[data-layout-mode]')?.dataset.layoutMode,
       panels:[...el.querySelectorAll('[data-combat-panel]')].slice(0,3).map(w=>({
@@ -499,7 +516,7 @@ async function metrics(page) {
     const controls=p.getByTestId('combat-drag-header-controls');
     const positionBefore=await p.locator('[data-combat-panel="controls"]')
       .evaluate(el=>[el.style.getPropertyValue('--combat-x'),el.style.getPropertyValue('--combat-y')]);
-    await controls.dblclick({position:{x:34,y:20}});
+    await controls.dblclick({position:{x:34,y:(await controls.boundingBox()).height/2}});
     const returnFocus=p.getByRole('button',{name:'Return from Encounter Controls'});
     await returnFocus.waitFor();
     await returnFocus.click();
@@ -557,7 +574,7 @@ async function metrics(page) {
         };
       });
       matrix.push(reading);
-      assert.equal(reading.windows,15,'Missing Player windows at '+width+'px');
+      assert.equal(reading.windows,PLAYER_FIXTURE_IDS.length,'Missing Player windows at '+width+'px');
       assert.ok(reading.hostWidth>0,'Player canvas has zero width at '+width+'px');
       if(reading.hostWidth<700)assert.equal(reading.mode,'stacked',
         'Player canvas should stack in a narrow container at '+width+'px');
@@ -573,8 +590,11 @@ async function metrics(page) {
     for(let i=0;i<5;i++)await p.getByRole('button',{name:'Zoom out of canvas'}).click();
     assert.equal(await canvas.locator('[data-detail-level]').getAttribute('data-detail-level'),
       'preview','Adaptive low zoom must deliberately enter preview mode');
-    assert.notEqual(await canvas.locator('[data-canvas-window="armour"] [data-combat-scroll]')
-      .getAttribute('inert'),null,'Preview should not expose unclickable controls');
+    assert.equal(await canvas.locator('[data-canvas-window="armour"] [data-combat-scroll]')
+      .getAttribute('inert'),null,'Low zoom must retain interactive window content');
+    assert.equal(await canvas.locator('[data-canvas-window="armour"] [data-combat-scroll]')
+      .evaluate(el=>getComputedStyle(el).pointerEvents),'auto',
+      'Low zoom must not disable pointer interaction');
     for(let i=0;i<5;i++)await p.getByRole('button',{name:'Zoom into canvas'}).click();
     assert.equal(await canvas.locator('[data-canvas-window="armour"] [data-combat-scroll]')
       .getAttribute('inert'),null,'Returning to readable zoom should restore interactions');
