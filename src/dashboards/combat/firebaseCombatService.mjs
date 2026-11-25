@@ -1,3 +1,4 @@
+import {libraryDraft,updateGMLibrary} from '../../../src/state/gmNpcCreatureLibraryModel.mjs';
 import {assertGMCampaignId,gmCampaignAccess,gmPartySummary} from './combatAccess.mjs';
 import {requireDashboardId,playerCampaignAccess,linkedCharacterAccess,matchesOwnedSource} from './combatAccess.mjs';
 import {gmSessionState} from './combatAccess.mjs';
@@ -310,8 +311,30 @@ export function createFirebaseCombatService({
     same(uid);
     return result;
   }
+  /** Create a separate campaign-owned creature variant; never change the
+   * source Library record, prepared encounter or active combatant. */
+  async function saveCreatureVariant(id,enemy){
+    const {uid}=await check(id,'gm');
+    if(!enemy||typeof enemy!=='object'||!Array.isArray(enemy.hp))
+      throw Error('Choose an encounter enemy with valid statistics.');
+    const variantId='creature-'+crypto.randomUUID();
+    const draft=libraryDraft('creature',{
+      ...enemy,name:enemy.name,xpReward:enemy.xpReward??0
+    });
+    const result=await firestoreSdk.runTransaction(db,async tx=>{
+      const reference=gmRef(id),snap=await tx.get(reference);
+      same(uid);
+      const world=snap.exists()?snap.data()?.world||{}:{};
+      const update=updateGMLibrary(world,'creature',draft,variantId);
+      if(!update.ok)throw Error(update.error);
+      tx.set(reference,{world:{...world,...update.patch},
+        updatedBy:uid,updatedAt:firestoreSdk.serverTimestamp()},{merge:true});
+      return {ok:true,id:variantId,name:update.record.name};
+    });
+    same(uid);return result;
+  }
   return Object.freeze({
-    availability:()=>flags,watchGM,watchPlayer,watchGMHistory,
+    availability:()=>flags,watchGM,watchPlayer,watchGMHistory,saveCreatureVariant,
     reviewCompletion:(id,input)=>completionAction(id,input),
     deliverCompletion,
     commandGM:(id,actorId,input)=>command(id,'gm','',actorId,input),
