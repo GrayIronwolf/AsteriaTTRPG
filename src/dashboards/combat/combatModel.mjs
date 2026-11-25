@@ -177,6 +177,7 @@ export function libraryEnemy(source,id){
   if(source.initiative!==undefined&&source.initiative!==''&&
     Number.isFinite(Number(source.initiative))){
     next.initiative=Number(source.initiative);next.initiativeSet=true;
+    next.sourceSnapshot.initiative=next.initiative;
   }
   return next;
 }
@@ -188,7 +189,8 @@ export function gmEncounterCandidates(world){
       hp:encounterResourcePair(row,'hp'),sp:encounterResourcePair(row,'sp'),
       mp:encounterResourcePair(row,'mp'),sourceId:row.id,
       sourceRef:prefix+row.id,sourceVersion:title(row.updatedAt,40),
-      ac:Number.isFinite(Number(row.ac))?Number(row.ac):undefined,
+      ac:row.ac!==undefined&&row.ac!==null&&Number.isFinite(Number(row.ac))?
+        Number(row.ac):undefined,
       xpReward:Number.isFinite(Number(row.xpReward))?Number(row.xpReward):undefined,
       ...safeEnemyProfile(row)
     })).filter(row=>row.name&&row.hp);
