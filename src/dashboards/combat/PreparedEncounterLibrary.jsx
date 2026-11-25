@@ -51,6 +51,17 @@ export function PreparedEncounterLibrary({
   const updateEnemy=(index,field,value)=>setDraft(previous=>({...previous,
     enemies:previous.enemies.map((row,i)=>i===index?{...row,[field]:value}:row)
   }));
+  const saveVariant=async row=>{
+    if(busy)return;
+    setBusy(true);setError('');setMessage('');
+    try{
+      if(typeof api.saveCreatureVariant!=='function')
+        throw Error('The authenticated creature variant service is unavailable.');
+      const saved=await api.saveCreatureVariant(campaignId,row);
+      setMessage('Saved '+saved.name+' as an independent campaign creature.');
+    }catch(failure){setError(failure?.message||'Creature variant could not be saved.');}
+    finally{setBusy(false);}
+  };
   const startRefresh=row=>{
     const source=row.sourceRef?library.find(candidate=>candidate.id===row.sourceRef):null;
     const changes=source?comparePreparedEnemySource(row,source):null;
@@ -357,6 +368,8 @@ export function PreparedEncounterLibrary({
               '':(row.preparedEnemyId||'legacy-'+index))}>Customize</button>
           <button type="button" disabled={busy||!row.preparedEnemyId||!row.sourceRef||!row.sourceSnapshot}
             onClick={()=>startRefresh(row)}>Compare with Library</button>
+          <button type="button" disabled={busy||!Array.isArray(row.hp)}
+            onClick={()=>saveVariant(row)}>Save as New Creature</button>
           <button type="button" disabled={busy} aria-label={'Remove '+row.name+' '+(index+1)}
             onClick={()=>setDraft(previous=>({...previous,
               enemies:previous.enemies.filter((_,i)=>i!==index)}))}>Remove</button>
