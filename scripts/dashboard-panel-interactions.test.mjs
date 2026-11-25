@@ -20,11 +20,20 @@ test('Quick item use requires a distinct confirmation and preserves inventory na
 });
 
 test('Spell cast reviews cost and never casts directly from the spell card',()=>{
-  assert.match(player,/onActivate=\{spell => setPendingSpell\(spell\)\}/);
+  assert.match(player,/onActivate=\{spell => setPendingSpell\(spell\.key\)\}/);
   assert.match(player,/const result = await cast\(pendingSpell\)/);
   assert.match(player,/if\(result\?\.ok\) setPendingSpell\(null\)/);
-  assert.match(player,/disabled=\{!editable \|\| busy\} onClick=\{confirmCast\}/);
+  assert.match(player,/disabled=\{!editable \|\| busy \|\| Boolean\(problem\)\} onClick=\{confirmCast\}/);
   assert.match(player,/Confirm this spell before spending its resources/);
+  assert.match(player,/pendingSpell=spells\.find\(row=>row\.key===pendingKey\)/);
+  assert.match(player,/if\(!pendingSpell \|\| !editable \|\| busy \|\| combat\?\.active \|\| problem\) return;/);
+  assert.match(player,/spellPaymentProblem\(character,pendingSpell\)/);
+  assert.match(player,/key:spell\.key,rank:spell\.rank,expectedCoreRevision:/);
+  const tabs=readFileSync(new URL('../src/dashboards/CharacterWorkspaceTabs.jsx',import.meta.url),'utf8');
+  assert.match(tabs,/onClick=\{\(\)=>setPending\(spell\.key\)\}/);
+  assert.match(tabs,/if\(!selected\|\|!editable\|\|combat\?\.active\|\|action\.busy\|\|problem\)return;/);
+  assert.match(tabs,/key:selected\.key,rank:selected\.rank,expectedCoreRevision:/);
+  assert.match(tabs,/<CombatActionButton combat=\{combat\} option=\{option\}/);
 });
 
 test('GM character-specific title drafts reset and mutation handlers always release busy state',()=>{
