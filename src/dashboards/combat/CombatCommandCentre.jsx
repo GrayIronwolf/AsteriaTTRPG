@@ -743,7 +743,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
           <button type="button" className={styles.iconButton}
             data-testid="site-canvas-opening-zoom"
             aria-label="Reset canvas view to 50 percent" title="Reset canvas view to 50%"
-            onClick={openingView}><AsteriaIcon name="focus" size={19}/></button>
+            onClick={openingView}><AsteriaIcon name="fitCanvas" size={19}/></button>
           <button type="button" className={styles.iconButton}
             aria-label="Zoom into canvas" title="Zoom in"
             onClick={()=>updateCamera(current=>zoomCombatCamera(current,
