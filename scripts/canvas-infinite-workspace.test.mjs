@@ -75,7 +75,7 @@ test('Canvas is borderless, fills the viewport and retains responsive stacking',
  assert.match(css,/background-position:center top,var\(--combat-grid-x,0px\) var\(--combat-grid-y,60px\)/);
  assert.match(renderer,/scrollArea.clientHeight-contentTop-2/);
  assert.match(renderer,/viewportRect.top-scrollRect.top\+scrollArea.scrollTop/);
- assert.match(renderer,/Math.min\(36,Math.max\(0,parentRect.left-scrollRect.left\)\)/);
+ assert.match(renderer,/host\.style\.setProperty\('--combat-edge-left','0px'\)/);
  assert.match(css,/@container \(max-width:699px\)/);
  assert.match(css,/\.window\[data-combat-panel\]\{position:relative;left:auto;top:auto;width:100%;height:auto/);
  assert.match(combat,/\.workspace\[data-testid="site-gm-combat"\]\{padding:0;border:0/);

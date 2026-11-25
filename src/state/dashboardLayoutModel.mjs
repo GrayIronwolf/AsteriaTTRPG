@@ -18,6 +18,7 @@ export {
 export const DASHBOARD_PANEL_REGISTRY = {
   player: [
     {id:'armour',label:'Equipment & Armour',category:'Character',size:'3x3'},
+    // Legacy grid identifier: kept for saved layout compatibility only.
     {id:'weapons',label:'Equipped Weapons',category:'Equipment',size:'3x3'},
     {id:'quick',label:'Quick Items',category:'Equipment',size:'3x3'},
     {id:'talents',label:'Class Talents',category:'Abilities',size:'3x3'},
@@ -172,28 +173,27 @@ export function normalizeGMCanvasLayout(raw,oldGrid=null){
 /** Player Main uses the same canvas geometry/interaction engine as GM and
  * Combat. The original registry remains the permission-safe panel allowlist. */
 export const PLAYER_CANVAS_DEFAULT_IDS=Object.freeze([
-  'armour','weapons','quick','talents','spells','conditions','quests','party'
+  'armour','quick','talents','spells','conditions','quests','party'
 ]);
 const PLAYER_CANVAS_DEFAULT_POSITIONS=Object.freeze({
   armour:{x:0,y:0,w:235,h:360},
-  weapons:{x:255,y:0,w:235,h:360},
-  quick:{x:510,y:0,w:235,h:360},
-  talents:{x:765,y:0,w:235,h:360},
-  spells:{x:0,y:380,w:235,h:360},
-  conditions:{x:255,y:380,w:235,h:360},
-  quests:{x:510,y:380,w:235,h:360},
-  party:{x:765,y:380,w:235,h:360}
+  quick:{x:255,y:0,w:235,h:360},
+  talents:{x:510,y:0,w:235,h:360},
+  spells:{x:765,y:0,w:235,h:360},
+  conditions:{x:0,y:380,w:235,h:360},
+  quests:{x:255,y:380,w:235,h:360},
+  party:{x:510,y:380,w:235,h:360}
 });
 const playerCanvasIds=[...PLAYER_CANVAS_DEFAULT_IDS,
   ...DASHBOARD_PANEL_REGISTRY.player.map(item=>item.id)
-    .filter(id=>!PLAYER_CANVAS_DEFAULT_IDS.includes(id)),'activityLog'];
+    .filter(id=>id!=='weapons'&&!PLAYER_CANVAS_DEFAULT_IDS.includes(id)),'activityLog'];
 const playerOptional=playerCanvasIds.filter(id=>!PLAYER_CANVAS_DEFAULT_IDS.includes(id));
 const playerCategories=['Character','Equipment','Abilities','Combat','Adventures',
   'Social','Focus Panels','Shortcuts'].map(category=>({
     id:category.toLowerCase().replace(/[^a-z0-9]+/g,'-'),
     label:category==='Focus Panels'?'Quick Views':category==='Shortcuts'?'Page Shortcuts':category,
     panels:[
-      ...DASHBOARD_PANEL_REGISTRY.player.filter(item=>item.category===category).map(item=>item.id),
+      ...DASHBOARD_PANEL_REGISTRY.player.filter(item=>item.category===category&&item.id!=='weapons').map(item=>item.id),
       ...(category==='Social'?['activityLog']:[])
     ]
   }));
@@ -217,8 +217,17 @@ export function defaultPlayerCanvasLayout(){
   return defaultCombatWorkspaceLayout(PLAYER_DASHBOARD_CANVAS_CONFIG);
 }
 export function normalizePlayerCanvasLayout(raw,oldGrid=null){
-  if(raw&&typeof raw==='object'&&!Array.isArray(raw))
-    return normalizeCombatWorkspace(raw,PLAYER_DASHBOARD_CANVAS_CONFIG);
+  if(raw&&typeof raw==='object'&&!Array.isArray(raw)){
+    // "weapons" is a retired independent window. Its functionality now
+    // lives in armour; map a visible old Weapons window to the combined one.
+    const legacyWeaponsPresent=Object.hasOwn(raw.freeform?.positions||{},'weapons');
+    const wasWeaponsVisible=legacyWeaponsPresent&&Array.isArray(raw.hidden)&&
+      !raw.hidden.includes('weapons');
+    const wasArmourHidden=Array.isArray(raw.hidden)&&raw.hidden.includes('armour');
+    const next=wasWeaponsVisible&&wasArmourHidden?{...raw,
+      hidden:raw.hidden.filter(id=>id!=='armour')} : raw;
+    return normalizeCombatWorkspace(next,PLAYER_DASHBOARD_CANVAS_CONFIG);
+  }
   const base=defaultPlayerCanvasLayout();
   if(!oldGrid||typeof oldGrid!=='object')return base;
   // One-time conversion keeps explicitly hidden player windows, legacy lock

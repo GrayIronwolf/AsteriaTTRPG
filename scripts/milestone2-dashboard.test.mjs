@@ -16,12 +16,13 @@ import {
 } from '../src/state/preparedEncounterModel.mjs';
 import {validateCombatCommand,projectCombat} from '../src/dashboards/combat/combatModel.mjs';
 
-test('each new dashboard has exactly eight visible default windows',()=>{
-  for(const layout of [defaultGMCanvasLayout(),defaultPlayerCanvasLayout(),
-    defaultCombatWorkspaceLayout()]){
-    assert.equal(Object.keys(layout.freeform.positions).length>=8,true);
+test('each dashboard has its approved visible default windows',()=>{
+  for(const [layout,count] of [
+    [defaultGMCanvasLayout(),8],[defaultPlayerCanvasLayout(),7],
+    [defaultCombatWorkspaceLayout(),8]]){
+    assert.equal(Object.keys(layout.freeform.positions).length>=count,true);
     assert.equal(Object.keys(layout.freeform.positions)
-      .filter(id=>!layout.hidden.includes(id)).length,8);
+      .filter(id=>!layout.hidden.includes(id)).length,count);
   }
   assert.equal(COMBAT_PANEL_IDS.length,15);
   const gm=defaultGMCanvasLayout();

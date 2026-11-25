@@ -83,3 +83,41 @@
   .art :global(.asteria-icon){width:42px;height:42px}
 }
 @media(prefers-reduced-motion:reduce){.card,.category,.searchButton,.summary{transition:none}}
+
+
+/* Milestone 2.1 compact left tool rail. The existing category/permission
+ * model and header-style dropdown cards remain unchanged. */
+@media(min-width:801px){
+  :global(.asteria-canvas-workspace-mode) .root{
+    width:56px;min-width:56px;align-self:stretch;
+    background:#132739;border:1px solid #526e80;border-radius:4px;
+  }
+  :global(.asteria-canvas-workspace-mode) .bar{
+    display:flex;flex-direction:column;gap:4px;
+    padding:4px;align-items:stretch;
+  }
+  :global(.asteria-canvas-workspace-mode) .category,
+  :global(.asteria-canvas-workspace-mode) .searchButton{
+    min-height:45px;min-width:0;width:46px;max-width:46px;
+    padding:4px;flex-direction:column;gap:1px;
+  }
+  :global(.asteria-canvas-workspace-mode) .category>span:not(.chevron),
+  :global(.asteria-canvas-workspace-mode) .searchText{
+    font-size:0;line-height:0;overflow:hidden;
+  }
+  :global(.asteria-canvas-workspace-mode) .category :global(.asteria-icon),
+  :global(.asteria-canvas-workspace-mode) .searchButton :global(.asteria-icon){
+    width:19px;height:19px;
+  }
+  :global(.asteria-canvas-workspace-mode) .chevron{display:none}
+  :global(.asteria-canvas-workspace-mode) .dropdown{
+    top:0;left:calc(100% + 9px);right:auto;
+    width:min(670px,calc(100vw - 105px));box-sizing:border-box;
+  }
+  :global(.asteria-canvas-workspace-mode) .favourites{
+    position:absolute;top:0;left:calc(100% + 9px);
+    width:min(400px,calc(100vw - 105px));box-sizing:border-box;
+    max-height:120px;overflow-y:auto;z-index:2;
+  }
+  :global(.asteria-canvas-workspace-mode) .root:has(.dropdown) .favourites{display:none}
+}

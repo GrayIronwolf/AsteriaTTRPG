@@ -12,13 +12,14 @@ const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 test('Player Main canvas preserves every existing panel and the Action / Resource Log',()=>{
  const defaults=DASHBOARD_PANEL_REGISTRY.player.filter(row=>!row.optional).map(row=>row.id);
  assert.deepEqual([...PLAYER_DASHBOARD_CANVAS_CONFIG.ids].sort(),
-   [...DASHBOARD_PANEL_REGISTRY.player.map(row=>row.id),'activityLog'].sort());
+   [...DASHBOARD_PANEL_REGISTRY.player.filter(row=>row.id!=='weapons').map(row=>row.id),'activityLog'].sort());
  const layout=defaultPlayerCanvasLayout();
  assert.deepEqual(PLAYER_DASHBOARD_CANVAS_CONFIG.ids.filter(id=>!layout.hidden.includes(id)),
    PLAYER_CANVAS_DEFAULT_IDS);
- assert.equal(PLAYER_CANVAS_DEFAULT_IDS.length,8);
- assert.equal(PLAYER_DASHBOARD_CANVAS_CONFIG.ids.length,DASHBOARD_PANEL_REGISTRY.player.length+1);
+ assert.equal(PLAYER_CANVAS_DEFAULT_IDS.length,7);
+ assert.equal(PLAYER_DASHBOARD_CANVAS_CONFIG.ids.length,DASHBOARD_PANEL_REGISTRY.player.length);
  assert.equal(new Set(PLAYER_DASHBOARD_CANVAS_CONFIG.ids).size,PLAYER_DASHBOARD_CANVAS_CONFIG.ids.length);
+ assert.equal(PLAYER_DASHBOARD_CANVAS_CONFIG.ids.includes('weapons'),false);
  const library=PLAYER_DASHBOARD_CANVAS_CONFIG.categories.flatMap(group=>group.panels);
  assert.deepEqual([...new Set(library)].sort(),[...PLAYER_DASHBOARD_CANVAS_CONFIG.ids].sort());
  for(const id of PLAYER_DASHBOARD_CANVAS_CONFIG.ids){
@@ -35,11 +36,11 @@ test('Player canvas remains independent of GM and Combat panel allowlists',()=>{
  assert.ok(!gm.ids.includes('activityLog'));
  assert.equal(editCombatWindow(player,'controls','move',{x:100,y:100},
    PLAYER_DASHBOARD_CANVAS_CONFIG),player);
- const edited=editCombatWindow(player,'weapons','resize',{w:720,h:490},
+ const edited=editCombatWindow(player,'armour','resize',{w:720,h:490},
    PLAYER_DASHBOARD_CANVAS_CONFIG);
- assert.equal(edited.freeform.positions.weapons.w,720);
- assert.equal(edited.freeform.positions.weapons.h,490);
- assert.equal(normalizePlayerCanvasLayout(JSON.parse(JSON.stringify(edited))).freeform.positions.weapons.w,720);
+ assert.equal(edited.freeform.positions.armour.w,720);
+ assert.equal(edited.freeform.positions.armour.h,490);
+ assert.equal(normalizePlayerCanvasLayout(JSON.parse(JSON.stringify(edited))).freeform.positions.armour.w,720);
  assert.equal(normalizeCombatWorkspace(null).hidden.length,7,
    'Combat defaults show eight windows; other tools remain in the library');
 });
@@ -49,19 +50,19 @@ test('Legacy Player grid migration keeps hide/show, lock and desktop arrangement
  const newLayout=normalizeDashboardLayout({
    ...old,mode:'custom',playerCanvas:undefined,
    hidden:old.hidden.filter(id=>id!=='combatOverview').concat('skills'),
-   lockedPositions:['weapons'],
-   placements:{...old.placements,weapons:{x:4,y:23,w:6,h:3}}
+   lockedPositions:['armour'],
+   placements:{...old.placements,armour:{x:4,y:23,w:6,h:3}}
  },'player');
  const canvas=newLayout.playerCanvas;
  assert.equal(canvas.hidden.includes('combatOverview'),false,
    'Previously added optional panel must stay visible');
  assert.equal(canvas.hidden.includes('skills'),true,
    'Previously hidden player panel must remain hidden');
- assert.deepEqual(canvas.locked,['weapons']);
- assert.equal(canvas.freeform.positions.weapons.x,333);
- assert.equal(canvas.freeform.positions.weapons.y,2645);
- assert.equal(canvas.freeform.positions.weapons.w,500);
- assert.equal(canvas.freeform.positions.weapons.h,570);
+ assert.deepEqual(canvas.locked,['armour']);
+ assert.equal(canvas.freeform.positions.armour.x,333);
+ assert.equal(canvas.freeform.positions.armour.y,2645);
+ assert.equal(canvas.freeform.positions.armour.w,500);
+ assert.equal(canvas.freeform.positions.armour.h,570);
  assert.deepEqual(normalizeDashboardLayout(JSON.parse(JSON.stringify(newLayout)),'player')
    .playerCanvas,canvas);
 });

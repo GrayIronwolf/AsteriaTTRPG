@@ -5,6 +5,7 @@ import { useCharacterSystemsSync } from '../sessions/useCharacterSystemsSync.js'
 import { reconcileCharacterSystems } from '../state/characterSystems.mjs';
 import { resolveRosterSelection } from '../state/dashboardNavigation.mjs';
 import {CanvasWorkspace,CombatCommandPanel} from './combat/CombatCommandCentre.jsx';
+import {DashboardHeaderFold} from '../components/DashboardHeaderFold.jsx';
 import {
   GMQuickRequests,GMQuickPreparedEncounters,GMQuickNotes,
   GMQuickCalendarWeather,GMQuickSession,GMQuickReference,GMQuickPlayerManager
@@ -838,12 +839,13 @@ export function GMDashboard({ campaignId }) {
   if(live.membershipLoading) return <div className="react-route-state">Verifying GM campaign membership...</div>;
   if(!window.AsteriaCharacterAccess.isGM(live.campaign,accountUid,live.membership)) return <div className="react-route-state" role="alert">{live.membershipError||'You do not have GM access to this campaign.'}</div>;
   return <AsteriaAppShell
-    className="react-gm-dashboard"
+    className={['main','combat'].includes(tab)?'react-gm-dashboard asteria-canvas-workspace-mode':'react-gm-dashboard'}
     eyebrow="GM Dashboard"
     title={live.campaign?.name || 'Campaign'}
     subtitle="Live campaign control, party resources, rewards, encounters, and session tools."
     actions={<><SessionActions campaignId={campaignId} session={live.session} busy={busy} run={run} /><LiveSyncStatus online={live.online} connectionState={live.connectionState} error={live.error || actionError || coreSyncError} loading={live.loading} session={live.session} /></>}
   >
+    <DashboardHeaderFold scope="gm"/>
     {tab!=='combat'&&tab!=='main'?<section className="react-gm-party-strip" aria-label="GM Player Resources"
       data-testid="gm-player-resources-strip">
       <PartySidebar campaign={live.campaign || { id: campaignId }}
@@ -931,7 +933,7 @@ export function GMDashboard({ campaignId }) {
       <Modal title={(live.characters[canvasCharacterId]?.name||'Character')+' — Player Dashboard'}
         eyebrow="GM Character Inspection" onClose={()=>setCanvasCharacterId('')}>
         <div className="react-canvas-character-dashboard" data-testid="gm-canvas-character-dashboard">
-          <CharacterDashboard campaignId={campaignId} characterId={canvasCharacterId}/>
+          <CharacterDashboard campaignId={campaignId} characterId={canvasCharacterId} embedded/>
         </div>
       </Modal>:null}
   </AsteriaAppShell>;

@@ -104,8 +104,11 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
     setSaved(gmCanvas?normalizeLayout(layoutValue):readLayout(storageKey));
     setUndoStack([]);setRedoStack([]);
     const storedCamera=readCamera(storageKey);
-    openingCameraPending.current=!storedCamera;
-    const freshCamera=storedCamera||DEFAULT_CAMERA;
+    // Migrate legacy near-invisible camera positions (4-10% in older layouts)
+    // to the approved 50% opening view; keep ordinary saved zoom settings.
+    const restoredCamera=storedCamera&&storedCamera.scale>=.25?storedCamera:null;
+    openingCameraPending.current=!restoredCamera;
+    const freshCamera=restoredCamera||DEFAULT_CAMERA;
     cameraRef.current=freshCamera;setCameraState({scope:storageKey,view:freshCamera});
     setFocused(null);setFrontWindow('');setMessage('');
     setSidebarExpanded(false);
@@ -141,17 +144,13 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
       // Measure in one coordinate space. The former viewport-top + scrollTop
       // mix left an unintended gap below the GM/Player/Combat canvases.
       const contentTop=viewportRect.top-scrollRect.top+scrollArea.scrollTop;
-      const height=Math.max(380,Math.floor(scrollArea.clientHeight-contentTop-2));
-      const parentRect=host.parentElement?.getBoundingClientRect();
-      const expandHorizontally=window.innerWidth>=900&&
-        (host.parentElement?.clientWidth||0)>=700;
-      // Expand into page gutters, not into player combat sidebars or dialogs.
-      const left=expandHorizontally&&parentRect
-        ?Math.min(36,Math.max(0,parentRect.left-scrollRect.left)):0;
-      const right=expandHorizontally&&parentRect
-        ?Math.min(36,Math.max(0,scrollRect.right-parentRect.right)):0;
-      host.style.setProperty('--combat-edge-left',left+'px');
-      host.style.setProperty('--combat-edge-right',right+'px');
+      // Identical 80vh/800px desktop viewport on all three dashboards,
+      // regardless of their different header, portrait and toolbar heights.
+      const height=window.innerWidth>=900?Math.max(800,Math.floor(window.innerHeight*.8)):
+        Math.max(380,Math.floor(scrollArea.clientHeight-contentTop-2));
+      // Canvas fills its own content column; never extend over the left rail.
+      host.style.setProperty('--combat-edge-left','0px');
+      host.style.setProperty('--combat-edge-right','0px');
       viewport.style.setProperty('--combat-viewport-height',height+'px');
     };
     const schedule=()=>{
@@ -744,6 +743,10 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
         </button>
         {wide?<>
           <button type="button" className={styles.iconButton}
+            data-testid="site-canvas-opening-zoom"
+            aria-label="Reset canvas view to 50 percent" title="Reset canvas view to 50%"
+            onClick={openingView}><AsteriaIcon name="fitCanvas" size={19}/></button>
+          <button type="button" className={styles.iconButton}
             aria-label="Zoom into canvas" title="Zoom in"
             onClick={()=>updateCamera(current=>zoomCombatCamera(current,
               current.scale*1.2,{x:(canvas.current?.clientWidth||0)/2,
@@ -846,6 +849,30 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
             onClick={()=>setPreference(previous=>({...previous,hidden:[]}))}>
             Show all panels ({visible.length}/{panels.length})
           </button>
+          {canEditCanvas?<button type="button" className={styles.showAll}
+            data-testid="apply-recommended-canvas-arrangement"
+            onClick={()=>{
+              const defaults=defaultCombatWorkspaceLayout(canvasConfig||undefined);
+              // Preserve each window's current width and height. Only placement
+              // and visibility are reset; explicit saved presets are retained.
+              change(previous=>({...previous,
+                hidden:[...defaults.hidden],
+                minimized:[],
+                freeform:{...previous.freeform,
+                  positions:Object.fromEntries(panelIds.map(id=>[
+                    id,{...previous.freeform.positions[id],
+                      x:defaults.freeform.positions[id].x,
+                      y:defaults.freeform.positions[id].y}
+                  ]))}
+              }));
+              setFocused(null);
+              const viewport=canvas.current;
+              if(viewport)updateCamera(openingCombatCamera(defaults,
+                panelIds.filter(id=>!defaults.hidden.includes(id)),viewport.clientWidth));
+              setMessage('Recommended positions and visibility applied; window sizes preserved.');
+            }}>
+            Apply Recommended Arrangement (keep window sizes)
+          </button>:null}
           <details className={styles.drawerSettings}>
             <summary>Canvas Preferences</summary>
             {wide?<button type="button" className={styles.openingView}
