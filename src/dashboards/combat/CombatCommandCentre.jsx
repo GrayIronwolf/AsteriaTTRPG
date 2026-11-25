@@ -144,7 +144,9 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
       // Measure in one coordinate space. The former viewport-top + scrollTop
       // mix left an unintended gap below the GM/Player/Combat canvases.
       const contentTop=viewportRect.top-scrollRect.top+scrollArea.scrollTop;
-      const height=window.innerWidth>=900?Math.max(800,Math.floor(scrollArea.clientHeight-contentTop-2)):
+      // Identical 80vh/800px desktop viewport on all three dashboards,
+      // regardless of their different header, portrait and toolbar heights.
+      const height=window.innerWidth>=900?Math.max(800,Math.floor(window.innerHeight*.8)):
         Math.max(380,Math.floor(scrollArea.clientHeight-contentTop-2));
       // Canvas fills its own content column; never extend over the left rail.
       host.style.setProperty('--combat-edge-left','0px');
