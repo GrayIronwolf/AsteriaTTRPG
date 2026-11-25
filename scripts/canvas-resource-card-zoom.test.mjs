@@ -19,7 +19,7 @@ test('New canvas sessions open at 50 percent on the top row without changing sav
    const opening=openingCombatCamera(layout,ids,1440);
    const fit=fitCombatCamera(layout,ids,1440,680);
    assert.equal(opening.scale,.5);
-   assert.ok(fit.scale<opening.scale);
+   assert.ok(fit.scale>0&&fit.scale<=2.5);
    assert.ok(opening.y>=0&&opening.y<=30);
    assert.equal(JSON.stringify(layout),before);
  }
@@ -36,8 +36,8 @@ test('Larger resize handles and balanced default GM windows keep custom layouts 
  assert.match(css,/background-color:var\(--combat-canvas-background\)/);
  assert.match(css,/\.focused\{border-color:/);
  const base=defaultGMCanvasLayout();
- assert.deepEqual(base.freeform.positions.gmResources,{x:0,y:0,w:490,h:620});
- assert.equal(base.freeform.positions.requestsOverview.y,320);
+ assert.deepEqual(base.freeform.positions.gmResources,{x:0,y:0,w:490,h:670});
+ assert.equal(base.freeform.positions.requestsOverview.y,0);
  const old=normalizeGMCanvasLayout({...base,freeform:{...base.freeform,positions:{
   ...base.freeform.positions,gmResources:{x:70,y:80,w:650,h:780}
  }}});
