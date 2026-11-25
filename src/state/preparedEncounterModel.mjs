@@ -37,6 +37,7 @@ export function normalizePreparedEnemy(row){
     result.initiative=val;
   }
   if(id(row.sourceId))result.sourceId=row.sourceId;
+  if(id(row.sourceRef))result.sourceRef=row.sourceRef;
   if(id(row.preparedEnemyId))result.preparedEnemyId=row.preparedEnemyId;
   if(typeof row.sourceVersion==='string'&&row.sourceVersion.length<=40)
     result.sourceVersion=row.sourceVersion;
