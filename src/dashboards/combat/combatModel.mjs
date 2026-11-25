@@ -1,4 +1,4 @@
-import {enemyProfileSnapshot,enemyCombatOptions} from '../../../src/state/enemyProfileModel.mjs';
+import {enemyProfileSnapshot} from '../../../src/state/enemyProfileModel.mjs';
 import {customEncounterCreature,encounterResourcePair,encounterSourceResources} from '../../../src/state/encounterResourceModel.mjs';
 import {gmSessionState} from './combatAccess.mjs';
 import {liveCombatTimerState} from '../../../src/state/liveCombatCommandModel.mjs';
