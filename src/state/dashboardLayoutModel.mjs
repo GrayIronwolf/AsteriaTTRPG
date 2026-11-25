@@ -208,7 +208,7 @@ export const PLAYER_DASHBOARD_CANVAS_CONFIG=Object.freeze({
   defaultPositions:Object.freeze({
     ...PLAYER_CANVAS_DEFAULT_POSITIONS,
     ...Object.fromEntries(playerOptional.map((id,i)=>[id,{
-      x:i%2?510:0,y:3260+Math.floor(i/2)*230,w:490,h:350
+      x:i%2?510:0,y:770+Math.floor(i/2)*380,w:490,h:350
     }]))
   }),
   categories:Object.freeze(playerCategories)
