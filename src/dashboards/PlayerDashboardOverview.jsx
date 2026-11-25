@@ -21,7 +21,8 @@ import { spellPaymentProblem } from '../state/combatRules.mjs';
 import { normalizeDashboardPreferences } from '../state/liveWorkspaceModel.mjs';
 import { resourcePair, soulDamageValue, soulHealingCap } from '../state/specialDamageModel.mjs';
 import { useArmourClass } from '../systems/armour/useArmourClass.js';
-import { knownSpells, quests as selectQuests, unlockedClassTalents } from './characterWorkspaceData.js';
+import { equipmentSlotIdentity, liveQuickSlots, inventoryRecoveryProblem } from '../state/inventoryQuickActions.mjs';
+import { inventoryItems, knownSpells, quests as selectQuests, unlockedClassTalents } from './characterWorkspaceData.js';
 import { openDashboardQuests } from '../state/gameplayIntegrationView.mjs';
 
 function values(value) {
@@ -48,11 +49,15 @@ function rarityClass(item) {
   return itemRarity(item).toLowerCase().replace(/[^a-z0-9]+/g, '-');
 }
 
-function equipmentItem(equipment = {}, slot) {
-  const compact = slot.toLowerCase().replace(/[^a-z0-9]/g, '');
-  const camel = slot.toLowerCase().replace(/\s+(\w)/g, (_, value) => value.toUpperCase());
-  const key = Object.keys(equipment).find(value => value.toLowerCase().replace(/[^a-z0-9]/g, '') === compact);
-  return equipment[slot] || equipment[slot.toLowerCase()] || equipment[camel] || (key ? equipment[key] : null);
+function equipmentItem(equipment = {}, slot, items=[]) {
+  const key=equipmentSlotIdentity(slot);
+  const live=items.find(item=>item.equipped&&equipmentSlotIdentity(item.equippedSlot)===key&&Number(item.qty)>0);
+  if(live)return live;
+  const entry=Object.entries(equipment).find(([label])=>equipmentSlotIdentity(label)===key)?.[1];
+  if(!entry)return null;
+  const id=entry.instanceId||entry.id;
+  const owned=items.find(item=>item.id===id);
+  return owned?(owned.equipped&&Number(owned.qty)>0&&equipmentSlotIdentity(owned.equippedSlot)===key?owned:null):entry;
 }
 
 function costText(value) {
@@ -96,8 +101,9 @@ function DashboardEmpty({ title, description, actionLabel, onAction }) {
 
 function ArmourPanel({ character, onNavigate, style }) {
   const equipment = character.equipment || {};
-  const left = ['Head', 'Chest', 'Hands', 'Feet'];
-  const right = ['Back', 'Torso', 'Waist', 'Shoulders'];
+  const items=inventoryItems(character);
+  const left = ['Head', 'Torso', 'Hands', 'Feet'];
+  const right = ['Back', 'Neck', 'Waist / Hips', 'Shoulders'];
   const armour = useArmourClass(character);
   const [showBreakdown, setShowBreakdown] = useState(false);
   const [changed, setChanged] = useState(false);
@@ -113,14 +119,14 @@ function ArmourPanel({ character, onNavigate, style }) {
   const decimal = value => Number(value).toFixed(2).replace(/\.00$/,'');
   return <DashboardPanel icon="armour" title="Equipment / Armour" variant="equipment" className={`react-overview-armour ${changed ? 'ac-updated' : ''}`} style={style}>
     <div className="react-armour-layout">
-      <div className="react-armour-slots">{left.map(slot => <LoadoutSlot key={slot} label={slot} item={equipmentItem(equipment, slot)} icon="armour" onOpen={() => onNavigate('inventory')} />)}</div>
+      <div className="react-armour-slots">{left.map(slot => <LoadoutSlot key={slot} label={slot} item={equipmentItem(equipment, slot, items)} icon="armour" onOpen={() => onNavigate('inventory')} />)}</div>
       <button className="react-armour-core" type="button" onClick={() => setShowBreakdown(true)} aria-label={`Open Armour Class breakdown. Armour Class ${armour.finalAC}`}>
         <AsteriaIcon name="armour" size={46} />
         <small>Armour Class</small>
         <strong>{armour.finalAC}</strong>
         <span>View Breakdown</span>
       </button>
-      <div className="react-armour-slots">{right.map(slot => <LoadoutSlot key={slot} label={slot} item={equipmentItem(equipment, slot)} icon="armour" onOpen={() => onNavigate('inventory')} />)}</div>
+      <div className="react-armour-slots">{right.map(slot => <LoadoutSlot key={slot} label={slot} item={equipmentItem(equipment, slot, items)} icon="armour" onOpen={() => onNavigate('inventory')} />)}</div>
     </div>
     {showBreakdown ? <Modal title={`Armour Class ${armour.finalAC}`} eyebrow="Live Defence Calculation" onClose={() => setShowBreakdown(false)} footer={<><button type="button" onClick={() => setShowBreakdown(false)}>Close</button><button className="primary" type="button" onClick={() => { setShowBreakdown(false); onNavigate('inventory'); }}>Open Equipment</button></>}>
       <div className="react-ac-summary">
@@ -146,28 +152,35 @@ function ArmourPanel({ character, onNavigate, style }) {
 
 function WeaponsPanel({ character, onNavigate, style }) {
   const equipment = character.equipment || {};
-  const slots = ['Main Weapon', 'Secondary Weapon', 'Off Weapon', 'Quiver', 'Shield'];
+  const items=inventoryItems(character);
+  const slots = ['Main Weapon', 'Secondary Weapon', 'Off-Hand', 'Quiver'];
   return <DashboardPanel icon="weapon" title="Equipped Weapons" variant="equipment" className="react-overview-weapons" style={style}>
-    <div className="react-weapon-slot-grid">{slots.map(slot => <LoadoutSlot key={slot} label={slot} item={equipmentItem(equipment, slot)} icon={slot === 'Shield' ? 'armour' : 'weapon'} onOpen={() => onNavigate('inventory')} />)}</div>
+    <div className="react-weapon-slot-grid">{slots.map(slot => <LoadoutSlot key={slot} label={slot} item={equipmentItem(equipment, slot, items)} icon={slot === 'Shield' ? 'armour' : 'weapon'} onOpen={() => onNavigate('inventory')} />)}</div>
   </DashboardPanel>;
 }
 
-function QuickItemsPanel({ campaignId, character, editable, busy, onNavigate, run, style }) {
-  const quickSlots = values(character.quickSlots).slice(0, 4).map(record);
+function QuickItemsPanel({ campaignId, character, editable, busy, onNavigate, run, style, combat }) {
+  const quickSlots=liveQuickSlots(character,inventoryItems(character));
   const [pendingItem, setPendingItem] = useState(null);
-  const itemStillEquipped = Boolean(pendingItem?.id && quickSlots.some(slot => slot.id === pendingItem.id));
+  const currentItem=quickSlots.find(slot=>slot?.id===pendingItem?.id);
+  const itemStillEquipped=Boolean(currentItem&&!inventoryRecoveryProblem(currentItem));
+  useEffect(()=>setPendingItem(null),[character.id,combat?.active]);
+  const review=item=>{
+    if(combat?.active){const option=combat.options.find(row=>row.itemId===item.id);if(option&&combat.editable&&!combat.busy)combat.select(option);else onNavigate('inventory');return;}
+    if(editable&&!inventoryRecoveryProblem(item))setPendingItem(item);else onNavigate('inventory');
+  };
   const useItem = item => run(() => firebaseService.updateInventory(campaignId, character.id, { type:'use', itemId:item.id, expectedCoreRevision:Number(character.coreRevision || 0) }));
   const confirmUse = async () => {
-    if(!editable || busy || !itemStillEquipped) return;
+    if(!editable || busy || !itemStillEquipped || combat?.active) return;
     const result = await useItem(pendingItem);
     if(result?.ok) setPendingItem(null);
   };
   return <DashboardPanel icon="quick" title="Quick Items" variant="equipment" className="react-overview-quick" style={style} action={<button type="button" onClick={() => onNavigate('inventory')}>Open Inventory</button>}>
-    <div className="react-quick-slot-grid">{[0, 1, 2, 3].map(index => <LoadoutSlot key={index} label={`Quick ${index + 1}`} shortcut={String(index + 1)} item={quickSlots[index]} icon="quick" disabled={busy || !editable} onOpen={() => onNavigate('inventory')} onUse={editable && quickSlots[index]?.id ? item => setPendingItem(item) : undefined} />)}</div>
-    {pendingItem ? <Modal title={`Use ${itemName(pendingItem)}?`} eyebrow="Quick Item" busy={busy} onClose={() => setPendingItem(null)} footer={<><button type="button" disabled={busy} onClick={() => setPendingItem(null)}>Cancel</button><button type="button" className="primary" disabled={busy || !editable || !itemStillEquipped} onClick={confirmUse}>Use Item</button></>}>
+    <div className="react-quick-slot-grid">{[0, 1, 2, 3].map(index => <LoadoutSlot key={index} label={`Quick ${index + 1}`} shortcut={String(index + 1)} item={quickSlots[index]} icon="quick" disabled={busy || Boolean(combat?.active&&combat.busy)} onOpen={() => onNavigate('inventory')} onUse={quickSlots[index]?.id ? review : undefined} />)}</div>
+    {pendingItem&&!combat?.active ? <Modal title={`Use ${itemName(currentItem||pendingItem)}?`} eyebrow="Quick Item" busy={busy} onClose={() => setPendingItem(null)} footer={<><button type="button" disabled={busy} onClick={() => setPendingItem(null)}>Cancel</button><button type="button" className="primary" disabled={busy || !editable || !itemStillEquipped} onClick={confirmUse}>Use Item</button></>}>
       <p>Review your selection before using this item. It may be consumed or change your character's resources.</p>
       {!editable ? <p role="status">Start an editable campaign session to use this item. You can still open Inventory to inspect it.</p> : null}
-      {!itemStillEquipped ? <p role="alert">This item is no longer in a quick slot. Close this panel and select an available item.</p> : null}
+      {!itemStillEquipped ? <p role="alert">This item is no longer available or has no usable recovery effect. Close this panel and select an available item.</p> : null}
     </Modal> : null}
   </DashboardPanel>;
 }
@@ -325,7 +338,7 @@ export function PlayerDashboardOverview({ campaignId, campaign, character, chara
     switch(id) {
       case 'armour':return <ArmourPanel character={character} onNavigate={onNavigate}/>;
       case 'weapons':return <WeaponsPanel character={character} onNavigate={onNavigate}/>;
-      case 'quick':return <QuickItemsPanel campaignId={campaignId} character={character} editable={editable} busy={busy} onNavigate={onNavigate} run={run}/>;
+      case 'quick':return <QuickItemsPanel campaignId={campaignId} character={character} editable={abilityEditable} combat={combat} busy={busy} onNavigate={onNavigate} run={run}/>;
       case 'talents':return <TalentSummary combat={combat} talents={talents} campaignId={campaignId} character={character} characters={characters} clock={clock} editable={abilityEditable} onNavigate={onNavigate}/>;
       case 'spells':return <SpellSummary combat={combat} campaignId={campaignId} character={character} spells={spells} editable={abilityEditable} busy={busy} onNavigate={onNavigate} run={run}/>;
       case 'skills':return <SkillsSummary combat={combat} skills={skills} onNavigate={onNavigate}/>;

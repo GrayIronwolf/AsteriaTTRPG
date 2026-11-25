@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {equipCharacterInventoryItem,rewardEquipmentSlots,stageDirectEquipReward} from '../functions/rewardDelivery.mjs';
+import {equipCharacterInventoryItem,unequipCharacterInventoryItem,rewardEquipmentSlots,stageDirectEquipReward} from '../functions/rewardDelivery.mjs';
 
 const bag={id:'bag',name:'Adventuring Pack',rows:2,cols:2,maxSlots:4};
 const character=(inventory=[],equipment={})=>({id:'hero',name:'Hero',naturalAC:2,inventory,storages:[bag],equipment});
@@ -71,4 +71,24 @@ test('Phase 3.1: distinct reward event IDs prevent inventory identity collision'
   const row=stageDirectEquipReward(hero,sword('source'),'event-1');
   assert.notEqual(row.id,'reward-event-1');
   assert.equal(new Set(hero.inventory.map(item=>item.id)).size,2);
+});
+
+test('regular equipment validates compatible destinations and stock',()=>{
+  const hero=character([sword('regular'),sword('depleted',{qty:0})]);
+  assert.throws(()=>equipCharacterInventoryItem(hero,'regular','Ring 1'),/cannot be equipped/);
+  assert.throws(()=>equipCharacterInventoryItem(hero,'depleted','Main Hand'),/no longer available/);
+  assert.equal(hero.inventory.filter(row=>row.equipped).length,0);
+});
+test('unequip clears aliased equipment and allocates free storage atomically',()=>{
+  const old=sword('old',{equipped:true,equippedSlot:'Main Hand',location:'equipment'});
+  const hero=character([old,sword('occupied')],{'Main Weapon':old});
+  const item=unequipCharacterInventoryItem(hero,'old');
+  assert.equal(item.storageSlot,1);
+  assert.equal(item.equipped,false);
+  assert.deepEqual(hero.equipment,{});
+  const full=character([old,sword('occupied')],{'Main Weapon':old});
+  full.storages=[{...bag,rows:1,cols:1,maxSlots:1}];
+  assert.throws(()=>unequipCharacterInventoryItem(full,'old'),/Make room/);
+  assert.equal(full.inventory[0].equipped,true);
+  assert.equal(full.equipment['Main Weapon'].id,'old');
 });

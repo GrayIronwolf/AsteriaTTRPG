@@ -1,3 +1,5 @@
+import { useAsyncAction } from '../components/useAsyncAction.js';
+import { CombatActionButton } from './CombatPanel.jsx';
 import { ManualNumberInput } from '../components/ManualNumberInput.jsx';
 import { isManualNumber, manualNumber } from '../state/manualNumber.mjs';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -12,7 +14,7 @@ import { ShopWorkspace } from './ShopWorkspace.jsx';
 import { PartyLootPlayerPanel } from './PartyLootWorkspace.jsx';
 import {PlayerItemLoreWorkspace} from './ItemLoreWorkspace.jsx';
 import { createAsteriaItem, formatMarks, getInventoryResaleValue, marketPricingStatus, validateMarketPricing } from '../systems/items/marketPricing.mjs';
-import { INVENTORY_CATEGORIES, matchesInventoryFilter, inventoryQuickActionAvailability, availableInventoryEquipmentSlots } from '../state/inventoryQuickActions.mjs';
+import { INVENTORY_CATEGORIES, matchesInventoryFilter, inventoryQuickActionAvailability, availableInventoryEquipmentSlots, quickSlotItem, inventoryRecoveryProblem, equipmentSlotIdentity } from '../state/inventoryQuickActions.mjs';
 import {inventoryActivityRecords,inventoryActivityDelta,filterInventoryActivityRecords,INVENTORY_ACTIVITY_CATEGORIES} from '../state/inventoryActivityModel.mjs';
 import {playerTradeLootOverview} from '../state/inventoryActionHubModel.mjs';
 import {inventoryStorageSummary} from '../state/inventoryPresentationModel.mjs';
@@ -206,16 +208,15 @@ function equipmentFallback(equipment, aliases) {
 }
 
 function equippedItemForSlot(items, aliases, equipment) {
-  const names = aliases.map(value => String(value).toLowerCase());
-  return items.find(item => item.equipped && names.includes(String(item.equippedSlot || item.raw?.slot || '').toLowerCase())) || equipmentFallback(equipment, aliases);
+  const names = aliases.map(equipmentSlotIdentity);
+  return items.find(item => item.equipped && names.includes(equipmentSlotIdentity(item.equippedSlot || item.raw?.slot))) || equipmentFallback(equipment, aliases);
 }
 
-function itemFitsSlot(item, label) {
-  if(!item) return false;
-  const allowed = Array.isArray(item.allowedSlots) ? item.allowedSlots : [];
-  if(!allowed.length) return true;
-  const target = String(label).toLowerCase();
-  return allowed.some(slot => target.includes(String(slot).toLowerCase()) || String(slot).toLowerCase().includes(target));
+function itemFitsSlot(item,label){
+  if(!item)return false;
+  const armour=calculateArmourPieceAC(item).piece;
+  if(armour)return equipmentSlotIdentity(armour.location)===equipmentSlotIdentity(label);
+  return availableInventoryEquipmentSlots(item).some(slot=>equipmentSlotIdentity(slot)===equipmentSlotIdentity(label));
 }
 
 function EquipmentSlot({ label, item, dragged, editable, onDrop, onDetails, onUnequip, selectedItem, onEquipSelected }) {
@@ -233,7 +234,7 @@ function EquipmentSlot({ label, item, dragged, editable, onDrop, onDetails, onUn
     onDragEnter={event=>{if(editable&&dragged){event.preventDefault();setDropState(canDrop?'valid-drop':'invalid-drop');}}}
     onDragLeave={()=>setDropState('')}
     onDragOver={event => editable && event.preventDefault()}
-    onDrop={event => {setDropState(''); if(editable) onDrop(event, label);}}
+    onDrop={event => {setDropState(''); if(editable&&canDrop) onDrop(event, label);}}
     onClick={inspect}
     onDoubleClick={inspect}
   >
@@ -242,13 +243,6 @@ function EquipmentSlot({ label, item, dragged, editable, onDrop, onDetails, onUn
     {item && !item.readOnlyEquipment ? <button type="button" title={`Unequip ${item.name}`} aria-label={`Unequip ${item.name}`} disabled={!editable} onClick={event => { event.stopPropagation(); onUnequip(item); }}>×</button> : null}
     {canTapEquip?<button type="button" className="react-inventory-slot-tap-equip" aria-label={`Equip ${selectedItem.name} in ${label}`} onClick={event=>{event.stopPropagation();onEquipSelected(selectedItem,label);}}>Equip</button>:null}
   </div>;
-}
-
-function quickSlotItem(character, items, index) {
-  const entry = (Array.isArray(character.quickSlots) ? character.quickSlots : [])[index];
-  if (!entry) return null;
-  const id = typeof entry === 'string' ? entry : entry.id || entry.itemId;
-  return items.find(item => String(item.id) === String(id)) || (typeof entry === 'object' ? entry : null);
 }
 
 function InventoryEquipmentPanel({ campaignId, character, items, dragged, editable, run, onDetails, selectedItem }) {
@@ -264,6 +258,7 @@ function InventoryEquipmentPanel({ campaignId, character, items, dragged, editab
   const assignQuick=(selected,index)=>run(()=>firebaseService.updateInventory(campaignId,character.id,{
     type:'quick',itemId:selected.id,index
   }),`Assigned ${selected.name} to Quick Slot ${index+1}.`);
+  const clearQuick=index=>run(()=>firebaseService.updateInventory(campaignId,character.id,{type:'clear-quick',index,expectedCoreRevision:Number(character.coreRevision||0)}),`Cleared Quick Slot ${index+1}.`);
   const dropQuick = (event, index) => {
     event.preventDefault();
     const itemId = event.dataTransfer.getData('application/x-asteria-item');
@@ -279,7 +274,7 @@ function InventoryEquipmentPanel({ campaignId, character, items, dragged, editab
       const item = quickSlotItem(character, items, index);
       return <div key={index} className={item ? 'filled' : ''} onDragOver={event => editable && event.preventDefault()} onDrop={event => editable && dropQuick(event, index)} onDoubleClick={() => item && onDetails(item)}>
         <small>Q{index + 1}</small><ItemImage item={item || { name: '?' }} className="react-slot-image" /><b>{item?.name || 'Empty'}</b>
-        {item?<button type="button" onClick={()=>onDetails(item)} aria-label={`Inspect quick item ${item.name}`}>Inspect</button>:null}
+        {item?<><button type="button" onClick={()=>onDetails(item)} aria-label={`Inspect quick item ${item.name}`}>Inspect</button>{editable?<button type="button" onClick={()=>clearQuick(index)} aria-label={`Clear quick slot ${index+1}`}>Clear</button>:null}</>:null}
         {editable&&selectedItem?.id?<button type="button" onClick={()=>assignQuick(selectedItem,index)} aria-label={`Assign ${selectedItem.name} to quick slot ${index+1}`}>Assign</button>:null}
       </div>;
     })}</div>
@@ -307,7 +302,7 @@ function InventoryItemCard({ item, editable, selected, onSelect, onDragStart, on
   </article>;
 }
 
-function InventoryQuickActions({campaignId,item,character,characters,storages,ecosystem,editable,busy,onRun,onInspect,onOffer,onSell,onUse,onClear}){
+function InventoryQuickActions({campaignId,item,character,characters,storages,ecosystem,editable,busy,onRun,onInspect,onOffer,onSell,onUse,onClear,combat}){
   const party=Object.values(characters||{}).filter(row=>row.id!==character.id);
   const merchants=(ecosystem?.shops||[]).filter(shop=>shop.status==='open'&&
     (!Array.isArray(shop.visitorCharacterIds)||!shop.visitorCharacterIds.length||shop.visitorCharacterIds.includes(character.id)));
@@ -329,7 +324,7 @@ function InventoryQuickActions({campaignId,item,character,characters,storages,ec
       <button type="button" aria-label="Clear item selection" onClick={onClear}>Close</button></header>
     <div className="react-inventory-action-buttons">
       <button type="button" onClick={()=>onInspect(item)} disabled={!actions.inspect}>Inspect</button>
-      <button type="button" onClick={()=>onUse(item)} disabled={!actions.use}>Use</button>
+      {combat?.active?(combat.options.find(row=>row.itemId===item.id)?<CombatActionButton combat={combat} option={combat.options.find(row=>row.itemId===item.id)} className="primary">Review combat item</CombatActionButton>:<button type="button" disabled>Use Combat Panel</button>):<button type="button" onClick={()=>onUse(item)} disabled={!actions.use}>Use</button>}
       {item.equipped?<button type="button" onClick={()=>execute('unequip','Unequipped '+item.name+'.')} disabled={!actions.unequip}>Unequip</button>:
         <button type="button" onClick={()=>execute('equip','Equipped '+item.name+'.',selectedSlot)} disabled={!actions.equip}>Equip</button>}
       <button type="button" onClick={()=>execute('move-storage','Moved '+item.name+' into '+storage?.name+'.')} disabled={!actions.store}>Store</button>
@@ -564,14 +559,14 @@ function PartyInventoryPanel({ character, characters, items, editable, dragged, 
   </aside>;
 }
 
-export function InventoryWorkspace({ campaignId, character, characters, ecosystem, editable, events=[], partyLoot={} }) {
+export function InventoryWorkspace({ campaignId, character, characters, ecosystem, editable:sessionEditable, events=[], partyLoot={}, combat, online=true }) {
+  const editable=Boolean(sessionEditable&&online&&!combat?.active);
   const [selectedStorage, setSelectedStorage] = useState('');
   const [details, setDetails] = useState(null);
   const [dragged, setDragged] = useState(null);
   const [offer, setOffer] = useState(null);
   const [custom, setCustom] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState('');
+  const {busy,message,run}=useAsyncAction();
   const [mobileView,setMobileView]=useState('inventory');
   const [selectedItemId,setSelectedItemId]=useState('');
   const [pendingUse,setPendingUse]=useState(null);
@@ -592,6 +587,7 @@ export function InventoryWorkspace({ campaignId, character, characters, ecosyste
     seenActivityRef.current=null;
     setActivityNotice('');setActivityOpen(false);
     setActivityCategory('all');setActivitySearch('');setActivityDateRange('all');setSelectedReceipt('');
+    setSelectedStorage('');setSelectedItemId('');setDetails(null);setOffer(null);setCustom(false);setDragged(null);setPendingUse(null);setSaleRequest(null);
   },[campaignId,character.id]);
   useEffect(()=>{
     const delta=inventoryActivityDelta(seenActivityRef.current,activity);
@@ -604,6 +600,8 @@ export function InventoryWorkspace({ campaignId, character, characters, ecosyste
   const activeStorage = storages.some(value => value.id === selectedStorage) ? selectedStorage : storages[0]?.id || '';
   const items = useMemo(()=>inventoryItems(character),[character]);
   const selectedItem=items.find(row=>String(row.id)===String(selectedItemId))||null;
+  const currentUse=items.find(row=>row.id===pendingUse?.id),useProblem=pendingUse?inventoryRecoveryProblem(currentUse):'';
+  useEffect(()=>{setPendingUse(null);setDragged(null);setOffer(null);setCustom(false);},[combat?.active,online]);
   const downloadJournal=()=>{
     if(!visibleActivity.length)return;
     const csv=exportInventoryJournalCsv(visibleActivity);
@@ -632,22 +630,8 @@ export function InventoryWorkspace({ campaignId, character, characters, ecosyste
         section.scrollIntoView({behavior:'smooth',block:'start'});
     });
   };
-  const run = async (operation, success) => {
-    if(busy)return {ok:false,error:'An inventory action is still processing.'};
-    setBusy(true);
-    try{
-      const result=await operation();
-      setMessage(resultText(result,success));
-      return result;
-    }catch(error){
-      const result={ok:false,error:error?.message||'The inventory action could not be completed.'};
-      setMessage(result.error);
-      return result;
-    }finally{
-      setBusy(false);
-    }
-  };
   return <div className="react-inventory-workspace">
+    {combat?.active?<p role="status">Use the Combat Panel for equipment changes and item actions during this encounter. Inventory remains available for inspection.</p>:!online?<p role="status">Inventory changes are unavailable until live synchronization reconnects.</p>:null}
     <div className="react-inventory-mobile-feedback" role="status" aria-live="polite">
       <div className="react-inventory-mobile-feedback-copy">
         <strong>{busy?'Processing inventory action':message?'Inventory update':activityNotice?'New activity':'Inventory controls'}</strong>
@@ -711,8 +695,8 @@ export function InventoryWorkspace({ campaignId, character, characters, ecosyste
     <div className="react-inventory-mobile-tabs"><Tabs tabs={[{id:'support',label:'Info',icon:'info'},{id:'equipment',label:'Equipment',icon:'equipment'},{id:'inventory',label:'Inventory',icon:'inventory'},{id:'party',label:'Party',icon:'party'},{id:'shops',label:'Shops',icon:'store'},{id:'party-loot',label:'Party Loot',icon:'inventory'}]} active={mobileView} onChange={setMobileView} ariaLabel="Mobile inventory sections" /></div>
     <div className={`react-inventory-layout mobile-${mobileView}`}>
       <InventorySupportPanel character={character} items={items} storages={storages}/>
-      <InventoryEquipmentPanel campaignId={campaignId} character={character} items={items} dragged={dragged} editable={editable} run={run} selectedItem={selectedItem} onDetails={item=>{if(item?.id)setSelectedItemId(item.id);setDetails(item);}} />
-      <StoragePanel campaignId={campaignId} character={character} storages={storages} activeStorage={activeStorage} setActiveStorage={setSelectedStorage} items={items} editable={editable} busy={busy} run={run} onCustom={() => setCustom(true)} onDragStart={(event, item) => { setDragged(item); event.dataTransfer.setData('application/x-asteria-item', item.id); }} onDragEnd={() => setDragged(null)} onDetails={setDetails} selectedItemId={selectedItemId} onSelectItem={item => setSelectedItemId(item.id)} quickActions={selectedItem?<InventoryQuickActions key={selectedItem.id} campaignId={campaignId} item={selectedItem} character={character} characters={characters} storages={storages} ecosystem={ecosystem} editable={editable} busy={busy} onRun={run} onInspect={setDetails} onOffer={(target,item,mode)=>setOffer({target,item,mode})} onSell={item=>{setSaleRequest({itemId:item.id,token:Date.now()});setMobileView('shops');}} onUse={setPendingUse} onClear={()=>setSelectedItemId('')}/>:null} />
+      <InventoryEquipmentPanel campaignId={campaignId} character={character} items={items} dragged={dragged} editable={editable&&!busy} run={run} selectedItem={selectedItem} onDetails={item=>{if(item?.id)setSelectedItemId(item.id);setDetails(item);}} />
+      <StoragePanel campaignId={campaignId} character={character} storages={storages} activeStorage={activeStorage} setActiveStorage={setSelectedStorage} items={items} editable={editable} busy={busy} run={run} onCustom={() => setCustom(true)} onDragStart={(event, item) => { setDragged(item); event.dataTransfer.setData('application/x-asteria-item', item.id); }} onDragEnd={() => setDragged(null)} onDetails={setDetails} selectedItemId={selectedItemId} onSelectItem={item => setSelectedItemId(item.id)} quickActions={selectedItem?<InventoryQuickActions key={selectedItem.id} campaignId={campaignId} item={selectedItem} character={character} characters={characters} storages={storages} ecosystem={ecosystem} editable={editable} busy={busy} onRun={run} onInspect={setDetails} onOffer={(target,item,mode)=>setOffer({target,item,mode})} onSell={item=>{setSaleRequest({itemId:item.id,token:Date.now()});setMobileView('shops');}} onUse={setPendingUse} combat={combat} onClear={()=>setSelectedItemId('')}/>:null} />
       <PartyInventoryPanel character={character} characters={characters} items={items} editable={editable} dragged={dragged} onOffer={(target, item, mode) => setOffer({ target, item, mode })} />
 
       {campaignId?<div id="react-inventory-shops" className="react-inventory-merchants"><ShopWorkspace campaignId={campaignId} character={character} ecosystem={ecosystem} editable={editable} requestedSale={saleRequest}/></div>:null}
@@ -720,9 +704,9 @@ export function InventoryWorkspace({ campaignId, character, characters, ecosyste
       {campaignId?<div id="react-inventory-party-loot" className="react-inventory-party-loot"><PartyLootPlayerPanel campaignId={campaignId} character={character} characters={characters} partyLoot={partyLoot} editable={editable}/></div>:null}
     </div>
     <p className="react-action-message" role="status" aria-live="polite">{message}</p>
-    {pendingUse?<Modal title={'Use '+pendingUse.name+'?'} eyebrow="Inventory Quick Action" busy={busy} onClose={()=>setPendingUse(null)} footer={<div className="react-modal-actions"><button type="button" disabled={busy} onClick={()=>setPendingUse(null)}>Cancel</button><button type="button" className="primary" disabled={!editable||busy||!items.some(row=>row.id===pendingUse.id&&Number(row.qty)>0)} onClick={async()=>{const result=await run(()=>firebaseService.updateInventory(campaignId,character.id,{type:'use',itemId:pendingUse.id,expectedCoreRevision:Number(character.coreRevision||0)}),'Used '+pendingUse.name+'.');if(result?.ok)setPendingUse(null);}}>Confirm Use</button></div>}><p>Use one {pendingUse.name}. This may consume an item and update your character's resources.</p></Modal>:null}
-    {details ? <ItemDetailModal campaignId={campaignId} character={character} item={details} editable={editable} onClose={() => setDetails(null)} onAction={() => setDetails(null)} /> : null}
+    {pendingUse&&!combat?.active?<Modal title={'Use '+(currentUse?.name||pendingUse.name)+'?'} eyebrow="Inventory Quick Action" busy={busy} onClose={()=>setPendingUse(null)} footer={<div className="react-modal-actions"><button type="button" disabled={busy} onClick={()=>setPendingUse(null)}>Cancel</button><button type="button" className="primary" disabled={!editable||busy||Boolean(useProblem)} onClick={async()=>{if(!editable||busy||useProblem)return;const result=await run(()=>firebaseService.updateInventory(campaignId,character.id,{type:'use',itemId:pendingUse.id,expectedCoreRevision:Number(character.coreRevision||0)}),'Used '+pendingUse.name+'.');if(result?.ok)setPendingUse(null);}}>Confirm Use</button></div>}><p>Use one {pendingUse.name}. This may consume an item and update your character's resources.</p>{useProblem?<p role="status">{useProblem}</p>:null}</Modal>:null}
+    {details ? <ItemDetailModal campaignId={campaignId} character={character} item={items.find(row=>row.id===details.id)||details} editable={editable&&!busy&&Boolean(items.some(row=>row.id===details.id))} onClose={() => setDetails(null)} onAction={() => setDetails(null)} /> : null}
     {offer ? <SendPlayerItemModal key={`${offer.target.id}-${offer.item.id}-${offer.mode}`} campaignId={campaignId} character={character} target={offer.target} item={offer.item} mode={offer.mode} editable={editable} onClose={() => { setOffer(null); setDragged(null); }} /> : null}
-    {custom ? <CustomItemModal campaignId={campaignId} character={character} storageId={activeStorage} onClose={() => setCustom(false)} /> : null}
+    {custom&&editable ? <CustomItemModal campaignId={campaignId} character={character} storageId={activeStorage} onClose={() => setCustom(false)} /> : null}
   </div>;
 }

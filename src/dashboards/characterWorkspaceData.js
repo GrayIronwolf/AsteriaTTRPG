@@ -1,6 +1,6 @@
 import { ownedSpellRecords, describeOwnedSpell, ownedSpellCosts } from '../state/combatRules.mjs';
 import { buildTalentCatalog, characterClasses, ownedTalents, talentRank as savedTalentRank } from '../state/talentModel.mjs';
-import { SKILL_RANKS, normalizeLiveItem, skillRankNumber, slug } from '../state/liveWorkspaceModel.mjs';
+import { SKILL_RANKS, normalizeInventoryItems, skillRankNumber, slug } from '../state/liveWorkspaceModel.mjs';
 import { getMarketPrice, getMarketValue } from '../systems/items/marketPricing.mjs';
 import { magicElementImage } from '../data/magicElementSymbols.mjs';
 import { knownMagicElements } from '../state/characterIntegrityModel.mjs';
@@ -57,8 +57,7 @@ export function knownSpells(character = {}) {
 }
 
 export function inventoryItems(character = {}) {
-  return list(character.inventory).map((source,index)=>{
-    const item=normalizeLiveItem(source,index,character);
+  return normalizeInventoryItems(list(character.inventory),character).map((item,index)=>{
     return {
       id:item.id,
       name:item.name || `Item ${index+1}`, trueName:item.trueName, basicName:item.basicName, identified:item.identified, storageId:item.storageId, storageSlot:item.storageSlot,
@@ -67,7 +66,7 @@ export function inventoryItems(character = {}) {
       marketValue:getMarketValue(item), marketPrice:getMarketPrice(item), pricingNeedsCompletion:Boolean(item.pricingNeedsCompletion),
       weight:Number(item.weight ?? item.unitWeight ?? item.metadata?.weight ?? 0),
       equipped:Boolean(item.equipped), equippedSlot:item.equippedSlot || item.slot || '', allowedSlots:item.allowedSlots || window.AsteriaInventory?.inferSlots?.(item) || [],
-      effect:item.effect || item.effects || null, locked:Boolean(item.locked), bound:Boolean(item.bound), questItem:Boolean(item.questItem), raw:item
+      effect:item.effect || item.effects || null, location:item.location, charges:item.charges, stackable:item.stackable, unique:item.unique, maxStack:item.maxStack, locked:Boolean(item.locked), bound:Boolean(item.bound), questItem:Boolean(item.questItem), raw:item
     };
   });
 }

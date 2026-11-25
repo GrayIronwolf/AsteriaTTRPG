@@ -75,10 +75,14 @@ export function equipCharacterInventoryItem(character,itemId,slot,{reward=false}
   const sourceId=String(itemId||'');
   const item=inventory.find(row=>stableInventoryItemId(row)===sourceId);
   if(!item) throw new Error('Inventory item not found.');
+  if(!Number.isSafeInteger(Number(item.qty??item.quantity??1))||Number(item.qty??item.quantity??1)<1||item.location==='ground')throw new Error('This item is no longer available.');
   const targetKey=equipmentSlotKey(destination);
   if(!KNOWN_SLOT_KEYS.has(targetKey)) throw new Error('Choose a valid equipment slot.');
   if(reward && !rewardEquipmentSlots(item).some(value=>equipmentSlotKey(value)===targetKey))
     throw new Error('This reward cannot be equipped in that slot. Choose a compatible slot or add it to storage.');
+
+  if(!reward && !resolveArmourPiece(item) && !rewardEquipmentSlots(item).some(value=>equipmentSlotKey(value)===targetKey))
+    throw new Error('This item cannot be equipped in that slot. Choose a compatible equipment slot.');
 
   const displaced=inventory.filter(row=>row.equipped &&
     stableInventoryItemId(row)!==sourceId && equipmentSlotKey(row.equippedSlot||row.slot)===targetKey);
@@ -114,6 +118,28 @@ export function equipCharacterInventoryItem(character,itemId,slot,{reward=false}
   character.inventory=nextInventory;
   character.equipment=nextEquipment;
   return nextItem;
+}
+
+// Reserve a real storage slot before removing equipment.
+export function unequipCharacterInventoryItem(character,itemId){
+  const inventory=normalizeInventoryItems(character.inventory,character);
+  const item=inventory.find(row=>stableInventoryItemId(row)===String(itemId));
+  if(!item||!item.equipped)throw new Error('This item is no longer equipped.');
+  const storages=normalizeCharacterStorages(character);
+  const preferred=storages.find(row=>row.id===item.storageId);
+  const candidates=[preferred,...storages].filter((row,index,all)=>row&&all.findIndex(other=>other?.id===row.id)===index);
+  let destination=null,slot=-1;
+  for(const storage of candidates){
+    const free=firstFreeStorageSlot(inventory,storage,item.id);
+    if(free>=0){destination=storage;slot=free;break;}
+  }
+  if(!destination)throw new Error('Make room in a storage container before unequipping this item.');
+  const oldSlot=equipmentSlotKey(item.equippedSlot||item.slot);
+  item.equipped=false;item.equippedSlot='';item.location='inventory';item.storageId=destination.id;item.storageSlot=slot;
+  character.inventory=inventory;
+  character.equipment=Object.fromEntries(Object.entries(character.equipment||{}).filter(([key,row])=>
+    stableInventoryItemId(row||{})!==String(itemId)&&!(equipmentSlotKey(key)===oldSlot&&row&&!row.id&&!row.instanceId)));
+  return item;
 }
 
 // A player may equip a reward when every bag is full, as long as doing so

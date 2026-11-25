@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {
   INVENTORY_CATEGORIES,inventoryCategory,matchesInventoryFilter,canTransferInventoryItem,
-  itemRecoveryEffect,availableInventoryEquipmentSlots,inventoryQuickActionAvailability
+  itemRecoveryEffect,availableInventoryEquipmentSlots,inventoryQuickActionAvailability,liveQuickSlots,inventoryRecoveryProblem,quickSlotIndex,equipmentSlotIdentity
 } from '../src/state/inventoryQuickActions.mjs';
 
 const sword={id:'s1',name:'High Steel Sword',type:'Weapon',rarity:'Rare',qty:1,storageId:'bag'};
@@ -83,4 +83,17 @@ test('Phase 4.1: contextual controls reuse secure inventory, exchange and mercha
   assert.match(merchant,/handledSaleToken/);
   assert.match(service,/buyShopItem:[^\n]+quote/);
   assert.match(service,/sellShopItem:[^\n]+quantity=1, quote=/);
+});
+
+test('quick slots use live owned item instances and reject depleted or stale references',()=>{
+  const c={quickSlots:[{id:'p1',qty:99},null,'gone',{itemId:'s1'}]};
+  assert.deepEqual(liveQuickSlots(c,[potion,sword]),[potion,null,null,sword]);
+  assert.deepEqual(liveQuickSlots(c,[{...potion,qty:0},sword]),[null,null,null,sword]);
+  assert.equal(liveQuickSlots({quickSlots:[{name:potion.name}]},[potion,{...potion,id:'p2'}])[0],null);
+  for(const value of [-1,4,1.5,'1',null])assert.throws(()=>quickSlotIndex(value),/Quick Slot/);
+  assert.equal(quickSlotIndex(0),0);
+  assert.equal(inventoryRecoveryProblem({...potion,charges:0}),'No charges remaining.');
+  assert.match(inventoryRecoveryProblem({...potion,location:'ground'}),/no longer available/);
+  assert.equal(equipmentSlotIdentity('Main Weapon'),equipmentSlotIdentity('Main Hand'));
+  assert.equal(equipmentSlotIdentity('Shield'),equipmentSlotIdentity('Off-Hand'));
 });
