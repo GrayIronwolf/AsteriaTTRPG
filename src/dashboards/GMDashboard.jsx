@@ -933,7 +933,7 @@ export function GMDashboard({ campaignId }) {
       <Modal title={(live.characters[canvasCharacterId]?.name||'Character')+' — Player Dashboard'}
         eyebrow="GM Character Inspection" onClose={()=>setCanvasCharacterId('')}>
         <div className="react-canvas-character-dashboard" data-testid="gm-canvas-character-dashboard">
-          <CharacterDashboard campaignId={campaignId} characterId={canvasCharacterId}/>
+          <CharacterDashboard campaignId={campaignId} characterId={canvasCharacterId} embedded/>
         </div>
       </Modal>:null}
   </AsteriaAppShell>;
