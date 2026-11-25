@@ -3,7 +3,6 @@
  * commands. The server remains responsible for validating every combat action.
  */
 const record=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
-const list=value=>Array.isArray(value)?value:[];
 const label=(value,max)=>typeof value==='string'?value.trim().slice(0,max):'';
 const id=value=>typeof value==='string'&&/^[A-Za-z0-9_-]{1,100}$/.test(value);
 const cost=(value,max=1000000000)=>Number.isSafeInteger(Number(value))&&Number(value)>=0&&Number(value)<=max?Number(value):null;
