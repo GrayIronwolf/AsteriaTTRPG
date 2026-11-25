@@ -164,7 +164,9 @@ export function libraryEnemy(source,id){
   if(!name)throw Error('Creature name is missing.');
   const next={id,sourceId:source.id,name,kind:'enemy',type:title(source.type,80),
     defeated:false,...encounterSourceResources(source),...safeEnemyProfile(source),
-    sourceSnapshot:safeEnemyProfile(source)};
+    sourceSnapshot:safeEnemyProfile(source),
+    sourceRef:validId(source.sourceRef)?source.sourceRef:'',
+    sourceVersion:title(source.sourceVersion,40)};
   if(source.initiative!==undefined&&source.initiative!==''&&
     Number.isFinite(Number(source.initiative))){
     next.initiative=Number(source.initiative);next.initiativeSet=true;
@@ -177,7 +179,11 @@ export function gmEncounterCandidates(world){
       id:prefix+row.id,name:title(row.name||row.title,120),
       type:prefix==='npc-'?'NPC':'Creature',initiative:row.initiative,
       hp:encounterResourcePair(row,'hp'),sp:encounterResourcePair(row,'sp'),
-      mp:encounterResourcePair(row,'mp'),sourceId:row.id
+      mp:encounterResourcePair(row,'mp'),sourceId:row.id,
+      sourceRef:prefix+row.id,sourceVersion:title(row.updatedAt,40),
+      ac:Number.isFinite(Number(row.ac))?Number(row.ac):undefined,
+      xpReward:Number.isFinite(Number(row.xpReward))?Number(row.xpReward):undefined,
+      ...safeEnemyProfile(row)
     })).filter(row=>row.name&&row.hp);
   return Object.freeze([...from(world?.npcs,'npc-'),...from(world?.creatures,'creature-')].slice(0,100));
 }
