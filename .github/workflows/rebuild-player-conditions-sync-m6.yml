@@ -1,4 +1,4 @@
-name: Verify and rebuild player conditions and sync milestone 6 assets
+name: Rebuild player conditions and character sync milestone 6 assets
 on:
   push:
     branches: [Website-Build-Test]
@@ -8,9 +8,9 @@ on:
       - 'src/state/characterSystemsSyncModel.mjs'
       - 'src/sessions/useCharacterSystemsSync.js'
       - 'src/dashboards/CharacterSystemsPanels.jsx'
-      - 'src/dashboards/PlayerDashboardOverview.jsx'
       - 'src/dashboards/CharacterDashboard.jsx'
       - 'src/dashboards/GMDashboard.jsx'
+      - 'src/dashboards/PlayerDashboardOverview.jsx'
       - 'scripts/player-conditions-sync-m6.test.mjs'
       - 'package.json'
       - '.github/workflows/rebuild-player-conditions-sync-m6.yml'
@@ -46,5 +46,5 @@ jobs:
           if git diff --cached --quiet; then exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "build: synchronize conditions and character sync milestone 6 assets"
+          git commit -m "build: synchronize player conditions milestone 6 assets"
           git push origin HEAD:Website-Build-Test
