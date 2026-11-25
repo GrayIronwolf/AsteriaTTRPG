@@ -676,7 +676,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
           </header>
           <div className={styles.windowContent} data-combat-scroll
             aria-hidden={isMinimised||(layout.detailMode==='adaptive'&&camera.scale<.26)}
-            inert={isMinimised||(layout.detailMode==='adaptive'&&camera.scale<.26)?true:undefined}>
+            inert={isMinimised||(layout.detailMode==='adaptive'&&camera.scale<.26)?'':undefined}>
             <div className={styles.windowBody}
               style={{'--combat-content-scale':layout.contentScale[id]??1}}>
               {typeof panel.props.children==='function'?
