@@ -269,7 +269,10 @@ test('28. The dashboard uses modular armour, weapon, and quick-item summaries', 
   const dashboard = read('src/dashboards/CharacterDashboard.jsx');
   const overview = read('src/dashboards/PlayerDashboardOverview.jsx');
   assert.match(dashboard, /PlayerDashboardOverview/);
-  ['ArmourPanel','WeaponsPanel','QuickItemsPanel'].forEach(name => assert.match(overview, new RegExp(name)));
+  ['ArmourPanel','QuickItemsPanel'].forEach(name => assert.match(overview, new RegExp(name)));
+  assert.match(overview, /Equipment, Armour & Weapons/);
+  assert.match(overview, /react-overview-combined-weapons/);
+  assert.match(overview, /'Main Weapon','Secondary Weapon','Off-Hand','Quiver'/);
   assert.match(overview, /firebaseService\.updateInventory/);
   assert.doesNotMatch(read('src/dashboards/InventoryWorkspace.jsx'), /ariaLabel="Inventory menu"/);
 });
