@@ -741,6 +741,10 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
         </button>
         {wide?<>
           <button type="button" className={styles.iconButton}
+            data-testid="site-canvas-opening-zoom"
+            aria-label="Reset canvas view to 50 percent" title="Reset canvas view to 50%"
+            onClick={openingView}><AsteriaIcon name="focus" size={19}/></button>
+          <button type="button" className={styles.iconButton}
             aria-label="Zoom into canvas" title="Zoom in"
             onClick={()=>updateCamera(current=>zoomCombatCamera(current,
               current.scale*1.2,{x:(canvas.current?.clientWidth||0)/2,
@@ -843,6 +847,30 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
             onClick={()=>setPreference(previous=>({...previous,hidden:[]}))}>
             Show all panels ({visible.length}/{panels.length})
           </button>
+          {canEditCanvas?<button type="button" className={styles.showAll}
+            data-testid="apply-recommended-canvas-arrangement"
+            onClick={()=>{
+              const defaults=defaultCombatWorkspaceLayout(canvasConfig||undefined);
+              // Preserve each window's current width and height. Only placement
+              // and visibility are reset; explicit saved presets are retained.
+              change(previous=>({...previous,
+                hidden:[...defaults.hidden],
+                minimized:[],
+                freeform:{...previous.freeform,
+                  positions:Object.fromEntries(panelIds.map(id=>[
+                    id,{...previous.freeform.positions[id],
+                      x:defaults.freeform.positions[id].x,
+                      y:defaults.freeform.positions[id].y}
+                  ]))}
+              }));
+              setFocused(null);
+              const viewport=canvas.current;
+              if(viewport)updateCamera(openingCombatCamera(defaults,
+                panelIds.filter(id=>!defaults.hidden.includes(id)),viewport.clientWidth));
+              setMessage('Recommended positions and visibility applied; window sizes preserved.');
+            }}>
+            Apply Recommended Arrangement (keep window sizes)
+          </button>:null}
           <details className={styles.drawerSettings}>
             <summary>Canvas Preferences</summary>
             {wide?<button type="button" className={styles.openingView}
