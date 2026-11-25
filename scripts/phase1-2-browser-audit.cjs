@@ -1,4 +1,5 @@
-/* Phase 1.2: read-only local browser audit of the recovered hybrid Asteria website.
+/* Milestone 1 closeout: 14 fixture-browser acceptance checks; no production network. 
+ * Phase 1.2: read-only local browser audit of the recovered hybrid Asteria website.
  * All non-loopback requests are blocked, so tests cannot reach production Firebase.
  * Only the existing in-memory ?reactFixture=1 data is used for dashboard interactions.
  */
