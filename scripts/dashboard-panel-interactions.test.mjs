@@ -14,6 +14,9 @@ test('Player action cards work on ordinary click, touch and keyboard activation'
 test('Quick item use requires a distinct confirmation and preserves inventory navigation',()=>{
   assert.match(player,/const \[pendingItem, setPendingItem\] = useState\(null\)/);
   assert.match(player,/const result = await useItem\(pendingItem\)/);
+  assert.match(player,/liveQuickSlots\(character,inventoryItems\(character\)\)/);
+  assert.match(player,/inventoryRecoveryProblem\(currentItem\)/);
+  assert.match(player,/if\(!editable \|\| busy \|\| !itemStillEquipped \|\| combat\?\.active\) return;/);
   assert.match(player,/if\(result\?\.ok\) setPendingItem\(null\)/);
   assert.match(player,/action=\{<button type="button" onClick=\{\(\) => onNavigate\('inventory'\)\}>Open Inventory<\/button>\}/);
   assert.match(player,/disabled=\{busy \|\| !editable \|\| !itemStillEquipped\}/);
