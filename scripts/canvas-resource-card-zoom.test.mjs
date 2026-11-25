@@ -31,7 +31,8 @@ test('New canvas sessions open at 50 percent on the top row without changing sav
 test('Larger resize handles and balanced default GM windows keep custom layouts intact',async()=>{
  const css=read('src/dashboards/combat/CombatCommandCentre.module.css');
  const {defaultGMCanvasLayout,normalizeGMCanvasLayout}=await import('../src/state/dashboardLayoutModel.mjs');
- assert.match(css,/width:16px;height:16px;min-height:16px!important/);
+ assert.match(css,/--grip:clamp\(20px,calc\(22px \/ var\(--combat-scale,1\)\),80px\)/);
+ assert.match(css,/width:var\(--grip\);height:var\(--grip\)/);
  assert.match(css,/--combat-canvas-background:#091623/);
  assert.match(css,/background-color:var\(--combat-canvas-background\)/);
  assert.match(css,/\.focused\{border-color:/);

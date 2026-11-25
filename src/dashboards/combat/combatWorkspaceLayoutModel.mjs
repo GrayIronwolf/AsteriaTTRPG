@@ -204,6 +204,23 @@ const allowed=(id,config)=>scopeOf(config).ids.includes(id);
 const unique=(values,config)=>[...new Set(Array.isArray(values)?
   values.filter(id=>allowed(id,config)):[])];
 const nameOf=value=>typeof value==='string'?value.trim().replace(/\s+/g,' ').slice(0,48):'';
+export const CANVAS_CONTENT_SIZING_OPTIONS=Object.freeze([
+ {id:'responsive',label:'Responsive — reflow content'},
+ {id:'proportional',label:'Proportional — scale to fit'},
+ {id:'fixed',label:'Fixed size — scroll content'}
+]);
+const contentSizing=value=>CANVAS_CONTENT_SIZING_OPTIONS.some(option=>option.id===value);
+/** Resize constraints apply to edits; reading an old layout never changes its geometry. */
+export function combatWindowSizeLimits(id,config){
+ const kind=scopeOf(config).kind;
+ if(['map','worldContext','worldQuick','diceQuick'].includes(id))
+  return {minW:280,minH:220,maxW:1800,maxH:2000};
+ if(['resources','gmResources','playerManagement'].includes(id))
+  return {minW:280,minH:240,maxW:1800,maxH:2000};
+ if(['timer','quickNotes','sessionOverview'].includes(id))
+  return {minW:200,minH:140,maxW:1400,maxH:1800};
+ return {minW:kind==='player'?220:200,minH:180,maxW:1400,maxH:2000};
+}
 
 function normaliseBase(raw,config=COMBAT_CANVAS_CONFIG){
   const scope=scopeOf(config);
@@ -253,6 +270,9 @@ function normaliseBase(raw,config=COMBAT_CANVAS_CONFIG){
     locked:unique(source.locked,scope),
     minimized:unique(source.minimized,scope),
     contentScale,
+    defaultContentSizing:contentSizing(source.defaultContentSizing)?source.defaultContentSizing:'responsive',
+    contentSizing:Object.fromEntries(Object.entries(isRecord(source.contentSizing)?source.contentSizing:{})
+      .filter(([id,value])=>allowed(id,scope)&&contentSizing(value))),
     partyCardOrder:[...new Set((Array.isArray(source.partyCardOrder)?source.partyCardOrder:[])
       .filter(id=>typeof id==='string'&&id.length>0&&id.length<=180))].slice(0,200),
     groups,
@@ -302,10 +322,11 @@ export function combatWindowAlignment(layout,id,position,{snap=false,strength='m
   return {position,guides:[]};
  const threshold={gentle:8,medium:16,strong:28}[strength]??16;
  const nearest={x:null,y:null};
+ const moving=layout.groups.find(group=>group.includes(id))||[id];
  const own={x:[position.x,position.x+current.w/2,position.x+current.w],
   y:[position.y,position.y+current.h/2,position.y+current.h]};
  for(const [otherId,rect] of Object.entries(layout.freeform.positions)){
-  if(otherId===id||layout.hidden.includes(otherId))continue;
+  if(moving.includes(otherId)||layout.hidden.includes(otherId))continue;
   for(const [axis,size] of [['x','w'],['y','h']]){
    const other=[rect[axis],rect[axis]+rect[size]/2,rect[axis]+rect[size]];
    for(const source of own[axis])for(const target of other){
@@ -334,7 +355,19 @@ export function editCombatWindow(layout,id,operation,values={},config=COMBAT_CAN
      y:step(Number.isFinite(values.y)?values.y:before.y)}:
    {...before,...Object.fromEntries(['x','y','w','h']
      .filter(key=>Number.isFinite(values[key])).map(key=>[key,step(values[key])]))};
- const next=normalizeCombatCanvasRect(wanted,before);
+ let next=normalizeCombatCanvasRect(wanted,before);
+ if(operation==='resize'){
+   const limits=combatWindowSizeLimits(id,config);
+   next={...next,
+    w:bounded(next.w,limits.minW,Math.max(limits.maxW,before.w)),
+    h:bounded(next.h,limits.minH,Math.max(limits.maxH,before.h))};
+   // A north/west grip keeps the opposite edge anchored even after clamping.
+   if(Number.isFinite(values.x)&&values.x!==before.x)
+    next.x=before.x+before.w-next.w;
+   if(Number.isFinite(values.y)&&values.y!==before.y)
+    next.y=before.y+before.h-next.h;
+   next=normalizeCombatCanvasRect(next,before);
+ }
  if(JSON.stringify(next)===JSON.stringify(before))return layout;
  const positions={...state.positions};
  if(group){

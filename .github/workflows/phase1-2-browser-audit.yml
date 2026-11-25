@@ -5,6 +5,7 @@ on:
     branches: [Website-Build-Test]
     paths:
       - 'scripts/phase1-2-browser-audit.cjs'
+      - 'scripts/milestone2-3-window-browser.cjs'
       - 'src/devFixtures.js'
       - 'src/dashboards/combat/**'
       - 'src/dashboards/presentation/**'
@@ -23,6 +24,7 @@ on:
     branches: [Website-Build-Test]
     paths:
       - 'scripts/phase1-2-browser-audit.cjs'
+      - 'scripts/milestone2-3-window-browser.cjs'
       - 'src/dashboards/combat/**'
       - 'react-dist/asteria-react-content-v2.js'
       - '.github/workflows/phase1-2-browser-audit.yml'
@@ -59,7 +61,9 @@ jobs:
       - name: Install Chromium and Linux browser dependencies
         run: npx playwright install --with-deps chromium
       - name: Test recovered website against isolated local fixtures
-        run: node scripts/phase1-2-browser-audit.cjs
+        run: |
+          node scripts/phase1-2-browser-audit.cjs
+          node scripts/milestone2-3-window-browser.cjs
         env:
           CI: 'true'
       - name: Upload browser screenshots and structured audit results
