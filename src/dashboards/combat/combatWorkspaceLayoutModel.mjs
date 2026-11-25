@@ -5,18 +5,20 @@ import {
 /** Layout-only state: never includes encounter data, permissions or combat commands. */
 export const COMBAT_PANEL_IDS=Object.freeze([
   'resources','controls','initiative','actor','setup','map','history',
-  'queue','timer','waves','events','log','advanced','prepared'
+  'queue','timer','waves','events','log','advanced','prepared','enemyTracker'
 ]);
 /** Sidebar categories are launchers; they do not create duplicate combat state. */
 export const COMBAT_TOOL_CATEGORIES=Object.freeze([
   {id:'overview',label:'Combat Overview',panels:['resources','controls','initiative']},
   {id:'builder',label:'Encounter Builder',panels:['setup']},
   {id:'prepared',label:'Prepared Encounters',panels:['prepared']},
-  {id:'live',label:'Live Combat',panels:['actor','queue','timer','waves','events','log','advanced']},
+  {id:'live',label:'Live Combat',panels:['actor','enemyTracker','queue','timer','waves','events','log','advanced']},
   {id:'maps',label:'Battle Maps',panels:['map']},
   {id:'rewards',label:'Rewards & History',panels:['history']}
 ]);
-const DEFAULT_HIDDEN=Object.freeze([]); // All tools on new GM canvases.
+const DEFAULT_HIDDEN=Object.freeze([
+  'setup','history','timer','waves','events','log','advanced'
+]); // Hidden tools stay available through Add Window.
 const MAX_CANVAS_COORD=250000;
 const CANVAS_INTERACTION_VERSION=2;
 const MIN_CANVAS_SIZE=140;
@@ -151,7 +153,7 @@ export const COMBAT_WORKSPACE_MODES=Object.freeze([
   {id:'preparation',label:'Encounter Preparation',panels:Object.freeze([
     'controls','initiative','setup','map','prepared','waves','events'])},
   {id:'live',label:'Live Combat',panels:Object.freeze([
-    'controls','initiative','actor','map','queue','timer','waves','events','log','advanced'])},
+    'controls','initiative','actor','map','enemyTracker','queue','timer','waves','events','log','advanced'])},
   {id:'completion',label:'Encounter Completion',panels:Object.freeze([
     'controls','initiative','actor','history','log','prepared'])}
 ]);
@@ -170,24 +172,27 @@ export const COMBAT_PANEL_LABELS=Object.freeze({
   events:'Planned Events',
   log:'Combat Event History',
   advanced:'Advanced Adjudication & Conditions',
-  prepared:'Prepared Encounter Library & Builder'
+  prepared:'Prepared Encounter Library & Builder',
+  enemyTracker:'Enemy Combat Tracker'
 });
 export const COMBAT_WORKSPACE_PRESET_LIMIT=8;
 const DEFAULT_POSITIONS=Object.freeze({
-  resources:{x:0,y:0,w:490,h:670},
-  controls:{x:510,y:0,w:490,h:180},
-  initiative:{x:510,y:190,w:490,h:420},
-  actor:{x:510,y:620,w:490,h:480},
-  setup:{x:0,y:1250,w:490,h:430},
-  map:{x:0,y:680,w:490,h:300},
-  history:{x:510,y:3110,w:490,h:450},
-  queue:{x:510,y:1110,w:490,h:430},
-  timer:{x:0,y:990,w:490,h:250},
-  waves:{x:510,y:2160,w:490,h:430},
-  events:{x:0,y:1690,w:490,h:430},
-  log:{x:0,y:2130,w:490,h:280},
-  advanced:{x:510,y:2600,w:490,h:500},
-  prepared:{x:510,y:1550,w:490,h:600}
+  // Battle map at centre, tall portrait enemy tracker beside it.
+  map:{x:0,y:0,w:490,h:710},
+  enemyTracker:{x:510,y:0,w:245,h:710},
+  controls:{x:775,y:0,w:225,h:200},
+  initiative:{x:775,y:220,w:225,h:460},
+  resources:{x:0,y:730,w:490,h:490},
+  actor:{x:510,y:730,w:245,h:490},
+  queue:{x:775,y:700,w:225,h:510},
+  prepared:{x:0,y:1240,w:490,h:510},
+  setup:{x:510,y:1240,w:490,h:430},
+  history:{x:510,y:1690,w:490,h:450},
+  timer:{x:0,y:1770,w:490,h:250},
+  waves:{x:0,y:2040,w:490,h:430},
+  events:{x:510,y:2160,w:490,h:430},
+  log:{x:0,y:2490,w:490,h:280},
+  advanced:{x:510,y:2610,w:490,h:500}
 });
 const COMBAT_CANVAS_CONFIG=Object.freeze({
   ids:COMBAT_PANEL_IDS,defaultPositions:DEFAULT_POSITIONS,defaultHidden:DEFAULT_HIDDEN,
