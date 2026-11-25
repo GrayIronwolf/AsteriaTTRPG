@@ -220,7 +220,9 @@ export function normalizePlayerCanvasLayout(raw,oldGrid=null){
   if(raw&&typeof raw==='object'&&!Array.isArray(raw)){
     // "weapons" is a retired independent window. Its functionality now
     // lives in armour; map a visible old Weapons window to the combined one.
-    const wasWeaponsVisible=Array.isArray(raw.hidden)&&!raw.hidden.includes('weapons');
+    const legacyWeaponsPresent=Object.hasOwn(raw.freeform?.positions||{},'weapons');
+    const wasWeaponsVisible=legacyWeaponsPresent&&Array.isArray(raw.hidden)&&
+      !raw.hidden.includes('weapons');
     const wasArmourHidden=Array.isArray(raw.hidden)&&raw.hidden.includes('armour');
     const next=wasWeaponsVisible&&wasArmourHidden?{...raw,
       hidden:raw.hidden.filter(id=>id!=='armour')} : raw;
