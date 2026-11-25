@@ -20,8 +20,9 @@ export function effectTimeMs(value) {
 export function effectIsActive(effect={}, clock={}) {
   if(effect.active===false || effect.ended || effect.expired || effect.removedAt) return false;
   if(effect.expiresAt && effectTimeMs(effect.expiresAt)<=(clock.now ?? Date.now())) return false;
-  if(effect.encounterId && clock.encounter) {
-    if(clock.encounter.status!=='active' || (clock.encounter.combatId || 'legacy-combat')!==effect.encounterId) return false;
+  if(effect.encounterId) {
+    // Encounter-scoped effects must never leak into an unassigned or ended view.
+    if(clock.encounter?.status!=='active' || (clock.encounter.combatId || 'legacy-combat')!==effect.encounterId) return false;
     if(effect.untilRound && Number(clock.encounter.round)>=effect.untilRound) return false;
   }
   return true;
