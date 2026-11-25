@@ -52,7 +52,7 @@
  isolation:isolate;pointer-events:auto;text-rendering:optimizeLegibility}
 .window[data-combat-panel]::before{content:none}
 .window.dragging{will-change:transform;cursor:grabbing;
-  border-color:var(--asteria-border-active);box-shadow:0 18px 48px rgb(0 0 0 / .55)}
+  border-color:var(--asteria-border-active);box-shadow:0 3px 8px rgb(0 0 0 / .35)}
 .windowBar{position:relative;z-index:2;display:flex;align-items:center;gap:var(--asteria-space-2);
  min-height:36px;padding:4px 7px 4px 10px;border-bottom:1px solid rgba(162,174,179,.46);
  background:linear-gradient(180deg,#394b58 0%,#253442 48%,#101d2a 100%);
@@ -216,6 +216,7 @@
 .alignmentOverlay{position:absolute;inset:0;pointer-events:none;z-index:4;overflow:hidden}
 .alignmentOverlay i{position:absolute;display:block;pointer-events:none;
  border-color:rgba(125,206,237,.85);filter:drop-shadow(0 0 3px rgba(45,153,210,.6))}
+.alignmentOverlay i[hidden]{display:none}
 .alignmentVertical{top:60px;bottom:0;border-left:1px dashed}
 .alignmentHorizontal{left:0;right:0;border-top:1px dashed}
 .canvas[data-editing='true'] .resizeHandle{transition:opacity 140ms ease}
