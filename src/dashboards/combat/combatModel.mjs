@@ -1,3 +1,4 @@
+import {enemyProfileSnapshot} from '../../../src/state/enemyProfileModel.mjs';
 import {customEncounterCreature,encounterResourcePair,encounterSourceResources} from '../../../src/state/encounterResourceModel.mjs';
 import {gmSessionState} from './combatAccess.mjs';
 import {liveCombatTimerState} from '../../../src/state/liveCombatCommandModel.mjs';
@@ -57,13 +58,26 @@ export function projectCombat(encounter={},session=null,{role='player',character
       initiative:Number.isFinite(Number(row.initiative))?Number(row.initiative):null,
       initiativeSet:row.initiativeSet===true,defeated:row.defeated===true,
       current:false,turnComplete:p.turnComplete===true,
-      ...(allowed?{
+      ...(allowed&&!player?{
+        ...enemyProfileSnapshot(saved||{}),
+        conditions:array(saved?.conditions).slice(0,24).map(condition=>({
+          id:title(condition?.id,100),name:title(condition?.name||condition?.type,100)
+        })),
+        ac:Number.isFinite(Number(saved?.ac))?Number(saved.ac):null,
         ap:Math.max(0,Math.min(3,whole(p.ap))),
         bonus:p.bonus===true,pendingDeathSave:p.pendingDeathSave===true,
         hp:encounterResourcePair(saved||{},'hp'),
         sp:encounterResourcePair(saved||{},'sp'),
         mp:encounterResourcePair(saved||{},'mp')
-      }:{})
+      }:{
+        ...(allowed?{
+          ap:Math.max(0,Math.min(3,whole(p.ap))),
+          bonus:p.bonus===true,pendingDeathSave:p.pendingDeathSave===true,
+          hp:encounterResourcePair(saved||{},'hp'),
+          sp:encounterResourcePair(saved||{},'sp'),
+          mp:encounterResourcePair(saved||{},'mp')
+        }:{})
+      })
     };
     return Object.freeze(result);
   });
@@ -145,7 +159,8 @@ export function libraryEnemy(source,id){
   const name=title(source.name,120).trim();
   if(!name)throw Error('Creature name is missing.');
   const next={id,sourceId:source.id,name,kind:'enemy',type:title(source.type,80),
-    defeated:false,...encounterSourceResources(source)};
+    defeated:false,...encounterSourceResources(source),...enemyProfileSnapshot(source),
+    sourceSnapshot:enemyProfileSnapshot(source)};
   if(source.initiative!==undefined&&source.initiative!==''&&
     Number.isFinite(Number(source.initiative))){
     next.initiative=Number(source.initiative);next.initiativeSet=true;
