@@ -88,7 +88,7 @@ test('dashboard main menu reuses approved header frame, crystal and press states
 });
 
 test('combat launcher keeps all tools attached to one window system',()=>{
-  assert.equal(COMBAT_PANEL_IDS.length,14);
+  assert.equal(COMBAT_PANEL_IDS.length,15);
   assert.ok(unique(COMBAT_PANEL_IDS));
   assert.ok(COMBAT_PANEL_IDS.every(id=>Boolean(COMBAT_PANEL_LABELS[id])));
   const groups=COMBAT_TOOL_CATEGORIES.flatMap(group=>group.panels);
@@ -118,10 +118,10 @@ test('combat default layout keeps every possible window out of overlap',()=>{
     }
   assert.equal(layout.hidden.includes('prepared'),false);
   assert.equal(layout.hidden.includes('queue'),false);
-  assert.equal(layout.hidden.includes('timer'),false);
-  assert.equal(layout.hidden.includes('advanced'),false);
-  assert.equal(layout.hidden.includes('setup'),false);
-  assert.equal(layout.hidden.length,0,'New GM combat workspaces show all 14 windows');
+  assert.equal(layout.hidden.includes('timer'),true);
+  assert.equal(layout.hidden.includes('advanced'),true);
+  assert.equal(layout.hidden.includes('setup'),true);
+  assert.equal(layout.hidden.length,7,'New GM combat workspaces show eight windows');
 });
 
 test('existing GM saved combat layouts preserve six previous window positions',()=>{
