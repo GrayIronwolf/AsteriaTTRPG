@@ -12,12 +12,12 @@ const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 test('Player Main canvas preserves every existing panel and the Action / Resource Log',()=>{
  const defaults=DASHBOARD_PANEL_REGISTRY.player.filter(row=>!row.optional).map(row=>row.id);
  assert.deepEqual([...PLAYER_DASHBOARD_CANVAS_CONFIG.ids].sort(),
-   [...DASHBOARD_PANEL_REGISTRY.player.map(row=>row.id),'activityLog'].sort());
+   [...DASHBOARD_PANEL_REGISTRY.player.filter(row=>row.id!=='weapons').map(row=>row.id),'activityLog'].sort());
  const layout=defaultPlayerCanvasLayout();
  assert.deepEqual(PLAYER_DASHBOARD_CANVAS_CONFIG.ids.filter(id=>!layout.hidden.includes(id)),
    PLAYER_CANVAS_DEFAULT_IDS);
  assert.equal(PLAYER_CANVAS_DEFAULT_IDS.length,7);
- assert.equal(PLAYER_DASHBOARD_CANVAS_CONFIG.ids.length,DASHBOARD_PANEL_REGISTRY.player.length+1);
+ assert.equal(PLAYER_DASHBOARD_CANVAS_CONFIG.ids.length,DASHBOARD_PANEL_REGISTRY.player.length);
  assert.equal(new Set(PLAYER_DASHBOARD_CANVAS_CONFIG.ids).size,PLAYER_DASHBOARD_CANVAS_CONFIG.ids.length);
  assert.equal(PLAYER_DASHBOARD_CANVAS_CONFIG.ids.includes('weapons'),false);
  const library=PLAYER_DASHBOARD_CANVAS_CONFIG.categories.flatMap(group=>group.panels);
