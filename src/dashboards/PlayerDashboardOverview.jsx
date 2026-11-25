@@ -117,7 +117,7 @@ function ArmourPanel({ character, onNavigate, style }) {
   }, [armour.finalAC]);
   const signed = value => `${Number(value) >= 0 ? '+' : ''}${Number(value)}`;
   const decimal = value => Number(value).toFixed(2).replace(/\.00$/,'');
-  return <DashboardPanel icon="armour" title="Equipment / Armour" variant="equipment" className={`react-overview-armour ${changed ? 'ac-updated' : ''}`} style={style}>
+  return <DashboardPanel icon="armour" title="Equipment, Armour & Weapons" variant="equipment" className={`react-overview-armour ${changed ? 'ac-updated' : ''}`} style={style}>
     <div className="react-armour-layout">
       <div className="react-armour-slots">{left.map(slot => <LoadoutSlot key={slot} label={slot} item={equipmentItem(equipment, slot, items)} icon="armour" onOpen={() => onNavigate('inventory')} />)}</div>
       <button className="react-armour-core" type="button" onClick={() => setShowBreakdown(true)} aria-label={`Open Armour Class breakdown. Armour Class ${armour.finalAC}`}>
@@ -128,6 +128,15 @@ function ArmourPanel({ character, onNavigate, style }) {
       </button>
       <div className="react-armour-slots">{right.map(slot => <LoadoutSlot key={slot} label={slot} item={equipmentItem(equipment, slot, items)} icon="armour" onOpen={() => onNavigate('inventory')} />)}</div>
     </div>
+    <section className="react-overview-combined-weapons" aria-label="Equipped Weapons">
+      <h3>Equipped Weapons</h3>
+      <div className="react-weapon-slot-grid">
+        {['Main Weapon','Secondary Weapon','Off-Hand','Quiver'].map(slot=>
+          <LoadoutSlot key={slot} label={slot}
+            item={equipmentItem(equipment,slot,items)} icon="weapon"
+            onOpen={()=>onNavigate('inventory')}/>)}
+      </div>
+    </section>
     {showBreakdown ? <Modal title={`Armour Class ${armour.finalAC}`} eyebrow="Live Defence Calculation" onClose={() => setShowBreakdown(false)} footer={<><button type="button" onClick={() => setShowBreakdown(false)}>Close</button><button className="primary" type="button" onClick={() => { setShowBreakdown(false); onNavigate('inventory'); }}>Open Equipment</button></>}>
       <div className="react-ac-summary">
         <div><span>Natural AC</span><strong>{armour.naturalAC}</strong><small>{armour.naturalACSource.replace(/-/g,' ')}</small></div>
@@ -147,15 +156,6 @@ function ArmourPanel({ character, onNavigate, style }) {
       {[...armour.validation.errors, ...armour.validation.warnings].length ? <div className="react-ac-warnings" role="status">{[...armour.validation.errors, ...armour.validation.warnings].map(message => <p key={message}>{message}</p>)}</div> : null}
       {armour.conditionalModifiers.length ? <div className="react-ac-conditionals"><h3>Conditional AC</h3>{armour.conditionalModifiers.map(modifier => <p key={modifier.id}><b>{modifier.name} {signed(modifier.value)}</b><span>{modifier.condition || 'Applies when its condition is met.'}</span></p>)}</div> : null}
     </Modal> : null}
-  </DashboardPanel>;
-}
-
-function WeaponsPanel({ character, onNavigate, style }) {
-  const equipment = character.equipment || {};
-  const items=inventoryItems(character);
-  const slots = ['Main Weapon', 'Secondary Weapon', 'Off-Hand', 'Quiver'];
-  return <DashboardPanel icon="weapon" title="Equipped Weapons" variant="equipment" className="react-overview-weapons" style={style}>
-    <div className="react-weapon-slot-grid">{slots.map(slot => <LoadoutSlot key={slot} label={slot} item={equipmentItem(equipment, slot, items)} icon={slot === 'Shield' ? 'armour' : 'weapon'} onOpen={() => onNavigate('inventory')} />)}</div>
   </DashboardPanel>;
 }
 
@@ -337,7 +337,6 @@ export function PlayerDashboardOverview({ campaignId, campaign, character, chara
   const renderPanel=id=>{
     switch(id) {
       case 'armour':return <ArmourPanel character={character} onNavigate={onNavigate}/>;
-      case 'weapons':return <WeaponsPanel character={character} onNavigate={onNavigate}/>;
       case 'quick':return <QuickItemsPanel campaignId={campaignId} character={character} editable={abilityEditable} combat={combat} busy={busy} onNavigate={onNavigate} run={run}/>;
       case 'talents':return <TalentSummary combat={combat} talents={talents} campaignId={campaignId} character={character} characters={characters} clock={clock} editable={abilityEditable} onNavigate={onNavigate}/>;
       case 'spells':return <SpellSummary combat={combat} campaignId={campaignId} character={character} spells={spells} editable={abilityEditable} busy={busy} onNavigate={onNavigate} run={run}/>;
