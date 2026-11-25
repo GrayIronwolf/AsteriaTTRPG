@@ -4462,3 +4462,37 @@ html[data-asteria-dashboard-header='expanded'] .topbar.core-v2-topbar{
 @media(prefers-reduced-motion:reduce){
   .asteria-dashboard-header-fold *{transition:none!important}
 }
+
+
+/* Non-canvas pages: constrain oversized forms/cards independently from the
+   freeform canvas. Detailed maps, tables and media remain allowed to fill. */
+.react-character-dashboard:not(.asteria-canvas-workspace-mode) .react-workspace-main
+  > .react-settings-workspace,
+.react-gm-dashboard:not(.asteria-canvas-workspace-mode) .react-workspace-main
+  > .react-settings-workspace,
+.react-character-dashboard:not(.asteria-canvas-workspace-mode) .react-workspace-main
+  > .react-crafting-workspace,
+.react-gm-dashboard:not(.asteria-canvas-workspace-mode) .react-workspace-main
+  > .react-settings-workspace {
+  width:100%;max-width:1200px;box-sizing:border-box;
+}
+.react-character-dashboard:not(.asteria-canvas-workspace-mode) .react-workspace-main
+  :where(.react-form-grid,.react-settings-grid),
+.react-gm-dashboard:not(.asteria-canvas-workspace-mode) .react-workspace-main
+  :where(.react-form-grid,.react-settings-grid){
+  width:100%;max-width:1120px;
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));
+  gap:clamp(8px,1vw,14px);
+}
+.react-character-dashboard:not(.asteria-canvas-workspace-mode) .react-workspace-main
+  :where(.react-form-grid,.react-settings-grid) > *,
+.react-gm-dashboard:not(.asteria-canvas-workspace-mode) .react-workspace-main
+  :where(.react-form-grid,.react-settings-grid) > *{
+  min-width:0;max-width:100%;box-sizing:border-box;
+}
+@media(max-width:700px){
+  .react-character-dashboard:not(.asteria-canvas-workspace-mode) .react-workspace-main
+    :where(.react-form-grid,.react-settings-grid),
+  .react-gm-dashboard:not(.asteria-canvas-workspace-mode) .react-workspace-main
+    :where(.react-form-grid,.react-settings-grid){grid-template-columns:minmax(0,1fr)}
+}
