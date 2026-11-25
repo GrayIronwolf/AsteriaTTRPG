@@ -16,6 +16,7 @@ const numericFields=Object.freeze(['hp','sp','mp','ac','initiative','xpReward'])
 const safeArray=value=>Array.isArray(value)?value:[];
 const short=(value,max=120)=>String(value??'').trim().replace(/\s+/g,' ').slice(0,max);
 const isRecord=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
+const safeProfile=row=>{try{return enemyProfileSnapshot(row);}catch{return {};}};
 
 export function libraryCollectionKey(kind){
   return kind==='npc'?'npcs':kind==='creature'?'creatures':null;
@@ -29,7 +30,7 @@ export function libraryDraft(kind='npc',entry={}){
     ...Object.fromEntries(numericFields.map(key=>[
       key,row[key]===undefined||row[key]===null?'':String(Array.isArray(row[key])?(row[key][1]??''):row[key])
     ])),
-    ...enemyProfileSnapshot(row)
+    ...safeProfile(row)
   };
 }
 export function libraryEncounterReady(row={}){
