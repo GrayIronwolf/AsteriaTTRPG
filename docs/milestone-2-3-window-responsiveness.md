@@ -52,6 +52,7 @@ Resize bounds are expressed in the existing world units:
 | Additional dashboard/combat/data-sync regressions | 52 passed |
 | Existing browser acceptance | 14 scenarios passed |
 | New sizing browser matrix | All 9 role/zoom combinations passed |
+| Physical dice browser acceptance | Passed; camera assertions await the rendered React effect |
 | Release source, production dependency audit, content validation and coordinated campaign audit | Passed at existing configured thresholds |
 | XP realtime sync | Passed |
 
@@ -60,5 +61,7 @@ The runtime/model tests cover all eight resize edges in GM, Player and Combat ca
 The new Chromium matrix covers each role at all three zoom levels, southeast/northwest pointer resizing, content-layout modes, 390/900/1280/1600px viewport changes, unchanged saved world geometry, correct grip hit targets, settings accessibility, cancellation during viewport resize and Combat refresh restoration. The existing baseline additionally covers 320/360/390/768/1280/1920px viewports, overlapping moves, persistence, focus, window libraries, menus and resource cards. External requests are blocked; these are local fixtures, not production accounts or physical touchscreen tests.
 
 The added emulator test writes and reloads the real normalized content preferences/geometry through the existing private dashboard and owned-character mirror paths, verifies another account cannot access the private layout, and checks HP/ownership remain unchanged.
+
+The first PR verification exposed an existing timing race in the physical dice browser test: it read the camera immediately after a middle-button gesture, before the camera effect ran. The check now waits for camera mode and the observable camera change, retaining the assertions that the camera moves and dice remain unchanged. No dice implementation or required check was bypassed.
 
 No Firebase Functions, Firestore/Storage rules or collection paths changed. No Firebase backend deployment or data migration is required. Live frontend publication is explicitly deferred to the user.
