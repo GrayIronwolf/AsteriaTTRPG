@@ -24,7 +24,7 @@ test('New canvas sessions open at 50 percent on the top row without changing sav
    assert.equal(JSON.stringify(layout),before);
  }
  const jsx=read('src/dashboards/combat/CombatCommandCentre.jsx');
- assert.match(jsx,/openingCameraPending\.current=!storedCamera/);
+ assert.match(jsx,/openingCameraPending\.current=!restoredCamera/);
  assert.match(jsx,/onClick=\{openingView\}>Opening view \(50%\)/);
  assert.match(jsx,/stored\?normalizeCombatCamera\(JSON\.parse\(stored\)\):null/);
 });
