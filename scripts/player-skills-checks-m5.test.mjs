@@ -64,7 +64,7 @@ test('player preview calculates the same server modifier without changing a char
   assert.equal(preview.total,4);
   assert.equal(preview.rank,'Journeyman');
   assert.deepEqual(character,before);
-  assert.match(universalSkillPreview(character,{name:'Stealth'}).reason,/Governing characteristic/);
+  assert.match(universalSkillPreview(character,{name:'Unknown Skill'}).reason,/Governing characteristic/);
   const legacy=db.store.get('campaigns/c/characters/b');
   legacy.skills=[{name:'Stealth',rank:4,primaryStat:'dexterity'}];
   assert.equal(universalSkillPreview(legacy,{name:'Stealth',primaryStat:'dexterity'}).available,false);
