@@ -2,16 +2,35 @@
 // movement segments, so splitting a move cannot make an expensive diagonal cheap.
 import {mapGridType,terrainIndex,terrainMoveMultiplier} from './battleMapTerrainModel.mjs';
 
-export function mapCell(point,columns,rows){
+export function mapCell(point,columns,rows,gridType='square'){
   if(!Number.isFinite(point?.x)||!Number.isFinite(point?.y)||point.x<0||point.x>100||point.y<0||point.y>100)
     return null;
+  if(mapGridType(gridType)==='hex'){
+    // Nearest-centre lookup for pointy-top odd-row hexes; test neighbouring
+    // rows to correctly select wedges close to the hex boundaries.
+    const x=point.x*(columns+0.5)/100,y=point.y*(rows*.75+.25)/100;
+    const nearestRow=Math.round((y-.5)/.75);
+    let closest=null,best=Infinity;
+    for(let row=Math.max(0,nearestRow-2);row<=Math.min(rows-1,nearestRow+2);row++){
+      const centreX=x-.5-(row&1)*.5;
+      const nearestColumn=Math.round(centreX);
+      for(let column=Math.max(0,nearestColumn-1);column<=Math.min(columns-1,nearestColumn+1);column++){
+        const dx=x-(column+.5+(row&1)*.5),dy=y-(row*.75+.5);
+        const distance=.75*dx*dx+dy*dy;
+        if(distance<best){best=distance;closest={column,row};}
+      }
+    }
+    return closest;
+  }
   return {column:Math.min(columns-1,Math.floor(point.x*columns/100)),
     row:Math.min(rows-1,Math.floor(point.y*rows/100))};
 }
 export const mapCellKey=({column,row})=>column+':'+row;
-export const mapCellCenter=({column,row},columns,rows)=>({
-  x:(column+.5)*100/columns,y:(row+.5)*100/rows
-});
+export const mapCellCenter=({column,row},columns,rows,gridType='square')=>
+  mapGridType(gridType)==='hex'?{
+    x:(column+.5+(row&1)*.5)*100/(columns+.5),
+    y:(row*.75+.5)*100/(rows*.75+.25)
+  }:{x:(column+.5)*100/columns,y:(row+.5)*100/rows};
 const ortho=[[1,0],[-1,0],[0,1],[0,-1]];
 const diagonal=[[1,1],[1,-1],[-1,1],[-1,-1]];
 const neighbours=[...ortho,...diagonal];
@@ -57,7 +76,7 @@ export function mapReachableRoutes(map,origin,allowance,{
   const columns=Number(map.gridColumns),rows=Number(map.gridRows),scale=Number(map.metresPerCell??1);
   if(!Number.isInteger(columns)||!Number.isInteger(rows)||columns<1||rows<1||columns>80||rows>80||
     !Number.isFinite(scale)||scale<=0||!Number.isFinite(allowance)||allowance<=0)return new Map();
-  const start=mapCell(origin,columns,rows);
+  const start=mapCell(origin,columns,rows,map.gridType);
   if(!start)return new Map();
   const startKey=mapCellKey(start),blocked=new Set();
   const hex=mapGridType(map.gridType)==='hex';
@@ -65,7 +84,7 @@ export function mapReachableRoutes(map,origin,allowance,{
   const originElevation=terrain.get(startKey)?.elevation??0;
   const entry=(column,row)=>terrain.get(column+':'+row)||{kind:'plain',elevation:0};
   for(const token of occupied){
-    const cell=mapCell(token,columns,rows);
+    const cell=mapCell(token,columns,rows,map.gridType);
     if(cell)footprintFits(cell.column,cell.row,token.cells??1,(column,row)=>{
       blocked.add(mapCellKey({column,row}));
       return true;
@@ -120,8 +139,8 @@ export function mapReachableRoutes(map,origin,allowance,{
   }
   return routes;
 }
-export function mapRoutePoints(node,columns,rows){
+export function mapRoutePoints(node,columns,rows,gridType='square'){
   const path=[];
-  for(let entry=node;entry;entry=entry.previous)path.push(mapCellCenter(entry,columns,rows));
+  for(let entry=node;entry;entry=entry.previous)path.push(mapCellCenter(entry,columns,rows,gridType));
   return path.reverse();
 }
