@@ -16,6 +16,7 @@
 - New maps open at 3 metres per cell; existing maps retain their stored scale and the legacy fallback.
 - Resizing the grid remaps terrain by relative cell centre; the GM should inspect merged cells after shrinking.
 - All terrain authoring is GM-only. Hazard labels are intentionally omitted from the public projection; all other public terrain is filtered against existing fog.
+- Firestore rules allow only validated terrain and grid metadata and prohibit modifying them on combat-linked maps. These rules must be reviewed and manually released alongside the backend/frontend when production deployment is explicitly authorised.
 
 ### Travel and map interaction
 - Square traversal retains the alternating diagonal cost and no-corner-cutting rules from Milestone 3.3.
