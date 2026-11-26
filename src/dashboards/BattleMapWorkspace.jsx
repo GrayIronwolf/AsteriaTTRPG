@@ -20,7 +20,7 @@ import {hudImageSource} from '../state/playerHudMedia.mjs';
 const defaults=()=>({
   name:'',description:'',visibility:'gm',gridColumns:20,gridRows:15,
   gridOpacity:40,gridVisible:true,tokens:[],
-  fogEnabled:false,fogCells:'',metresPerCell:1,gridType:'square',terrainCells:[]
+  fogEnabled:false,fogCells:'',metresPerCell:3,gridType:'square',terrainCells:[]
 });
 const currentSettings=map=>({
   name:map.name,description:map.description||'',visibility:map.visibility,
