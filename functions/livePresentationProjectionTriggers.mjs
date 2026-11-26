@@ -1,3 +1,4 @@
+import {characterSight,explorationKey} from '../src/state/battleMapVision.mjs';
 import {onDocumentWritten} from 'firebase-functions/v2/firestore';
 import {getFirestore,FieldValue} from 'firebase-admin/firestore';
 import {isDeepStrictEqual} from 'node:util';
@@ -18,10 +19,22 @@ function writeProjection(tx,ref,snapshot,value){
   }else if(!snapshot.exists||!isDeepStrictEqual(withoutTimestamp(snapshot),value))
     tx.set(ref,{...value,updatedAt:FieldValue.serverTimestamp()});
 }
-function mapProjection(raw,campaignId,mapId,encounter){
+async function mapProjection(tx,db,raw,campaignId,mapId,encounter){
   if(!raw||raw.visibility!=='players')return null;
-  try{return publicPresentationBattleMap(raw,campaignId,mapId,encounter);}
+  try{
+    const ids=raw.fogEnabled&&raw.vision?.automatic?[...new Set((raw.tokens||[]).filter(t=>t.kind==='character'&&t.visibility!=='gm')
+      .map(t=>t.refId).filter(presentationId))]:[];
+    const characters=Object.fromEntries(await Promise.all(ids.map(async id=>[id,
+      (await tx.get(db.doc('campaigns/'+campaignId+'/characters/'+id))).data()])));
+    return publicPresentationBattleMap(raw,campaignId,mapId,encounter,characters);
+  }
   catch{return null;}
+}
+function saveExploration(tx,source,raw,value){
+  if(!value?.exploredCells)return;
+  const key=explorationKey(raw);
+  if(raw.exploredCells!==value.exploredCells||raw.explorationKey!==key)
+    tx.set(source,{exploredCells:value.exploredCells,explorationKey:key},{merge:true});
 }
 async function synchronize(db,campaignId,changedMapId=''){
   const path='campaigns/'+campaignId;
@@ -36,7 +49,8 @@ async function synchronize(db,campaignId,changedMapId=''){
       const [source,current]=await Promise.all([
         tx.get(ref('battleMaps',changedMapId)),tx.get(output)
       ]);
-      const value=mapProjection(source.data(),campaignId,changedMapId,encounter);
+      const value=await mapProjection(tx,db,source.data(),campaignId,changedMapId,encounter);
+      saveExploration(tx,ref('battleMaps',changedMapId),source.data(),value);
       writeProjection(tx,output,current,value);
       return value;
     }
@@ -49,7 +63,7 @@ async function synchronize(db,campaignId,changedMapId=''){
       const output=ref('battleMapsPublic',mapId);
       const [source,current]=await Promise.all([tx.get(ref('battleMaps',mapId)),tx.get(output)]);
       const raw=source.data();
-      return {output,current,mapId,raw,value:mapProjection(raw,campaignId,mapId,encounter)};
+      return {output,current,mapId,raw,value:await mapProjection(tx,db,raw,campaignId,mapId,encounter)};
     }));
     const active=maps.find(row=>row.mapId===activeMapId);
     const scope=active&&combatMapVisibility(active.raw,active.value);
@@ -58,7 +72,10 @@ async function synchronize(db,campaignId,changedMapId=''){
     const hybridOpen=shared?.status==='open'&&shared.expiresAt?.toMillis?.()>Date.now();
     const summary={...publicCombatPresentation(encounter,scope),epoch:hybridOpen?shared.epoch:'',
       visible:Boolean(hybridOpen&&presentation.data()?.scene==='combat')};
-    for(const row of maps)writeProjection(tx,row.output,row.current,row.value);
+    for(const row of maps){
+      saveExploration(tx,ref('battleMaps',row.mapId),row.raw,row.value);
+      writeProjection(tx,row.output,row.current,row.value);
+    }
     writeProjection(tx,combat,previous,safe);
     writeProjection(tx,display,previousDisplay,summary);
     return changedMapId?active?.value||null:safe;
@@ -83,4 +100,19 @@ export const asteriaBattleMapProjection=onDocumentWritten({
   const {campaignId,mapId}=event.params;
   if(!presentationId(campaignId)||!presentationId(mapId))return;
   await synchronizeBattleMapPresentation(getFirestore(),campaignId,mapId);
+});
+
+
+export const asteriaCharacterVisionProjection=onDocumentWritten({
+  document:'campaigns/{campaignId}/characters/{characterId}',region:'us-central1',maxInstances:3
+},async event=>{
+  const {campaignId,characterId}=event.params;
+  if(!presentationId(campaignId)||!presentationId(characterId))return;
+  const before=event.data.before.data(),after=event.data.after.data();
+  if(before&&after&&isDeepStrictEqual(characterSight(before),characterSight(after))&&
+    isDeepStrictEqual(before.activeEffects,after.activeEffects)&&isDeepStrictEqual(before.effects,after.effects))return;
+  const db=getFirestore(),maps=await db.collection('campaigns/'+campaignId+'/battleMaps')
+    .where('vision.automatic','==',true).limit(40).get();
+  for(const map of maps.docs)if(map.data().tokens?.some(token=>token.refId===characterId))
+    await synchronizeBattleMapPresentation(db,campaignId,map.id);
 });

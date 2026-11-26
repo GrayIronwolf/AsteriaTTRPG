@@ -333,7 +333,7 @@ export function createFirebaseCampaignMediaService({
         details.gridRows!==before.gridRows||details.gridColumns!==before.gridColumns||
         details.metresPerCell!==before.metresPerCell||
         details.gridType!==(before.gridType||'square')||
-        JSON.stringify(details.terrainCells)!==JSON.stringify(before.terrainCells||[])))
+        details.gridOffsetX!==(before.gridOffsetX||0)||details.gridOffsetY!==(before.gridOffsetY||0)))
         throw Error('End the linked combat before changing token or grid geometry.');
       tx.update(mapRef(id,map),{...details,updatedAt:firestoreSdk.serverTimestamp()});
     });

@@ -22,14 +22,14 @@ export function CombatBattleMapPanel({mediaApi,campaignId,combat,pending,onComma
     const requested=pending?.mapMove;
     if(preview||!map||requested?.mapId!==map.id)return [];
     const origin=map.tokens?.find(token=>token.combatantId===pending.actorId);
-    const target=mapCell(requested.point,map.gridColumns,map.gridRows);
+    const target=mapCell(requested.point,map.gridColumns,map.gridRows,map);
     if(!origin||!target)return [];
     const routes=mapReachableRoutes(map,origin,requested.distance,{
       occupied:map.tokens.filter(row=>row.id!==origin.id),revealedOnly:true,
       movementKind:requested.kind,diagonalParity:requested.diagonalParity
     });
     const route=routes.get(mapCellKey(target));
-    return route?mapRoutePoints(route,map.gridColumns,map.gridRows):[];
+    return route?mapRoutePoints(route,map.gridColumns,map.gridRows,map):[];
   },[preview,map,pending]);
   const moveEnabled=!preview&&combat?.isActive&&!combat.paused&&combat.sessionEditable&&
     !busy&&!combat.pending&&Boolean(combat.battleMapId)&&typeof onCommand==='function';

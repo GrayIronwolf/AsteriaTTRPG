@@ -64,7 +64,7 @@ export function synchronizeCombatMapTokens(map,encounter,idFactory=()=>crypto.ra
       typeof encounter.combatants?.find(entry=>entry.id===row.id)?.spawn?.x==='number'
       ?encounter.combatants.find(entry=>entry.id===row.id).spawn:null;
     const preparedPoint=placed?battleMapPoint(placed.x,placed.y,{
-      columns:map.gridColumns,rows:map.gridRows,snap:true,gridType:map.gridType
+      columns:map.gridColumns,rows:map.gridRows,snap:true,...map
     }):point;
     return {...(linked||{id:idFactory(),...preparedPoint}),combatantId:row.id,
       kind:isPlayer?'character':'creature',label:row.name.slice(0,48),
@@ -95,10 +95,10 @@ export function combatMapMovePlan(map,encounter,actorId,point,{mode='movement',r
   const tokens=battleMapTokens(map.tokens||[]),token=tokens.find(t=>t.combatantId===actorId);
   if(!token)throw Error('Synchronize combatants before moving their map token.');
   const to=battleMapPoint(point?.x,point?.y,{
-    columns:map.gridColumns,rows:map.gridRows,snap:true,gridType:map.gridType
+    columns:map.gridColumns,rows:map.gridRows,snap:true,...map
   });
-  const fromCentre=battleMapPoint(token.x,token.y,{columns:map.gridColumns,rows:map.gridRows,snap:true,gridType:map.gridType});
-  let distance=measureGridDistance(fromCentre,to,map.gridColumns,map.gridRows,map.metresPerCell??1,map.gridType);
+  const fromCentre=battleMapPoint(token.x,token.y,{columns:map.gridColumns,rows:map.gridRows,snap:true,...map});
+  let distance=measureGridDistance(fromCentre,to,map.gridColumns,map.gridRows,map.metresPerCell??1,map);
   if(distance.metres<=0)throw Error('Choose a different map square to move.');
   if(!['movement','reposition','forced'].includes(mode))throw Error('Unknown map movement mode.');
   let remaining=null,diagonalParity=0,nextMovement=null;
@@ -115,7 +115,7 @@ export function combatMapMovePlan(map,encounter,actorId,point,{mode='movement',r
         occupied:tokens.filter(row=>row.id!==token.id),diagonalParity:movement.diagonalParity,
         movementKind:movement.routeKind||movement.kind
       });
-      const destination=mapCell(to,map.gridColumns,map.gridRows,map.gridType);
+      const destination=mapCell(to,map.gridColumns,map.gridRows,map);
       const route=routes.get(mapCellKey(destination));
       if(!route)throw Error('No traversable route reaches this destination within the approved remaining distance.');
       distance={squares:n2(route.cost/Number(map.metresPerCell??1)),metres:n2(route.cost)};
@@ -143,7 +143,7 @@ export function combatMapMovePlan(map,encounter,actorId,point,{mode='movement',r
       occupied:tokens.filter(row=>row.id!==token.id),
       movementKind:routeKind==='ground'?'walk':routeKind
     });
-    const route=routes.get(mapCellKey(mapCell(to,map.gridColumns,map.gridRows,map.gridType)));
+    const route=routes.get(mapCellKey(mapCell(to,map.gridColumns,map.gridRows,map)));
     if(!route)throw Error('Forced movement exceeds its approved range or crosses blocked map cells.');
     distance={squares:n2(route.cost/Number(map.metresPerCell??1)),metres:n2(route.cost)};
   }else{

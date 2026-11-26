@@ -1408,7 +1408,7 @@ const firebasePublicApi = {
           details.gridRows!==previous.gridRows||
           details.metresPerCell!==previous.metresPerCell||
           details.gridType!==(previous.gridType||'square')||
-          JSON.stringify(details.terrainCells)!==JSON.stringify(previous.terrainCells||[])))
+          details.gridOffsetX!==(previous.gridOffsetX||0)||details.gridOffsetY!==(previous.gridOffsetY||0)))
           throw Error('End the linked encounter before modifying map terrain, grid or combat tokens.');
         tx.update(ref,{...details,updatedAt:serverTimestamp()});
       });

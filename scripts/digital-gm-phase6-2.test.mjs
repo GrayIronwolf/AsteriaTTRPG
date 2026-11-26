@@ -89,3 +89,36 @@ test('React map renderer layers fog above public tokens while keeping GM pins se
   assert.match(rules,/match \/battleMaps\/\{mapId\}\/gmNotes\/\{noteId\}/);
   assert.match(rules,/allow get, list: if isCampaignGM\(campaignId\)/);
 });
+
+test('party sight uses source senses, active spells, blockers, light and manual overrides',async()=>{
+  const {partyVisibility,characterSight,explorationKey}=await import('../src/state/battleMapVision.mjs');
+  const map={gridColumns:6,gridRows:1,metresPerCell:3,fogEnabled:true,vision:{automatic:true,ambient:'dark'},
+    tokens:[{id:'hero',kind:'character',refId:'hero',x:8,y:50}],terrainCells:[{column:3,row:0,kind:'plain',blocksSight:true}]};
+  const party={hero:{race:'Cavern Sprite'}};
+  assert.equal(characterSight(party.hero).dark,30);
+  assert.equal(partyVisibility(map,{},party).fogCells,'111100');
+  const ordinary={hero:{}};
+  assert.equal(partyVisibility(map,{},ordinary).fogCells,'100000');
+  const spell={hero:{activeEffects:[{target:'vision.dark',operation:'SET',value:6}]}};
+  assert.equal(partyVisibility(map,{},spell).fogCells,'111000');
+  map.vision.sources=[{kind:'light',x:25,y:50,radius:3}];
+  assert.equal(partyVisibility(map,{},ordinary).fogCells,'111000');
+  map.explorationKey=explorationKey(map);map.exploredCells='111111';map.vision.overrides='-0---1';
+  assert.equal(partyVisibility(map,{},ordinary).fogCells,'101001');
+  assert.equal(partyVisibility(map,{},ordinary).exploredCells,'101111');
+  map.vision.resetId='fresh';map.vision.overrides='';
+  assert.equal(partyVisibility(map,{},ordinary).exploredCells,'111000');
+});
+test('LOS blocks corner peeking, smoke can conceal tokens, visual weather has no rule effect',async()=>{
+  const {lineOfSight,partyVisibility}=await import('../src/state/battleMapVision.mjs');
+  const a={column:0,row:0};
+  assert.equal(lineOfSight(a,{column:2,row:2},false,new Set(['1:0'])),false);
+  assert.equal(lineOfSight(a,{column:2,row:0},true,new Set(['1:0'])),false);
+  const map={gridColumns:4,gridRows:1,metresPerCell:3,vision:{automatic:true,sources:[
+    {kind:'smoke',x:37.5,y:50,radius:1,affectsSight:true,rule:'GM-approved smoke screen'},
+    {kind:'rain',x:12.5,y:50,radius:6}
+  ]},tokens:[{id:'pc',kind:'character',refId:'hero',x:12.5,y:50}]};
+  const vision=partyVisibility(map,{}, {hero:{}});
+  assert.equal(vision.fogCells,'1100');assert.equal(vision.tokenCells,'1000');
+  assert.equal(vision.effectCells.smoke,'0100');assert.equal(vision.effectCells.rain,'1100');
+});

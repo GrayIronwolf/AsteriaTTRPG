@@ -145,3 +145,23 @@ test('older Phase 6.1 maps remain readable and can adopt fog without a data migr
   await projections.sync(campaignId,mapId);
   assert.equal((await assertSucceeds(getDoc(doc(db('alice'),publicPath)))).data().fogEnabled,true);
 });
+
+test('automatic party vision persists exploration while retiring hidden tokens from the public feed',async()=>{
+  const gm=db('gm'),player=db('alice');
+  await env.withSecurityRulesDisabled(async context=>{
+    await setDoc(doc(context.firestore(),'campaigns/'+campaignId+'/characters/pc-1'),{id:'pc-1',vision:{dark:2}});
+  });
+  const tokens=[fixture.tokens[0],{id:'enemy',kind:'creature',label:'Guardian',x:36,y:10}];
+  await assertSucceeds(updateDoc(doc(gm,mapPath),{tokens,vision:{automatic:true,ambient:'dark'}}));
+  await projections.sync(campaignId,mapId);
+  const first=(await getDoc(doc(player,publicPath))).data();
+  assert.deepEqual(first.tokens.map(row=>row.id),['hero','enemy']);
+  assert.ok(!Object.hasOwn(first,'vision'));
+  await assertFails(updateDoc(doc(player,mapPath),{exploredCells:'1'.repeat(16)}));
+  await assertSucceeds(updateDoc(doc(gm,mapPath),{tokens:[{...tokens[0],x:90,y:90},tokens[1]]}));
+  await projections.sync(campaignId,mapId);
+  const second=(await getDoc(doc(player,publicPath))).data();
+  assert.equal(second.fogCells[1],'0');assert.equal(second.exploredCells[1],'1');
+  assert.deepEqual(second.tokens.map(t=>t.id),['hero']);
+  assert.equal(JSON.stringify(second).includes('Guardian'),false);
+});

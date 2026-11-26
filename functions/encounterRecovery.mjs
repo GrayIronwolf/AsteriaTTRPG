@@ -4,7 +4,7 @@ import {battleMapTokens} from '../src/state/battleMapModel.mjs';
 const idPattern=/^[A-Za-z0-9_-]{1,160}$/;
 const validId=value=>typeof value==='string'&&idPattern.test(value);
 const clone=value=>JSON.parse(JSON.stringify(value));
-const mapGeometry=['gridColumns','gridRows','metresPerCell','storagePath','contentType','width','height','imagePath','imageUrl','mediaId'];
+const mapGeometry=['gridColumns','gridRows','metresPerCell','gridType','gridOffsetX','gridOffsetY','storagePath','contentType','width','height','imagePath','imageUrl','mediaId'];
 export const recoveryOperations=new Set(['reopen','save-snapshot','restore-snapshot','delete-snapshot']);
 
 export function captureEncounterRecovery(encounter,privateState,map,now){
@@ -22,7 +22,8 @@ export function captureEncounterRecovery(encounter,privateState,map,now){
   }),map:map&&map.combatId===saved.combatId?{
     geometry:Object.fromEntries(mapGeometry.filter(key=>map[key]!==undefined).map(key=>[key,map[key]])),
     tokens:battleMapTokens(map.tokens||[]).filter(token=>token.combatantId),
-    fogEnabled:map.fogEnabled===true,fogCells:map.fogCells||''
+    fogEnabled:map.fogEnabled===true,fogCells:map.fogCells||'',
+    ...(map.vision?{vision:clone(map.vision),exploredCells:map.exploredCells||'',explorationKey:map.explorationKey||''}:{})
   }:null};
   if(Buffer.byteLength(JSON.stringify(checkpoint))>700000)
     throw Error('This encounter is too large to save a recovery checkpoint.');
@@ -34,7 +35,8 @@ function recoverMap(map,saved,encounterId,reopening){
     (reopening&&map.combatId&&map.combatId!==encounterId))
     throw Error('The saved battle map is unavailable or linked to another encounter.');
   const geometry=Object.fromEntries(mapGeometry.filter(key=>map[key]!==undefined).map(key=>[key,map[key]]));
-  if(!isDeepStrictEqual(geometry,saved.geometry))
+  const defaults={gridType:'square',gridOffsetX:0,gridOffsetY:0,metresPerCell:1};
+  if(!isDeepStrictEqual({...defaults,...geometry},{...defaults,...saved.geometry}))
     throw Error('The battle map image or grid changed. Recover the original map configuration first.');
   const mapped=saved.tokens;
   const tokenIds=new Set(mapped.map(token=>token.id));
@@ -42,7 +44,8 @@ function recoverMap(map,saved,encounterId,reopening){
   if(manual.some(token=>tokenIds.has(token.id))||manual.length+mapped.length>60)
     throw Error('Remove conflicting markers before restoring the map.');
   return {combatId:encounterId,tokens:battleMapTokens([...manual,...mapped]),
-    fogEnabled:saved.fogEnabled,fogCells:saved.fogCells};
+    fogEnabled:saved.fogEnabled,fogCells:saved.fogCells,
+    ...(map.vision||saved.vision?{vision:saved.vision||{},exploredCells:saved.exploredCells||'',explorationKey:saved.explorationKey||''}:{})};
 }
 
 export async function applyEncounterRecovery({tx,db,doc,campaignId,encounterRef,gmRef,gmSnap,

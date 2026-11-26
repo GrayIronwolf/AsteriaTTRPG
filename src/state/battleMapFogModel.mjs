@@ -1,6 +1,6 @@
+import {mapCell,gridSteps} from './battleMapGrid.mjs';
 // Digital GM phase 6.2. Pure geometry and validation for tabletop fog, ruler, and GM-only pins.
 // Fog overlays are visual controls: published original media may still be inspected client-side.
-import {mapCell,hexCellDistance} from './battleMapRoutes.mjs';
 export const BATTLE_MAP_MAX_PRIVATE_PINS=40;
 export const BATTLE_MAP_MAX_CELLS=6400;
 const boundedInt=(value,min,max,label)=>{
@@ -42,7 +42,7 @@ export function resizeFogCells(value,oldCols,oldRows,nextCols,nextRows){
   }
   return resized;
 }
-export function paintFogStroke(cells,cols,rows,from,to,mode='reveal',radius=1){
+export function paintFogStroke(cells,cols,rows,from,to,mode='reveal',radius=1,map={}){
   const d=dims(cols,rows),start=finitePoint(from),end=finitePoint(to);
   const r=boundedInt(radius,0,8,'fog brush radius');
   if(!['reveal','hide'].includes(mode))throw Error('Unknown fog brush tool.');
@@ -50,11 +50,10 @@ export function paintFogStroke(cells,cols,rows,from,to,mode='reveal',radius=1){
   const dx=(end.x-start.x)*d.columns/100,dy=(end.y-start.y)*d.rows/100;
   const steps=Math.max(1,Math.min(320,Math.ceil(Math.hypot(dx,dy)*2)));
   const drawAt=(x,y)=>{
-    const cx=Math.min(d.columns-1,Math.floor(Math.min(99.99999,x)*d.columns/100));
-    const cy=Math.min(d.rows-1,Math.floor(Math.min(99.99999,y)*d.rows/100));
+    const centre=mapCell({x,y},d.columns,d.rows,map),cx=centre.column,cy=centre.row;
     for(let row=Math.max(0,cy-r);row<=Math.min(d.rows-1,cy+r);row++){
       for(let col=Math.max(0,cx-r);col<=Math.min(d.columns-1,cx+r);col++){
-        if((row-cy)**2+(col-cx)**2<=r*r)chars[row*d.columns+col]=mode==='reveal'?'1':'0';
+        if(map.gridType==='hex'?gridSteps(centre,{column:col,row},true)<=r:(row-cy)**2+(col-cx)**2<=r*r)chars[row*d.columns+col]=mode==='reveal'?'1':'0';
       }
     }
   };
@@ -89,12 +88,11 @@ export function distanceMetersPerCell(input=1){
     throw Error('Square distance must be 0.1–100 metres with at most two decimals.');
   return n;
 }
-export function measureGridDistance(from,to,cols,rows,metresPerCell=1,gridType='square'){
+export function measureGridDistance(from,to,cols,rows,metresPerCell=1,grid='square'){
   const a=finitePoint(from),b=finitePoint(to),d=dims(cols,rows);
   const scale=distanceMetersPerCell(metresPerCell);
-  const squares=gridType==='hex'?hexCellDistance(mapCell(a,d.columns,d.rows,gridType),
-    mapCell(b,d.columns,d.rows,gridType)):
-    Math.hypot((b.x-a.x)*d.columns/100,(b.y-a.y)*d.rows/100);
+  const hex=grid==='hex'||grid?.gridType==='hex';
+  const squares=hex?gridSteps(mapCell(a,cols,rows,grid),mapCell(b,cols,rows,grid),true):Math.hypot((b.x-a.x)*d.columns/100,(b.y-a.y)*d.rows/100);
   return {squares:Math.round(squares*100)/100,metres:Math.round(squares*scale*100)/100};
 }
 export function battleMapPrivatePins(value){
@@ -115,4 +113,15 @@ export function battleMapPrivatePins(value){
     return {id,label,note,kind,
       x:Math.round(point.x*100)/100,y:Math.round(point.y*100)/100};
   });
+}
+
+export function mapFogStroke(map,from,to,mode,radius){
+  const {gridColumns,gridRows}=map;
+  if(!map.vision?.automatic)
+    return {fogCells:paintFogStroke(map.fogCells,gridColumns,gridRows,from,to,mode,radius,map)};
+  const mask=paintFogStroke('',gridColumns,gridRows,from,to,'reveal',radius,map);
+  const current=map.vision.overrides||'-'.repeat(mask.length);
+  const value={hide:'0',reveal:'1',auto:'-'}[mode];
+  if(!value)throw Error('Invalid visibility brush.');
+  return {vision:{...map.vision,overrides:[...current].map((v,i)=>mask[i]==='1'?value:v).join('')}};
 }

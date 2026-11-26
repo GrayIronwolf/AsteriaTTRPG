@@ -34,6 +34,11 @@ export function mapForViewer(raw,campaignId,mode='player'){
       fogEnabled:settings.fogEnabled,fogCells:settings.fogCells,
       metresPerCell:settings.metresPerCell,gridType:settings.gridType,
       terrainCells:mode==='gm'?settings.terrainCells:publicTerrainCells(settings,settings.fogCells),
+      gridOffsetX:settings.gridOffsetX,gridOffsetY:settings.gridOffsetY,
+      ...(mode==='gm'&&settings.vision?{vision:settings.vision,explorationKey:raw.explorationKey||''}:{}),
+      ...(raw.exploredCells?{exploredCells:validFogCells(raw.exploredCells,cols,rows)}:{}),
+      ...(mode!=='gm'&&typeof raw.lightingCells==='string'&&raw.lightingCells.length===cols*rows&&/^[012]+$/.test(raw.lightingCells)?
+        {lightingCells:raw.lightingCells,effectCells:raw.effectCells||{}}:{}),
       tokens:battleMapTokens(settings.tokens),
       combatId:mapId(raw.combatId)?raw.combatId:'',
       ...(mode==='gm'?{updatedAt:raw.updatedAt||null}:
