@@ -3,6 +3,7 @@ import { SESSION_LIMIT_MS, applyCharacteristicAllocations, applyCharacteristicPo
 import { applyRest, applySoulDamage, clampHpForSoulDamage, recoverSoulDamage } from './state/specialDamageModel.mjs';
 import { createAsteriaItem, normalizeMarketPricing } from './systems/items/marketPricing.mjs';
 import { merchantPriceCopper, shopStockCompatible, shopVariantKey } from './state/shopTransactionModel.mjs';
+import {diceResult} from './state/diceRollModel.mjs';
 
 const DEMO_CAMPAIGN_ID = 'demo-campaign';
 
@@ -106,7 +107,15 @@ export function installDevFixtures() {
   };
   let partyLoot={stashes:[],loot:[],drafts:[]};
   let customItems=[];
-  const listeners = { campaign: [], characters: [], session: [], presence: [], events: [], encounter: [], gmWorkspace:[], partyWorkspace:[], partyChat:[], itemEcosystem:[], partyLoot:[], customItems:[] };
+  const diceWorkspace={presets:[],history:[]};
+  let diceRollRequests=0;
+  const staticStreams=new Set();
+  const staticSubscription=(kind,value,callback)=>{
+    const stream={kind};staticStreams.add(stream);
+    queueMicrotask(()=>{if(staticStreams.has(stream))callback(clone(value));});
+    return ()=>staticStreams.delete(stream);
+  };
+  const listeners = { campaign: [], characters: [], session: [], presence: [], events: [], encounter: [], gmWorkspace:[], partyWorkspace:[], partyChat:[], itemEcosystem:[], partyLoot:[], customItems:[],diceWorkspace:[] };
   const presence = {
     'gm-demo': { uid: 'gm-demo', state: 'online', mode: 'gm' },
     'player-demo': { uid: 'player-demo', state: 'online', mode: 'character', characterId: 'kael' }
@@ -125,6 +134,7 @@ export function installDevFixtures() {
     if(key === 'itemEcosystem') callback(clone(itemEcosystem));
     if(key === 'partyLoot') callback(clone(partyLoot));
     if(key === 'customItems') callback(clone(customItems));
+    if(key === 'diceWorkspace') callback(clone(diceWorkspace));
   });
   const subscribe = (key, callback) => {
     document.documentElement.dataset.asteriaFixtureSubscription = key;
@@ -261,6 +271,29 @@ export function installDevFixtures() {
     refreshCharacterSystems: async () => ({ok:true}),
     getUser: () => ({ uid: 'player-demo', email: 'preview@asteria.local' }),
     getProfile: () => ({ uid: 'player-demo', displayName: 'Preview Player' }),
+    // Local browser acceptance uses the real panel APIs without cloud traffic.
+    getCanvasFixtureMetrics:()=>({diceRollRequests,diceListeners:listeners.diceWorkspace.length,
+      streams:[...staticStreams].map(stream=>stream.kind)}),
+    subscribeDiceWorkspace:callback=>subscribe('diceWorkspace',callback),
+    subscribeDiceAppearanceLibrary:callback=>staticSubscription('dice-appearance',{},callback),
+    subscribeOwnedDiceCharacters:callback=>staticSubscription('dice-characters',
+      Object.values(ownedCharacters).filter(row=>row.ownerUid==='player-demo'),callback),
+    advancedDiceAction:async request=>{
+      if(request.action!=='roll')return {ok:false,error:'This fixture accepts dice rolls only.'};
+      const previous=diceWorkspace.history.find(row=>row.id===request.requestId);
+      if(previous)return {ok:true,roll:clone(previous)};
+      const roll=diceResult({pool:request.pool,modifier:request.modifier,label:request.label},
+        sides=>Math.min(17,sides),Date.now(),request.requestId);
+      diceRollRequests++;diceWorkspace.history.unshift(roll);notify('diceWorkspace');
+      return {ok:true,roll:clone(roll)};
+    },
+    subscribeCampaignAudio:(_campaignId,callback)=>staticSubscription('audio-library',[],callback),
+    subscribeCampaignAudioLive:(_campaignId,callback)=>staticSubscription('audio-live',
+      {version:1,revision:0,ambient:null,effect:null},callback),
+    subscribeAsteriaCalendar:(_campaignId,callback)=>staticSubscription('calendar',null,callback),
+    subscribeAsteriaCalendarEntries:(_campaignId,callback)=>staticSubscription('calendar-entries',[],callback),
+    subscribeWeatherReports:(_campaignId,callback)=>staticSubscription('weather-reports',[],callback),
+    subscribeWeatherZones:(_campaignId,callback)=>staticSubscription('weather-zones',[],callback),
     saveOwnedCharacterSnapshot: async (characterId,character) => {
       if(!characterId || !character) return false;
       ownedCharacters[characterId] = { ...(ownedCharacters[characterId] || {}), ...clone(character), id:characterId };

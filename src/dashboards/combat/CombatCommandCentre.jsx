@@ -69,9 +69,13 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
   const camera=cameraState.scope===storageKey?cameraState.view:DEFAULT_CAMERA;
   const updateCamera=update=>{
     if(gesture.current)return;
+    clearTimeout(wheelTimer.current);wheelTimer.current=null;
+    if(wheelFrame.current)cancelAnimationFrame(wheelFrame.current);
+    wheelFrame.current=0;
     const current=cameraRef.current;
     const candidate=normalizeCombatCamera(typeof update==='function'?update(current):update);
     const viewport=canvas.current;
+    if(viewport)delete viewport.dataset.interacting;
     const next=viewport&&viewport.clientWidth>=700?
       clampCombatCamera(candidate,saved,
         panelIds.filter(id=>!saved.hidden.includes(id)),
@@ -86,6 +90,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
   const [message,setMessage]=useState('');
   const [frontWindow,setFrontWindow]=useState('');
   const [windowSearch,setWindowSearch]=useState('');
+  const [switcherExpanded,setSwitcherExpanded]=useState(true);
   const [wide,setWide]=useState(false);
   const [sidebarExpanded,setSidebarExpanded]=useState(false);
   const [selectedTools,setSelectedTools]=useState(
@@ -99,6 +104,10 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
   const zoomReadout=useRef(null),spaceHeld=useRef(false),focusTimer=useRef(null);
   const lastTitlePress=useRef(null);
   const layout=saved;
+  const saveContext=useRef(null);
+  if(saveContext.current?.scope!==storageKey)saveContext.current={
+    scope:storageKey,pending:0,generation:0,confirmedGeneration:0,confirmed:saved,active:true};
+  const wheelContext=useRef(null);
   const panels=collectCombatPanels(children).filter(child=>
     React.isValidElement(child)&&panelIds.includes(child.props.id));
   const forced=new Set(forcedPanelIds.filter(id=>panelIds.includes(id)));
@@ -106,6 +115,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
   const visible=panels.filter(panel=>!suppressed.has(panel.props.id)&&
     (!layout.hidden.includes(panel.props.id)||forced.has(panel.props.id)));
   const visibleSizingIds=visible.map(panel=>panel.props.id).join('|');
+  const contentScaleKey=fingerprint(layout.contentScale);
   // One observer for the canvas: proportional and fixed content keep a stable
   // design width, independent of camera zoom. No React state changes on resize.
   useEffect(()=>{
@@ -134,9 +144,11 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
     });
     for(const node of viewport.querySelectorAll('[data-combat-scroll]'))observer.observe(node);
     return ()=>{observer.disconnect();if(frame)cancelAnimationFrame(frame);pending.clear();};
-  },[storageKey,visibleSizingIds,layout.contentScale,wide]);
+  },[storageKey,visibleSizingIds,contentScaleKey,wide]);
   useEffect(()=>{
-    setSaved(gmCanvas?normalizeLayout(layoutValue):readLayout(storageKey));
+    if(gesture.current)endGesture.current?.({type:'pointercancel',pointerId:gesture.current.pointer});
+    const initial=gmCanvas?normalizeLayout(layoutValue):readLayout(storageKey);
+    saveContext.current.confirmed=initial;setSaved(initial);setMessage('');
     setUndoStack([]);setRedoStack([]);
     const storedCamera=readCamera(storageKey);
     // Migrate legacy near-invisible camera positions (4-10% in older layouts)
@@ -147,10 +159,17 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
     cameraRef.current=freshCamera;setCameraState({scope:storageKey,view:freshCamera});
     setFocused(null);setFrontWindow('');setMessage('');
     setSidebarExpanded(false);
+    setWindowSearch('');setSwitcherExpanded(true);
   },[storageKey]);
   useEffect(()=>{
     if(!gmCanvas||!layoutValue)return;
+    // Parent streams can acknowledge an earlier queued edit while a newer
+    // optimistic gesture is still saving. Its completion owns reconciliation.
+    if(saveContext.current.pending)return;
     const incoming=normalizeLayout(layoutValue);
+    if(fingerprint(saved)!==fingerprint(incoming)&&gesture.current)
+      endGesture.current?.({type:'pointercancel',pointerId:gesture.current.pointer});
+    saveContext.current.confirmed=incoming;
     setSaved(current=>fingerprint(current)===fingerprint(incoming)?current:incoming);
   },[layoutValue,storageKey]);
   useEffect(()=>{
@@ -307,6 +326,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
       Math.max(200,viewport.clientHeight-64)));
     setFrontWindow(id);
   };
+  wheelContext.current={layout,visibleIds:visible.map(panel=>panel.props.id),drawCamera};
   useEffect(()=>{
     const viewport=canvas.current;
     if(!viewport||!wide)return;
@@ -316,6 +336,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
       if(event.target===viewport||event.target===stage.current)event.preventDefault();
     };
     const wheel=event=>{
+      const {layout,visibleIds,drawCamera}=wheelContext.current;
       if(gesture.current){event.preventDefault();return;}
       if(event.target.closest?.('[data-canvas-ui]'))return;
       const overWindow=Boolean(event.target.closest?.('[data-combat-panel]'));
@@ -340,6 +361,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
       }
       event.preventDefault();
       if(!event.deltaY&&!event.deltaX)return;
+      if(viewport.dataset.interacting!=='camera')viewport.dataset.interacting='camera';
       clearFocus();
       const rect=viewport.getBoundingClientRect();
       const unit=event.deltaMode===1?16:event.deltaMode===2?viewport.clientHeight:1;
@@ -355,13 +377,14 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
           {x:event.clientX-rect.left,y:event.clientY-rect.top-60}:
           {x:viewport.clientWidth/2,y:(viewport.clientHeight-60)/2});
       cameraRef.current=clampCombatCamera(requested,layout,
-        visible.map(panel=>panel.props.id),viewport.clientWidth,
+        visibleIds,viewport.clientWidth,
         Math.max(200,viewport.clientHeight-64));
       if(!wheelFrame.current)wheelFrame.current=requestAnimationFrame(()=>{
         wheelFrame.current=0;drawCamera(cameraRef.current);
       });
       clearTimeout(wheelTimer.current);
       wheelTimer.current=setTimeout(()=>{
+        wheelTimer.current=null;delete viewport.dataset.interacting;
         setCameraState({scope:storageKey,view:cameraRef.current});
       },140);
     };
@@ -371,33 +394,54 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
       viewport.removeEventListener('wheel',wheel,{capture:true});
       viewport.removeEventListener('touchstart',backgroundTouch);
       clearTimeout(wheelTimer.current);
+      wheelTimer.current=null;delete viewport.dataset.interacting;
       if(wheelFrame.current)cancelAnimationFrame(wheelFrame.current);
       wheelFrame.current=0;
     };
-  },[wide,storageKey,layout]);
-  useEffect(()=>()=>{clearTimeout(focusTimer.current);if(gesture.current?.frame)
-    cancelAnimationFrame(gesture.current.frame);},[]);
+  },[wide,storageKey]);
+  useEffect(()=>{
+    const viewport=canvas.current;
+    saveContext.current.active=true;
+    return ()=>{
+      clearTimeout(focusTimer.current);
+      const g=gesture.current;
+      if(g?.frame)cancelAnimationFrame(g.frame);
+      for(const id of new Set([g?.pointer,...touches.current.keys()])){
+        if(id===undefined)continue;
+        try{viewport?.releasePointerCapture?.(id);}catch{/* already released */}
+      }
+      touches.current.clear();gesture.current=null;saveContext.current.active=false;
+    };
+  },[]);
   /** Gameplay state never enters the local geometry/history store. */
   const commit=(next,announce=false)=>{
     if(!canEditCanvas){setMessage('This dashboard can be customised only by its owner.');return false;}
     if(!storageKey){setMessage('Dashboard account or character context is unavailable.');return false;}
+    if(gesture.current)endGesture.current?.({type:'pointercancel',pointerId:gesture.current.pointer});
     const normalized=normalizeLayout(next);
     if(gmCanvas){
       if(typeof onSaveLayout!=='function'){
         setMessage(canvasRole+' dashboard layout storage is not connected.');return false;
       }
-      const previous=saved;
+      const context=saveContext.current,generation=++context.generation;
+      context.pending++;
       setSaved(normalized);
       setMessage('');
-      Promise.resolve().then(()=>onSaveLayout(normalized)).then(result=>{
+      const settle=result=>{
+        context.pending--;
+        if(saveContext.current!==context||!context.active)return;
+        if(result?.ok!==false&&generation>context.confirmedGeneration){
+          context.confirmed=normalized;context.confirmedGeneration=generation;
+        }
+        if(generation!==context.generation)return;
         if(result?.ok===false){
+          if(gesture.current)endGesture.current?.({type:'pointercancel',pointerId:gesture.current.pointer});
           setMessage(result.error||canvasRole+' dashboard layout could not be saved.');
-          setSaved(current=>fingerprint(current)===fingerprint(normalized)?previous:current);
+          setSaved(context.confirmed);setUndoStack([]);setRedoStack([]);
         }else if(announce)setMessage(canvasRole+' dashboard canvas saved.');
-      }).catch(error=>{
-        setMessage(error?.message||canvasRole+' dashboard layout could not be saved.');
-        setSaved(current=>fingerprint(current)===fingerprint(normalized)?previous:current);
-      });
+      };
+      Promise.resolve().then(()=>onSaveLayout(normalized)).then(settle,
+        error=>settle({ok:false,error:error?.message||String(error)}));
       return true;
     }
     try{localStorage.setItem(storageKey,JSON.stringify(normalized));}
@@ -460,7 +504,10 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
     stage.current?.classList.remove(styles.cameraFocus);
     canvas.current?.classList.remove(styles.cameraFocus);
     clearFocus();
+    if(wheelTimer.current)updateCamera(cameraRef.current);
+    if(canvas.current)canvas.current.dataset.interacting='camera';
     gesture.current={kind:'pan',pointer:event.pointerId,x:event.clientX,y:event.clientY,
+      width:canvas.current?.clientWidth,
       origin:{...cameraRef.current},cancelOrigin:{...cameraRef.current},latestCamera:{...cameraRef.current},frame:0};
     if(touch)touches.current.set(event.pointerId,{x:event.clientX,y:event.clientY});
     event.preventDefault();canvas.current?.setPointerCapture?.(event.pointerId);
@@ -471,13 +518,15 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
      (layout.hidden.includes(id)&&!forced.has(id)))return;
     const width=canvas.current?.clientWidth||0,initial=layout.freeform.positions[id];
     if(!width||!initial)return;
+    if(wheelTimer.current)updateCamera(cameraRef.current);
     const ids=kind==='move'?layout.groups.find(row=>row.includes(id))||[id]:[id];
     const nodes=Object.fromEntries(ids.map(panelId=>
       [panelId,canvas.current?.querySelector('[data-combat-panel="'+panelId+'"]')]));
     setAlignmentLines([]);
-    if(canvas.current)canvas.current.dataset.draggingWindow=id;
+    if(canvas.current){canvas.current.dataset.draggingWindow=id;canvas.current.dataset.interacting=kind;}
     gesture.current={id,kind,edge,initial,width,scale:cameraRef.current.scale,
       pointer:event.pointerId,x:event.clientX,y:event.clientY,layout,ids,nodes,
+      visibleIds:visible.map(panel=>panel.props.id),
       lastValid:layout,pending:null,frame:0};
     setFrontWindow(current=>current===id?current:id);
     for(const node of Object.values(nodes))node?.classList.add(styles.dragging);
@@ -527,8 +576,8 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
       return;
     }
     const alignment=g.kind==='move'&&(g.layout.alignmentGuides||g.layout.magneticSnap)?
-      combatWindowAlignment(g.layout,g.id,g.pending,{snap:g.layout.magneticSnap,strength:g.layout.snapStrength}):null;
-    const candidate=editCombatWindow(g.layout,g.id,g.kind,alignment?.position||g.pending,canvasConfig||undefined);
+      combatWindowAlignment(g.layout,g.id,g.pending,{snap:g.layout.magneticSnap,strength:g.layout.snapStrength,visibleIds:g.visibleIds}):null;
+    const candidate=editCombatWindow(g.layout,g.id,g.kind,alignment?.position||g.pending,canvasConfig||undefined,g.visibleIds);
     if(g.layout.alignmentGuides&&alignment)setAlignmentLines(alignment.guides);
     // A rejected strict-collision proposal retains the last valid frame.
     // Normal freeform mode accepts overlapping positions immediately.
@@ -587,7 +636,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
     }
     touches.current.clear();
     setAlignmentLines([]);
-    if(canvas.current)delete canvas.current.dataset.draggingWindow;
+    if(canvas.current){delete canvas.current.dataset.draggingWindow;delete canvas.current.dataset.interacting;}
     if(g.kind==='pan'||g.kind==='pinch'){
       if(event.type==='pointerup')updateCamera(g.latestCamera);
       else{cameraRef.current=g.cancelOrigin||g.origin;drawCamera(cameraRef.current);}
@@ -605,17 +654,24 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
     try{canvas.current?.releasePointerCapture?.(event.pointerId);}catch{/* released */}
   };
   useEffect(()=>{endGesture.current=end;});
+  useEffect(()=>{
+    const g=gesture.current;
+    if(g?.id&&(!canEditCanvas||layout.canvasLocked||layout.locked.includes(g.id)||
+       !visible.some(panel=>panel.props.id===g.id)))
+      endGesture.current?.({type:'pointercancel',pointerId:g.pointer});
+  },[canEditCanvas,layout.canvasLocked,layout.locked,visibleSizingIds]);
   // A captured drag may finish outside the canvas or even outside its visible
   // browser rectangle. Complete it from the window-level pointer release too.
   // The gesture pointer guard makes a second call after canvas bubbling harmless.
   useEffect(()=>{
-    window.addEventListener('pointerup',end);
-    window.addEventListener('pointercancel',end);
+    const finish=event=>endGesture.current?.(event);
+    window.addEventListener('pointerup',finish);
+    window.addEventListener('pointercancel',finish);
     return ()=>{
-      window.removeEventListener('pointerup',end);
-      window.removeEventListener('pointercancel',end);
+      window.removeEventListener('pointerup',finish);
+      window.removeEventListener('pointercancel',finish);
     };
-  });
+  },[]);
   const keyboard=(event,id)=>{
     if(!layout.keyboardShortcuts||!canEditCanvas||!wide||layout.canvasLocked||!event.altKey||
       !event.key.startsWith('Arrow'))return;
@@ -627,7 +683,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
     const kind=event.shiftKey?'resize':'move';
     const values=kind==='move'?{x:rect.x+delta[0],y:rect.y+delta[1]}:
       {w:rect.w+delta[0],h:rect.h+delta[1]};
-    change(previous=>editCombatWindow(previous,id,kind,values,canvasConfig||undefined));
+    change(previous=>editCombatWindow(previous,id,kind,values,canvasConfig||undefined,visible.map(panel=>panel.props.id)));
   };
   useEffect(()=>{
     if(!focused)return;
@@ -794,10 +850,10 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
                       hidden:[...previous.hidden,id]
                     }))}>Hide window</button>
                   <button type="button" disabled={!canEditCanvas||isLocked}
-                    onClick={()=>change(previous=>dockCombatWindow(previous,id,'left',canvasConfig||undefined))}>
+                    onClick={()=>change(previous=>dockCombatWindow(previous,id,'left',canvasConfig||undefined,visible.map(panel=>panel.props.id)))}>
                     Dock left</button>
                   <button type="button" disabled={!canEditCanvas||isLocked}
-                    onClick={()=>change(previous=>dockCombatWindow(previous,id,'right',canvasConfig||undefined))}>
+                    onClick={()=>change(previous=>dockCombatWindow(previous,id,'right',canvasConfig||undefined,visible.map(panel=>panel.props.id)))}>
                     Dock right</button>
 
                 </div>
@@ -902,16 +958,20 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
         </svg>
       </div>:null}
       {wide&&layout.windowSwitcher?<nav className={styles.navigationSwitcher} data-canvas-ui
+        data-expanded={switcherExpanded}
         aria-label="Canvas window switcher">
-        <input type="search" aria-label="Search canvas windows"
+        <button type="button" aria-expanded={switcherExpanded}
+          aria-label={switcherExpanded?'Collapse canvas windows':'Expand canvas windows'}
+          onClick={()=>setSwitcherExpanded(value=>!value)}>Windows {switcherExpanded?'−':'+'}</button>
+        {switcherExpanded?<><input type="search" aria-label="Search canvas windows"
           placeholder="Find a window" value={windowSearch}
           onChange={event=>setWindowSearch(event.target.value)}/>
         <div>{visible.filter(panel=>(panelLabels[panel.props.id]||panel.props.id)
           .toLowerCase().includes(windowSearch.trim().toLowerCase()))
           .map(panel=><button type="button" key={panel.props.id}
-            onClick={()=>{setFrontWindow(panel.props.id);focusWindow(panel.props.id);}}>
+            onClick={()=>{setFrontWindow(panel.props.id);focusWindow(panel.props.id);setSwitcherExpanded(false);}}>
             {panelLabels[panel.props.id]||panel.props.id}
-          </button>)}</div>
+          </button>)}</div></>:null}
       </nav>:null}
       {gmCanvas?<div className={styles.manageActions} role="toolbar" data-canvas-ui
         aria-label={canvasRole+' dashboard window management'}>
@@ -1021,8 +1081,8 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
               <legend>Navigation</legend>
               <label><input type="checkbox" checked={layout.windowSwitcher}
                 disabled={!canEditCanvas}
-                onChange={event=>setPreference(previous=>({...previous,
-                  windowSwitcher:event.target.checked}))}/> Window switcher and search</label>
+                onChange={event=>{setSwitcherExpanded(true);setPreference(previous=>({...previous,
+                  windowSwitcher:event.target.checked}));}}/> Window switcher and search</label>
               <label><input type="checkbox" checked={layout.focusMode}
                 disabled={!canEditCanvas}
                 onChange={event=>setPreference(previous=>({...previous,
