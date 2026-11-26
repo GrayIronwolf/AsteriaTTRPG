@@ -676,6 +676,47 @@ test('a successful reviewed jump uses paid movement and its source SP exactly on
   assert.equal(h.store.get(path).tokens[0].x,62.5);
 });
 
+test('a confirmed movement uses the existing reaction review when a visible opponent can react',async()=>{
+  const h=database();await h.setup();
+  const encounter=h.encounter(),actor=currentCombatant(encounter);
+  const opponent=encounter.combatants.find(row=>row.id!==actor.id);
+  const uid=actor.characterId==='a'?'alice':'bob',other=uid==='alice'?'bob':'alice';
+  const initialAP=encounter.combat.participants[actor.id].ap;
+  encounter.combat.participants[opponent.id].ap=2;
+  encounter.battleMapId='arena';
+  h.character(actor.characterId).movement=9;
+  h.character(opponent.characterId).inventory=[{id:'sword',name:'Sword',type:'Weapon',equipped:true}];
+  const path='campaigns/c/battleMaps/arena';
+  h.store.set(path,{id:'arena',kind:'image',contentType:'image/png',
+    storagePath:path+'/scene.png',name:'Arena',combatId:encounter.combatId,
+    visibility:'players',gridColumns:4,gridRows:4,metresPerCell:3,tokens:[
+      {id:'hero',label:actor.name,kind:'character',combatantId:actor.id,x:12.5,y:12.5},
+      {id:'opponent',label:opponent.name,kind:'character',combatantId:opponent.id,faction:'hostile',x:12.5,y:37.5}
+    ]});
+  const review=await h.command(uid,actor.id,'player-map-move',{
+    mapId:'arena',point:{x:37.5,y:12.5},moveKind:'walk'
+  });
+  assert.equal(review.queued,true,review.error);
+  assert.equal(h.encounter().combat.participants[actor.id].ap,initialAP);
+  assert.equal(h.store.get(path).tokens[0].x,12.5);
+  assert.equal((await h.command('gm',actor.id,'approve',{
+    approval:{checkType:'none',voluntaryLeavesReach:true}
+  })).ok,true);
+  assert.equal((await h.command('gm',actor.id,'window',{
+    reactors:[{actorId:opponent.id,choices:['opportunity'],reason:'Confirmed the move leaves melee reach'}]
+  })).ok,true);
+  assert.equal((await h.command(other,opponent.id,'react',{reaction:'opportunity'})).ok,true);
+  assert.equal((await h.command('gm',actor.id,'resolve-reaction',{reason:'The reaction attack missed.'})).ok,true);
+  assert.equal((await h.command('gm',actor.id,'close-window')).ok,true);
+  assert.equal((await h.command('gm',actor.id,'roll')).ok,true);
+  assert.equal((await h.command('gm',actor.id,'resolve',{success:true})).ok,true);
+  assert.equal(h.store.get(path).tokens[0].x,37.5);
+  const participants=h.encounter().combat.participants;
+  assert.equal(participants[actor.id].ap,initialAP-1);
+  assert.equal(participants[opponent.id].ap,1);
+  assert.equal(participants[opponent.id].outOfTurn,undefined);
+});
+
 test('a player moves only their own token and recorded AP is charged once',async()=>{
   const h=database();await h.setup();
   for(const id of ['a','b'])h.character(id).movement=9;
@@ -710,6 +751,13 @@ test('a player moves only their own token and recorded AP is charged once',async
   assert.match((await h.command(uid,actor.id,'declare',{
     optionId:'basic:attack',outOfTurn:true,targetIds:[currentCombatant(h.encounter()).id]
   })).error,/already used/);
+  const correction={restoreOpportunity:true,reason:'Allow another opportunity after correcting the earlier move'};
+  assert.equal((await h.command(uid,actor.id,'correct',correction)).ok,false);
+  assert.equal((await h.command('gm',actor.id,'correct',correction)).ok,true);
+  const restored=h.encounter().combat.participants[actor.id];
+  assert.equal(restored.outOfTurn,null);
+  assert.equal(restored.ap,1);
+  assert.equal(h.encounter().combat.log[0].previousOpportunity.kind,'move');
 });
 
 test('GM approval of an out-of-turn attack spends AP without changing the active turn',async()=>{

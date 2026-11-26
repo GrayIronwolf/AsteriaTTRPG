@@ -91,12 +91,14 @@ export function BattleMapToken({token,columns,rows,className,selected=false,curr
   </Element>;
 }
 export function CampaignMapCanvas({api,campaignId,map,mode='player',atlas=false,
-  editing=false,onPoint,previewFog=false,showGrid=true,restricted=false,interactive=false,camera=null,movement=null}){
+  editing=false,onPoint,previewFog=false,showGrid=true,restricted=false,interactive=false,camera=null,
+  movement=null,routeOverlay=[]}){
   const media=useAuthenticatedMapBlob(api,campaignId,map,mode,atlas,restricted);
   const node=useRef(null),drag=useRef(null),[playing,setPlaying]=useState(true);
   const [localCamera,setLocalCamera]=useState(DEFAULT_BATTLE_MAP_CAMERA);
   const [tool,setTool]=useState('pan'),[selection,setSelection]=useState(''),[ruler,setRuler]=useState([]);
   const [destination,setDestination]=useState(null),[moving,setMoving]=useState(false),[moveNotice,setMoveNotice]=useState('');
+  const [moveQueued,setMoveQueued]=useState(false);
   const marker=map?.tokens?.find(row=>row.id===movement?.tokenId);
   const canMove=Boolean(marker&&movement?.distance>0&&!movement.disabled);
   const moveMode=tool==='move'&&canMove;
@@ -107,11 +109,15 @@ export function CampaignMapCanvas({api,campaignId,map,mode='player',atlas=false,
   }):new Map(),[tool,canMove,map,marker,movement?.distance,movement?.diagonalParity,movement?.approvedKind,movement?.routeKind]);
   const route=destination?routes.get(destination):null;
   const routePoints=route?mapRoutePoints(route,cols,rows):[];
-  useEffect(()=>{setDestination(null);setMoveNotice('');},[movement?.revision,map?.id,marker?.x,marker?.y]);
+  useEffect(()=>{setDestination(null);setMoveNotice('');setMoveQueued(false);},[map?.id,marker?.x,marker?.y]);
+  useEffect(()=>setDestination(null),[movement?.revision]);
   const commitMove=async target=>{
     if(!target||moving||!moveMode)return;
     setMoving(true);setMoveNotice('');
-    try{await movement.onMove(mapCellCenter(target,cols,rows));setDestination(null);}
+    try{
+      const result=await movement.onMove(mapCellCenter(target,cols,rows));
+      setDestination(null);setMoveQueued(result?.queued===true);
+    }
     catch(error){setMoveNotice(error?.message||'The move could not be confirmed.');}
     finally{setMoving(false);}
   };
@@ -193,6 +199,7 @@ export function CampaignMapCanvas({api,campaignId,map,mode='player',atlas=false,
       <button type="button" disabled={!route||moving} onClick={()=>commitMove(route)}>Confirm Move</button>
     </div>:null}
     {moveNotice?<p role="alert">{moveNotice}</p>:null}
+    {moveQueued&&movement?.disabled?<p role="status">Move awaiting GM reaction review.</p>:null}
     <div className={styles.canvas} data-map-zoom={view.zoom}
       style={{aspectRatio:map.width+' / '+map.height,minHeight:0,
         ...(interactive&&tool==='pan'&&view.zoom>1?{touchAction:'none',cursor:'grab'}:{})}}
@@ -221,14 +228,21 @@ export function CampaignMapCanvas({api,campaignId,map,mode='player',atlas=false,
             width={100/cols} height={100/rows}/>)}
         {routePoints.length?<polyline points={routePoints.map(p=>p.x+','+p.y).join(' ')}/>:null}
       </svg>:null}
+      {mode==='gm'&&routeOverlay.length>1?<svg className={styles.reachable}
+        aria-label="Confirmed movement route" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <polyline points={routeOverlay.map(p=>p.x+','+p.y).join(' ')}/>
+      </svg>:null}
       {!atlas&&tokens.filter(t=>{
         if(!fog)return true;
         const x=Math.min(cols-1,Math.floor(t.x*cols/100));
         const y=Math.min(rows-1,Math.floor(t.y*rows/100));
         return fogCells[y*cols+x]==='1';
       }).map(t=><BattleMapToken key={t.id} token={t} columns={cols} rows={rows} className={styles.token}
-        selected={selection===t.id} current={map.activeTokenId===t.id}
-        onSelect={interactive&&!moveMode&&tool!=='ruler'?()=>setSelection(t.id):undefined}/>)}
+        selected={selection===t.id} current={map.activeTokenId===t.id} defeated={t.defeated===true}
+        onSelect={interactive&&!moveMode&&tool!=='ruler'?()=>{
+          setSelection(t.id);
+          if(t.id===movement?.tokenId&&canMove){setTool('move');setDestination(null);}
+        }:undefined}/>)}
       {tool==='ruler'&&ruler.length>0?<svg className={styles.ruler} viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
         {ruler.length===2?<line x1={ruler[0].x} y1={ruler[0].y} x2={ruler[1].x} y2={ruler[1].y}/>:null}
         {ruler.map((p,i)=><circle key={i} cx={p.x} cy={p.y} r=".6"/>)}

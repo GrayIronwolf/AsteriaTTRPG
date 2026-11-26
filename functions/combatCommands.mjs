@@ -160,6 +160,76 @@ export function createCombatCommands(context) {
       const controlled=()=>{const actor=entry(actorId);if(!actor||(!gm&&(!actor.characterId||get(actorId).ownerUid!==currentUser.uid)))throw new Error('You cannot control this encounter participant.');return actor;};
       const requireActive=()=>{if(encounter.status!=='active')throw new Error('Combat is not active.');};
       const noPending=()=>{if(privateState.pending)throw new Error('Resolve the pending action before continuing.');};
+      let queuedMovement=false;
+      const validatePlayerMapMove=(actor,move,apPaid=false)=>{
+        if(move.mapId!==boundMapId||!boundMap||boundMap.combatId!==encounter.combatId||
+          boundMap.visibility!=='players')throw Error('This battle map is not shared for the current encounter.');
+        const id=actor.id,character=get(id),s=state(id);
+        if(move.requesterUid&&character.ownerUid!==move.requesterUid)
+          throw Error('The player no longer controls this participant.');
+        if(actor.defeated||combatRestriction(character,{now,encounter})||s.pendingDeathSave||s.grappledBy)
+          throw Error('This participant cannot move voluntarily.');
+        const offTurn=currentCombatant(encounter)?.id!==id||s.turnComplete;
+        if(offTurn&&move.outOfTurn!==true)throw Error('Confirm use of the out-of-turn movement opportunity.');
+        if(offTurn&&!apPaid)validateMapOpportunity(encounter,id);
+        const original=boundMap.tokens.find(row=>row.combatantId===id);
+        const projection=publicPresentationBattleMap(boundMap,campaignId,boundMapId,encounter);
+        if(!original||!projection.tokens.some(row=>row.id===original.id))
+          throw Error('No visible token is assigned to this participant.');
+        if(move.origin&&(original.x!==move.origin.x||original.y!==move.origin.y))
+          throw Error('The confirmed route no longer starts at the token position.');
+        const dest=mapCell(move.point,boundMap.gridColumns,boundMap.gridRows);
+        if(!dest)throw Error('Choose a valid destination.');
+        if(boundMap.fogEnabled&&projection.fogCells[dest.row*boundMap.gridColumns+dest.column]!=='1')
+          throw Error('Choose a revealed destination.');
+        const approved=move.moveKind==='approved'&&s.movement?.remaining>0;
+        const walk=move.moveKind==='walk';
+        if(!approved&&!walk)throw Error('This movement needs a GM-approved allowance.');
+        if(offTurn&&approved)throw Error('Use the remaining approved movement during your turn.');
+        if(walk&&s.movement?.remaining>0&&!offTurn)
+          throw Error('Finish the current approved movement first.');
+        const allowance=approved?s.movement.remaining:walkingAllowance(character,{now,encounter});
+        if(!allowance)throw Error('A movement allowance has not been recorded. Ask the GM to approve the movement.');
+        const ap=approved?0:MAP_MOVE_AP.walk;
+        if(!apPaid&&s.ap<ap)throw Error('Not enough AP.');
+        const movement=approved?s.movement:{actionId:context.requestId,kind:'walk',remaining:allowance};
+        const kind=movement.routeKind||movement.kind;
+        const routes=mapReachableRoutes(boundMap,original,allowance,{
+          occupied:boundMap.tokens.filter(row=>row.id!==original.id),
+          diagonalParity:movement.diagonalParity,revealedOnly:true,movementKind:kind
+        });
+        const route=routes.get(mapCellKey(dest));
+        if(!route)throw Error('That destination is unavailable within the current movement allowance.');
+        const point=mapCellCenter(dest,boundMap.gridColumns,boundMap.gridRows);
+        return {original,point,route,movement,kind,offTurn,ap,projection};
+      };
+      const applyPlayerMapMove=(actor,plan,playerUid,apPaid=false)=>{
+        const {original,point,route,movement,kind,offTurn,ap}=plan,s=state(actor.id);
+        const tokens=boundMap.tokens.map(row=>row.id===original.id?{...row,...point}:row);
+        tx.update(mapRef,{tokens,updatedAt:serverTimestamp()});
+        setState(actor.id,{ap:apPaid?s.ap:s.ap-ap,
+          movement:offTurn?s.movement??null:spendMapMovement(movement,route.cost,route.parity),
+          ...(offTurn?{outOfTurn:{round:encounter.round,kind:'move'}}:{})});
+        const metres=Math.round(route.cost*100)/100;
+        log(`${actor.name} moved ${metres} m${offTurn?' out of turn':''}.`,{
+          actorUid:playerUid,targetId:actor.id,from:{x:original.x,y:original.y},to:point,
+          metres,ap,movementKind:kind
+        });
+      };
+      const needsMapReactionReview=(actor,plan)=>{
+        if(plan.kind==='teleport'||state(actor.id).disengaged)return false;
+        const visible=new Set(plan.projection.tokens.map(token=>token.id));
+        return boundMap.tokens.some(token=>{
+          if(!visible.has(token.id)||!token.combatantId||token.combatantId===actor.id)return false;
+          const opponent=entry(token.combatantId);
+          if(!opponent||opponent.defeated||state(opponent.id).ap<1||
+            (token.faction?token.faction!=='hostile':opponent.kind!=='enemy'))return false;
+          const character=get(opponent.id);
+          if(combatRestriction(character,{now,encounter}))return false;
+          try{validateReactionEquipment(character,'opportunity');return true;}
+          catch{return false;}
+        });
+      };
       const conditionBoundary=(id,boundary)=>{
         let character=get(id);const turns=state(id).turns||0;
         for(const condition of activeConditions(character,{now,encounter}))if(!condition.pendingGMExpiry&&condition.tick?.boundary===boundary){
@@ -203,7 +273,7 @@ export function createCombatCommands(context) {
         if(restriction)throw new Error(`${restriction}: voluntary actions are unavailable.`);
         if(s.pendingDeathSave)throw new Error('Resolve the turn-start death save first.');
         if(option.blocked&&!approval.sourceReason)throw new Error(option.blocked);
-        const ap=approval.apOverride===undefined?option.ap:bounded(approval.apOverride,0,3);
+        const ap=p.mapMove?.ap??(approval.apOverride===undefined?option.ap:bounded(approval.apOverride,0,3));
         if(approval.apOverride!==undefined&&!approval.sourceReason)throw new Error('An explicit AP override needs its source and reason.');
         if(!Number.isInteger(ap)||(!p.ambush&&s.ap+(p.prepaidAP?.ap||0)<ap))throw new Error('Not enough AP.');
         if(option.bonus&&!s.bonus&&!p.prepaidAP?.bonus)throw new Error('The shared bonus action has already been used.');
@@ -266,6 +336,7 @@ export function createCombatCommands(context) {
       };
       const begin=(p,approval)=>{
         const option=findOption(p.actorId,p.optionId),s=state(p.actorId),ap=validateAction(p.actorId,option,p,approval);
+        if(p.mapMove)validatePlayerMapMove(entry(p.actorId),p.mapMove);
         if(approval.mapTravel){
           if(!boundMap||boundMap.combatId!==encounter.combatId||p.reaction)
             throw Error('Source-granted map movement requires a linked encounter map and an ordinary resolved action.');
@@ -274,7 +345,7 @@ export function createCombatCommands(context) {
         if(p.outOfTurn){
           validateMapOpportunity(encounter,p.actorId);
           if(p.outOfTurn!==encounter.round)throw Error('This opportunity belongs to another round.');
-          setState(p.actorId,{outOfTurn:{round:encounter.round,kind:'attack'}});
+          setState(p.actorId,{outOfTurn:{round:encounter.round,kind:p.mapMove?'move':'attack'}});
         }
         if(['attack','creature-attack'].includes(option.key)&&approval.checkType!=='attack')throw new Error('Weapon attacks use a named weapon skill against AC.');
         const opposed={grapple:[['grappling'],['grappling','acrobatics']],escape:[['grappling','acrobatics'],['grappling']],shove:[['athletics'],['athletics','acrobatics']],hide:[['stealth','stealth-combat'],['perception']]};
@@ -411,51 +482,21 @@ export function createCombatCommands(context) {
         log('GM linked combat encounter to a battle map.');
       }else if(input.operation==='player-map-move'){
         requireActive();noPending();const actor=controlled();
-        if(input.mapId!==boundMapId||!boundMap||boundMap.combatId!==encounter.combatId||
-          boundMap.visibility!=='players')throw Error('This battle map is not shared for the current encounter.');
-        const character=get(actorId),s=state(actorId);
-        if(actor.defeated||combatRestriction(character,{now,encounter})||s.pendingDeathSave||
-          s.grappledBy)throw Error('This participant cannot move voluntarily.');
-        const offTurn=currentCombatant(encounter)?.id!==actorId||s.turnComplete;
-        if(offTurn&&input.outOfTurn!==true)throw Error('Confirm use of the out-of-turn movement opportunity.');
-        if(offTurn)validateMapOpportunity(encounter,actorId);
-        const original=boundMap.tokens.find(row=>row.combatantId===actorId);
-        const projection=publicPresentationBattleMap(boundMap,campaignId,boundMapId,encounter);
-        if(!original||!projection.tokens.some(row=>row.id===original.id))
-          throw Error('No visible token is assigned to this participant.');
-        const dest=mapCell(input.point,boundMap.gridColumns,boundMap.gridRows);
-        if(!dest)throw Error('Choose a valid destination.');
-        if(boundMap.fogEnabled&&projection.fogCells[dest.row*boundMap.gridColumns+dest.column]!=='1')
-          throw Error('Choose a revealed destination.');
-        const approved=input.moveKind==='approved'&&s.movement?.remaining>0;
-        const walk=input.moveKind==='walk';
-        if(!approved&&!walk)throw Error('This movement needs a GM-approved allowance.');
-        if(offTurn&&approved)throw Error('Use the remaining approved movement during your turn.');
-        if(walk&&s.movement?.remaining>0&&!offTurn)
-          throw Error('Finish the current approved movement first.');
-        const allowance=approved?s.movement.remaining:walkingAllowance(character,{now,encounter});
-        if(!allowance)throw Error('A movement allowance has not been recorded. Ask the GM to approve the movement.');
-        const ap=approved?0:MAP_MOVE_AP.walk;
-        if(s.ap<ap)throw Error('Not enough AP.');
-        const routes=mapReachableRoutes(boundMap,original,allowance,{
-          occupied:boundMap.tokens.filter(row=>row.id!==original.id),
-          diagonalParity:approved?s.movement.diagonalParity:0,revealedOnly:true,
-          movementKind:approved?s.movement.routeKind||s.movement.kind:'walk'
-        });
-        const route=routes.get(mapCellKey(dest));
-        if(!route)throw Error('That destination is unavailable within the current movement allowance.');
-        const point=mapCellCenter(dest,boundMap.gridColumns,boundMap.gridRows);
-        const tokens=boundMap.tokens.map(row=>row.id===original.id?{...row,...point}:row);
-        tx.update(mapRef,{tokens,updatedAt:serverTimestamp()});
-        const movement=approved?s.movement:{actionId:context.requestId,kind:'walk',remaining:allowance};
-        setState(actorId,{ap:s.ap-ap,movement:offTurn?s.movement??null:
-          spendMapMovement(movement,route.cost,route.parity),
-          ...(offTurn?{outOfTurn:{round:encounter.round,kind:'move'}}:{})});
-        const metres=Math.round(route.cost*100)/100;
-        log(`${actor.name} moved ${metres} m${offTurn?' out of turn':''}.`,{
-          actorUid:currentUser.uid,targetId:actor.id,from:{x:original.x,y:original.y},to:point,
-          metres,ap,movementKind:movement.routeKind||movement.kind
-        });
+        const plan=validatePlayerMapMove(actor,input);
+        if(!gm&&needsMapReactionReview(actor,plan)){
+          const option=findOption(actor.id,'basic:walk');
+          const p=makePending(actor.id,option,{note:'Review the confirmed map route for eligible reactions.'});
+          p.name='Map movement';
+          p.ap=plan.ap;
+          p.mapMove={mapId:boundMapId,point:plan.point,moveKind:input.moveKind,
+            outOfTurn:plan.offTurn,requesterUid:currentUser.uid,ap:plan.ap,
+            origin:{x:plan.original.x,y:plan.original.y},distance:plan.route.cost,
+            kind:plan.kind,diagonalParity:plan.movement.diagonalParity??0};
+          if(plan.offTurn)p.outOfTurn=encounter.round;
+          privateState.pending=p;
+          queuedMovement=true;
+          log(actor.name+' requests map movement for GM reaction review.');
+        }else applyPlayerMapMove(actor,plan,currentUser.uid);
       }else if(input.operation==='map-token-appearance'){
         requireActive();
         if(encounter.battleMapId!==boundMapId||boundMap.combatId!==encounter.combatId)
@@ -677,6 +718,14 @@ export function createCombatCommands(context) {
         if(input.ap!==undefined)setState(id,{ap:bounded(input.ap,0,3)});
         if(input.bonus!==undefined)setState(id,{bonus:input.bonus===true});
         const audit={actorUid:currentUser.uid,targetId:id,reason};
+        if(input.restoreOpportunity===true){
+          requireActive();noPending();
+          const previous=state(id).outOfTurn;
+          if(previous?.round!==encounter.round)throw Error('This participant still has their round opportunity.');
+          setState(id,{outOfTurn:null});
+          audit.previousOpportunity=previous;
+          audit.restoredOpportunity=true;
+        }
         if(input.initiative!==undefined){
           noPending();
           const participant=entry(id);
@@ -866,13 +915,25 @@ export function createCombatCommands(context) {
           put(p.actorId,difference>0?payCombatCosts(get(p.actorId),{mp:difference},p.approval.hpPayment).character:applyResourceChanges(get(p.actorId),{restore:{mp:-difference}}));
         }
         if(input.outcome==='feedback'&&!p.feedbackApplied)put(p.actorId,feedback(get(p.actorId),p.rank,state(p.actorId).turns,now));
-        const manifests=success&&!p.prevented&&!['failed-before-manifestation','feedback','countered'].includes(input.outcome);
+        let manifests=success&&!p.prevented&&!['failed-before-manifestation','feedback','countered'].includes(input.outcome);
+        if(manifests&&p.mapMove){
+          const actor=entry(p.actorId);
+          let plan;
+          try{
+            plan=validatePlayerMapMove(actor,p.mapMove,true);
+          }catch(error){
+            manifests=false;
+            log('Map movement stopped: '+error.message,{actorUid:currentUser.uid,targetId:p.actorId});
+          }
+          if(plan)applyPlayerMapMove(actor,plan,p.mapMove.requesterUid,true);
+        }
         if(new Set((input.results||[]).map(row=>row.targetId)).size!==(input.results||[]).length)throw new Error('Resolve each target once per damage event.');
         if(manifests){
           if(p.deferred){const targetId=p.approval.effectTargetId||p.actorId;if(![p.actorId,...p.targetIds].includes(targetId))throw new Error('Effect target changed.');let target=applyResourceChanges(get(targetId),{restore:p.deferred.restore||{}});if(p.deferred.effect)target.talentEffects=[...(target.talentEffects||[]).filter(row=>row.id!==p.deferred.effect.id),p.deferred.effect];put(targetId,target);}
           if(p.key==='first-aid')put(p.targetIds[0],deathSave(get(p.targetIds[0]),10,{firstAid:true}));
           if(p.key==='disengage')setState(p.actorId,{disengaged:true});
-          if(['walk','swim','fly','climb','dash','climb-dash','mount-move'].includes(p.key))setState(p.actorId,{movement:{actionId:p.id,kind:p.key,remaining:p.approval.distance??null}});
+          if(!p.mapMove&&['walk','swim','fly','climb','dash','climb-dash','mount-move'].includes(p.key))
+            setState(p.actorId,{movement:{actionId:p.id,kind:p.key,remaining:p.approval.distance??null}});
           if(p.mapAward){
             setState(p.actorId,{movement:{...p.mapAward,actionId:p.id}});
             log(`${p.name} grants ${p.mapAward.remaining} m of ${p.mapAward.routeKind} movement.`,{
@@ -913,7 +974,9 @@ export function createCombatCommands(context) {
       // disappear; recursive merge would resurrect their old combat state.
       tx.set(encounterRef,{...encounter,updatedBy:currentUser.uid,updatedAt:serverTimestamp()});
       if(gmSnap.exists())tx.update(gmRef,{combatState:privateState});else tx.set(gmRef,{combatState:privateState});
-      return {ok:true,revision:encounter.combat.revision,...(unavailable.size?{message:`Encounter synchronized. Removed ${unavailable.size} unlinked character(s) from this encounter.`}:{})};
+      return {ok:true,revision:encounter.combat.revision,
+        ...(queuedMovement?{queued:true,message:'Move sent to the GM for reaction review.'}:{}),
+        ...(unavailable.size?{message:`Encounter synchronized. Removed ${unavailable.size} unlinked character(s) from this encounter.`}:{})};
     });}catch(error){return {ok:false,error:error.message||String(error)};}
   }};
 }

@@ -126,7 +126,7 @@ export function publicPresentationBattleMap(raw={},campaignId='',mapId='',encoun
   const fogCells=validFogCells(raw.fogCells,columns,rows);
   const linked=encounter.status==='active'&&encounter.combat?.version===1&&
     id(encounter.combatId)&&encounter.battleMapId===mapId&&raw.combatId===encounter.combatId;
-  const actors=new Set(linked?(encounter.combatants||[]).map(row=>row.id):[]);
+  const actors=new Map(linked?(encounter.combatants||[]).map(row=>[row.id,row]):[]);
   const visibleTokens=battleMapTokens(raw.tokens||[]).filter(row=>
     row.visibility!=='gm'&&(!row.combatantId||actors.has(row.combatantId))&&
     (!fogEnabled||tokenIsRevealed(row,fogCells,columns,rows)));
@@ -134,7 +134,8 @@ export function publicPresentationBattleMap(raw={},campaignId='',mapId='',encoun
   const focus=current?visibleTokens.find(row=>row.combatantId===current):null;
   const tokens=visibleTokens.map(row=>({id:row.id,label:row.label.slice(0,48),
     kind:row.kind,x:row.x,y:row.y,...(row.portrait?{portrait:row.portrait}:{}),
-    ...(row.faction?{faction:row.faction}:{}),...(row.cells?{cells:row.cells}:{})}));
+    ...(row.faction?{faction:row.faction}:{}),...(row.cells?{cells:row.cells}:{}),
+    ...(actors.get(row.combatantId)?.defeated===true?{defeated:true}:{})}));
   return Object.freeze({
     version:1,id:mapId,
     name:name(raw.name,100)||'Published battle map',
