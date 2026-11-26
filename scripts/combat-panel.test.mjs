@@ -872,3 +872,22 @@ test('GM can delegate and revoke one mapped token without granting combat action
     mapId:'arena',moveKind:'approved',point:{x:62.5,y:12.5}
   })).error,/cannot control/);
 });
+
+test('player combat projection reveals delegated tokens, but never the delegate UID',async()=>{
+  const {publicCombatSnapshot}=await import('../src/state/livePresentationProjectionModel.mjs');
+  const raw={status:'active',combatId:'combat',battleMapId:'arena',
+    combatants:[{id:'npc',name:'Scout',kind:'enemy',revealed:true}],
+    combat:{version:1,revision:1,participants:{npc:{
+      ap:3,movementDelegateUid:'alice',movement:{
+        kind:'dash',remaining:6,routeKind:'ground'
+      }}}}};
+  const map={id:'arena',combatId:'combat',visibleCombatants:['npc'],
+    markers:{npc:'scout-token'}};
+  const publicView=publicCombatSnapshot(raw,map);
+  assert.equal(publicView.combat.participants.npc.movementDelegated,true);
+  assert.equal(publicView.combat.participants.npc.mapTokenId,'scout-token');
+  assert.equal(publicView.combat.participants.npc.mapMovement.remaining,6);
+  assert.equal(JSON.stringify(publicView).includes('alice'),false);
+  assert.equal(publicView.combat.participants.npc.ap,undefined);
+  assert.equal(publicCombatSnapshot(raw,null).combatants.length,0);
+});
