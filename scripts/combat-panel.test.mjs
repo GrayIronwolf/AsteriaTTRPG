@@ -1,6 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {executeAction} from '../functions/handler.mjs';
+import {prepareQuickEncounterTemplate} from '../src/state/preparedEncounterModel.mjs';
 import {tierBonus,spellAP,rollD20,checkResult,attackResult,counterspellResult,feedback,deathSave,changeCombatHP,mixedDamage,combatOptions,skillCheck,combatActive,currentCombatant,activeReactionWindow,basicReactionProblem,combatActionScope,manualAPProblem,optionProblem} from '../src/state/combatRules.mjs';
 import compendium from '../data/compendium.js';
 
@@ -406,4 +407,54 @@ test('active initiative correction preserves the current actor and AP and record
   assert.equal(audit.previousInitiative,other.initiative);
   assert.equal(audit.initiative,1000);
   assert.equal(audit.reason,change.reason);
+});
+
+test('the GM can stage multiple prepared templates without writing any live combat data',async()=>{
+  const h=database();
+  await h.setup();
+  const workspacePath='campaigns/c/systems/gmWorkspace';
+  const plan={id:'prepared-first',revision:1,name:'Future ambush',notes:'GM only',
+    enemies:[{name:'Raider',hp:[20,20],preparedEnemyId:'raider'}]};
+  h.store.get(workspacePath).preparedEncounters=[plan,{...plan,id:'prepared-second'}];
+  const live=structuredClone(h.encounter());
+  const stage=(uid,id,revision=1)=>h.command(uid,'encounter','stage-prepared',{
+    preparedId:id,expectedPreparedRevision:revision
+  });
+  assert.match((await stage('alice','prepared-first')).error,/Only the campaign GM/);
+  assert.match((await stage('gm','prepared-first',2)).error,/current revision/);
+  const first=await stage('gm','prepared-first');
+  assert.equal(first.ok,true,first.error);
+  assert.equal((await stage('gm','prepared-second')).ok,true);
+  assert.equal((await stage('gm','prepared-first')).ok,true);
+  assert.deepEqual(h.store.get(workspacePath).combatState.stagedEncounters.map(row=>row.id),
+    ['prepared-first','prepared-second']);
+  assert.deepEqual(h.encounter(),live);
+  assert.equal((await h.command('gm','encounter','unstage-prepared',{preparedId:'prepared-second'})).ok,true);
+  assert.deepEqual(h.store.get(workspacePath).combatState.stagedEncounters.map(row=>row.id),['prepared-first']);
+  assert.deepEqual(h.encounter(),live);
+  assert.equal((await h.command('gm','encounter','end')).ok,true);
+  const load=await h.command('gm','encounter','load-prepared',{
+    preparedId:'prepared-first',expectedPreparedRevision:1,confirmation:'replace-staged-enemies',replace:true
+  });
+  assert.equal(load.ok,true,load.error);
+  assert.equal(h.encounter().status,'ready');
+  assert.deepEqual(h.store.get(workspacePath).combatState.stagedEncounters,[]);
+});
+
+test('saving a quick encounter resets copied creature resources and excludes live IDs and players',()=>{
+  const plan=prepareQuickEncounterTemplate('Roadside ambush',{
+    combatId:'live-battle',battleMapId:'forest-map',combatants:[
+      {id:'player-a',kind:'player',characterId:'a',name:'Alice',hp:[80,100]},
+      {id:'live-token',kind:'enemy',name:'Raider',hp:[1,20],sp:[0,10],defeated:true,
+        initiative:35,initiativeSet:false,rewardReceipt:{delivered:true}}
+    ]
+  });
+  assert.equal(plan.mapId,'forest-map');
+  assert.equal(plan.enemies.length,1);
+  assert.deepEqual(plan.enemies[0].hp,[20,20]);
+  assert.deepEqual(plan.enemies[0].sp,[10,10]);
+  assert.equal(plan.enemies[0].defeated,false);
+  assert.equal(plan.enemies[0].initiative,undefined);
+  assert.equal(plan.enemies[0].id,undefined);
+  assert.equal(plan.enemies[0].rewardReceipt,undefined);
 });

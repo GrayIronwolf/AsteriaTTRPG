@@ -2,6 +2,7 @@ import React,{useEffect,useState} from 'react';
 import {COMBAT_AP_ACTIONS,COMBAT_BASIC_DECLARATIONS,customEnemy,libraryEnemy} from './combatModel.mjs';
 import {CombatCommandCentre,CombatCommandPanel} from './CombatCommandCentre.jsx';
 import {COMBAT_PANEL_IDS} from './combatWorkspaceLayoutModel.mjs';
+import {prepareQuickEncounterTemplate} from '../../state/preparedEncounterModel.mjs';
 import {PreparedEncounterLibrary} from './PreparedEncounterLibrary.jsx';
 import {CombatBattleMapPanel} from './CombatBattleMapPanel.jsx';
 import {EnemyCombatTracker} from './EnemyCombatTracker.jsx';
@@ -128,13 +129,14 @@ export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigat
     [notice,setNotice]=useState(''),[error,setError]=useState('');
   const [enemy,setEnemy]=useState(emptyEnemy),[library,setLibrary]=useState('');
   const [selectedBattleMap,setSelectedBattleMap]=useState(null);
+  const [quickTemplateName,setQuickTemplateName]=useState('');
 
   const [resource,setResource]=useState('hp'),[amount,setAmount]=useState(''),
     [maximum,setMaximum]=useState(''),[reason,setReason]=useState('');
   const combat=stream.data?.combat;
   const current=selected&&combat?.combatants.find(row=>row.id===selected)||
     combat?.current||combat?.combatants[0]||null;
-  useEffect(()=>{setSelected('');setError('');setNotice('');setSelectedBattleMap(null);},[campaignId]);
+  useEffect(()=>{setSelected('');setError('');setNotice('');setSelectedBattleMap(null);setQuickTemplateName('');},[campaignId]);
   const submit=async(actorId,input)=>{
     if(busy||!combat)return;
     setBusy(true);setNotice('');setError('');
@@ -169,6 +171,17 @@ export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigat
     if(!candidate)return;
     const creature=libraryEnemy({...candidate,id:candidate.sourceId},'enemy-'+crypto.randomUUID());
     add([creature]);
+  };
+  const saveQuickTemplate=async()=>{
+    if(!combat?.sessionEditable||busy)return;
+    setBusy(true);setError('');setNotice('');
+    try{
+      const template=prepareQuickEncounterTemplate(quickTemplateName,combat);
+      await api.savePrepared(campaignId,{id:'prepared-'+crypto.randomUUID(),...template},0);
+      setQuickTemplateName('');
+      setNotice('Quick encounter saved as a reusable template.');
+    }catch(failure){setError(failure?.message||'Could not save the encounter template.');}
+    finally{setBusy(false);}
   };
   const canSetup=combat&&combat.status!=='active';
   return <section className={styles.workspace} data-testid="site-gm-combat">
@@ -256,16 +269,18 @@ export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigat
           </label>
           <button type="button" disabled={busy} onClick={()=>remove(current.id)}>
             Remove Participant</button>
-        </div>:null}
+        </div>:combat.isActive&&!combat.paused?<button type="button"
+          disabled={busy||!combat.sessionEditable||current.current||Boolean(combat.pending)}
+          onClick={()=>remove(current.id)}>Remove Participant</button>:null}
       </section>:<p>Select an encounter participant to view combatant controls.</p>}
       </CombatCommandPanel>
       <CombatCommandPanel id="setup">
-      {canSetup?<section className={styles.section}>
+      {!combat.paused?<section className={styles.section}>
         <h3>Encounter Setup</h3>
         <label>Initiative mode
           <select aria-label="Encounter initiative mode"
             value={combat.initiativeMode||'automatic'}
-            disabled={busy||!combat.sessionEditable}
+            disabled={!canSetup||busy||!combat.sessionEditable}
             onChange={event=>submit('encounter',{operation:'save',encounter:{
               combatants:roster(),initiativeMode:event.target.value
             }})}>
@@ -300,7 +315,13 @@ export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigat
           <button disabled={busy||!combat.sessionEditable||!enemy.name.trim()||!enemy.hp}
             type="button" onClick={addEnemy}>Add Custom Creature</button>
         </fieldset>
-      </section>:<p>Encounter setup is locked during active combat. End combat before changing the roster.</p>}
+      </section>:<p>Resume combat to change the roster.</p>}
+      {combat.combatants.some(row=>row.kind==='enemy')?<div className={styles.fields}>
+        <label>Template name<input value={quickTemplateName} maxLength={100}
+          onChange={event=>setQuickTemplateName(event.target.value)}/></label>
+        <button type="button" disabled={busy||!combat.sessionEditable||!quickTemplateName.trim()}
+          onClick={saveQuickTemplate}>Save Quick Encounter as Template</button>
+      </div>:null}
       </CombatCommandPanel>
       <CombatCommandPanel id="map">
         <section className={styles.section}>
@@ -360,6 +381,7 @@ export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigat
       <CombatCommandPanel id="prepared">
         <PreparedEncounterLibrary api={api} campaignId={campaignId}
           combat={combat} plans={stream.data.preparedEncounters||[]}
+          staged={stream.data.stagedEncounters||[]}
           maps={stream.data.maps||[]} mediaApi={mediaApi}
           library={stream.data.library||[]}/>
       </CombatCommandPanel>

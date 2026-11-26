@@ -13,7 +13,7 @@ import { calculateCharacterAC, validateEquipmentChange } from '../src/systems/ar
 import { normalizeInventoryItems, slug } from '../src/state/liveWorkspaceModel.mjs';
 import { encounterSourceResources, setEncounterResource } from '../src/state/encounterResourceModel.mjs';
 import {normalizePreparedEncounters,preparedEncounterRoster} from '../src/state/preparedEncounterModel.mjs';
-import {validatePreparedLoadRequest} from '../src/state/preparedEncounterLoadModel.mjs';
+import {updateStagedEncounter,validatePreparedLoadRequest} from '../src/state/preparedEncounterLoadModel.mjs';
 import {combatMapMovePlan,synchronizeCombatMapTokens,activeMapEncounter} from '../src/state/battleMapCombatModel.mjs';
 import {preparedMapTokenCapacity} from '../src/state/preparedBattleMapModel.mjs';
 import {captureEncounterCompletion} from '../src/state/encounterCompletionModel.mjs';
@@ -33,7 +33,7 @@ const combatCharacterFields=new Set(['hp','sp','mp','bp','zp','resources','resou
 const ENCOUNTER_INITIATIVE_MODES=new Set(['automatic','manual','mixed']);
 const initiativeMode=value=>ENCOUNTER_INITIATIVE_MODES.has(value)?value:'automatic';
 const needsManualInitiative=(row,mode)=>mode==='manual'||(mode==='mixed'&&Boolean(row.characterId));
-const management=new Set(['release-wave','trigger-event','timer','map-link','map-move','save','load-prepared','map-prepare','start','pause','resume','next','end','clear','approve','reject','window','close-window','resolve','roll','resolve-reaction','correct','condition','ambush','trigger-prepared']);
+const management=new Set(['release-wave','trigger-event','timer','map-link','map-move','save','stage-prepared','unstage-prepared','load-prepared','map-prepare','start','pause','resume','next','end','clear','approve','reject','window','close-window','resolve','roll','resolve-reaction','correct','condition','ambush','trigger-prepared']);
 const publicPending=p=>p?{id:p.id,actorId:p.actorId,actorName:p.actorName,optionId:p.actorKind==='player'?p.optionId:'',name:p.actorKind==='player'?p.name:'Creature action',status:p.status,targetIds:p.targetIds,ap:p.ap,bonus:p.bonus,apPaid:Boolean(p.prepaidAP),costs:p.actorKind==='player'?p.costs:{},reactionWindow:p.status==='reactions',reactorId:p.window?.[p.windowIndex||0]?.actorId||'',reactionChoices:p.window?.[p.windowIndex||0]?.choices||[],reaction:p.reaction?{actorId:p.reaction.actorId,name:p.reaction.name}:null,message:p.publicMessage||''}:null;
 
 // An extension of asteriaAction: one encounter document, existing resource/effect
@@ -53,6 +53,15 @@ export function createCombatCommands(context) {
       if(session.status!=='active'||effectTimeMs(session.expiresAt)<=now)throw new Error('The GM must start the live session first.');
       if(management.has(input.operation)&&!gm)throw new Error('Only the campaign GM can use this combat control.');
       let encounter={status:'ready',round:1,turnIndex:0,combatants:[],enemies:[],...encounterSnap.data()};
+      if(['stage-prepared','unstage-prepared'].includes(input.operation)){
+        const workspace=gmSnap.data()||{};
+        const plan=normalizePreparedEncounters(workspace.preparedEncounters)
+          .find(row=>row.id===input.preparedId);
+        const combatState=workspace.combatState||{};
+        const stagedEncounters=updateStagedEncounter(combatState.stagedEncounters,input,plan,now);
+        tx.set(gmRef,{combatState:{...combatState,stagedEncounters}},{merge:true});
+        return {ok:true,revision:Number(encounter.combat?.revision||0)};
+      }
       if(encounter.paused===true&&!['resume','end','correct','condition'].includes(input.operation))
         throw new Error('Combat is paused. Resume the encounter before continuing.');
       const oldRevision=Number(encounter.combat?.revision||0);
@@ -331,6 +340,8 @@ export function createCombatCommands(context) {
           // An edited manual roster must never silently edit the private wave template.
           // The existing schedule remains a snapshot of the last prepared load.
         }
+        if(loading&&Array.isArray(privateState.stagedEncounters))
+          privateState.stagedEncounters=privateState.stagedEncounters.filter(row=>row.id!==prepared.id);
         log(loading?'GM loaded prepared encounter: '+prepared.name+'.':'GM updated encounter participants.');
       }else if(input.operation==='map-prepare'){
         if(encounter.status==='active'||privateState.pending)

@@ -34,9 +34,11 @@ The canvas changes from PRs #387, #388, #389, #390 and #392 are merged into the 
 
 The authoritative encounter now supports GM pause and resume through its existing revision-guarded command. A pause retains the encounter ID, round, current actor, AP, pending actions and timer time. The public document retains its compatible `active` status and carries a separate pause flag. Player End Turn already leaves advancement to the GM. The existing transactional wave and event commands handle mid-combat changes. The GM can now correct initiative, with the previous and new values and GM reason recorded. Reordering preserves the current actor and existing participant AP.
 
+Prepared templates can be staged by the GM during combat. Staging writes only the private GM workspace, pins each template revision, and leaves the active encounter, battle map, and presentation unchanged. Reviewing and loading a staged template uses the existing inactive-combat guard and a separate Start Combat action.
+
 ## Outstanding approved Milestone 3.1 work
 
-1. Finish the private staging workflow and explicit activation. Verify compatibility across prepared, staged, active, paused and completed encounters.
+1. Verify staging, activation and lifecycle compatibility through the authenticated browser flow.
 2. Implement quick encounter creation distinct from reusable prepared templates without destructive replacement of active encounters.
 3. Stage a second encounter privately while a live encounter is active; its map and participants must not leak to public presentation.
 4. Verify active roster edits, reinforcements and initiative corrections through the authenticated browser flow, including two concurrent GM sessions.

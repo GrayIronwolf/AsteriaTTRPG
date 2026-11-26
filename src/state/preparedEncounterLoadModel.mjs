@@ -3,6 +3,29 @@ import {validatePreparedEncounterInput} from './preparedEncounterModel.mjs';
 export const PREPARED_LOAD_CONFIRMATION='replace-staged-enemies';
 const validId=value=>typeof value==='string'&&/^[A-Za-z0-9_-]{1,160}$/.test(value);
 const validRevision=value=>Number.isSafeInteger(value)&&value>=0;
+export const MAX_STAGED_ENCOUNTERS=12;
+
+export function stagedEncounterList(raw){
+  return (Array.isArray(raw)?raw:[])
+    .filter(row=>validId(row?.id)&&validRevision(row.templateRevision)&&row.templateRevision>0&&
+      Number.isSafeInteger(row.stagedAt)&&row.stagedAt>=0)
+    .slice(0,MAX_STAGED_ENCOUNTERS)
+    .map(({id,templateRevision,stagedAt})=>({id,templateRevision,stagedAt}));
+}
+
+export function updateStagedEncounter(raw,input,plan,now){
+  if(!validId(input.preparedId))throw Error('Choose a valid prepared encounter.');
+  const current=stagedEncounterList(raw);
+  const remaining=current.filter(row=>row.id!==input.preparedId);
+  if(input.operation==='unstage-prepared')return remaining;
+  if(input.operation!=='stage-prepared'||!plan||plan.id!==input.preparedId||plan.archived||
+    plan.revision!==input.expectedPreparedRevision)
+    throw Error('Choose and review the current revision of an active template.');
+  validatePreparedEncounterInput(plan);
+  if(current.some(row=>row.id===plan.id&&row.templateRevision===plan.revision))return current;
+  if(remaining.length>=MAX_STAGED_ENCOUNTERS)throw Error('Remove a staged encounter before adding another.');
+  return [...remaining,{id:plan.id,templateRevision:plan.revision,stagedAt:now}];
+}
 
 /** Only the reusable template and public GM combat projection enter this summary. */
 export function previewPreparedEncounterLoad(plan,combat,maps=[],pending=null){

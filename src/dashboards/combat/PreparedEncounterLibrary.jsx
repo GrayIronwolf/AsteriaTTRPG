@@ -28,7 +28,7 @@ const displayHP=row=>Array.isArray(row.hp)?row.hp[1]:row.hp||0;
 
 /** GM-specific private template storage via the existing combat adapter. */
 export function PreparedEncounterLibrary({
-  api,campaignId,combat,plans=[],maps=[],mediaApi=null,library=[],onLoaded
+  api,campaignId,combat,plans=[],staged=[],maps=[],mediaApi=null,library=[],onLoaded
 }){
   const [editId,setEditId]=useState(''),[revision,setRevision]=useState(0);
   const [draft,setDraft]=useState(draftFrom(null)),[enemy,setEnemy]=useState(enemyBlank);
@@ -173,6 +173,14 @@ export function PreparedEncounterLibrary({
         await api.deletePrepared(campaignId,plan,plan.revision);
         if(editId===plan.id)reset();
         setMessage('Prepared encounter deleted.');
+      }else if(action==='stage'||action==='unstage'){
+        if(action==='stage'){
+          await api.stagePrepared(campaignId,plan.id,combat.revision,plan.revision);
+          setMessage('Encounter staged privately. Load it when you are ready to prepare the next battle.');
+        }else{
+          await api.unstagePrepared(campaignId,plan.id,combat.revision);
+          setMessage('Encounter removed from staging.');
+        }
       }else if(action==='load'){
         if(!reviewFresh||!loadReview||!plan||plan.id!==loadReview.id)
           throw Error('The encounter or combat revision changed. Review the current encounter again.');
@@ -186,6 +194,8 @@ export function PreparedEncounterLibrary({
     finally{setBusy(false);}
   };
   const canEdit=!combat?.isActive&&combat?.sessionEditable!==false;
+  const canStage=Boolean(combat?.sessionEditable);
+  const stagedById=new Map(staged.map(row=>[row.id,row]));
   return <section className={styles.library} data-testid="site-prepared-encounter-library">
     <header className={styles.top}>
       <div><h3>Prepared Encounters</h3>
@@ -217,11 +227,18 @@ export function PreparedEncounterLibrary({
     </div>
     <div className={styles.saved} aria-label="Saved prepared encounters">
       <strong>Encounter Library ({visiblePlans.length} shown of {plans.length}/{PREPARED_ENCOUNTER_MAX_PLANS})</strong>
+      {staged.length?<p>{staged.length} privately staged. Loading and starting a battle remain separate GM actions.</p>:null}
+      {staged.filter(row=>!plans.some(plan=>plan.id===row.id)).map(row=><div key={row.id}>
+        Staged template unavailable. <button type="button" disabled={busy||!canStage}
+          onClick={()=>run('unstage',row)}>Remove from staging</button>
+      </div>)}
       {visiblePlans.length?visiblePlans.map(plan=><article key={plan.id}>
         <div className={styles.entryInfo}><strong>{plan.name}{plan.archived?' · Archived':''}</strong>
           <small>{plan.folder||'Unfiled'} · {plan.enemies.length} enemies ·
             {' '}{maps.find(m=>m.id===plan.mapId)?.name||'No map'}
             {' · '}Revision {plan.revision}</small>
+          {stagedById.has(plan.id)?<small>{stagedById.get(plan.id).templateRevision===plan.revision
+            ?'Privately staged':'Staged revision changed. Stage the latest revision to update it.'}</small>:null}
           {(plan.tags||[]).length?<small>Tags: {plan.tags.join(', ')}</small>:null}
           {previewId===plan.id?<div className={styles.preview}>
             <p>{plan.notes||'No GM notes.'}</p>
@@ -243,6 +260,11 @@ export function PreparedEncounterLibrary({
             onClick={()=>run('duplicate',plan)}>Duplicate</button>
           <button type="button" disabled={busy}
             onClick={()=>run('archive',plan)}>{plan.archived?'Restore':'Archive'}</button>
+          {stagedById.get(plan.id)?.templateRevision!==plan.revision&&!plan.archived?
+            <button type="button" disabled={busy||!canStage}
+              onClick={()=>run('stage',plan)}>Stage Privately</button>:null}
+          {stagedById.has(plan.id)?<button type="button" disabled={busy||!canStage}
+            onClick={()=>run('unstage',plan)}>Remove from Staging</button>:null}
           <button type="button" disabled={busy||!canEdit||plan.archived}
             onClick={()=>reviewLoad(plan)}>Review Load</button>
           <button type="button" disabled={busy}

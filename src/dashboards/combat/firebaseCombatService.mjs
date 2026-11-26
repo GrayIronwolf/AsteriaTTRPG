@@ -1,3 +1,4 @@
+import {stagedEncounterList} from '../../state/preparedEncounterLoadModel.mjs';
 import {libraryDraft,updateGMLibrary} from '../../../src/state/gmNpcCreatureLibraryModel.mjs';
 import {assertGMCampaignId,gmCampaignAccess,gmPartySummary} from './combatAccess.mjs';
 import {requireDashboardId,playerCampaignAccess,linkedCharacterAccess,matchesOwnedSource} from './combatAccess.mjs';
@@ -142,6 +143,7 @@ export function createFirebaseCombatService({
                 combatLog:projectGMLiveLog(data.encounter?.combat?.log),
                 encounterSchedule:encounterScheduleForGM(data.workspace?.combatState),
                 party:gmPartySummary(data.roster),
+                stagedEncounters:stagedEncounterList(data.workspace?.combatState?.stagedEncounters),
                 preparedEncounters:normalizePreparedEncounters(data.workspace?.preparedEncounters),
                 maps:data.maps
               }:{})};
@@ -341,6 +343,12 @@ export function createFirebaseCombatService({
     commandPlayer:(id,characterId,actorId,input)=>command(id,'player',characterId,actorId,input),
     savePrepared:(id,entry,expectedRevision=0)=>writePrepared(id,'save',entry,expectedRevision),
     deletePrepared:(id,entry,expectedRevision)=>writePrepared(id,'delete',entry,expectedRevision),
+    stagePrepared:(id,preparedId,revision,expectedPreparedRevision)=>command(id,'gm','','encounter',{
+      operation:'stage-prepared',preparedId,revision,expectedPreparedRevision
+    }),
+    unstagePrepared:(id,preparedId,revision)=>command(id,'gm','','encounter',{
+      operation:'unstage-prepared',preparedId,revision
+    }),
     loadPrepared:(id,preparedId,revision,expectedPreparedRevision)=>command(id,'gm','','encounter',{
       operation:'load-prepared',preparedId,replace:true,revision,
       expectedPreparedRevision,confirmation:'replace-staged-enemies'

@@ -134,6 +134,23 @@ export function validatePreparedEncounterInput(input){
   return {name,notes,mapId,enemies,folder:folder.trim(),
     tags:normalizedTags,archived,waves,events};
 }
+// Copy only reusable creature data through the existing template allowlist.
+export function prepareQuickEncounterTemplate(name,encounter={}){
+  return validatePreparedEncounterInput({
+    name,mapId:encounter.battleMapId||encounter.preparedMapId||'',
+    enemies:(Array.isArray(encounter.combatants)?encounter.combatants:[])
+      .filter(row=>row?.kind==='enemy'&&!row.characterId)
+      .map(row=>{
+        const enemy={...row};
+        for(const key of ['hp','sp','mp']){
+          const pair=encounterResourcePair(row,key);
+          if(pair)enemy[key]=[pair[1],pair[1]];
+        }
+        if(!row.initiativeSet)delete enemy.initiative;
+        return enemy;
+      })
+  });
+}
 export function normalizePreparedEncounters(raw){
   if(!Array.isArray(raw))return [];
   const seen=new Set(),plans=[];
