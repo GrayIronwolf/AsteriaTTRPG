@@ -466,7 +466,10 @@ export function createCombatCommands(context) {
         }
         log(plan.mode==='movement'
           ?entry(plan.actorId).name+' moved '+plan.distance.metres+' m on the map.'
-          :'GM repositioned '+entry(plan.actorId).name+': '+plan.reason);
+          :'GM repositioned '+entry(plan.actorId).name+': '+plan.reason,{
+            actorUid:currentUser.uid,targetId:plan.actorId,from:plan.from,to:plan.to,
+            ...(plan.reason?{reason:plan.reason}:{})
+          });
       }else if(input.operation==='start'){
         noPending();if(encounter.status==='active'&&encounter.combat?.version===1)throw new Error('The encounter is already active.');
         if(!encounter.combatants.length)throw new Error('Add participants first.');
@@ -709,7 +712,7 @@ export function createCombatCommands(context) {
         if(combatRestriction(get(actorId),{now,encounter}))throw new Error('This participant cannot act.');
         const p=makePending(actorId,option,input);validateTargets(p);
         if(offTurn){
-          if(!gm&&boundMap?.combatId===encounter.combatId){
+          if(!gm&&boundMap&&boundMap.combatId===encounter.combatId){
             const share=boundMap.visibility==='players'?
               publicPresentationBattleMap(boundMap,campaignId,boundMapId,encounter):null;
             const visible=new Set(share?.tokens.map(row=>row.id)||[]);

@@ -649,3 +649,23 @@ test('a player moves only their own token and recorded AP is charged once',async
     optionId:'basic:attack',outOfTurn:true,targetIds:[currentCombatant(h.encounter()).id]
   })).error,/already used/);
 });
+
+test('GM approval of an out-of-turn attack spends AP without changing the active turn',async()=>{
+  const h=database();await h.setup();
+  const actor=currentCombatant(h.encounter()),uid=actor.characterId==='a'?'alice':'bob';
+  h.character(actor.characterId).inventory=[{id:'sword',name:'Sword',type:'Weapon',equipped:true,qty:1}];
+  assert.equal((await h.command('gm','encounter','next')).ok,true);
+  const target=currentCombatant(h.encounter());
+  const attack={outOfTurn:true,optionId:'basic:attack',targetIds:[target.id],itemId:'sword'};
+  const declared=await h.command(uid,actor.id,'declare',attack);
+  assert.equal(declared.ok,true,declared.error);
+  assert.equal(h.encounter().combat.participants[actor.id].ap,3);
+  assert.equal(h.encounter().combat.participants[actor.id].outOfTurn,undefined);
+  const approval=await h.command('gm',actor.id,'approve',{approval:{
+    checkType:'attack',skill:'Athletics',feasible:true
+  }});
+  assert.equal(approval.ok,true,approval.error);
+  assert.equal(h.encounter().combat.participants[actor.id].ap,2);
+  assert.deepEqual(h.encounter().combat.participants[actor.id].outOfTurn,{round:1,kind:'attack'});
+  assert.equal(currentCombatant(h.encounter()).id,target.id);
+});
