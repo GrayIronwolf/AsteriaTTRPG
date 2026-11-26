@@ -1,7 +1,7 @@
 import React,{useEffect,useRef,useState} from 'react';
 import {freeformPercent} from '../../../src/state/workspaceFreeformModel.mjs';
 import {
-  COMBAT_PANEL_IDS,COMBAT_PANEL_LABELS,COMBAT_TOOL_CATEGORIES,
+  COMBAT_PANEL_IDS,COMBAT_PANEL_LABELS,COMBAT_TOOL_CATEGORIES,CANVAS_CONTENT_SIZING_OPTIONS,
   normalizeCombatCamera,zoomCombatCamera,fitCombatCamera,openingCombatCamera,
   combatCanvasGridStyle,combatCanvasDetailLevel,combatWindowAlignment,
   focusCombatCamera,clampCombatCamera,orderedCombatPartyIds,moveCombatPartyCard,
@@ -88,6 +88,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
   const [selectedTools,setSelectedTools]=useState(
     playerCanvas?canvasConfig.categories[0]?.id||'character':gmCanvas?'core':'overview');
   const root=useRef(null),canvas=useRef(null),stage=useRef(null),gesture=useRef(null);
+  const endGesture=useRef(null);
   const toolToggleRef=useRef(null);
   const cameraRef=useRef(camera),openingCameraPending=useRef(!readCamera(storageKey));
   const wheelTimer=useRef(null),wheelFrame=useRef(0);
@@ -100,6 +101,36 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
   const suppressed=new Set(suppressedPanelIds.filter(id=>panelIds.includes(id)));
   const visible=panels.filter(panel=>!suppressed.has(panel.props.id)&&
     (!layout.hidden.includes(panel.props.id)||forced.has(panel.props.id)));
+  const visibleSizingIds=visible.map(panel=>panel.props.id).join('|');
+  // One observer for the canvas: proportional and fixed content keep a stable
+  // design width, independent of camera zoom. No React state changes on resize.
+  useEffect(()=>{
+    if(typeof ResizeObserver==='undefined'||!canvas.current)return;
+    const viewport=canvas.current,defaults=defaultCombatWorkspaceLayout(canvasConfig||undefined);
+    const pending=new Map();let frame=0;
+    const paint=()=>{
+      frame=0;
+      for(const [node,width] of pending){
+        const id=node.closest('[data-canvas-window]')?.dataset.canvasWindow;
+        if(!id)continue;
+        // offsetWidth - contentRect.width includes a transient scrollbar.
+        // Fixed design geometry must depend only on the window border/padding.
+        const style=getComputedStyle(node);
+        const inset=parseFloat(style.paddingLeft)+parseFloat(style.paddingRight)+6;
+        const reference=Math.max(100,(defaults.freeform.positions[id]?.w||490)-inset);
+        node.style.setProperty('--combat-design-width',reference+'px');
+        node.style.setProperty('--combat-fit-scale',String(Math.min(4,Math.max(.1,
+          width/(reference*(layout.contentScale[id]||1))))));
+      }
+      pending.clear();
+    };
+    const observer=new ResizeObserver(entries=>{
+      for(const entry of entries)pending.set(entry.target,entry.contentRect.width);
+      if(!frame)frame=requestAnimationFrame(paint);
+    });
+    for(const node of viewport.querySelectorAll('[data-combat-scroll]'))observer.observe(node);
+    return ()=>{observer.disconnect();if(frame)cancelAnimationFrame(frame);pending.clear();};
+  },[storageKey,visibleSizingIds,layout.contentScale,wide]);
   useEffect(()=>{
     setSaved(gmCanvas?normalizeLayout(layoutValue):readLayout(storageKey));
     setUndoStack([]);setRedoStack([]);
@@ -120,7 +151,14 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
   },[layoutValue,storageKey]);
   useEffect(()=>{
     const host=root.current,viewport=canvas.current;
-    const refresh=()=>setWide((viewport?.clientWidth||host?.clientWidth||0)>=700);
+    const refresh=()=>{
+      const width=viewport?.clientWidth||host?.clientWidth||0,g=gesture.current;
+      // A viewport resize changes the world-to-pixel ratio. Cancel the old
+      // proposal rather than persisting dimensions measured in the wrong space.
+      if(g?.width&&g.width!==width)
+        endGesture.current?.({type:'pointercancel',pointerId:g.pointer});
+      setWide(width>=700);
+    };
     refresh();
     const observer=typeof ResizeObserver==='undefined'?null:new ResizeObserver(refresh);
     if(host)observer?.observe(host);
@@ -265,6 +303,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
     const viewport=canvas.current;
     if(!viewport||!wide)return;
     const wheel=event=>{
+      if(gesture.current){event.preventDefault();return;}
       const overWindow=Boolean(event.target.closest?.('[data-combat-panel]'));
       stage.current?.classList.remove(styles.cameraFocus);
       canvas.current?.classList.remove(styles.cameraFocus);
@@ -508,6 +547,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
     }
     try{canvas.current?.releasePointerCapture?.(event.pointerId);}catch{/* released */}
   };
+  useEffect(()=>{endGesture.current=end;});
   // A captured drag may finish outside the canvas or even outside its visible
   // browser rectangle. Complete it from the window-level pointer release too.
   // The gesture pointer guard makes a second call after canvas bubbling harmless.
@@ -614,8 +654,9 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
           (isMinimised?' '+styles.minimised:'')+
           (isFocused?' '+styles.focused:'')}
           data-combat-panel={id} data-canvas-window={id}
+          data-content-sizing={layout.contentSizing[id]||layout.defaultContentSizing}
           data-window-label={label}
-          onPointerDownCapture={()=>setFrontWindow(current=>current===id?current:id)}
+          onPointerDownCapture={()=>{if(!gesture.current)setFrontWindow(current=>current===id?current:id);}}
           style={{zIndex:frontWindow===id?50:1,
             '--combat-x':freeformPercent(rect.x),'--combat-y':rect.y/10+'cqw',
             '--combat-w':freeformPercent(rect.w),'--combat-h':rect.h/10+'cqw'}}>
@@ -652,6 +693,20 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
               <details className={styles.options}>
                 <summary aria-label={'Window options for '+label} title="Window options"><AsteriaIcon name="settings" size={17}/></summary>
                 <div>
+                  <label>Content layout
+                    <select aria-label={'Content layout for '+label}
+                      value={layout.contentSizing[id]||'default'} disabled={!canEditCanvas}
+                      onChange={event=>setPreference(previous=>{
+                        const contentSizing={...previous.contentSizing};
+                        if(event.target.value==='default')delete contentSizing[id];
+                        else contentSizing[id]=event.target.value;
+                        return {...previous,contentSizing};
+                      })}>
+                      <option value="default">Use canvas preference</option>
+                      {CANVAS_CONTENT_SIZING_OPTIONS.map(option=><option key={option.id}
+                        value={option.id}>{option.label}</option>)}
+                    </select>
+                  </label>
                   <label>Content size
                     <select aria-label={'Content size for '+label}
                       value={layout.contentScale[id]??1} disabled={!canEditCanvas}
@@ -883,6 +938,14 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
           </button>:null}
           <details className={styles.drawerSettings}>
             <summary>Canvas Preferences</summary>
+            <label>Default content layout
+              <select aria-label="Default canvas content layout" value={layout.defaultContentSizing}
+                disabled={!canEditCanvas} onChange={event=>setPreference(previous=>({...previous,
+                  defaultContentSizing:event.target.value}))}>
+                {CANVAS_CONTENT_SIZING_OPTIONS.map(option=><option key={option.id}
+                  value={option.id}>{option.label}</option>)}
+              </select>
+            </label>
             {wide?<button type="button" className={styles.openingView}
               aria-label="Show readable opening view at 50 percent"
               onClick={openingView}>Opening view (50%)</button>:null}

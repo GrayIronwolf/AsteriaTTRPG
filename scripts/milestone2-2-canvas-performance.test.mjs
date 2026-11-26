@@ -18,7 +18,7 @@ new Function('require','module','exports',compiled.outputFiles[0].text)(
  createRequire(import.meta.url),module,module.exports);
 const {CombatCommandCentre,CombatCommandPanel}=module.exports;
 
-function fixture(config=null,preferences={}){
+function fixture(config=null,preferences={},options={}){
  const globals=['window','document','localStorage','requestAnimationFrame','cancelAnimationFrame'];
  const original=Object.fromEntries(globals.map(key=>[key,Object.getOwnPropertyDescriptor(globalThis,key)]));
  const frames=new Map(),listeners=new Map(),storage=new Map();let nextFrame=0;
@@ -43,8 +43,11 @@ function fixture(config=null,preferences={}){
  const noop=()=>{};
  globalThis.window={addEventListener:noop,removeEventListener:noop,matchMedia:()=>({matches:false})};
  globalThis.document={addEventListener:noop,removeEventListener:noop};
- globalThis.localStorage={getItem:key=>key.endsWith(':camera')?JSON.stringify({x:0,y:0,scale:1}):JSON.stringify(layout),
-  setItem:(key,value)=>{storage.set(key,value);saves.push(JSON.parse(value));}};
+ globalThis.localStorage={getItem:key=>key.endsWith(':camera')?JSON.stringify({x:0,y:0,scale:options.scale||1}):JSON.stringify(layout),
+  setItem:(key,value)=>{storage.set(key,value);
+   // Camera persistence is independent of the layout save under test. Its
+   // debounce may fire during a slow CI run without creating a layout edit.
+   if(!key.endsWith(':camera'))saves.push(JSON.parse(value));}};
  globalThis.requestAnimationFrame=callback=>{frames.set(++nextFrame,callback);return nextFrame;};
  globalThis.cancelAnimationFrame=key=>frames.delete(key);
  let renderer;
@@ -72,6 +75,10 @@ function fixture(config=null,preferences={}){
   flush(){act(()=>{const pending=[...frames.values()];frames.clear();for(const callback of pending)callback();});},
   end(type='pointerup',x=100,y=100){act(()=>canvas().props[
    type==='lostpointercapture'?'onLostPointerCapture':type==='pointercancel'?'onPointerCancel':'onPointerUp'](event(type,x,y)));},
+  wheel(){let prevented=false;act(()=>listeners.get('wheel')?.({preventDefault(){prevented=true;}}));return prevented;},
+  contentMode(value,id=null){act(()=>renderer.root.findByProps({'aria-label':id?
+    'Content layout for '+(config?.labels?.[id]||'GM Player Resources'):'Default canvas content layout'})
+    .props.onChange({target:{value}}));},
   undo(){act(()=>renderer.root.findByProps({'aria-label':'Undo canvas change'}).props.onClick());},
   close(){act(()=>renderer.unmount());for(const key of globals){
    if(original[key])Object.defineProperty(globalThis,key,original[key]);else delete globalThis[key];}}
@@ -168,3 +175,50 @@ test('alignment selects the same nearest edge, centre and stable tie at every sn
    guides:[...(a?[{axis:'x',line:a.line}]:[]),...(b?[{axis:'y',line:b.line}]:[])]});
  }
 });
+
+
+for(const [role,config] of [['Combat',null],['GM',GM_DASHBOARD_CANVAS_CONFIG],['Player',PLAYER_DASHBOARD_CANVAS_CONFIG]]){
+ for(const scale of [.5,.75,1])for(const edge of ['n','s','e','w','ne','nw','se','sw']){
+  test(`Milestone 2.3 ${role}: ${edge} resize at ${scale*100}% keeps batching and geometry`,async()=>{
+   const f=fixture(config,{}, {scale});try{
+    const before=f.layout.freeform.positions[f.id];
+    const dx=edge.includes('w')?-30:edge.includes('e')?30:0;
+    const dy=edge.includes('n')?-40:edge.includes('s')?40:0;
+    f.start('resize',edge);const commits=f.commits;
+    for(let n=1;n<=40;n++)f.move(100+dx*scale*n/40,100+dy*scale*n/40);
+    assert.equal(f.frames.size,1);f.flush();
+    assert.equal(f.commits,commits,'resizing must not rerender React');
+    assert.equal(f.saves.length,0);
+    f.end('pointerup',100+dx*scale,100+dy*scale);await act(async()=>{});
+    assert.equal(f.saves.length,1);
+    const after=f.saves[0].freeform.positions[f.id];
+    assert.equal(after.w,before.w+(dx?30:0));
+    assert.equal(after.h,before.h+(dy?40:0));
+    assert.equal(after.x,before.x+(edge.includes('w')?-30:0));
+    assert.equal(after.y,before.y+(edge.includes('n')?-40:0));
+   }finally{f.close();}
+  });
+ }
+ test('Milestone 2.3 '+role+': competing resize and wheel do not disturb an active drag',async()=>{
+  const f=fixture(config);try{
+   f.start();f.start('resize');assert.equal(f.wheel(),true,'wheel is contained during a gesture');
+   f.move(140,150);f.flush();f.end('pointerup',140,150);await act(async()=>{});
+   assert.equal(f.saves.length,1);
+   assert.equal(f.saves[0].freeform.positions[f.id].w,f.layout.freeform.positions[f.id].w);
+   assert.equal(f.saves[0].freeform.positions[f.id].x,f.layout.freeform.positions[f.id].x+40);
+  }finally{f.close();}
+ });
+ test('Milestone 2.3 '+role+': content preferences persist and undo without changing geometry',async()=>{
+  const f=fixture(config);try{
+   f.contentMode('fixed');await act(async()=>{});
+   assert.equal(f.saves[0].defaultContentSizing,'fixed');
+   assert.deepEqual(f.saves[0].freeform.positions,f.layout.freeform.positions);
+   f.contentMode('proportional',f.id);await act(async()=>{});
+   assert.equal(f.saves[1].contentSizing[f.id],'proportional');
+   assert.deepEqual(f.saves[1].contentScale,f.layout.contentScale);
+   f.undo();await act(async()=>{});
+   assert.equal(f.saves[2].contentSizing[f.id],undefined);
+   assert.equal(f.saves[2].defaultContentSizing,'fixed');
+  }finally{f.close();}
+ });
+}

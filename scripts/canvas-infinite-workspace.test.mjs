@@ -76,7 +76,7 @@ test('Canvas is borderless, fills the viewport and retains responsive stacking',
  assert.match(renderer,/scrollArea.clientHeight-contentTop-2/);
  assert.match(renderer,/viewportRect.top-scrollRect.top\+scrollArea.scrollTop/);
  assert.match(renderer,/host\.style\.setProperty\('--combat-edge-left','0px'\)/);
- assert.match(css,/@container \(max-width:699px\)/);
+ assert.match(css,/@container combatCanvas \(max-width:699px\)/);
  assert.match(css,/\.window\[data-combat-panel\]\{position:relative;left:auto;top:auto;width:100%;height:auto/);
  assert.match(combat,/\.workspace\[data-testid="site-gm-combat"\]\{padding:0;border:0/);
  assert.match(css,/royal-relic-obsidian\.svg/);

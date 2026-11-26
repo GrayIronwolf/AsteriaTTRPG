@@ -600,7 +600,7 @@ test('51. The player HUD remains responsive and main windows use the freeform ca
   assert.doesNotMatch(styles, /react-player-overview-grid/,
     'Retired Player overview grid styles must not return');
   assert.match(player, /<CanvasWorkspace/);
-  assert.match(canvasCss, /@container \(max-width:699px\)/,
+  assert.match(canvasCss, /@container combatCanvas \(max-width:699px\)/,
     'The shared canvas must stack windows on narrow screens');
   assert.match(canvasCss, /\.stage\{position:relative/,
     'Responsive canvas windows must return to document flow');

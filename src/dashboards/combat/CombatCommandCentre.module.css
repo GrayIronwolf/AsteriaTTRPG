@@ -1,8 +1,8 @@
 /* Combat Command Centre: one canvas surface. No legacy sidebar grid or layout toolbar. */
 .centre{width:calc(100% + var(--combat-edge-left,0px) + var(--combat-edge-right,0px));
-  min-width:0;margin-left:calc(-1 * var(--combat-edge-left,0px));container-type:inline-size;
+  min-width:0;margin-left:calc(-1 * var(--combat-edge-left,0px));container-type:inline-size;container-name:combatCanvas;
   border:0;border-radius:0;box-shadow:none}
-.canvas{position:relative;container-type:inline-size;min-width:0;width:100%;
+.canvas{position:relative;container-type:inline-size;min-width:0;width:100%;container-name:combatCanvas;
   height:var(--combat-viewport-height,max(580px,calc(100dvh - 190px)));
   min-height:380px;overflow:hidden;touch-action:none;cursor:grab;
   border:0!important;border-radius:0;box-shadow:none;outline:0;
@@ -65,16 +65,26 @@
 .windowActions{position:relative;display:flex;align-items:center;gap:3px;flex-wrap:nowrap;cursor:auto}
 .windowActions button,.options summary,.resizeHandle{font:inherit;color:var(--asteria-text);cursor:pointer;border:1px solid #627482;border-radius:3px;background:linear-gradient(180deg,#394b58,#111e2b 54%,#1b2a36);box-shadow:inset 0 1px 0 rgb(224 240 246 / .18);padding:var(--asteria-space-1) var(--asteria-space-2);min-height:29px}
 .windowActions button{min-width:29px;min-height:29px;padding:3px 6px}
-.windowContent{position:relative;z-index:1;flex:1;min-width:0;min-height:0;overflow:auto;
+.windowContent{position:relative;z-index:1;flex:1;min-width:0;min-height:0;overflow:auto;contain:layout style;
  overscroll-behavior:contain;padding:var(--asteria-space-3);background:#101820;scrollbar-width:thin}
-.windowBody{min-width:0;display:flow-root;zoom:var(--combat-content-scale,1)}
+.windowBody{min-width:0;display:flow-root;overflow-wrap:anywhere;zoom:var(--combat-content-scale,1)}
+.window[data-content-sizing='fixed'] .windowBody{width:var(--combat-design-width,580px);max-width:none}
+.window[data-content-sizing='proportional'] .windowBody{width:var(--combat-design-width,580px);max-width:none;
+ zoom:calc(var(--combat-content-scale,1) * var(--combat-fit-scale,1))}
+.window[data-content-sizing='responsive'] .windowBody :where(.react-form-grid,.react-gm-resources-grid){
+ display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr))}
+.window[data-content-sizing='responsive'] .windowBody :where(form,fieldset,label,section,article){min-width:0;max-width:100%}
+.window[data-content-sizing='responsive'] .windowBody :where(input:not([type='checkbox']):not([type='radio']),select,textarea){min-width:0;max-width:100%;box-sizing:border-box}
+.window[data-content-sizing='responsive'] .windowBody :where(.react-resource-bar,.react-resource-track){min-width:0;max-width:100%}
+.window[data-content-sizing='responsive'] .windowBody :where(th,td){overflow-wrap:anywhere;white-space:normal}
+.window[data-content-sizing='responsive'] .windowBody :where(table){max-width:100%}
+.window[data-content-sizing='responsive'] .windowBody :where(.react-panel-actions,.react-form-actions){display:flex;flex-wrap:wrap;gap:8px}
 .windowBody>section{padding:0;border:0;background:transparent;box-shadow:none}
 .windowBody :where(h3,p){margin-top:0}
 .windowBody :where(input,select,textarea){max-width:100%}
 .windowBody :where(button){max-width:100%;white-space:normal}
 .windowContent:focus-within{outline-offset:-2px}
 .windowBody :where(img,svg){max-width:100%;height:auto}
-.canvas[data-detail-level='compact'] .windowBody{zoom:calc(var(--combat-content-scale,1) * 1.12)}
 .canvas[data-detail-level='preview'] .windowBar{
  min-height:calc(36px / var(--combat-scale));padding:0 calc(12px / var(--combat-scale))}
 .canvas[data-detail-level='preview'] .windowBar strong{
@@ -84,12 +94,10 @@
 .canvas[data-detail-level='preview'] .windowContent{opacity:1;pointer-events:auto}
 .canvas[data-detail-mode='proportional'] .windowContent{opacity:1;pointer-events:auto}
 @container combatWindow (min-width:520px){
-  .windowBody :where(.react-form-grid,.react-gm-resources-grid){
+  .window[data-content-sizing='responsive'] .windowBody :where(.react-form-grid,.react-gm-resources-grid){
     grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr))
   }
 }
-@container combatWindow (min-width:640px){.windowBody{zoom:calc(var(--combat-content-scale,1) * 1.12)}}
-@container combatWindow (min-width:980px){.windowBody{zoom:calc(var(--combat-content-scale,1) * 1.24)}}
 .focused{border-color:var(--asteria-border-active)!important;box-shadow:0 0 0 1px var(--asteria-accent-soft),0 16px 38px rgb(0 0 0 / .55)!important}
 .focused .windowBar{border-bottom-color:var(--asteria-border-active)}
 .canvas[data-editing='true'] .window:hover{border-color:var(--asteria-border-active)}
@@ -97,16 +105,24 @@
 .minimised .windowContent{visibility:hidden;height:0;min-height:0;padding:0;
   overflow:hidden;pointer-events:none}
 .resizeHandle{position:absolute;z-index:5;touch-action:none;user-select:none;
-  width:16px;height:16px;min-height:16px!important;padding:0!important;
-  border-color:var(--asteria-border-active)!important;cursor:nwse-resize}
-.resizeHandle[data-resize-edge='n']{top:-5px;left:20%;width:60%;height:10px;cursor:ns-resize}
-.resizeHandle[data-resize-edge='s']{bottom:-5px;left:20%;width:60%;height:10px;cursor:ns-resize}
-.resizeHandle[data-resize-edge='e']{right:-5px;top:20%;height:60%;width:10px;cursor:ew-resize}
-.resizeHandle[data-resize-edge='w']{left:-5px;top:20%;height:60%;width:10px;cursor:ew-resize}
+ --grip:clamp(20px,calc(22px / var(--combat-scale,1)),80px);
+ --edge-grip:clamp(10px,calc(12px / var(--combat-scale,1)),40px);
+ width:var(--grip);height:var(--grip);min-height:var(--grip)!important;padding:0!important;
+ background:transparent;box-shadow:none;border-color:transparent!important;cursor:nwse-resize}
+.resizeHandle[data-resize-edge='n']{top:calc(3px - var(--edge-grip));left:20%;width:60%;height:var(--edge-grip);min-height:0!important;cursor:ns-resize}
+.resizeHandle[data-resize-edge='s']{bottom:calc(3px - var(--edge-grip));left:20%;width:60%;height:var(--edge-grip);min-height:0!important;cursor:ns-resize}
+.resizeHandle[data-resize-edge='e']{right:calc(3px - var(--edge-grip));top:20%;height:60%;width:var(--edge-grip);min-height:0!important;cursor:ew-resize}
+.resizeHandle[data-resize-edge='w']{left:calc(3px - var(--edge-grip));top:20%;height:60%;width:var(--edge-grip);min-height:0!important;cursor:ew-resize}
 .resizeHandle[data-resize-edge='ne']{right:-4px;top:-4px;cursor:nesw-resize}
 .resizeHandle[data-resize-edge='nw']{left:-4px;top:-4px;cursor:nwse-resize}
 .resizeHandle[data-resize-edge='se']{right:-4px;bottom:-4px}
 .resizeHandle[data-resize-edge='sw']{left:-4px;bottom:-4px;cursor:nesw-resize}
+/* Keep grips usable at 50/75/100% zoom without covering title-bar controls. */
+.resizeHandle:is([data-resize-edge='ne'],[data-resize-edge='nw']){top:calc(4px - var(--grip))}
+.resizeHandle:is([data-resize-edge='se'],[data-resize-edge='sw']){bottom:calc(4px - var(--grip))}
+.resizeHandle:is([data-resize-edge='ne'],[data-resize-edge='se']){right:calc(2px - var(--grip) / 2)}
+.resizeHandle:is([data-resize-edge='nw'],[data-resize-edge='sw']){left:calc(2px - var(--grip) / 2)}
+.resizeHandle:focus-visible{background:var(--asteria-accent-soft);border-color:var(--asteria-border-active)!important}
 .options{position:relative}
 .options summary{list-style:none;display:inline-flex;align-items:center}
 .options summary::-webkit-details-marker{display:none}
@@ -190,7 +206,7 @@
   margin:0;padding:9px 12px;font-size:var(--asteria-type-sm);
   color:var(--asteria-text);border:1px solid var(--asteria-border-subtle);
   border-radius:var(--asteria-radius-sm);background:var(--asteria-surface-raised)}
-@container (max-width:699px){
+@container combatCanvas (max-width:699px){
  .canvas{height:auto;min-height:380px;overflow:visible;touch-action:auto}
  .stage{position:relative;top:auto;left:auto;display:flex;flex-direction:column;
    gap:var(--asteria-space-3);width:100%;height:auto!important;
@@ -198,7 +214,7 @@
  .window[data-combat-panel]{position:relative;left:auto;top:auto;width:100%;height:auto;
    min-height:160px}
  .windowBar{cursor:default;touch-action:auto;flex-wrap:wrap}
- .windowContent{overflow:visible;max-height:none}
+ .windowContent{overflow:auto;max-height:none}
  .minimised{min-height:0}
  .minimised .windowContent{display:none}
  .toolSidebar{position:fixed;top:12px;bottom:12px;right:12px;
@@ -250,13 +266,10 @@
 .window[data-combat-panel]:hover{border-color:#8ba5b5}
 .windowContent :where(button,input,select,textarea){min-width:0}
 @container combatWindow (max-width:480px){
- .windowBody :where(.react-form-grid,.react-gm-resources-grid){grid-template-columns:minmax(0,1fr)}
+ .window[data-content-sizing='responsive'] .windowBody :where(.react-form-grid,.react-gm-resources-grid){grid-template-columns:minmax(0,1fr)}
  .windowContent{padding:8px}
 }
 @media (pointer:coarse){
- .resizeHandle[data-resize-edge='n'],.resizeHandle[data-resize-edge='s']{height:20px;top:auto}
- .resizeHandle[data-resize-edge='n']{top:-8px}
- .resizeHandle[data-resize-edge='s']{bottom:-8px}
- .resizeHandle[data-resize-edge='e'],.resizeHandle[data-resize-edge='w']{width:20px}
- .resizeHandle[data-resize-edge='se']{width:26px;height:26px}
+ .resizeHandle{--grip:clamp(44px,calc(44px / var(--combat-scale,1)),120px);
+  --edge-grip:clamp(22px,calc(22px / var(--combat-scale,1)),80px)}
 }
