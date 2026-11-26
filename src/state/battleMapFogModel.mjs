@@ -92,8 +92,8 @@ export function distanceMetersPerCell(input=1){
 export function measureGridDistance(from,to,cols,rows,metresPerCell=1,gridType='square'){
   const a=finitePoint(from),b=finitePoint(to),d=dims(cols,rows);
   const scale=distanceMetersPerCell(metresPerCell);
-  const squares=gridType==='hex'?hexCellDistance(mapCell(a,d.columns,d.rows),
-    mapCell(b,d.columns,d.rows)):
+  const squares=gridType==='hex'?hexCellDistance(mapCell(a,d.columns,d.rows,gridType),
+    mapCell(b,d.columns,d.rows,gridType)):
     Math.hypot((b.x-a.x)*d.columns/100,(b.y-a.y)*d.rows/100);
   return {squares:Math.round(squares*100)/100,metres:Math.round(squares*scale*100)/100};
 }
