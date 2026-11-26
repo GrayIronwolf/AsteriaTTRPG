@@ -556,9 +556,13 @@ export function GMBattleMapManager({campaignId,characters={},encounter={},search
           </>:<p>Remaining approved movement: {combatMoveRemaining===null?'No movement action approved':combatMoveRemaining+' m'}.
               A player must declare a movement action; the GM approves its distance through the existing combat panel.</p>}
           {selectedCombatantId?<div className="asteria-battle-form-row">
-            <label>Delegate this token's map movement to a campaign player
-              <input value={delegateUid} maxLength={160} onChange={event=>setDelegateUid(event.target.value)}
-                placeholder="Player account UID; blank to revoke"/>
+            <label>Delegate map movement to a linked campaign player
+              <select value={delegateUid} onChange={event=>setDelegateUid(event.target.value)}>
+                <option value="">No delegate / revoke delegation</option>
+                {[...new Map(Object.values(characters).filter(row=>row?.ownerUid).map(row=>
+                  [row.ownerUid,{uid:row.ownerUid,label:row.name||row.ownerUid}])).values()]
+                  .map(row=><option key={row.uid} value={row.uid}>{row.label}</option>)}
+              </select>
             </label>
             <button type="button" disabled={busy} onClick={saveMapDelegate}>
               {delegateUid.trim()?'Assign map-only control':'Revoke map delegation'}
