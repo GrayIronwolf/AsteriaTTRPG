@@ -26,6 +26,13 @@ export function mapCell(point,columns,rows,gridType='square'){
     row:Math.min(rows-1,Math.floor(point.y*rows/100))};
 }
 export const mapCellKey=({column,row})=>column+':'+row;
+export function hexCellPoints(cell,columns,rows){
+  const x=(cell.column+.5+(cell.row&1)*.5)*100/(columns+.5),
+    y=(cell.row*.75+.5)*100/(rows*.75+.25);
+  const hw=50/(columns+.5),hh=50/(rows*.75+.25);
+  return [[x,y-hh],[x+hw,y-hh/2],[x+hw,y+hh/2],
+    [x,y+hh],[x-hw,y+hh/2],[x-hw,y-hh/2]];
+}
 export const mapCellCenter=({column,row},columns,rows,gridType='square')=>
   mapGridType(gridType)==='hex'?{
     x:(column+.5+(row&1)*.5)*100/(columns+.5),
