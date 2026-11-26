@@ -267,8 +267,10 @@ export function createFirebaseCombatService({
     if(combatRevision(raw)!==command.revision)
       throw Error('Combat changed in another session. Wait for live sync.');
     if(mode==='player'&&!((raw.combatants||[]).some(row=>
-      row.id===actorId&&row.characterId===characterId)))
-      throw Error('That combat participant is not linked to your character.');
+      row.id===actorId&&(row.characterId===characterId||
+        command.operation==='player-map-move'&&
+        raw.combat?.participants?.[actorId]?.movementDelegated===true))))
+      throw Error('That combat participant is not linked to your character or delegated for map movement.');
     const action=functionsSdk.httpsCallable(functions,'asteriaAction');
     const response=await action({
       action:'combatCommand',args:[id,actorId,command],
