@@ -6,4 +6,6 @@
 .ruler{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;stroke:#f5ca66;stroke-width:.35;fill:#f5ca66}
 .reachable{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;fill:#54d88e44;stroke:#54d88e;stroke-width:.16}
 .reachable[data-move-kind=dash]{fill:#ffa65155;stroke:#ffa651;stroke-dasharray:1 .55}
+.reachable[data-move-kind=talent]{fill:#61b6ff55;stroke:#61b6ff;stroke-dasharray:.75 .25}
+.reachable[data-move-kind=spell]{fill:#c38aff55;stroke:#c38aff;stroke-dasharray:.35 .3}
 .reachable polyline{fill:none;stroke:#fff4ab;stroke-width:.75;stroke-dasharray:none}

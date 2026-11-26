@@ -3,10 +3,12 @@
 import {battleMapTokens,battleMapPoint,BATTLE_MAP_MAX_TOKENS} from './battleMapModel.mjs';
 import {measureGridDistance} from './battleMapFogModel.mjs';
 import {mapCell,mapCellKey,mapReachableRoutes} from './battleMapRoutes.mjs';
+import {spendMapMovement} from './battleMapMovement.mjs';
 
 const idPattern=/^[A-Za-z0-9_-]{1,160}$/;
 const n2=n=>Math.round((Number(n)+Number.EPSILON)*100)/100;
-export const MAP_COMBAT_ACTIONS=Object.freeze(['walk','swim','fly','climb','dash','climb-dash','mount-move']);
+export const MAP_COMBAT_ACTIONS=Object.freeze(['walk','swim','fly','climb','dash','climb-dash','mount-move',
+  'jump','spell','talent']);
 export function activeMapEncounter(encounter){
   return Boolean(encounter?.status==='active'&&encounter?.combat?.version===1&&
     typeof encounter.combatId==='string'&&idPattern.test(encounter.combatId)&&
@@ -96,7 +98,7 @@ export function combatMapMovePlan(map,encounter,actorId,point,{mode='movement',r
   let distance=measureGridDistance(fromCentre,to,map.gridColumns,map.gridRows,map.metresPerCell??1);
   if(distance.metres<=0)throw Error('Choose a different map square to move.');
   if(!['movement','reposition'].includes(mode))throw Error('Unknown map movement mode.');
-  let remaining=null,diagonalParity=0;
+  let remaining=null,diagonalParity=0,nextMovement=null;
   if(mode==='movement'){
     if(!row.isCurrent||row.turnComplete)
       throw Error('Only the current combatant may use approved movement during their turn.');
@@ -104,11 +106,11 @@ export function combatMapMovePlan(map,encounter,actorId,point,{mode='movement',r
     if(!movement||!MAP_COMBAT_ACTIONS.includes(movement.kind)||
        !Number.isFinite(Number(movement.remaining))||Number(movement.remaining)<=0)
       throw Error('The GM must approve and resolve a movement action with a distance allowance first.');
-    const routedMovement=['walk','dash','mount-move','fly'].includes(movement.kind);
+    const routedMovement=movement.routeKind||['walk','dash','mount-move','fly'].includes(movement.kind);
     if(routedMovement){
       const routes=mapReachableRoutes(map,token,Number(movement.remaining),{
         occupied:tokens.filter(row=>row.id!==token.id),diagonalParity:movement.diagonalParity,
-        movementKind:movement.kind
+        movementKind:movement.routeKind||movement.kind
       });
       const destination=mapCell(to,map.gridColumns,map.gridRows);
       const route=routes.get(mapCellKey(destination));
@@ -119,13 +121,14 @@ export function combatMapMovePlan(map,encounter,actorId,point,{mode='movement',r
       throw Error('Movement exceeds the approved remaining distance.');
     }
     remaining=n2(Math.max(0,Number(movement.remaining)-distance.metres));
+    nextMovement=spendMapMovement(movement,distance.metres,diagonalParity);
   }else{
     const explanation=String(reason||'').trim();
     if(explanation.length<5||explanation.length>160)
       throw Error('GM repositioning requires a reason of 5–160 characters.');
   }
   return {actorId,tokenId:token.id,from:{x:token.x,y:token.y},to,distance,
-    mode,remaining,diagonalParity,reason:mode==='reposition'?String(reason).trim():''};
+    mode,remaining,diagonalParity,nextMovement,reason:mode==='reposition'?String(reason).trim():''};
 }
 export function combatMapMovementAllowance(encounter,id){
   const row=combatMapRoster(encounter).find(value=>value.id===id);

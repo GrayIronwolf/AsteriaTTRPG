@@ -103,8 +103,8 @@ export function CampaignMapCanvas({api,campaignId,map,mode='player',atlas=false,
   const cols=map?.gridColumns||20,rows=map?.gridRows||15;
   const routes=useMemo(()=>tool==='move'&&canMove?mapReachableRoutes(map,marker,movement.distance,{
     occupied:map.tokens.filter(row=>row.id!==marker.id),diagonalParity:movement.diagonalParity,revealedOnly:true,
-    movementKind:movement.approvedKind
-  }):new Map(),[tool,canMove,map,marker,movement?.distance,movement?.diagonalParity,movement?.approvedKind]);
+    movementKind:movement.routeKind||movement.approvedKind
+  }):new Map(),[tool,canMove,map,marker,movement?.distance,movement?.diagonalParity,movement?.approvedKind,movement?.routeKind]);
   const route=destination?routes.get(destination):null;
   const routePoints=route?mapRoutePoints(route,cols,rows):[];
   useEffect(()=>{setDestination(null);setMoveNotice('');},[movement?.revision,map?.id,marker?.x,marker?.y]);
@@ -184,7 +184,9 @@ export function CampaignMapCanvas({api,campaignId,map,mode='player',atlas=false,
     {moveMode?<div className={styles.controls}>
       <output aria-live="polite">{movement.outOfTurn?'Out-of-turn move · ':''}
         {movement.kind==='approved'?({dash:'Paid Dash',fly:'Approved flight',swim:'Approved swim',
-          climb:'Approved climb','climb-dash':'Paid climbing Dash'}[movement.approvedKind]||'Approved move'):'Move'} ·
+          climb:'Approved climb','climb-dash':'Paid climbing Dash',jump:'Approved jump',
+          spell:'Spell movement',talent:'Talent movement'}[movement.approvedKind]||'Approved move'):'Move'} ·
+        {movement.routeKind==='teleport'?' Teleport ·':''}
         {' '}{route?Number(route.cost.toFixed(2))+' m of ':''}{movement.distance} m ·
         {' '}{movement.kind==='approved'?0:MAP_MOVE_AP.walk} AP
       </output>

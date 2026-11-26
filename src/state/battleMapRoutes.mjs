@@ -68,9 +68,9 @@ export function mapReachableRoutes(map,origin,allowance,{
   const free=(column,row)=>column>=0&&row>=0&&column<columns&&row<rows&&!blocked.has(column+':'+row)&&
     (!revealedOnly||!map.fogEnabled||map.fogCells?.[row*columns+column]==='1');
   const valid=(column,row)=>footprintFits(column,row,origin.cells??1,free);
-  if(movementKind==='fly'){
-    // Approved map flight measures horizontal travel. Ground occupants do not
-    // block its line, but the destination still needs a free legal footprint.
+  if(['fly','jump','teleport'].includes(movementKind)){
+    // These modes have an approved horizontal range and require an unoccupied
+    // landing. Grid steps and ground occupants do not determine their range.
     for(let row=0;row<rows;row++)for(let column=0;column<columns;column++){
       const cost=Math.hypot(column-start.column,row-start.row)*scale;
       if(cost>0&&cost<=allowance+1e-7&&valid(column,row)){

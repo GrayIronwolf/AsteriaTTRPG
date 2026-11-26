@@ -27,7 +27,8 @@ import {
 import { currentCombatant, initiativeResult, initiativeOrder, combatOptions, combatRestriction, optionProblem, skillCheck, rollD20, checkResult, attackResult, counterspellResult, validateReactionEquipment, payCombatCosts, changeCombatHP, deathSave, feedback, mixedDamage, rows, SPELL_RANKS, SPELL_SKILL_ACCESS } from '../src/state/combatRules.mjs';
 
 import {mapCell,mapCellCenter,mapCellKey,mapReachableRoutes} from '../src/state/battleMapRoutes.mjs';
-import {MAP_MOVE_AP,validateMapOpportunity,walkingAllowance} from '../src/state/battleMapMovement.mjs';
+import {MAP_MOVE_AP,approvedMapMovementAward,spendMapMovement,validateMapOpportunity,walkingAllowance}
+  from '../src/state/battleMapMovement.mjs';
 import {publicPresentationBattleMap} from '../src/state/livePresentationProjectionModel.mjs';
 
 const copy=value=>JSON.parse(JSON.stringify(value));
@@ -265,6 +266,11 @@ export function createCombatCommands(context) {
       };
       const begin=(p,approval)=>{
         const option=findOption(p.actorId,p.optionId),s=state(p.actorId),ap=validateAction(p.actorId,option,p,approval);
+        if(approval.mapTravel){
+          if(!boundMap||boundMap.combatId!==encounter.combatId||p.reaction)
+            throw Error('Source-granted map movement requires a linked encounter map and an ordinary resolved action.');
+          p.mapAward=approvedMapMovementAward(option,approval,s.movement);
+        }
         if(p.outOfTurn){
           validateMapOpportunity(encounter,p.actorId);
           if(p.outOfTurn!==encounter.round)throw Error('This opportunity belongs to another round.');
@@ -434,21 +440,21 @@ export function createCombatCommands(context) {
         const routes=mapReachableRoutes(boundMap,original,allowance,{
           occupied:boundMap.tokens.filter(row=>row.id!==original.id),
           diagonalParity:approved?s.movement.diagonalParity:0,revealedOnly:true,
-          movementKind:approved?s.movement.kind:'walk'
+          movementKind:approved?s.movement.routeKind||s.movement.kind:'walk'
         });
         const route=routes.get(mapCellKey(dest));
         if(!route)throw Error('That destination is unavailable within the current movement allowance.');
         const point=mapCellCenter(dest,boundMap.gridColumns,boundMap.gridRows);
-        const remaining=offTurn?0:Math.round((allowance-route.cost)*100)/100;
         const tokens=boundMap.tokens.map(row=>row.id===original.id?{...row,...point}:row);
         tx.update(mapRef,{tokens,updatedAt:serverTimestamp()});
-        setState(actorId,{ap:s.ap-ap,movement:offTurn?s.movement??null:{
-          actionId:approved?s.movement.actionId:context.requestId,
-          kind:approved?s.movement.kind:'walk',remaining,diagonalParity:route.parity
-        },...(offTurn?{outOfTurn:{round:encounter.round,kind:'move'}}:{})});
-        log(`${actor.name} moved ${route.cost} m${offTurn?' out of turn':''}.`,{
+        const movement=approved?s.movement:{actionId:context.requestId,kind:'walk',remaining:allowance};
+        setState(actorId,{ap:s.ap-ap,movement:offTurn?s.movement??null:
+          spendMapMovement(movement,route.cost,route.parity),
+          ...(offTurn?{outOfTurn:{round:encounter.round,kind:'move'}}:{})});
+        const metres=Math.round(route.cost*100)/100;
+        log(`${actor.name} moved ${metres} m${offTurn?' out of turn':''}.`,{
           actorUid:currentUser.uid,targetId:actor.id,from:{x:original.x,y:original.y},to:point,
-          metres:route.cost,ap
+          metres,ap,movementKind:movement.routeKind||movement.kind
         });
       }else if(input.operation==='map-token-appearance'){
         requireActive();
@@ -477,7 +483,7 @@ export function createCombatCommands(context) {
         if(plan.mode==='movement'){
           const existing=encounter.combat.participants[plan.actorId]||{};
           encounter.combat.participants[plan.actorId]={
-            ...existing,movement:{...existing.movement,remaining:plan.remaining,diagonalParity:plan.diagonalParity}
+            ...existing,movement:plan.nextMovement
           };
         }
         log(plan.mode==='movement'
@@ -867,6 +873,12 @@ export function createCombatCommands(context) {
           if(p.key==='first-aid')put(p.targetIds[0],deathSave(get(p.targetIds[0]),10,{firstAid:true}));
           if(p.key==='disengage')setState(p.actorId,{disengaged:true});
           if(['walk','swim','fly','climb','dash','climb-dash','mount-move'].includes(p.key))setState(p.actorId,{movement:{actionId:p.id,kind:p.key,remaining:p.approval.distance??null}});
+          if(p.mapAward){
+            setState(p.actorId,{movement:{...p.mapAward,actionId:p.id}});
+            log(`${p.name} grants ${p.mapAward.remaining} m of ${p.mapAward.routeKind} movement.`,{
+              actorUid:currentUser.uid,targetId:p.actorId,source:p.optionId,reason:p.approval.sourceReason
+            });
+          }
           if(p.key==='grapple'){setState(p.actorId,{grappleTarget:p.targetIds[0]});setState(p.targetIds[0],{grappledBy:p.actorId});}
           if(p.key==='escape'){const holder=state(p.actorId).grappledBy;if(holder)setState(holder,{grappleTarget:null});setState(p.actorId,{grappledBy:null});}
           if(p.key==='stand'){const target=get(p.actorId);target.conditions=rows(target.conditions).map(row=>/prone/i.test(row.name)?{...row,active:false}:row);put(p.actorId,target);}

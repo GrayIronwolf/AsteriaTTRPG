@@ -590,6 +590,7 @@ export function PlayerBattleMapView({campaignId,encounter={},character=null,mapI
     disabled:encounter.paused||Boolean(encounter.combat.pending)||offTurn&&state.opportunityUsed||(!approved&&state.ap<MAP_MOVE_AP.walk),
     diagonalParity:approved?state.mapMovement.diagonalParity:0,
     kind:approved?'approved':'walk',approvedKind:approved?state.mapMovement.kind:'',
+    routeKind:approved?state.mapMovement.routeKind:'',
     outOfTurn:offTurn,onMove:point=>combatApi.commandPlayer(campaignId,character.id,actor.id,{
       operation:'player-map-move',revision:encounter.combat.revision,mapId:encounter.battleMapId,
       moveKind:approved?'approved':'walk',point,outOfTurn:offTurn

@@ -643,6 +643,39 @@ test('only the GM can update a linked token and its private presentation setting
   assert.deepEqual(h.encounter().combat.log[0].to,command.appearance);
 });
 
+test('a successful reviewed jump uses paid movement and its source SP exactly once',async()=>{
+  const h=database();await h.setup();
+  const actor=currentCombatant(h.encounter()),uid=actor.characterId==='a'?'alice':'bob';
+  const encounter=h.encounter(),participants=encounter.combat.participants;
+  participants[actor.id].movement={actionId:'paid-move',kind:'walk',remaining:9,diagonalParity:1};
+  encounter.battleMapId='arena';
+  const path='campaigns/c/battleMaps/arena';
+  h.store.set(path,{id:'arena',kind:'image',contentType:'image/png',
+    storagePath:path+'/scene.png',name:'Arena',combatId:encounter.combatId,
+    visibility:'players',gridColumns:4,gridRows:4,metresPerCell:3,tokens:[
+      {id:'hero',label:actor.name,kind:'character',combatantId:actor.id,x:12.5,y:12.5},
+      {id:'obstacle',label:'Obstacle',kind:'marker',x:37.5,y:12.5}
+    ]});
+  const startSP=h.character(actor.characterId).sp[0],startAP=participants[actor.id].ap;
+  assert.equal((await h.command(uid,actor.id,'declare',{optionId:'basic:jump'})).ok,true);
+  const approval={mapTravel:'jump',distance:9,feasible:true,checkType:'none',
+    sourceReason:'Athletics jump over a single obstacle'};
+  assert.match((await h.command('gm',actor.id,'approve',{approval:{...approval,distance:10}})).error,/already paid/);
+  assert.equal((await h.command('gm',actor.id,'approve',{approval})).ok,true);
+  assert.equal((await h.command('gm',actor.id,'roll')).ok,true);
+  assert.equal((await h.command('gm',actor.id,'resolve',{success:true})).ok,true);
+  const details={mapId:'arena',point:{x:62.5,y:12.5},moveKind:'approved',
+    revision:h.encounter().combat.revision};
+  const result=await h.command(uid,actor.id,'player-map-move',details,'jump-landing');
+  assert.equal(result.ok,true,result.error);
+  assert.deepEqual(await h.command(uid,actor.id,'player-map-move',details,'jump-landing'),result);
+  assert.deepEqual(h.encounter().combat.participants[actor.id].movement,
+    {actionId:'paid-move',kind:'walk',remaining:3,diagonalParity:1});
+  assert.equal(h.encounter().combat.participants[actor.id].ap,startAP);
+  assert.equal(h.character(actor.characterId).sp[0],startSP-10);
+  assert.equal(h.store.get(path).tokens[0].x,62.5);
+});
+
 test('a player moves only their own token and recorded AP is charged once',async()=>{
   const h=database();await h.setup();
   for(const id of ['a','b'])h.character(id).movement=9;
