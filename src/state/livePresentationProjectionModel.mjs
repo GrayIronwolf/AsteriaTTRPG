@@ -48,6 +48,7 @@ export function publicCombatSnapshot(raw={},publishedMap=null){
       bonus:entry.bonus===true,
       pendingDeathSave:entry.pendingDeathSave===true,
       turnComplete:entry.turnComplete===true,
+      ...(typeof entry.movementDelegateUid==='string'&&entry.movementDelegateUid?{movementDelegated:true}:{}),
       ...(Object.hasOwn(markers||{},row.id)?{mapTokenId:markers[row.id]}:{}),
       ...(entry.movement&&Number.isFinite(entry.movement.remaining)?{
         mapMovement:{remaining:Math.max(0,entry.movement.remaining),kind:name(entry.movement.kind,40),
