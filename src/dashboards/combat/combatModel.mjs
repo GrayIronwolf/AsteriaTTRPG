@@ -31,7 +31,7 @@ export const COMBAT_BASIC_DECLARATIONS=Object.freeze([
 ]);
 export const COMBAT_PLAYER_COMMANDS=Object.freeze(['declare','spend-ap','end-turn','death-save','player-map-move']);
 export const COMBAT_GM_COMMANDS=Object.freeze([
-  'save','stage-prepared','unstage-prepared','load-prepared','map-prepare','map-link','map-move','map-token-appearance',
+  'save','stage-prepared','unstage-prepared','load-prepared','map-prepare','map-link','map-move','map-delegate','map-token-appearance',
   'start','pause','resume','next','skip-turn','override-turn','reopen','save-snapshot','restore-snapshot','delete-snapshot','end','clear','timer','release-wave','trigger-event',
   'declare','prepare','ambush','approve','reject','cancel','window',
   'close-window','roll','resolve','pass','react','react-ability',
