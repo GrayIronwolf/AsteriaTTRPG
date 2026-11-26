@@ -26,10 +26,15 @@ test('7.7: privileged enemy and map information cannot enter player projection',
     storagePath:'campaigns/phase77/battleMaps/map77/scene.png',
     width:1280,height:720,gridColumns:2,gridRows:2,
     gridVisible:true,fogEnabled:true,fogCells:'1111',
-    tokens:[],gmNotes:'DO_NOT_EXPOSE'
+    tokens:[
+      {id:'scout',kind:'character',label:'Scout',portrait:'/images/scout.webp',faction:'ally',cells:2,x:10,y:10},
+      {id:'secret-scout',kind:'creature',label:'DO_NOT_EXPOSE',visibility:'gm',portrait:'/images/do-not-expose.webp',x:10,y:10}
+    ],gmNotes:'DO_NOT_EXPOSE'
   },'phase77','map77');
   assert.equal(map.storagePath,undefined);
-  assert.doesNotMatch(JSON.stringify(map),/DO_NOT_EXPOSE/);
+  assert.deepEqual(map.tokens,[{id:'scout',kind:'character',label:'Scout',
+    portrait:'/images/scout.webp',faction:'ally',cells:2,x:10,y:10}]);
+  assert.doesNotMatch(JSON.stringify(map),/DO_NOT_EXPOSE|secret-scout|do-not-expose/);
 });
 
 test('7.7: viewer identity, epoch, status and expiry remain mandatory',()=>{

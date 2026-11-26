@@ -108,7 +108,9 @@ export function installDevFixtures() {
   if(unifiedMapFixture)encounter={status:'active',round:2,turnIndex:0,
     combatId:sharedMap.combatId,battleMapId:sharedMap.id,
     combatants:[{id:'actor-kael',characterId:'kael',kind:'player',name:'Kael'}],
-    combat:{version:1,revision:3,participants:{'actor-kael':{ap:3,bonus:true}}}};
+    combat:{version:1,revision:3,participants:{'actor-kael':{ap:3,bonus:true,mapTokenId:'visible-kael'}}}};
+  if(unifiedMapFixture)characters.kael.movement=9;
+  const battleMapListeners=new Set();
   let gmWorkspace=null;
   let partyWorkspace={ sharedNotes:'Meet at the western gate before the next expedition.', questLog:[] };
   let partyChat=[{ id:'chat-1', characterId:'lyra', ownerUid:'player-lyra', characterName:'Lyra', text:'I will bring the healing supplies.', createdAt:new Date().toISOString() }];
@@ -227,6 +229,14 @@ export function installDevFixtures() {
       combatListeners.add(listener);
       queueMicrotask(()=>{if(combatListeners.has(listener))listener();});
       return()=>combatListeners.delete(listener);
+    },
+    commandPlayer:async(_campaignId,_characterId,_actorId,input)=>{
+      if(!unifiedMapFixture||input.operation!=='player-map-move')throw Error('Unsupported fixture action.');
+      sharedMap.tokens[0]={...sharedMap.tokens[0],...input.point};
+      encounter={...encounter,combat:{...encounter.combat,revision:encounter.combat.revision+1}};
+      notify('encounter');
+      for(const callback of battleMapListeners)callback([clone(sharedMap)]);
+      return {ok:true};
     },
     commandGM:async(_campaignId,actorId,input)=>{
       const nextRev=Number(encounter.combat?.revision||0)+1;
@@ -387,9 +397,9 @@ export function installDevFixtures() {
     subscribeCampaignEvents: (_campaignId, callback) => subscribe('events', callback),
     subscribeCampaignEncounter: (_campaignId, callback) => subscribe('encounter', callback),
     subscribeBattleMaps: (_campaignId, callback) => {
-      let active=true;
-      queueMicrotask(()=>{if(active)callback(unifiedMapFixture?[clone(sharedMap)]:[]);});
-      return ()=>{active=false;};
+      battleMapListeners.add(callback);
+      queueMicrotask(()=>{if(battleMapListeners.has(callback))callback(unifiedMapFixture?[clone(sharedMap)]:[]);});
+      return ()=>battleMapListeners.delete(callback);
     },
     fetchBattleMapMedia: async () => ({ok:true,blob:new Blob([
       Uint8Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9ZQmcAAAAASUVORK5CYII='),byte=>byte.charCodeAt(0))

@@ -300,6 +300,10 @@ export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigat
                 resource,current:Number(amount),
                 ...(maximum!==''?{maximum:Number(maximum)}:{})
               })})}>Apply GM Correction</button>
+          {combat.isActive&&current.opportunityUsed?<button type="button"
+            disabled={busy||!combat.sessionEditable||Boolean(combat.pending)||!reason.trim()}
+            onClick={()=>submit(current.id,{operation:'correct',targetId:current.id,reason:reason.trim(),
+              restoreOpportunity:true})}>Restore Round Opportunity</button>:null}
         </details>
         {canSetup?<div className={styles.fields}>
           <label>Set initiative
@@ -389,7 +393,8 @@ export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigat
             {(stream.data.maps||[]).map(map=><option key={map.id} value={map.id}>{map.name}</option>)}
           </select></label>:null}
           <CombatBattleMapPanel key={campaignId+':'+combat.combatId+':'+combat.battleMapId}
-            mediaApi={mediaApi} campaignId={campaignId} combat={combat} onCommand={submit} busy={busy}/>
+            mediaApi={mediaApi} campaignId={campaignId} combat={combat}
+            pending={legacyCombatState?.pending} onCommand={submit} busy={busy}/>
           <div className={styles.controls}>
             {canSetup?<button type="button" disabled={busy||!combat.sessionEditable}
               onClick={()=>submit('encounter',{operation:'map-prepare',

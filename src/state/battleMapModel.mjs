@@ -61,6 +61,24 @@ export function battleMapEditableSettings(input={}){
 export function battleMapDimensions(width,height){
   return {width:safeNumber(width,1,8192,'map width'),height:safeNumber(height,1,8192,'map height')};
 }
+export function battleMapTokenAppearance(row={}){
+  const portrait=typeof row.portrait==='string'?row.portrait.trim():'';
+  const siteRelative=portrait.startsWith('/')&&!portrait.startsWith('//');
+  let absolute=null;
+  try{if(portrait.toLowerCase().startsWith('https://'))absolute=new URL(portrait);}
+  catch{ /* Invalid URLs are rejected below. */ }
+  if(portrait&&(portrait.length>600||/[\s\\]/.test(portrait)||
+    [...portrait].some(letter=>letter.charCodeAt(0)<32||letter.charCodeAt(0)===127)||
+    !(siteRelative||absolute?.hostname&&!absolute.username&&!absolute.password)))
+    throw Error('Use an HTTPS or site-relative token portrait URL.');
+  const faction=String(row.faction||'');
+  if(faction&&!['party','ally','neutral','hostile'].includes(faction))throw Error('Invalid token faction.');
+  const cells=safeNumber(row.cells??1,1,80,'token footprint');
+  const visibility=String(row.visibility||'players');
+  if(!['gm','players'].includes(visibility))throw Error('Invalid token visibility.');
+  return {...(portrait?{portrait}:{}),...(faction?{faction}:{}),
+    ...(cells>1?{cells}:{}),...(visibility==='gm'?{visibility}:{})};
+}
 export function battleMapTokens(items){
   if(!Array.isArray(items)||items.length>BATTLE_MAP_MAX_TOKENS)throw Error('Map supports up to 60 tokens.');
   const ids=new Set();
@@ -80,7 +98,7 @@ export function battleMapTokens(items){
     if(combatantId&&!/^[A-Za-z0-9_-]{1,160}$/.test(combatantId))
       throw Error('Invalid combat participant binding.');
     return {id,label,kind,refId,...(combatantId?{combatantId}:{}),
-      x:Math.round(x*100)/100,y:Math.round(y*100)/100};
+      x:Math.round(x*100)/100,y:Math.round(y*100)/100,...battleMapTokenAppearance(row)};
   });
 }
 export function battleMapPoint(x,y,{columns=20,rows=15,snap=false}={}){

@@ -22,6 +22,7 @@ export function publicCombatSnapshot(raw={},publishedMap=null){
   const active=raw.status==='active'&&raw.combat?.version===1;
   const linked=active&&publishedMap?.id===raw.battleMapId&&publishedMap?.combatId===raw.combatId;
   const visibleCombatants=new Set(linked?publishedMap.visibleCombatants:[]);
+  const markers=linked?publishedMap.markers:{};
   const privateMap=active&&id(raw.battleMapId);
   const currentId=list[int(raw.turnIndex)]?.id;
   const roster=list.filter(row=>id(row?.id)&&
@@ -46,9 +47,29 @@ export function publicCombatSnapshot(raw={},publishedMap=null){
       ap:clamp(entry.ap,0,3,0),
       bonus:entry.bonus===true,
       pendingDeathSave:entry.pendingDeathSave===true,
-      turnComplete:entry.turnComplete===true
+      turnComplete:entry.turnComplete===true,
+      ...(typeof entry.movementDelegateUid==='string'&&entry.movementDelegateUid?{movementDelegated:true}:{}),
+      ...(Object.hasOwn(markers||{},row.id)?{mapTokenId:markers[row.id]}:{}),
+      ...(entry.movement&&Number.isFinite(entry.movement.remaining)?{
+        mapMovement:{remaining:Math.max(0,entry.movement.remaining),kind:name(entry.movement.kind,40),
+          ...(['ground','jump','teleport'].includes(entry.movement.routeKind)?{routeKind:entry.movement.routeKind}:{}),
+          diagonalParity:entry.movement.diagonalParity===1?1:0}
+      }:{}),
+      ...(entry.outOfTurn?.round===raw.round?{opportunityUsed:true}:{})
     };
-    else participants[row.id]={turnComplete:entry.turnComplete===true};
+    else participants[row.id]={turnComplete:entry.turnComplete===true,
+      ...(typeof entry.movementDelegateUid==='string'&&entry.movementDelegateUid?
+        {movementDelegated:true,
+          ...(Object.hasOwn(markers||{},row.id)?{mapTokenId:markers[row.id]}:{})}:{}),
+      ...(typeof entry.movementDelegateUid==='string'&&entry.movementDelegateUid&&
+        entry.movement&&Number.isFinite(entry.movement.remaining)?{
+          mapMovement:{remaining:Math.max(0,entry.movement.remaining),
+            kind:name(entry.movement.kind,40),
+            ...(['ground','jump','teleport'].includes(entry.movement.routeKind)?
+              {routeKind:entry.movement.routeKind}:{}),
+            diagonalParity:entry.movement.diagonalParity===1?1:0}
+        }:{}),
+      ...(entry.outOfTurn?.round===raw.round?{opportunityUsed:true}:{})};
   }
   const timer=raw.turnTimer||raw.timer||{};
   const pending=raw.combat?.pending;
@@ -118,14 +139,16 @@ export function publicPresentationBattleMap(raw={},campaignId='',mapId='',encoun
   const fogCells=validFogCells(raw.fogCells,columns,rows);
   const linked=encounter.status==='active'&&encounter.combat?.version===1&&
     id(encounter.combatId)&&encounter.battleMapId===mapId&&raw.combatId===encounter.combatId;
-  const actors=new Set(linked?(encounter.combatants||[]).map(row=>row.id):[]);
+  const actors=new Map(linked?(encounter.combatants||[]).map(row=>[row.id,row]):[]);
   const visibleTokens=battleMapTokens(raw.tokens||[]).filter(row=>
-    (!row.combatantId||actors.has(row.combatantId))&&
+    row.visibility!=='gm'&&(!row.combatantId||actors.has(row.combatantId))&&
     (!fogEnabled||tokenIsRevealed(row,fogCells,columns,rows)));
   const current=linked?encounter.combatants?.[encounter.turnIndex]?.id:'';
   const focus=current?visibleTokens.find(row=>row.combatantId===current):null;
   const tokens=visibleTokens.map(row=>({id:row.id,label:row.label.slice(0,48),
-    kind:row.kind,x:row.x,y:row.y}));
+    kind:row.kind,x:row.x,y:row.y,...(row.portrait?{portrait:row.portrait}:{}),
+    ...(row.faction?{faction:row.faction}:{}),...(row.cells?{cells:row.cells}:{}),
+    ...(actors.get(row.combatantId)?.defeated===true?{defeated:true}:{})}));
   return Object.freeze({
     version:1,id:mapId,
     name:name(raw.name,100)||'Published battle map',
@@ -146,7 +169,9 @@ export function combatMapVisibility(map,projection){
   if(!projection?.combatId)return null;
   const ids=new Set(projection.tokens.map(row=>row.id));
   return {id:projection.id,combatId:projection.combatId,
-    visibleCombatants:(map.tokens||[]).filter(row=>ids.has(row.id)).map(row=>row.combatantId)};
+    visibleCombatants:(map.tokens||[]).filter(row=>ids.has(row.id)).map(row=>row.combatantId),
+    markers:Object.fromEntries((map.tokens||[]).filter(row=>row.kind==='character'&&
+      ids.has(row.id)&&id(row.combatantId)).map(row=>[row.combatantId,row.id]))};
 }
 export function mapForRestrictedViewer(raw={},campaignId=''){
   if(!id(raw.id)||raw.visibility!=='players')return null;

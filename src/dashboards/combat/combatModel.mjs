@@ -29,14 +29,14 @@ export const COMBAT_BASIC_DECLARATIONS=Object.freeze([
   {id:'basic:grapple',name:'Grapple',requiresTarget:true},
   {id:'basic:shove',name:'Shove',requiresTarget:true}
 ]);
-export const COMBAT_PLAYER_COMMANDS=Object.freeze(['declare','spend-ap','end-turn','death-save']);
+export const COMBAT_PLAYER_COMMANDS=Object.freeze(['declare','spend-ap','end-turn','death-save','player-map-move']);
 export const COMBAT_GM_COMMANDS=Object.freeze([
-  'save','stage-prepared','unstage-prepared','load-prepared','map-prepare','map-link','map-move',
+  'save','stage-prepared','unstage-prepared','load-prepared','map-prepare','map-link','map-move','map-delegate','map-token-appearance',
   'start','pause','resume','next','skip-turn','override-turn','reopen','save-snapshot','restore-snapshot','delete-snapshot','end','clear','timer','release-wave','trigger-event',
   'declare','prepare','ambush','approve','reject','cancel','window',
   'close-window','roll','resolve','pass','react','react-ability',
   'resolve-reaction','trigger-prepared','condition',
-  'correct','spend-ap','end-turn','death-save'
+  'correct','spend-ap','end-turn','death-save','player-map-move'
 ]);
 
 export function combatRevision(encounter){return revision(encounter?.combat?.revision);}
@@ -64,6 +64,7 @@ export function projectCombat(encounter={},session=null,{role='player',character
       current:false,...(gm?{actedThisRound:raw.combat?.turnsTaken
         ?Object.hasOwn(raw.combat.turnsTaken,row.id):array(raw.combatants).findIndex(entry=>entry.id===row.id)<=raw.turnIndex}:{}),
       turnComplete:p.turnComplete===true,
+      ...(gm?{opportunityUsed:p.outOfTurn?.round===raw.round}:{}),
       ...(allowed&&!player?{
         ...safeEnemyProfile(saved||{}),
         conditions:array(saved?.conditions).slice(0,24).map(condition=>({
@@ -206,6 +207,10 @@ export function validateCombatCommand(mode,actorId,input){
     throw Error('Invalid combat command.');
   const allowed=mode==='gm'?COMBAT_GM_COMMANDS:COMBAT_PLAYER_COMMANDS;
   if(!allowed.includes(input.operation))throw Error('This combat operation is unavailable.');
+  if(input.operation==='player-map-move'&&(!validId(input.mapId)||
+    !['walk','approved'].includes(input.moveKind)||!Number.isFinite(input.point?.x)||
+    !Number.isFinite(input.point?.y)||input.point.x<0||input.point.x>100||input.point.y<0||input.point.y>100))
+    throw Error('Choose a valid token destination.');
   if(input.operation==='release-wave'&&(
     !validId(input.waveId)||input.confirmation!=='release-wave'
   ))throw Error('Choose and confirm a valid wave.');

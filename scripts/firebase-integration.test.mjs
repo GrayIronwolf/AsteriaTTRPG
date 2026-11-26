@@ -186,6 +186,45 @@ test('encounter and map projections stay in sync when turns, fog and publication
   assert.doesNotMatch(JSON.stringify((await mine(combatPath)).data()),/Private plan|Unseen threat/);
 });
 
+test('concurrent player token moves spend AP once and a GM can conceal a live token',async()=>{
+  const encounter=db.doc('campaigns/c/systems/encounter');
+  const map=db.doc('campaigns/c/battleMaps/arena');
+  const snapshot=()=>getDoc(doc(user('alice'),'campaigns/c/battleMapsPublic/arena'));
+  await db.doc('campaigns/c/characters/a').update({movement:9});
+  await encounter.set({status:'active',combatId:'arena-fight',battleMapId:'arena',turnIndex:0,round:1,
+    combatants:[{id:'hero',name:'Alice',kind:'player',characterId:'a'}],
+    combat:{version:1,revision:1,participants:{hero:{ap:3,turns:1}},log:[]}});
+  await map.set({id:'arena',combatId:'arena-fight',name:'Arena',visibility:'players',
+    storagePath:'campaigns/c/battleMaps/arena/scene.png',kind:'image',contentType:'image/png',
+    gridColumns:4,gridRows:4,metresPerCell:3,width:800,height:800,fogEnabled:false,
+    tokens:[{id:'hero-token',combatantId:'hero',label:'Alice',kind:'character',x:12.5,y:12.5}]});
+  const move=(uid,point,requestId)=>action(uid,'combatCommand',['c','hero',{
+    operation:'player-map-move',mapId:'arena',moveKind:'walk',revision:1,point
+  }],requestId);
+  assert.match((await move('bob',{x:37.5,y:12.5},'other-owner')).error,/cannot control/);
+  const destinations=[{x:37.5,y:12.5},{x:12.5,y:37.5}];
+  const results=await Promise.all(destinations.map((point,i)=>move('alice',point,'move-'+i)));
+  const winning=results.findIndex(row=>row.ok);
+  assert.notEqual(winning,-1,JSON.stringify(results));
+  assert.equal(results.filter(row=>row.ok).length,1);
+  assert.match(results[1-winning].error,/Combat changed/);
+  assert.deepEqual(await move('alice',destinations[winning],'move-'+winning),results[winning]);
+  assert.equal((await encounter.get()).data().combat.participants.hero.ap,2);
+  await synchronizeCombatPresentation(db,'c');
+  const visible=(await assertSucceeds(snapshot())).data();
+  assert.deepEqual(visible.tokens[0],{id:'hero-token',kind:'character',label:'Alice',...destinations[winning]});
+  const update={operation:'map-token-appearance',mapId:'arena',tokenId:'hero-token',
+    revision:2,appearance:{portrait:'/images/private-portrait.webp',visibility:'gm'}};
+  assert.match((await action('alice','combatCommand',['c','encounter',update])).error,/campaign GM/);
+  const hidden=await action('gm','combatCommand',['c','encounter',update]);
+  assert.equal(hidden.ok,true,hidden.error);
+  await synchronizeBattleMapPresentation(db,'c','arena');
+  const concealed=(await assertSucceeds(snapshot())).data();
+  assert.deepEqual(concealed.tokens,[]);
+  assert.equal(concealed.activeTokenId,'');
+  await assertFails(getDoc(doc(user('alice'),'campaigns/c/battleMaps/arena')));
+});
+
 test('Combat recovery uses one authoritative transaction across concurrent GM sessions',async()=>{
   const ref=db.doc('campaigns/c/systems/encounter');
   const command=(operation,revision,details={},requestId=crypto.randomUUID())=>
