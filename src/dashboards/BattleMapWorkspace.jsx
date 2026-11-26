@@ -1,5 +1,7 @@
 import {createSiteCombatApi,createSiteCombatMediaApi} from './combat/siteCombatApi.js';
 import {MAP_MOVE_AP,walkingAllowance} from '../state/battleMapMovement.mjs';
+import {paintTerrainCell,resizeTerrainCells} from '../state/battleMapTerrainModel.mjs';
+import {mapCell} from '../state/battleMapRoutes.mjs';
 import {BattleMapToken,CampaignMapWorkspace} from './presentation/CampaignMapWorkspace.jsx';
 import React,{useCallback,useEffect,useMemo,useRef,useState} from 'react';
 import {firebaseService} from '../firebase/asteriaFirebaseService.js';
@@ -18,14 +20,15 @@ import {hudImageSource} from '../state/playerHudMedia.mjs';
 const defaults=()=>({
   name:'',description:'',visibility:'gm',gridColumns:20,gridRows:15,
   gridOpacity:40,gridVisible:true,tokens:[],
-  fogEnabled:false,fogCells:'',metresPerCell:1
+  fogEnabled:false,fogCells:'',metresPerCell:1,gridType:'square',terrainCells:[]
 });
 const currentSettings=map=>({
   name:map.name,description:map.description||'',visibility:map.visibility,
   gridColumns:map.gridColumns,gridRows:map.gridRows,
   gridOpacity:map.gridOpacity,gridVisible:map.gridVisible,
   tokens:map.tokens||[],fogEnabled:map.fogEnabled===true,
-  fogCells:map.fogCells||'',metresPerCell:map.metresPerCell??1
+  fogCells:map.fogCells||'',metresPerCell:map.metresPerCell??1,
+  gridType:map.gridType||'square',terrainCells:map.terrainCells||[]
 });
 async function mediaDimensions(file){
   const url=URL.createObjectURL(file),isVideo=String(file.type).startsWith('video/');
@@ -81,6 +84,7 @@ function useMapMedia(campaignId,selected){
 }
 function MapCanvas({campaignId,map,gm=false,onPlaceToken,selectedTokenId='',fogTool='token',
   onFogStroke,onFogBegin,onPrivatePin,privatePins=[],previewPlayerFog=false,onMeasure,measurePoints=[],
+  onTerrainPaint,
   encounter=null,selectedCombatantId='',onCombatMove,combatBusy=false}) {
   const media=useMapMedia(campaignId,map),canvas=useRef(null);
   const [playing,setPlaying]=useState(true),[showGrid,setShowGrid]=useState(true);
@@ -95,6 +99,7 @@ function MapCanvas({campaignId,map,gm=false,onPlaceToken,selectedTokenId='',fogT
     Boolean(selectedCombatantId)&&Boolean(onCombatMove)&&!combatBusy;
   const isAnnotating=gm&&fogTool==='pin'&&Boolean(onPrivatePin);
   const isMeasuring=gm&&fogTool==='measure'&&Boolean(onMeasure);
+  const isTerrain=gm&&fogTool==='terrain'&&Boolean(onTerrainPaint);
   const tokens=derivedCombatMapTokens(map,encounter);
   const combatants=combatMapRoster(encounter);
   const activeActor=combatants.find(row=>row.isCurrent)?.id||'';
@@ -136,6 +141,7 @@ function MapCanvas({campaignId,map,gm=false,onPlaceToken,selectedTokenId='',fogT
   const pointerUp=()=>{pointerLast.current=null;};
   const move=event=>{
     if(isCombatMove){const point=pointFromEvent(event);if(point)onCombatMove(selectedCombatantId,point);return;}
+    if(isTerrain){const point=pointFromEvent(event);if(point)onTerrainPaint(point);return;}
     if(!isPlacing||!onPlaceToken)return;
     const point=pointFromEvent(event);
     if(!point)return;
@@ -151,7 +157,7 @@ function MapCanvas({campaignId,map,gm=false,onPlaceToken,selectedTokenId='',fogT
       {map.gridVisible?<button type="button" onClick={()=>setShowGrid(value=>!value)}>
         {showGrid?'Hide grid':'Show grid'}</button>:null}
     </div>
-    <div ref={canvas} className={'asteria-battle-canvas'+((isPlacing||isBrush||isMeasuring||isAnnotating||isCombatMove)?' token-placement':'')+(isBrush?' fog-edit':'')}
+    <div ref={canvas} className={'asteria-battle-canvas'+((isPlacing||isBrush||isMeasuring||isAnnotating||isCombatMove||isTerrain)?' token-placement':'')+(isBrush?' fog-edit':'')}
       onClick={move} onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerUp}
       onPointerCancel={pointerUp} onLostPointerCapture={pointerUp}
       style={{aspectRatio:map.width+' / '+map.height}}>
@@ -163,6 +169,16 @@ function MapCanvas({campaignId,map,gm=false,onPlaceToken,selectedTokenId='',fogT
         onError={()=>{}} aria-label={'Looping animated map: '+map.name}/>:
         <img src={media.url} alt={map.name} className="asteria-battle-media"/>):null}
       {grid?<div aria-hidden="true" className="asteria-battle-grid" style={background}/>:null}
+      {gm&&Array.isArray(map.terrainCells)&&map.terrainCells.length>0?<svg
+        aria-label="GM terrain grid overlay" viewBox="0 0 100 100" preserveAspectRatio="none"
+        style={{position:'absolute',inset:0,width:'100%',height:'100%',pointerEvents:'none'}}>
+        {map.terrainCells.map(cell=><rect key={cell.column+':'+cell.row}
+          x={cell.column*100/cols} y={cell.row*100/rows}
+          width={100/cols} height={100/rows}
+          fill={({wall:'#c74444',water:'#317ec4',difficult:'#a87a32',
+            hazard:'#a8429c',cover:'#678663',stairs:'#989bb2'}[cell.kind]||'#94a1ae')}
+          fillOpacity=".33" stroke="#d8dbe0" strokeOpacity=".45" strokeWidth=".12"/>)}
+      </svg>:null}
       {tokens.filter(token=>{
         if((!gm||previewPlayerFog)&&token.visibility==='gm')return false;
         if(!playerFog)return true;
@@ -277,6 +293,7 @@ export function GMBattleMapManager({campaignId,characters={},encounter={},search
   const [file,setFile]=useState(null),[busy,setBusy]=useState(false),[message,setMessage]=useState('');
   const [selectedTokenId,setSelectedTokenId]=useState('');
   const [fogTool,setFogTool]=useState('token'),[fogBrush,setFogBrush]=useState(1);
+  const [terrainKind,setTerrainKind]=useState('difficult'),[terrainElevation,setTerrainElevation]=useState(0);
   const [previewPlayerFog,setPreviewPlayerFog]=useState(false);
   const [measurePoints,setMeasurePoints]=useState([]);
   const [privatePins,setPrivatePins]=useState([]),[privateNoteName,setPrivateNoteName]=useState('');
@@ -323,7 +340,9 @@ export function GMBattleMapManager({campaignId,characters={},encounter={},search
       nextCols<1||nextCols>80||nextRows<1||nextRows>80)return previous;
     try{
       return {...previous,...values,fogCells:resizeFogCells(previous.fogCells,
-        previous.gridColumns,previous.gridRows,nextCols,nextRows)};
+        previous.gridColumns,previous.gridRows,nextCols,nextRows),
+        terrainCells:resizeTerrainCells(previous.terrainCells||[],previous.gridColumns,
+          previous.gridRows,nextCols,nextRows)};
     }catch{return {...previous,...values};}
   });
   const rememberFog=()=>{undoFog.current=[...undoFog.current.slice(-19),draft.fogCells||
@@ -352,6 +371,12 @@ export function GMBattleMapManager({campaignId,characters={},encounter={},search
     }catch(error){setMessage(error.message);}
   };
   const placeMeasurePoint=point=>setMeasurePoints(previous=>previous.length===2?[point]:[...previous,point]);
+  const paintTerrain=point=>{
+    if(combatLinked)return;
+    try{patch({terrainCells:paintTerrainCell(draft.terrainCells||[],draft.gridColumns,
+      draft.gridRows,mapCell(point,draft.gridColumns,draft.gridRows),terrainKind,Number(terrainElevation))});}
+    catch(error){setMessage(error.message);}
+  };
   let measurement=null;
   if(measurePoints.length===2){
     try{measurement=measureGridDistance(measurePoints[0],measurePoints[1],
@@ -449,7 +474,11 @@ export function GMBattleMapManager({campaignId,characters={},encounter={},search
       <label>Grid rows<input type="number" min="1" max="80" disabled={combatLinked} value={draft.gridRows} onChange={event=>patch({gridRows:Number(event.target.value)})}/></label>
       <label>Grid opacity %<input type="number" min="0" max="100" value={draft.gridOpacity} onChange={event=>patch({gridOpacity:Number(event.target.value)})}/></label>
       <label><input type="checkbox" checked={draft.gridVisible} onChange={event=>patch({gridVisible:event.target.checked})}/> Show grid</label>
-      <label>Metres per square<input type="number" min="0.1" max="100" step="0.1" disabled={combatLinked} value={draft.metresPerCell}
+      <label>Grid geometry<select value={draft.gridType||'square'} disabled={combatLinked}
+        onChange={event=>patch({gridType:event.target.value})}>
+        <option value="square">Square</option><option value="hex">Hexagonal</option>
+      </select></label>
+      <label>Metres per cell<input type="number" min="0.1" max="100" step="0.1" disabled={combatLinked} value={draft.metresPerCell}
         onChange={event=>patch({metresPerCell:Number(event.target.value)})}/></label>
       <label><input type="checkbox" checked={draft.fogEnabled} onChange={event=>{
         patch({fogEnabled:event.target.checked});setFogTool(event.target.checked?'reveal':'token');
@@ -467,6 +496,7 @@ export function GMBattleMapManager({campaignId,characters={},encounter={},search
           <option value="reveal" disabled={!draft.fogEnabled}>Reveal fog brush</option>
           <option value="hide" disabled={!draft.fogEnabled}>Hide fog brush</option>
           <option value="measure">Distance ruler</option>
+          <option value="terrain" disabled={combatLinked}>Paint terrain</option>
           <option value="pin">Place GM-only pin</option>
         </select></label>
         <label>Fog brush radius (squares)<input type="number" min="0" max="8" value={fogBrush}
@@ -474,6 +504,15 @@ export function GMBattleMapManager({campaignId,characters={},encounter={},search
         <label><input type="checkbox" checked={previewPlayerFog}
           onChange={event=>setPreviewPlayerFog(event.target.checked)}/> Preview visible player fog</label>
       </div>
+      {fogTool==='terrain'?<div className="asteria-battle-form-row">
+        <label>Terrain<select value={terrainKind} onChange={event=>setTerrainKind(event.target.value)}>
+          {['plain','difficult','wall','water','hazard','cover','stairs'].map(kind=>
+            <option key={kind} value={kind}>{kind}</option>)}
+        </select></label>
+        <label>Elevation (metres)<input type="number" min="-100" max="100" step="0.25"
+          value={terrainElevation} onChange={event=>setTerrainElevation(event.target.value)}/></label>
+        <small>Select a cell to paint its terrain. Plain at zero elevation erases terrain.</small>
+      </div>:null}
       {draft.fogEnabled?<div className="react-action-row">
         <button type="button" onClick={()=>setAllFog(true)}>Reveal all</button>
         <button type="button" onClick={()=>setAllFog(false)}>Hide all</button>
@@ -587,6 +626,7 @@ export function GMBattleMapManager({campaignId,characters={},encounter={},search
       fogTool={fogTool} onFogBegin={rememberFog} onFogStroke={fogStroke}
       onPrivatePin={addPrivatePin} privatePins={privatePins}
       previewPlayerFog={previewPlayerFog} onMeasure={placeMeasurePoint}
+      onTerrainPaint={paintTerrain}
       measurePoints={measurePoints}/>:null}
     <div className="react-action-row">
       {!selected?<button type="button" className="primary" disabled={busy||!file||!settings||maps.length>=40}
