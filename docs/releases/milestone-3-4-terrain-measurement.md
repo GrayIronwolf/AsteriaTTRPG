@@ -41,3 +41,9 @@
 - Generate and commit matching frontend bundle assets before merge.
 - Confirm full GitHub Actions success and verify test-branch publishing safeguards before retargeting/merging.
 - Manual cross-browser and GM/player session tests remain required before production deployment.
+
+## Integration verification (26 November 2026)
+
+- Dependency Milestone 3.3 was merged into `Website-Build-Test` by PR #394 at `ccc44c2f163a3a4c4ceefe52a8352a8597ae53e0` after 13/13 fresh checks passed.
+- GitHub Pages is configured in `workflow` publishing mode. Its legacy `source.branch` metadata must not be treated as an active publish trigger; the test-branch safeguard now audits workflow deployment actions and Pages write permissions and passed.
+- This PR is retargeted to `Website-Build-Test` for final combined-base verification. It must still pass the new PR checks before merging. No live release, Firebase backend deployment or Firestore rules deployment is included in a code merge.
