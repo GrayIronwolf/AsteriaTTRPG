@@ -1,5 +1,6 @@
 // Digital GM phase 6.2. Pure geometry and validation for tabletop fog, ruler, and GM-only pins.
 // Fog overlays are visual controls: published original media may still be inspected client-side.
+import {mapCell,hexCellDistance} from './battleMapRoutes.mjs';
 export const BATTLE_MAP_MAX_PRIVATE_PINS=40;
 export const BATTLE_MAP_MAX_CELLS=6400;
 const boundedInt=(value,min,max,label)=>{
@@ -88,10 +89,12 @@ export function distanceMetersPerCell(input=1){
     throw Error('Square distance must be 0.1–100 metres with at most two decimals.');
   return n;
 }
-export function measureGridDistance(from,to,cols,rows,metresPerCell=1){
+export function measureGridDistance(from,to,cols,rows,metresPerCell=1,gridType='square'){
   const a=finitePoint(from),b=finitePoint(to),d=dims(cols,rows);
   const scale=distanceMetersPerCell(metresPerCell);
-  const squares=Math.hypot((b.x-a.x)*d.columns/100,(b.y-a.y)*d.rows/100);
+  const squares=gridType==='hex'?hexCellDistance(mapCell(a,d.columns,d.rows,gridType),
+    mapCell(b,d.columns,d.rows,gridType)):
+    Math.hypot((b.x-a.x)*d.columns/100,(b.y-a.y)*d.rows/100);
   return {squares:Math.round(squares*100)/100,metres:Math.round(squares*scale*100)/100};
 }
 export function battleMapPrivatePins(value){

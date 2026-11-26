@@ -891,3 +891,77 @@ test('player combat projection reveals delegated tokens, but never the delegate 
   assert.equal(publicView.combat.participants.npc.ap,undefined);
   assert.equal(publicCombatSnapshot(raw,null).combatants.length,0);
 });
+
+test('Milestone 3.4 validates sparse terrain and preserves legacy square defaults',async()=>{
+  const {battleMapEditableSettings}=await import('../src/state/battleMapModel.mjs');
+  const {validateTerrainCells,resizeTerrainCells,paintTerrainCell,publicTerrainCells}
+    =await import('../src/state/battleMapTerrainModel.mjs');
+  const basic=battleMapEditableSettings({name:'Plains',gridColumns:4,gridRows:4});
+  assert.equal(basic.gridType,'square');
+  assert.deepEqual(basic.terrainCells,[]);
+  assert.deepEqual(validateTerrainCells([{column:1,row:1,kind:'wall',elevation:0}],4,4),
+    [{column:1,row:1,kind:'wall',elevation:0}]);
+  assert.throws(()=>validateTerrainCells([{column:0,row:0,kind:'wall'},
+    {column:0,row:0,kind:'water'}],4,4),/Duplicate/);
+  assert.throws(()=>validateTerrainCells([{column:4,row:0,kind:'wall'}],4,4),/column/);
+  assert.throws(()=>validateTerrainCells([{column:0,row:0,kind:'unknown'}],4,4),/Unknown/);
+  assert.throws(()=>validateTerrainCells([{column:0,row:0,kind:'wall',elevation:Infinity}],4,4),/elevation/);
+  const cells=paintTerrainCell([],4,4,{column:1,row:1},'difficult',1.25);
+  assert.equal(cells[0].elevation,1.25);
+  assert.deepEqual(paintTerrainCell(cells,4,4,{column:1,row:1},'plain',0),[]);
+  assert.equal(resizeTerrainCells(cells,4,4,2,2).length,1);
+  const map={gridColumns:4,gridRows:4,fogEnabled:true,terrainCells:[
+    {column:0,row:0,kind:'wall',elevation:0},{column:3,row:3,kind:'water',elevation:0}
+  ]};
+  assert.deepEqual(publicTerrainCells(map,'1'+'0'.repeat(15)),
+    [{column:0,row:0,kind:'wall',elevation:0}]);
+});
+test('Milestone 3.4 terrain routes enforce difficult costs, walls, water and elevation',()=>{
+  const start={x:12.5,y:12.5},map={gridColumns:4,gridRows:4,metresPerCell:3,
+    terrainCells:[{column:1,row:0,kind:'difficult',elevation:0},
+      {column:0,row:1,kind:'wall',elevation:0},{column:2,row:0,kind:'water',elevation:0},
+      {column:1,row:1,kind:'plain',elevation:5}]};
+  assert.equal(mapReachableRoutes(map,start,3).has('1:0'),false);
+  assert.equal(mapReachableRoutes(map,start,6).get('1:0').cost,6);
+  assert.equal(mapReachableRoutes(map,start,12).has('0:1'),false);
+  assert.equal(mapReachableRoutes(map,start,20).has('1:1'),false);
+  assert.equal(mapReachableRoutes(map,start,30).has('2:0'),false);
+  assert.equal(mapReachableRoutes(map,start,6,{movementKind:'fly'}).has('2:0'),true);
+  assert.equal(mapReachableRoutes(map,start,6,{movementKind:'teleport'}).has('0:1'),false);
+  const stairMap={...map,terrainCells:[{column:1,row:0,kind:'stairs',elevation:4}]};
+  assert.ok(mapReachableRoutes(stairMap,start,7).has('1:0'));
+});
+test('Milestone 3.4 odd-row hex routes and distance use six neighbours',async()=>{
+  const {hexCellDistance}=await import('../src/state/battleMapRoutes.mjs');
+  const map={gridColumns:5,gridRows:5,metresPerCell:3,gridType:'hex'};
+  const start={x:30,y:30}; // column 1, row 1 (odd-row geometry)
+  const routes=mapReachableRoutes(map,start,3);
+  assert.equal(routes.size,6);
+  assert.equal(routes.get('2:0').cost,3);
+  assert.equal(routes.get('2:2').cost,3);
+  assert.equal(routes.has('0:0'),false);
+  assert.equal(hexCellDistance({column:1,row:1},{column:2,row:2}),1);
+  assert.equal(hexCellDistance({column:1,row:1},{column:4,row:4}),4);
+});
+
+test('Milestone 3.4 ruler counts hex steps and keeps legacy square Euclidean distance',async()=>{
+  const {measureGridDistance}=await import('../src/state/battleMapFogModel.mjs');
+  const a={x:30,y:30},b={x:50,y:50};
+  assert.equal(measureGridDistance(a,b,5,5,3,'hex').metres,3);
+  assert.equal(measureGridDistance(a,b,5,5,3,'square').metres,4.24);
+});
+
+test('Milestone 3.4 pointer picking and snapping round-trip real staggered hex centres',async()=>{
+  const {mapCell,mapCellCenter,hexCellPoints}=await import('../src/state/battleMapRoutes.mjs');
+  const {battleMapPoint}=await import('../src/state/battleMapModel.mjs');
+  for(let row=0;row<5;row++)for(let column=0;column<5;column++){
+    const center=mapCellCenter({column,row},5,5,'hex');
+    assert.deepEqual(mapCell(center,5,5,'hex'),{column,row});
+    assert.deepEqual(mapCell(battleMapPoint(center.x,center.y,{
+      columns:5,rows:5,snap:true,gridType:'hex'
+    }),5,5,'hex'),{column,row});
+    assert.equal(hexCellPoints({column,row},5,5).length,6);
+  }
+  assert.deepEqual(mapCell(mapCellCenter({column:2,row:3},5,5),5,5),
+    {column:2,row:3});
+});

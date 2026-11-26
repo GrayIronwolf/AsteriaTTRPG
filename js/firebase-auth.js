@@ -1401,6 +1401,15 @@ const firebasePublicApi = {
           throw Error('Only the campaign GM can edit battle maps.');
         const ref=doc(db,'campaigns',campaignId,'battleMaps',mapId),snap=await tx.get(ref);
         if(!snap.exists())throw Error('This battle map no longer exists.');
+        const previous=snap.data();
+        if(previous.combatId&&(
+          JSON.stringify(details.tokens)!==JSON.stringify(previous.tokens)||
+          details.gridColumns!==previous.gridColumns||
+          details.gridRows!==previous.gridRows||
+          details.metresPerCell!==previous.metresPerCell||
+          details.gridType!==(previous.gridType||'square')||
+          JSON.stringify(details.terrainCells)!==JSON.stringify(previous.terrainCells||[])))
+          throw Error('End the linked encounter before modifying map terrain, grid or combat tokens.');
         tx.update(ref,{...details,updatedAt:serverTimestamp()});
       });
       return {ok:true};
