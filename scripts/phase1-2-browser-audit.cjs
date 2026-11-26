@@ -238,7 +238,7 @@ async function metrics(page) {
     assert.equal(await confirm.isEnabled(),true);
     await confirm.press('Enter');
     await panel.waitFor({state:'visible'});
-    await panel.locator('[title="Kael"][style*="56.25%"]').waitFor();
+    await panel.locator('[data-token-id="visible-kael"][style*="56.25%"]').waitFor();
 
   });
   await scenario('05-gm-dashboard-canvas',{width:1440},async p=>{

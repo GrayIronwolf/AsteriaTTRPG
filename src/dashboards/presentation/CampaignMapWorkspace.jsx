@@ -71,6 +71,25 @@ function useAuthenticatedMapBlob(api,campaignId,map,mode,atlas=false,restricted=
   },[api,scope]);
   return result.scope===scope?result:{url:'',error:'',loading:Boolean(map)};
 }
+export function BattleMapToken({token,columns,rows,className,selected=false,current=false,defeated=false,onSelect}){
+  const footprint=token.cells??1,offset=footprint%2===0?0.5:0;
+  const style={left:(token.x+offset*100/columns)+'%',top:(token.y+offset*100/rows)+'%',
+    ...(footprint>1?{width:footprint*100/columns+'%',height:'auto',aspectRatio:'1'}:{})};
+  const label=[token.label,token.faction,current?'Current turn':'',defeated?'Defeated':'',
+    token.visibility==='gm'?'GM only':''].filter(Boolean).join(' · ');
+  const Element=onSelect?'button':'span';
+  return <Element className={className+' asteria-map-marker'} style={style}
+    data-token-id={token.id}
+    data-faction={token.faction||(token.kind==='character'?'party':'neutral')}
+    data-selected={selected||undefined} data-current={current||undefined}
+    data-defeated={defeated||undefined} data-private={token.visibility==='gm'||undefined}
+    aria-label={token.label} title={label}
+    {...(onSelect?{type:'button','aria-pressed':selected,onClick:onSelect}:{})}>
+    <span aria-hidden="true">{token.label.charAt(0).toUpperCase()||'•'}</span>
+    {token.portrait?<img src={token.portrait} alt="" loading="lazy" decoding="async"
+      referrerPolicy="no-referrer" onError={event=>{event.currentTarget.hidden=true;}}/>:null}
+  </Element>;
+}
 export function CampaignMapCanvas({api,campaignId,map,mode='player',atlas=false,
   editing=false,onPoint,previewFog=false,showGrid=true,restricted=false,interactive=false,camera=null,movement=null}){
   const media=useAuthenticatedMapBlob(api,campaignId,map,mode,atlas,restricted);
@@ -203,14 +222,9 @@ export function CampaignMapCanvas({api,campaignId,map,mode='player',atlas=false,
         const x=Math.min(cols-1,Math.floor(t.x*cols/100));
         const y=Math.min(rows-1,Math.floor(t.y*rows/100));
         return fogCells[y*cols+x]==='1';
-      }).map(t=>{
-        const position={left:t.x+'%',top:t.y+'%'};
-        const label=t.kind==='character'?'P':t.kind==='creature'?'C':'•';
-        return interactive&&!moveMode&&tool!=='ruler'?<button type="button" className={styles.token} key={t.id}
-          style={position} aria-label={t.label} aria-pressed={selection===t.id}
-          onClick={()=>setSelection(t.id)}>{label}</button>:
-          <span className={styles.token} key={t.id} style={position} title={t.label}>{label}</span>;
-      })}
+      }).map(t=><BattleMapToken key={t.id} token={t} columns={cols} rows={rows} className={styles.token}
+        selected={selection===t.id} current={map.activeTokenId===t.id}
+        onSelect={interactive&&!moveMode&&tool!=='ruler'?()=>setSelection(t.id):undefined}/>)}
       {tool==='ruler'&&ruler.length>0?<svg className={styles.ruler} viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
         {ruler.length===2?<line x1={ruler[0].x} y1={ruler[0].y} x2={ruler[1].x} y2={ruler[1].y}/>:null}
         {ruler.map((p,i)=><circle key={i} cx={p.x} cy={p.y} r=".6"/>)}

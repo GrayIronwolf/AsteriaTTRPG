@@ -610,8 +610,31 @@ test('battle map routes honour occupied cells and alternating diagonal costs',()
   assert.equal(mapReachableRoutes(map,start,9).get('2:2').cost,9);
   assert.equal(mapReachableRoutes(map,start,3,{diagonalParity:1}).has('1:1'),false);
   assert.equal(mapReachableRoutes(map,start,3,{occupied:[{x:37.5,y:12.5}]}).has('1:1'),false);
+  assert.equal(mapReachableRoutes(map,{...start,cells:2},3,{occupied:[{x:62.5,y:37.5}]}).has('1:0'),false);
+  assert.equal(mapReachableRoutes(map,{x:87.5,y:62.5},3,{occupied:[{x:62.5,y:37.5,cells:2}]}).has('3:1'),false);
   assert.equal(walkingAllowance({movement:'6m (Walking) - 18m (Flying)'},{}),6);
   assert.equal(walkingAllowance({movement:null},{}),null);
+});
+
+test('only the GM can update a linked token and its private presentation settings',async()=>{
+  const h=database();await h.setup();
+  const path='campaigns/c/battleMaps/arena';
+  h.store.set(path,{id:'arena',visibility:'players',gridColumns:4,gridRows:4,tokens:[]});
+  assert.equal((await h.command('gm','encounter','map-link',{mapId:'arena'})).ok,true);
+  const tokenId=h.store.get(path).tokens[0].id;
+  const command={mapId:'arena',tokenId,appearance:{
+    portrait:'/images/scout.webp',faction:'ally',cells:2,visibility:'gm'
+  }};
+  assert.match((await h.command('alice','encounter','map-token-appearance',command)).error,/campaign GM/);
+  assert.match((await h.command('gm','encounter','map-token-appearance',{
+    ...command,appearance:{...command.appearance,portrait:'//example.com/scout.png'}
+  })).error,/portrait URL/);
+  assert.equal((await h.command('gm','encounter','map-token-appearance',command)).ok,true);
+  const saved=h.store.get(path).tokens[0];
+  assert.equal(saved.visibility,'gm');
+  assert.equal(saved.cells,2);
+  assert.equal(saved.portrait,'/images/scout.webp');
+  assert.deepEqual(h.encounter().combat.log[0].to,command.appearance);
 });
 
 test('a player moves only their own token and recorded AP is charged once',async()=>{

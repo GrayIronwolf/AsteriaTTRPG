@@ -13,6 +13,15 @@ export const mapCellCenter=({column,row},columns,rows)=>({
 const ortho=[[1,0],[-1,0],[0,1],[0,-1]];
 const diagonal=[[1,1],[1,-1],[-1,1],[-1,-1]];
 const neighbours=[...ortho,...diagonal];
+function footprintFits(column,row,size,allows){
+  const offset=Math.floor((size-1)/2);
+  for(let y=row-offset;y<row-offset+size;y++){
+    for(let x=column-offset;x<column-offset+size;x++){
+      if(!allows(x,y))return false;
+    }
+  }
+  return true;
+}
 function push(queue,next){
   let i=queue.length;
   queue.push(next);
@@ -42,14 +51,21 @@ export function mapReachableRoutes(map,origin,allowance,{occupied=[],diagonalPar
     !Number.isFinite(scale)||scale<=0||!Number.isFinite(allowance)||allowance<=0)return new Map();
   const start=mapCell(origin,columns,rows);
   if(!start)return new Map();
-  const startKey=mapCellKey(start),blocked=new Set(occupied.map(point=>mapCell(point,columns,rows))
-    .filter(Boolean).map(mapCellKey));
+  const startKey=mapCellKey(start),blocked=new Set();
+  for(const token of occupied){
+    const cell=mapCell(token,columns,rows);
+    if(cell)footprintFits(cell.column,cell.row,token.cells??1,(column,row)=>{
+      blocked.add(mapCellKey({column,row}));
+      return true;
+    });
+  }
   blocked.delete(startKey);
   const queue=[],best=new Map(),routes=new Map();
   const seed={...start,parity:Number(diagonalParity===1),cost:0,previous:null};
   const stateKey=row=>mapCellKey(row)+':'+row.parity;
-  const valid=(column,row)=>column>=0&&row>=0&&column<columns&&row<rows&&!blocked.has(column+':'+row)&&
+  const free=(column,row)=>column>=0&&row>=0&&column<columns&&row<rows&&!blocked.has(column+':'+row)&&
     (!revealedOnly||!map.fogEnabled||map.fogCells?.[row*columns+column]==='1');
+  const valid=(column,row)=>footprintFits(column,row,origin.cells??1,free);
   best.set(stateKey(seed),seed);push(queue,seed);
   while(queue.length){
     const current=take(queue);

@@ -15,6 +15,7 @@ import { encounterSourceResources, setEncounterResource } from '../src/state/enc
 import {normalizePreparedEncounters,preparedEncounterRoster} from '../src/state/preparedEncounterModel.mjs';
 import {updateStagedEncounter,validatePreparedLoadRequest} from '../src/state/preparedEncounterLoadModel.mjs';
 import {combatMapMovePlan,synchronizeCombatMapTokens,activeMapEncounter} from '../src/state/battleMapCombatModel.mjs';
+import {battleMapTokenAppearance} from '../src/state/battleMapModel.mjs';
 import {preparedMapTokenCapacity} from '../src/state/preparedBattleMapModel.mjs';
 import {applyEncounterRecovery,captureEncounterRecovery,nextCompletionRecord,recoveryOperations} from './encounterRecovery.mjs';
 import {captureEncounterCompletion} from '../src/state/encounterCompletionModel.mjs';
@@ -38,7 +39,7 @@ const combatCharacterFields=new Set(['hp','sp','mp','bp','zp','resources','resou
 const ENCOUNTER_INITIATIVE_MODES=new Set(['automatic','manual','mixed']);
 const initiativeMode=value=>ENCOUNTER_INITIATIVE_MODES.has(value)?value:'automatic';
 const needsManualInitiative=(row,mode)=>mode==='manual'||(mode==='mixed'&&Boolean(row.characterId));
-const management=new Set([...recoveryOperations,'skip-turn','override-turn','release-wave','trigger-event','timer','map-link','map-move','save','stage-prepared','unstage-prepared','load-prepared','map-prepare','start','pause','resume','next','end','clear','approve','reject','window','close-window','resolve','roll','resolve-reaction','correct','condition','ambush','trigger-prepared']);
+const management=new Set([...recoveryOperations,'skip-turn','override-turn','release-wave','trigger-event','timer','map-link','map-move','map-token-appearance','save','stage-prepared','unstage-prepared','load-prepared','map-prepare','start','pause','resume','next','end','clear','approve','reject','window','close-window','resolve','roll','resolve-reaction','correct','condition','ambush','trigger-prepared']);
 const publicPending=p=>p?{id:p.id,actorId:p.actorId,actorName:p.actorName,optionId:p.actorKind==='player'?p.optionId:'',name:p.actorKind==='player'?p.name:'Creature action',status:p.status,targetIds:p.targetIds,ap:p.ap,bonus:p.bonus,apPaid:Boolean(p.prepaidAP),costs:p.actorKind==='player'?p.costs:{},reactionWindow:p.status==='reactions',reactorId:p.window?.[p.windowIndex||0]?.actorId||'',reactionChoices:p.window?.[p.windowIndex||0]?.choices||[],reaction:p.reaction?{actorId:p.reaction.actorId,name:p.reaction.name}:null,message:p.publicMessage||''}:null;
 
 // An extension of asteriaAction: one encounter document, existing resource/effect
@@ -117,7 +118,7 @@ export function createCombatCommands(context) {
       }
       // Fetch the bound map before any transaction writes; map and encounter are
       // committed atomically. Never trust client-supplied turn order or distance.
-      const mapOperation=['map-link','map-move'].includes(input.operation);
+      const mapOperation=['map-link','map-move','map-token-appearance'].includes(input.operation);
       const preparingMap=input.operation==='map-prepare';
       if(mapOperation&&!gm)throw new Error('Only the campaign GM can control combat maps.');
       const boundMapId=mapOperation?String(input.mapId||''):String(encounter.battleMapId||'');
@@ -448,6 +449,20 @@ export function createCombatCommands(context) {
           actorUid:currentUser.uid,targetId:actor.id,from:{x:original.x,y:original.y},to:point,
           metres:route.cost,ap
         });
+      }else if(input.operation==='map-token-appearance'){
+        requireActive();
+        if(encounter.battleMapId!==boundMapId||boundMap.combatId!==encounter.combatId)
+          throw Error('This map is not linked to the current encounter.');
+        const appearance=battleMapTokenAppearance(input.appearance||{});
+        const token=boundMap.tokens.find(row=>row.id===input.tokenId);
+        if(!token)throw Error('This map token no longer exists.');
+        const {portrait,faction,cells,visibility,...base}=token;
+        const tokens=boundMap.tokens.map(row=>row.id===token.id?{...base,...appearance}:row);
+        tx.update(mapRef,{tokens,updatedAt:serverTimestamp()});
+        log('GM updated the appearance and visibility of '+token.label+'.',{
+          actorUid:currentUser.uid,targetId:token.combatantId||token.id,
+          from:battleMapTokenAppearance({portrait,faction,cells,visibility}),to:appearance
+        });
       }else if(input.operation==='map-move'){
         requireActive();noPending();
         if(encounter.battleMapId!==boundMapId)
@@ -461,7 +476,7 @@ export function createCombatCommands(context) {
         if(plan.mode==='movement'){
           const existing=encounter.combat.participants[plan.actorId]||{};
           encounter.combat.participants[plan.actorId]={
-            ...existing,movement:{...existing.movement,remaining:plan.remaining}
+            ...existing,movement:{...existing.movement,remaining:plan.remaining,diagonalParity:plan.diagonalParity}
           };
         }
         log(plan.mode==='movement'

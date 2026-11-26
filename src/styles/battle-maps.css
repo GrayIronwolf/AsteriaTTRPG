@@ -13,6 +13,17 @@
 .asteria-battle-loading{position:absolute;inset:20% 7%;text-align:center;z-index:3;background:#1a2137dd;padding:10px;border-radius:6px}
 .asteria-battle-token{position:absolute;z-index:2;transform:translate(-50%,-50%);min-width:24px;height:24px;border-radius:50%;border:2px solid #d8cbad;background:#253b60;color:#fff;font-size:13px;font-weight:bold;display:grid;place-items:center;pointer-events:none;box-shadow:0 1px 8px #000b}
 .asteria-battle-token.selected{outline:2px solid #fed376;outline-offset:2px}
+.asteria-map-marker.asteria-map-marker{display:grid;place-items:center;width:26px;height:26px;min-height:0;
+  padding:0;border:2px solid var(--battle-token-rim,#d8cbad);border-radius:50%;background:#172737;
+  color:#fff;font-size:.75rem;font-weight:700;box-shadow:0 2px 6px #000a;isolation:isolate}
+.asteria-map-marker>img{position:absolute;inset:0;width:100%;height:100%;border-radius:inherit;object-fit:cover}
+.asteria-map-marker[data-faction=party]{--battle-token-rim:#76b9ff}
+.asteria-map-marker[data-faction=ally]{--battle-token-rim:#83d897}
+.asteria-map-marker[data-faction=hostile]{--battle-token-rim:#ff867e}
+.asteria-map-marker[data-current=true]{box-shadow:0 0 0 2px #fed376,0 2px 6px #000a}
+.asteria-map-marker[data-private=true]{border-style:dashed}
+.asteria-map-marker[data-selected=true]{outline:2px solid #fff4ab;outline-offset:3px}
+.asteria-map-marker[data-defeated=true]{filter:grayscale(.8);opacity:.65}
 .asteria-battle-token-editor{margin:12px 0;padding:10px;border:1px solid var(--asteria-border,#706e70);border-radius:8px}
 .asteria-battle-token-list{display:flex;flex-wrap:wrap;gap:8px;margin:9px 0}
 .asteria-battle-token-list>div{display:flex;gap:4px;align-items:center}

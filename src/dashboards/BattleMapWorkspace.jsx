@@ -1,11 +1,11 @@
 import {createSiteCombatApi,createSiteCombatMediaApi} from './combat/siteCombatApi.js';
 import {MAP_MOVE_AP,walkingAllowance} from '../state/battleMapMovement.mjs';
-import {CampaignMapWorkspace} from './presentation/CampaignMapWorkspace.jsx';
+import {BattleMapToken,CampaignMapWorkspace} from './presentation/CampaignMapWorkspace.jsx';
 import React,{useCallback,useEffect,useMemo,useRef,useState} from 'react';
 import {firebaseService} from '../firebase/asteriaFirebaseService.js';
 import {Panel} from '../components/WorkspaceUI.jsx';
 import {
-  battleMapFileError,battleMapEditableSettings,battleMapPoint,battleMapCanPreview,
+  battleMapFileError,battleMapEditableSettings,battleMapPoint,battleMapCanPreview,battleMapTokenAppearance,
   BATTLE_MAP_MAX_TOKENS
 } from '../state/battleMapModel.mjs';
 import {
@@ -13,6 +13,7 @@ import {
   measureGridDistance,battleMapPrivatePins
 } from '../state/battleMapFogModel.mjs';
 import {activeMapEncounter,combatMapLinked,combatMapRoster,derivedCombatMapTokens,combatMapMovementAllowance} from '../state/battleMapCombatModel.mjs';
+import {hudImageSource} from '../state/playerHudMedia.mjs';
 
 const defaults=()=>({
   name:'',description:'',visibility:'gm',gridColumns:20,gridRows:15,
@@ -163,19 +164,16 @@ function MapCanvas({campaignId,map,gm=false,onPlaceToken,selectedTokenId='',fogT
         <img src={media.url} alt={map.name} className="asteria-battle-media"/>):null}
       {grid?<div aria-hidden="true" className="asteria-battle-grid" style={background}/>:null}
       {tokens.filter(token=>{
+        if((!gm||previewPlayerFog)&&token.visibility==='gm')return false;
         if(!playerFog)return true;
         const x=Math.min(cols-1,Math.floor(Math.min(99.999,token.x)*cols/100));
         const y=Math.min(rows-1,Math.floor(Math.min(99.999,token.y)*rows/100));
         const cells=map.fogCells||createFogCells(cols,rows);
         return cells[y*cols+x]==='1';
-      }).map(token=><span key={token.id}
-        className={'asteria-battle-token'+(token.id===selectedTokenId?' selected':'')+
-          (token.combatantId===activeActor&&combatMapLinked(map,encounter)?' combat-active':'')+
-          (token.combatantId&&combatants.find(row=>row.id===token.combatantId)?.defeated?' combat-defeated':'')}
-        style={{left:token.x+'%',top:token.y+'%'}}
-        title={token.label+(token.combatantId===activeActor?' · Current turn':'')} aria-label={token.label}>
-        {token.kind==='character'?'P':token.kind==='creature'?'C':'•'}
-      </span>)}
+      }).map(token=><BattleMapToken key={token.id} token={token} columns={cols} rows={rows}
+        className="asteria-battle-token" selected={token.id===selectedTokenId}
+        current={Boolean(token.combatantId&&token.combatantId===activeActor&&combatMapLinked(map,encounter))}
+        defeated={Boolean(token.combatantId&&combatants.find(row=>row.id===token.combatantId)?.defeated)}/>)}
       {playerFog?<svg className="asteria-battle-fog" viewBox="0 0 100 100" preserveAspectRatio="none"
         aria-label="Fog of war hidden regions">
         {fogRectangles.map((rect,index)=><rect key={index}
@@ -200,15 +198,45 @@ function MapCanvas({campaignId,map,gm=false,onPlaceToken,selectedTokenId='',fogT
     {map.kind==='video'?<small>Video loops silently. Playback begins automatically where the browser permits; use Play animation if autoplay is blocked.</small>:null}
   </section>;
 }
+function TokenAppearanceFields({value,onChange}){
+  return <div className="asteria-battle-form-row">
+    <label>Portrait URL<input maxLength={600} value={value.portrait||''}
+      placeholder="HTTPS or site-relative URL" onChange={event=>onChange({portrait:event.target.value})}/></label>
+    <label>Faction<select value={value.faction||''} onChange={event=>onChange({faction:event.target.value})}>
+      <option value="">Default</option><option value="party">Party</option>
+      <option value="ally">Ally</option><option value="neutral">Neutral</option>
+      <option value="hostile">Hostile</option>
+    </select></label>
+    <label>Footprint (cells per side)<input type="number" min="1" max="80" value={value.cells??1}
+      onChange={event=>onChange({cells:event.target.value===''?'':Number(event.target.value)})}/></label>
+    <label>Token visibility<select value={value.visibility||'players'}
+      onChange={event=>onChange({visibility:event.target.value})}>
+      <option value="players">Visible when revealed</option><option value="gm">GM only</option>
+    </select></label>
+  </div>;
+}
+function LiveTokenAppearance({token,busy,onSave}){
+  const [appearance,setAppearance]=useState(token);
+  return <details>
+    <summary>Token appearance and visibility</summary>
+    <TokenAppearanceFields value={appearance} onChange={change=>setAppearance(previous=>({...previous,...change}))}/>
+    <button type="button" disabled={busy} onClick={()=>onSave(token.id,appearance)}>Save token appearance</button>
+  </details>;
+}
 function TokenEditor({tokens,onChange,characters={},selectedTokenId,onSelect}){
   const [label,setLabel]=useState(''),[kind,setKind]=useState('marker'),[refId,setRefId]=useState('');
   const roster=Object.values(characters).filter(record=>record?.id);
+  const selected=tokens.find(row=>row.id===selectedTokenId);
   const add=()=>{
     if(tokens.length>=BATTLE_MAP_MAX_TOKENS)return;
-    const final=kind==='character'&&refId?roster.find(row=>row.id===refId)?.name||label:label;
+    const linked=kind==='character'&&refId?roster.find(row=>row.id===refId):null;
+    const final=linked?.name||label;
     if(!final?.trim())return;
+    const portrait=hudImageSource(linked?.image,linked?.portrait,linked?.characterImage,linked?.appearance?.image);
     const token={id:crypto.randomUUID(),label:final.trim().slice(0,48),kind,
       refId:kind==='character'?refId:'',x:50,y:50};
+    try{Object.assign(token,battleMapTokenAppearance({portrait}));}
+    catch{ /* Legacy character artwork may not have a shareable URL. */ }
     onChange([...tokens,token]);onSelect(token.id);setLabel('');
   };
   return <section aria-label="Battle map tokens" className="asteria-battle-token-editor">
@@ -235,6 +263,12 @@ function TokenEditor({tokens,onChange,characters={},selectedTokenId,onSelect}){
         <button type="button" onClick={()=>onChange(tokens.filter(row=>row.id!==token.id))}>Remove</button>
       </div>)}
     </div>
+    {selected?<details open>
+      <summary>{selected.label} appearance and visibility</summary>
+      <TokenAppearanceFields value={selected} onChange={change=>onChange(
+        tokens.map(row=>row.id===selected.id?{...row,...change}:row)
+      )}/>
+    </details>:null}
   </section>;
 }
 export function GMBattleMapManager({campaignId,characters={},encounter={},searchTarget=null}){
@@ -258,6 +292,7 @@ export function GMBattleMapManager({campaignId,characters={},encounter={},search
   const combatants=combatMapRoster(encounter);
   const combatCurrent=combatants.find(row=>row.isCurrent);
   const combatMoveRemaining=selectedCombatantId?combatMapMovementAllowance(encounter,selectedCombatantId):null;
+  const selectedCombatToken=selectedCombatantId?selected?.tokens.find(row=>row.combatantId===selectedCombatantId):null;
   useEffect(()=>{
     if(selectedId&&!maps.some(row=>row.id===selectedId))setSelectedId('');
   },[maps,selectedId]);
@@ -354,6 +389,10 @@ export function GMBattleMapManager({campaignId,characters={},encounter={},search
       revision:Number(encounter.combat?.revision||0)
     }));
   };
+  const saveCombatToken=(tokenId,appearance)=>act(()=>firebaseService.combatCommand(campaignId,'encounter',{
+    operation:'map-token-appearance',mapId:selected.id,tokenId,appearance,
+    revision:Number(encounter.combat?.revision||0)
+  }));
   const savePrivate=async()=>{
     if(!selected)return;
     const result=await act(()=>firebaseService.saveBattleMapPrivatePins(campaignId,selected.id,privatePins));
@@ -478,6 +517,8 @@ export function GMBattleMapManager({campaignId,characters={},encounter={},search
             placeholder="Document the correction or forced movement"/></label>:
             <p>Remaining approved movement: {combatMoveRemaining===null?'No movement action approved':combatMoveRemaining+' m'}.
               A player must declare a movement action; the GM approves its distance through the existing combat panel.</p>}
+          {selectedCombatToken?<LiveTokenAppearance key={selectedCombatToken.id} token={selectedCombatToken}
+            busy={busy} onSave={saveCombatToken}/>:null}
           <ol className="asteria-battle-combat-roster">
             {combatants.map(row=><li key={row.id} className={row.isCurrent?'current':''}>
               <b>{row.name}</b> · Initiative {row.initiative??'—'}
@@ -485,7 +526,7 @@ export function GMBattleMapManager({campaignId,characters={},encounter={},search
               {row.defeated?' · Defeated':''}
             </li>)}
           </ol>
-          <p className="react-help">The existing combat engine remains authoritative for turns, AP, actions and movement allowance. Only the GM moves map tokens; movement and corrections are validated and recorded by the backend.</p>
+          <p className="react-help">Players can move their assigned tokens when combat allows it. GM corrections record the original position, destination and reason.</p>
         </>}
     </section>:null}
     {selected?<MapCanvas campaignId={campaignId} map={viewMap} gm encounter={encounter}

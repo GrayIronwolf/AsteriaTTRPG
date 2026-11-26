@@ -65,8 +65,24 @@ test('approved movement is bounded to active combatant, snapped map square and a
  assert.deepEqual(plan.from,{x:hero.x,y:hero.y});
  assert.equal(combatMapMovementAllowance(encounter,'pc-a'),12);
  assert.throws(()=>combatMapMovePlan(actual,encounter,'enemy-1',target),/Only the current/);
- assert.throws(()=>combatMapMovePlan(actual,encounter,'pc-a',{x:100,y:100}),/exceeds the approved/);
+ assert.throws(()=>combatMapMovePlan(actual,encounter,'pc-a',{x:100,y:100}),/within the approved/);
  assert.throws(()=>combatMapMovePlan({...actual,combatId:'wrong'},encounter,'pc-a',target),/not linked/);
+});
+test('GM walking uses the same square diagonals and occupied destinations as player movement',()=>{
+ const actual={...map,gridColumns:10,gridRows:10,metresPerCell:3,tokens:[
+  {id:'hero',label:'Hero',kind:'character',combatantId:'pc-a',x:15,y:15},
+  {id:'enemy',label:'Enemy',kind:'creature',combatantId:'enemy-1',x:35,y:35}
+ ]};
+ const plan=combatMapMovePlan(actual,encounter,'pc-a',{x:25,y:25});
+ assert.equal(plan.distance.metres,3);
+ assert.equal(plan.diagonalParity,1);
+ assert.throws(()=>combatMapMovePlan(actual,encounter,'pc-a',{x:35,y:35}),/No traversable route/);
+ const moved={...actual,tokens:[{...actual.tokens[0],...plan.to},actual.tokens[1]]};
+ const next={...encounter,combat:{...encounter.combat,participants:{'pc-a':{
+  ap:3,movement:{kind:'walk',remaining:plan.remaining,diagonalParity:plan.diagonalParity}
+ }}}};
+ const continued=combatMapMovePlan(moved,next,'pc-a',{x:35,y:15});
+ assert.equal(continued.distance.metres,6);
 });
 test('no free movement without approved combat action and GM-only correction requires audit reason',()=>{
  const tokens=synchronizeCombatMapTokens(map,encounter,()=>'one-'+Math.random().toString(36).slice(2));
