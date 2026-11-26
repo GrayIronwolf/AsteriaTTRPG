@@ -57,5 +57,7 @@ test('Player and GM settings preserve unsaved edits until a successful current-s
  const gm=read('src/dashboards/GMDashboard.jsx');
  assert.match(gm,/canvasSaveChain\.current=write\.catch/);
  assert.match(gm,/dashboardSaveScope\.current!==scope/);
- assert.match(gm,/setSavedDashboardLayout\(current=>/);
+ assert.match(gm,/version===batch\.version/);
+ assert.match(gm,/setSavedDashboardLayout\(batch\.confirmed\)/);
+ assert.match(gm,/setSavingDashboardSettings\(batch\.pending>0\)/);
 });

@@ -21,10 +21,11 @@ const {CombatCommandCentre,CombatCommandPanel}=module.exports;
 function fixture(config=null,preferences={},options={}){
  const globals=['window','document','localStorage','requestAnimationFrame','cancelAnimationFrame'];
  const original=Object.fromEntries(globals.map(key=>[key,Object.getOwnPropertyDescriptor(globalThis,key)]));
- const frames=new Map(),listeners=new Map(),storage=new Map();let nextFrame=0;
+ const frames=new Map(),listeners=new Map(),storage=new Map(),globalListeners=new Map();let nextFrame=0;
  const saves=[];let commits=0;
  const layout={...defaultCombatWorkspaceLayout(config||undefined),...preferences};
- const ids=(config?.ids||Object.keys(layout.freeform.positions)).filter(id=>!layout.hidden.includes(id));
+ const ids=(config?.ids||Object.keys(layout.freeform.positions)).filter(id=>
+  (!layout.hidden.includes(id)||options.props?.forcedPanelIds?.includes(id))&&!options.props?.suppressedPanelIds?.includes(id));
  const id=ids[0];
  // The test canvas is 1000px wide, so one world unit is one CSS pixel at 100%.
  const style=()=>({setProperty(key,value){this[key]=value;}});
@@ -43,7 +44,9 @@ function fixture(config=null,preferences={},options={}){
  const stage={style:style(),classList:{add(){},remove(){}}};
  const host={clientWidth:1000,closest:()=>null};
  const noop=()=>{};
- globalThis.window={addEventListener:noop,removeEventListener:noop,matchMedia:()=>({matches:false})};
+ globalThis.window={addEventListener:(type,handler)=>{
+  if(!globalListeners.has(type))globalListeners.set(type,new Set());globalListeners.get(type).add(handler);
+ },removeEventListener:(type,handler)=>globalListeners.get(type)?.delete(handler),matchMedia:()=>({matches:false})};
  globalThis.document={addEventListener:noop,removeEventListener:noop};
  globalThis.localStorage={getItem:key=>key.endsWith(':camera')?JSON.stringify({x:0,y:0,scale:options.scale||1}):JSON.stringify(layout),
   setItem:(key,value)=>{storage.set(key,value);
@@ -53,11 +56,14 @@ function fixture(config=null,preferences={},options={}){
  globalThis.requestAnimationFrame=callback=>{frames.set(++nextFrame,callback);return nextFrame;};
  globalThis.cancelAnimationFrame=key=>frames.delete(key);
  let renderer;
- act(()=>{renderer=create(React.createElement(React.Profiler,{id:'canvas',onRender:()=>commits++},
-  React.createElement(CombatCommandCentre,{uid:'perf-user',campaignId:'perf-campaign',
+ let props={uid:'perf-user',campaignId:'perf-campaign',
    canvasScopeId:'perf-character',canvasConfig:config,layoutValue:config?layout:null,
-   onSaveLayout:value=>{saves.push(value);return {ok:true};}},
-   ids.map(key=>React.createElement(CombatCommandPanel,{id:key,key},React.createElement('p',null,key))))),
+   onSaveLayout:value=>{saves.push(value);return options.save?options.save(value):{ok:true};},...options.props};
+ const element=()=>React.createElement(React.Profiler,{id:'canvas',onRender:()=>commits++},
+  React.createElement(CombatCommandCentre,props,
+   ids.map(key=>React.createElement(CombatCommandPanel,{id:key,key},
+    options.body?React.createElement(options.body,{id:key}):React.createElement('p',null,key)))));
+ act(()=>{renderer=create(element(),
   {createNodeMock:element=>element.props.className==='canvas'?viewport:
    element.props.className==='centre'?host:element.props['data-stage']?stage:
    element.props.className==='alignmentOverlay'?overlay:element.props['data-combat-panel']?
@@ -66,7 +72,7 @@ function fixture(config=null,preferences={},options={}){
   'Player dashboard freeform canvas':config?'GM dashboard freeform canvas':'Combat freeform canvas'});
  const event=(type,x=100,y=100)=>({type,clientX:x,clientY:y,pointerId:1,button:0,
   isPrimary:true,timeStamp:1000,target:{closest:()=>null},preventDefault:noop,stopPropagation:noop});
- return {id,ids,layout,nodes,overlay,viewport,stage,saves,frames,
+ return {id,ids,layout,nodes,overlay,viewport,stage,saves,frames,listeners,globalListeners,
   get commits(){return commits;},
   start(kind='move',edge='se'){
    act(()=>{const e=event('pointerdown');
@@ -82,7 +88,24 @@ function fixture(config=null,preferences={},options={}){
   toolbar(){return renderer.root.findByProps({role:'toolbar','aria-label':config?.kind==='player'?
    'Player dashboard canvas controls':config?'GM dashboard canvas controls':'Combat canvas controls'})
    .findAllByType('button').map(node=>node.props['aria-label']);},
+  update(next){props={...props,...next};act(()=>renderer.update(element()));},
+  mode(){return renderer.root.findByProps({'aria-label':'Default canvas content layout'}).props.value;},
+  geometry(){return Object.fromEntries(Object.entries(renderer.root.findByProps({'data-canvas-window':id}).props.style)
+   .filter(([key])=>key.startsWith('--combat-')));},
+  disabled(label){return renderer.root.findByProps({'aria-label':label}).props.disabled;},
+  key(event){act(()=>{for(const fn of globalListeners.get('keydown')||[])fn(event);});},
+  panelClick(){act(()=>renderer.root.findByProps({'data-testid':'interaction-'+id}).props.onClick());},
+  panelText(){return renderer.root.findByProps({'data-testid':'interaction-'+id}).children.join('');},
+  selectWindow(){act(()=>{
+   const label=renderer.root.findByProps({'data-canvas-window':id}).props['data-window-label'];
+   renderer.root.findByProps({'aria-label':'Canvas window switcher'}).findAllByType('button')
+    .find(node=>node.props.children===label).props.onClick();
+  });},
+  switcherExpanded(){return renderer.root.findByProps({'aria-label':'Canvas window switcher'})
+   .findAllByType('button')[0].props['aria-expanded'];},
   wheel(){let prevented=false;act(()=>listeners.get('wheel')?.({preventDefault(){prevented=true;}}));return prevented;},
+  wheelInput(extra={}){act(()=>listeners.get('wheel')?.({target:viewport,deltaY:-10,deltaX:0,
+   deltaMode:0,clientX:300,clientY:250,preventDefault:noop,...extra}));},
   contentMode(value,id=null){act(()=>renderer.root.findByProps({'aria-label':id?
     'Content layout for '+(config?.labels?.[id]||'GM Player Resources'):'Default canvas content layout'})
     .props.onChange({target:{value}}));},
@@ -264,6 +287,102 @@ for(const [role,config] of [['Combat',null],['GM',GM_DASHBOARD_CANVAS_CONFIG],['
    f.start();f.button('Zoom into canvas');f.move(140,150);f.flush();
    assert.equal(f.nodes[f.id].style.transform,'translate3d(40px,50px,0)');
    f.end('pointercancel');assert.equal(f.saves.length,0);
+  }finally{f.close();}
+ });
+}
+
+function InteractivePanel({id}){
+ const [count,setCount]=React.useState(0);
+ return React.createElement('button',{'data-testid':'interaction-'+id,onClick:()=>setCount(value=>value+1)},String(count));
+}
+for(const [role,config] of [['Combat',null],['GM',GM_DASHBOARD_CANVAS_CONFIG],['Player',PLAYER_DASHBOARD_CANVAS_CONFIG]]){
+ test('Milestone 2.5 '+role+': gameplay controls retain state through locking, camera and geometry edits',async()=>{
+  const f=fixture(config,{}, {body:InteractivePanel});try{
+   f.panelClick();f.button('Lock Canvas');await act(async()=>{});f.panelClick();
+   f.start();f.move(190,190);f.flush();f.end();
+   assert.equal(f.saves.length,1,'locked geometry cannot save');
+   assert.equal(f.panelText(),'2');f.button('Zoom into canvas');assert.equal(f.panelText(),'2');
+   f.button('Unlock Canvas');await act(async()=>{});f.start('resize');f.move(130,140);f.flush();f.end('pointerup',130,140);
+   await act(async()=>{});assert.equal(f.panelText(),'2');f.panelClick();assert.equal(f.panelText(),'3');
+  }finally{f.close();}
+ });
+ test('Milestone 2.5 '+role+': layout edits retain listener identity and unmount clears listeners and frames',async()=>{
+  const f=fixture(config);const wheel=f.listeners.get('wheel');
+  try{
+   f.contentMode('fixed');await act(async()=>{});
+   assert.equal(f.listeners.get('wheel'),wheel);
+   assert.equal(f.globalListeners.get('pointerup').size,1);
+   f.start();f.move(160,170);assert.equal(f.frames.size,1);
+  }finally{f.close();}
+  assert.equal(f.frames.size,0);assert.equal(f.listeners.size,0);
+  assert.ok([...f.globalListeners.values()].every(list=>list.size===0));
+ });
+ test('Milestone 2.5 '+role+': Escape and canvas lock cancel pending geometry before saving',async()=>{
+  const f=fixture(config);try{
+   const original=f.geometry();f.start();f.move(150,170);f.flush();
+   f.key({key:'Escape'});assert.equal(f.frames.size,0);assert.equal(f.saves.length,0);
+   assert.equal(f.nodes[f.id].style.transform,'');
+   f.start();f.move(170,190);f.flush();f.button('Lock Canvas');await act(async()=>{});f.end('pointerup',170,190);
+   assert.equal(f.saves.length,1);assert.deepEqual(f.geometry(),original);
+  }finally{f.close();}
+ });
+ test('Milestone 2.5 '+role+': read-only inspection preserves gameplay interaction without layout writes',()=>{
+  const f=fixture(config,{}, {body:InteractivePanel,props:{canEditCanvas:false}});try{
+   f.panelClick();f.start();f.move(160,180);f.flush();f.end('pointerup',160,180);
+   assert.equal(f.panelText(),'1');assert.equal(f.saves.length,0);
+   assert.ok(f.disabled('Read-only Canvas'));
+  }finally{f.close();}
+ });
+}
+for(const [role,config] of [['GM',GM_DASHBOARD_CANVAS_CONFIG],['Player',PLAYER_DASHBOARD_CANVAS_CONFIG]]){
+ for(const firstSucceeds of [true,false])test('Milestone 2.5 '+role+': failed latest save restores the last confirmed layout ('+firstSucceeds+')',async()=>{
+  const deferred=[];const f=fixture(config,{}, {save:()=>new Promise(resolve=>deferred.push(resolve))});try{
+   f.contentMode('fixed');await act(async()=>{});
+   f.contentMode('proportional');await act(async()=>{});
+   await act(async()=>{deferred[0]({ok:firstSucceeds,error:'older save failed'});});
+   assert.equal(f.mode(),'proportional','an earlier result cannot replace a newer optimistic edit');
+   await act(async()=>{deferred[1]({ok:false,error:'latest save failed'});});
+   assert.equal(f.mode(),firstSucceeds?'fixed':'responsive');
+   assert.equal(f.disabled('Undo canvas change'),true,'failed edits do not leave misleading undo history');
+  }finally{f.close();}
+ });
+ test('Milestone 2.5 '+role+': late saves and captured movement cannot cross a scope change',async()=>{
+  let settle;const f=fixture(config,{}, {save:()=>new Promise(resolve=>{settle=resolve;})});try{
+   f.contentMode('fixed');await act(async()=>{});f.start();f.move(160,180);f.flush();
+   const next={...defaultCombatWorkspaceLayout(config),defaultContentSizing:'proportional'};
+   f.update({uid:'next-account',layoutValue:next});
+   f.end('pointerup',160,180);await act(async()=>{settle({ok:false,error:'old account failure'});});
+   assert.equal(f.mode(),'proportional');assert.equal(f.frames.size,0);assert.equal(f.saves.length,1);
+   assert.equal(f.geometry()['--combat-x'],next.freeform.positions[f.id].x/10+'%');
+  }finally{f.close();}
+ });
+ test('Milestone 2.5 '+role+': a required visible panel can move without rewriting its saved visibility',async()=>{
+  const id=config.ids[0];const f=fixture(config,{hidden:[id]}, {props:{forcedPanelIds:[id]}});try{
+   f.start();f.move(140,150);f.flush();f.end('pointerup',140,150);await act(async()=>{});
+   assert.equal(f.saves.length,1);assert.deepEqual(f.saves[0].hidden,[id]);
+   assert.equal(f.saves[0].freeform.positions[id].x,f.layout.freeform.positions[id].x+40);
+  }finally{f.close();}
+ });
+}
+
+for(const [role,config] of [['Combat',null],['GM',GM_DASHBOARD_CANVAS_CONFIG],['Player',PLAYER_DASHBOARD_CANVAS_CONFIG]]){
+ test('Milestone 2.5 '+role+': a pending wheel debounce cannot render during the next drag',async()=>{
+  const f=fixture(config);try{
+   f.wheelInput();f.start();const commits=f.commits;f.move(140,150);f.flush();
+   assert.equal(f.viewport.dataset.interacting,'move');
+   await act(async()=>{await new Promise(resolve=>setTimeout(resolve,170));});
+   assert.equal(f.commits,commits);assert.equal(f.saves.length,0);
+   f.end('pointercancel');assert.equal(f.viewport.dataset.interacting,undefined);
+  }finally{f.close();}
+ });
+}
+
+for(const [role,config] of [['Combat',null],['GM',GM_DASHBOARD_CANVAS_CONFIG],['Player',PLAYER_DASHBOARD_CANVAS_CONFIG]]){
+ test('Milestone 2.5 '+role+': selecting a window collapses the optional switcher without saving layout',()=>{
+  const f=fixture(config,{windowSwitcher:true});try{
+   assert.equal(f.switcherExpanded(),true);f.selectWindow();assert.equal(f.switcherExpanded(),false);
+   assert.equal(f.saves.length,0);f.button('Expand canvas windows');assert.equal(f.switcherExpanded(),true);
+   assert.equal(f.toolbar().length,7);
   }finally{f.close();}
  });
 }

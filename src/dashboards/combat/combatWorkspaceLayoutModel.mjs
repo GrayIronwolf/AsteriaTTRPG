@@ -320,7 +320,7 @@ export function combatWorkspaceStorageKey(uid,campaignId){
     ?'asteria:gm-combat-workspace:v1:'+uid+':'+campaignId:null;
 }
 /** Align the active window to neighbouring window edges and centres. */
-export function combatWindowAlignment(layout,id,position,{snap=false,strength='medium'}={}){
+export function combatWindowAlignment(layout,id,position,{snap=false,strength='medium',visibleIds=null}={}){
  const current=layout?.freeform?.positions?.[id];
  if(!current||!position||!Number.isFinite(position.x)||!Number.isFinite(position.y))
   return {position,guides:[]};
@@ -330,7 +330,7 @@ export function combatWindowAlignment(layout,id,position,{snap=false,strength='m
  const own={x:[position.x,position.x+current.w/2,position.x+current.w],
   y:[position.y,position.y+current.h/2,position.y+current.h]};
  for(const [otherId,rect] of Object.entries(layout.freeform.positions)){
-  if(moving.includes(otherId)||layout.hidden.includes(otherId))continue;
+  if(moving.includes(otherId)||(visibleIds?!visibleIds.includes(otherId):layout.hidden.includes(otherId)))continue;
   for(const [axis,size] of [['x','w'],['y','h']]){
    const other=[rect[axis],rect[axis]+rect[size]/2,rect[axis]+rect[size]];
    for(const source of own[axis])for(const target of other){
@@ -347,9 +347,10 @@ export function combatWindowAlignment(layout,id,position,{snap=false,strength='m
 }
 /** Atomic freeform move/resize with bounds, optional snapping and collision safety.
  * Unlike the shared dashboard grid, x and y may extend beyond the visible viewport. */
-export function editCombatWindow(layout,id,operation,values={},config=COMBAT_CANVAS_CONFIG){
+export function editCombatWindow(layout,id,operation,values={},config=COMBAT_CANVAS_CONFIG,visibleIds=null){
+ const hidden=panel=>visibleIds?!visibleIds.includes(panel):layout.hidden.includes(panel);
  if(!allowed(id,config)||layout.canvasLocked||layout.locked.includes(id)||
-    layout.hidden.includes(id)||!['move','resize'].includes(operation))return layout;
+    hidden(id)||!['move','resize'].includes(operation))return layout;
  const state=layout.freeform,before=state.positions[id];
  if(!before)return layout;
  const step=n=>state.snap===true?Math.round(n/10)*10:n;
@@ -377,7 +378,7 @@ export function editCombatWindow(layout,id,operation,values={},config=COMBAT_CAN
  if(group){
    const dx=next.x-before.x,dy=next.y-before.y;
    for(const member of group){
-     if(layout.locked.includes(member)||layout.hidden.includes(member))return layout;
+     if(layout.locked.includes(member)||hidden(member))return layout;
      const current=positions[member],candidate=normalizeCombatCanvasRect(
        {...current,x:current.x+dx,y:current.y+dy},current);
      if(candidate.x!==current.x+dx||candidate.y!==current.y+dy)return layout;
@@ -390,9 +391,9 @@ export function editCombatWindow(layout,id,operation,values={},config=COMBAT_CAN
  if(!state.allowOverlap){
    const affected=group||[id];
    for(const panel of affected){
-     if(layout.hidden.includes(panel))continue;
+     if(hidden(panel))continue;
      for(const [other,rect] of Object.entries(positions)){
-       if(affected.includes(other)||layout.hidden.includes(other))continue;
+       if(affected.includes(other)||hidden(other))continue;
        if(freeformOverlaps(positions[panel],rect))return layout;
      }
    }
@@ -400,13 +401,14 @@ export function editCombatWindow(layout,id,operation,values={},config=COMBAT_CAN
  return {...layout,freeform:{...state,positions}};
 }
 
-export function dockCombatWindow(layout,id,edge,config=COMBAT_CANVAS_CONFIG){
+export function dockCombatWindow(layout,id,edge,config=COMBAT_CANVAS_CONFIG,visibleIds=null){
   if(!allowed(id,config)||!['left','right'].includes(edge)||layout.canvasLocked||layout.locked.includes(id))return layout;
+  if(visibleIds&&!visibleIds.includes(id))return layout;
   const rect=layout.freeform.positions[id];
   const proposed={...rect,x:edge==='left'?0:1000-rect.w,y:0};
   const state=layout.freeform;
   if(!state.allowOverlap&&scopeOf(config).ids.some(other=>
-    other!==id&&!layout.hidden.includes(other)&&
+    other!==id&&(visibleIds?visibleIds.includes(other):!layout.hidden.includes(other))&&
     freeformOverlaps(proposed,state.positions[other])))return layout;
   return {...layout,freeform:{...state,positions:{...state.positions,[id]:proposed}}};
 }

@@ -43,7 +43,7 @@
 .window[data-combat-panel]{position:absolute;display:flex;flex-direction:column;box-sizing:border-box;min-width:0;min-height:0;
  left:var(--combat-x);top:var(--combat-y);width:var(--combat-w);height:var(--combat-h);container-type:inline-size;container-name:combatWindow;
  background-color:var(--asteria-panel-background,#090e14);
- background-image:linear-gradient(160deg,rgba(182,202,211,.035),transparent 38%,rgba(0,0,0,.11) 80%);
+ background-image:linear-gradient(160deg,rgba(182,202,211,.035),transparent 38%,rgba(0,0,0,.11) 80%),var(--asteria-panel-backdrop,url("../../../assets/ui/royal-relic-obsidian.svg"));
  background-size:cover;background-position:center;
  border:3px ridge #647582;border-radius:6px;color:var(--asteria-text);
  box-shadow:0 0 0 1px #111920,0 6px 17px rgba(0,0,0,.48),
@@ -66,7 +66,7 @@
 .windowActions button,.options summary,.resizeHandle{font:inherit;color:var(--asteria-text);cursor:pointer;border:1px solid #627482;border-radius:3px;background:linear-gradient(180deg,#394b58,#111e2b 54%,#1b2a36);box-shadow:inset 0 1px 0 rgb(224 240 246 / .18);padding:var(--asteria-space-1) var(--asteria-space-2);min-height:29px}
 .windowActions button{min-width:29px;min-height:29px;padding:3px 6px}
 .windowContent{position:relative;z-index:1;flex:1;min-width:0;min-height:0;overflow:auto;contain:layout style;
- overscroll-behavior:contain;padding:var(--asteria-space-3);background:#101820;scrollbar-width:thin}
+ overscroll-behavior:contain;padding:var(--asteria-space-3);background:transparent;scrollbar-width:thin}
 .windowBody{min-width:0;display:flow-root;overflow-wrap:anywhere;zoom:var(--combat-content-scale,1)}
 .window[data-content-sizing='fixed'] .windowBody{width:var(--combat-design-width,580px);max-width:none}
 .window[data-content-sizing='proportional'] .windowBody{width:var(--combat-design-width,580px);max-width:none;
@@ -248,6 +248,8 @@
 .navigationSwitcher input{width:100%;min-width:0;margin-bottom:8px}
 .navigationSwitcher>div{display:grid;gap:4px}
 .navigationSwitcher button{text-align:left;white-space:normal}
+.navigationSwitcher[data-expanded='false']{width:auto;padding:4px 8px}
+.navigationSwitcher>button{min-height:28px;font-size:.8rem}
 
 /* Optional noninteractive overview: no layout mutation or extra gameplay subscriptions. */
 .canvasMinimap{position:absolute;bottom:12px;right:12px;z-index:108;
@@ -260,6 +262,9 @@
 .canvasMinimap button{width:100%;margin-top:6px;min-height:30px}
 .canvas[data-reduce-effects='on'] .window:not(:hover):not(:focus-within){
  filter:none;will-change:auto}
+.canvas[data-reduce-effects='on'][data-interacting] .window{
+ box-shadow:0 2px 6px rgb(0 0 0 / .25);filter:none;transition:none}
+.canvas[data-interacting] .alignmentOverlay i{filter:none}
 @media(max-width:699px){.canvasMinimap{display:none}}
 
 /* Milestone 2: accessible content-responsive windows and a restrained metal bezel. */

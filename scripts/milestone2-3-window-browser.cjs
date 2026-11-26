@@ -6,14 +6,18 @@ const base='http://127.0.0.1:8123/?reactFixture=1';
 const geometry=locator=>locator.evaluate(el=>{const r=el.getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height};});
 const painted=page=>page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
 (async()=>{
+ const {zoomCombatCamera,fitCombatCamera}=await import('../src/dashboards/combat/combatWorkspaceLayoutModel.mjs');
  const browser=await chromium.launch({headless:true,args:['--no-sandbox'],
   ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH?{executablePath:process.env.PLAYWRIGHT_EXECUTABLE_PATH}:{})});
  const results=[];
- const timeout=setTimeout(()=>{console.error('Canvas sizing browser acceptance timed out');browser.close().finally(()=>process.exit(1));},300000);
+ const timeout=setTimeout(()=>{console.error('Canvas sizing browser acceptance timed out');browser.close().finally(()=>process.exit(1));},480000);
  for(const role of ['gm','player','combat'])for(const scale of [.5,.75,1]){
   console.log('START sizing',role,scale);
   const page=await browser.newPage({viewport:{width:1600,height:1100},reducedMotion:'reduce'});
-  const errors=[];page.on('pageerror',error=>errors.push(error.message));
+  await page.addInitScript(()=>localStorage.setItem('asteria:dice:presentation:v1',
+   JSON.stringify({version:1,reducedMotion:'on'})));
+  const errors=[],consoleErrors=[];page.on('pageerror',error=>errors.push(error.message));
+  page.on('console',message=>{if(message.type()==='error')consoleErrors.push(message.text());});
   await page.route('**/*',route=>new URL(route.request().url()).hostname==='127.0.0.1'?route.continue():route.abort());
   const scope=role==='player'?'asteria:player-main-canvas:v1:player-demo:demo-campaign:kael':
    role==='gm'?'asteria:gm-main-canvas:v1:player-demo:demo-campaign':
@@ -114,6 +118,13 @@ const painted=page=>page.evaluate(()=>new Promise(resolve=>requestAnimationFrame
   const cameraMatrix=()=>root.locator('[data-stage]').evaluate(el=>{
    const m=new DOMMatrix(getComputedStyle(el).transform);return {x:m.e,y:m.f,scale:m.a};
   });
+  const viewport=root.locator('[data-layout-mode]');
+  const waitForCamera=async expected=>page.waitForFunction(({testId,expected})=>{
+   const node=document.querySelector('[data-testid="'+testId+'"] [data-stage]');
+   if(!node)return false;
+   const m=new DOMMatrix(getComputedStyle(node).transform);
+   return Math.abs(m.e-expected.x)<.02&&Math.abs(m.f-expected.y)<.02&&Math.abs(m.a-expected.scale)<.0001;
+  },{testId:await root.getAttribute('data-testid'),expected},{timeout:5000});
   const toolbar=root.getByRole('toolbar',{name:role==='player'?'Player dashboard canvas controls':role==='gm'?'GM dashboard canvas controls':'Combat canvas controls'});
   assert.equal(await toolbar.getByRole('button').count(),7,'the approved toolbar has seven controls');
   const label=await panel.getAttribute('data-window-label');
@@ -121,22 +132,37 @@ const painted=page=>page.evaluate(()=>new Promise(resolve=>requestAnimationFrame
   await panel.getByRole('button',{name:'Focus on '+label,exact:true}).click();await painted(page);
   assert.equal(await panel.getByRole('button',{name:'Return from '+label,exact:true}).count(),1);
   await panel.getByRole('button',{name:'Return from '+label,exact:true}).click();await painted(page);
+  await waitForCamera(beforeFocus);
   const returned=await cameraMatrix();
   assert.ok(Math.abs(returned.x-beforeFocus.x)<.02&&Math.abs(returned.y-beforeFocus.y)<.02&&
    returned.scale===beforeFocus.scale,'focus returns to the prior camera within transform rounding');
   await panel.locator('header strong').first().dblclick();await painted(page);
   assert.equal(await panel.getByRole('button',{name:'Return from '+label,exact:true}).count(),1,'double-click focuses the title');
   await panel.getByRole('button',{name:'Return from '+label,exact:true}).click();await painted(page);
+  await waitForCamera(beforeFocus);
   const h=await geometry(panel.locator('header').first()),beforePan=await cameraMatrix();
+  const panHit=await page.evaluate(point=>{
+   const node=document.elementFromPoint(point.x,point.y);return {tag:node?.tagName,window:node?.closest('[data-canvas-window]')?.dataset.canvasWindow};
+  },{x:h.x+h.w/2,y:h.y+h.h/2});
   await page.mouse.move(h.x+h.w/2,h.y+h.h/2);await page.mouse.down({button:'middle'});
   await page.mouse.move(h.x+h.w/2+35,h.y+h.h/2+25,{steps:12});await page.mouse.up({button:'middle'});await painted(page);
   const afterPan=await cameraMatrix();
-  assert.ok(Math.abs(afterPan.x-beforePan.x-35)<2&&Math.abs(afterPan.y-beforePan.y-25)<2,'middle-button pan follows the pointer');
-  await toolbar.getByRole('button',{name:'Zoom into canvas',exact:true}).click();await painted(page);
+  assert.ok(Math.abs(afterPan.x-beforePan.x-35)<2&&Math.abs(afterPan.y-beforePan.y-25)<2,
+   'middle-button pan follows the pointer '+JSON.stringify({beforePan,afterPan,h,panHit}));
+  const zoomPivot=await viewport.evaluate(el=>({x:el.clientWidth/2,y:(el.clientHeight-60)/2}));
+  await toolbar.getByRole('button',{name:'Zoom into canvas',exact:true}).click();
+  await waitForCamera(zoomCombatCamera(afterPan,afterPan.scale*1.2,zoomPivot));
   assert.ok((await cameraMatrix()).scale>afterPan.scale);
-  await toolbar.getByRole('button',{name:'Zoom out of canvas',exact:true}).click();await painted(page);
-  await toolbar.getByRole('button',{name:'Fit Canvas',exact:true}).click();await painted(page);
-  const viewport=root.locator('[data-layout-mode]'),v=await geometry(viewport);
+  const zoomed=await cameraMatrix();
+  await toolbar.getByRole('button',{name:'Zoom out of canvas',exact:true}).click();
+  await waitForCamera(zoomCombatCamera(zoomed,zoomed.scale/1.2,zoomPivot));
+  const fit=await viewport.evaluate(el=>({width:el.clientWidth,height:Math.max(200,el.clientHeight-64),
+   positions:Object.fromEntries([...el.querySelectorAll('[data-canvas-window]')].map(node=>[node.dataset.canvasWindow,
+    Object.fromEntries([['x','--combat-x'],['y','--combat-y'],['w','--combat-w'],['h','--combat-h']]
+     .map(([key,variable])=>[key,parseFloat(node.style.getPropertyValue(variable))*10]))]))}));
+  await toolbar.getByRole('button',{name:'Fit Canvas',exact:true}).click();
+  await waitForCamera(fitCombatCamera({freeform:{positions:fit.positions},minimized:[]},Object.keys(fit.positions),fit.width,fit.height));
+  const v=await geometry(viewport);
   const findBlank=()=>viewport.evaluate(el=>{
    const r=el.getBoundingClientRect(),background=(x,y)=>{
     const node=document.elementFromPoint(x,y);return node===el||node?.hasAttribute('data-stage');
@@ -185,15 +211,96 @@ const painted=page=>page.evaluate(()=>new Promise(resolve=>requestAnimationFrame
   await toolbar.getByRole('button',{name:'Redo canvas change',exact:true}).click();await painted(page);
   await toolbar.getByRole('button',{name:'Unlock Canvas',exact:true}).click();await painted(page);
   assert.deepEqual(await allGeometry(),layoutBeforeNavigation,'navigation and locking preserve every saved rectangle');
+  if(scale===.5){
+   console.log('INTEGRATION',role);
+   const countBefore=await root.locator('[data-canvas-window]').count();
+   await root.getByTestId('site-combat-tools-toggle').click();
+   await root.getByRole('button',{name:/^Show all panels/}).click();await painted(page);
+   const countAfter=await root.locator('[data-canvas-window]').count();
+   assert.ok(countAfter>countBefore,'window library creates existing authorised panels '+JSON.stringify({countBefore,countAfter,
+    messages:await root.getByRole('status').allTextContents(),errors,consoleErrors,
+    dashboard:await page.locator('#reactDashboard').innerText()}));
+   console.log('INTEGRATION windows',role,JSON.stringify({countBefore,countAfter}));
+   await root.locator('aside').getByText('Canvas Preferences',{exact:true}).click();
+   await root.getByRole('checkbox',{name:'Window switcher and search',exact:true}).check();
+   const background=root.getByRole('combobox',{name:'Canvas background',exact:true});
+   for(const theme of ['obsidian','slate','midnight']){
+    await background.selectOption(theme);await painted(page);
+    assert.equal(await viewport.getAttribute('data-background'),theme);
+   }
+   await root.getByRole('button',{name:role==='combat'?'Close Combat Tools menu':'Close Dashboard Windows menu',exact:true}).click();
+   const targetId=role==='combat'?'timer':'worldContext';
+   const target=root.locator('[data-canvas-window="'+targetId+'"]');
+   const targetLabel=await target.getAttribute('data-window-label');
+   const switcher=root.getByRole('navigation',{name:'Canvas window switcher',exact:true});
+   const switchTo=async label=>{
+    const expand=switcher.getByRole('button',{name:'Expand canvas windows',exact:true});
+    if(await expand.count())await expand.click();
+    await switcher.getByRole('searchbox').fill(label);
+    await switcher.getByRole('button',{name:label,exact:true}).click();await painted(page);
+    assert.equal(await switcher.getByRole('searchbox').count(),0,'selection collapses the overlay away from window controls');
+   };
+   await switchTo(targetLabel);
+   await target.getByRole('button',{name:'Minimise '+targetLabel,exact:true}).click();await painted(page);
+   assert.equal(await target.locator('[data-combat-scroll]').getAttribute('aria-hidden'),'true');
+   await target.getByRole('button',{name:'Restore '+targetLabel,exact:true}).click();await painted(page);
+   await toolbar.getByRole('button',{name:'Lock Canvas',exact:true}).click();await painted(page);
+   if(role==='combat'){
+    const length=target.getByRole('combobox',{name:/^Turn length/});
+    assert.equal(await length.count(),1,'turn-length control exists: '+await target.innerText());
+    const choice=await length.evaluate(el=>Array.from(el.options).map(option=>option.value).find(value=>value!==el.value));
+    await length.selectOption(choice);assert.equal(await length.inputValue(),choice,'combat forms stay interactive while canvas is locked');
+    const restart=target.getByRole('checkbox',{name:'Restart on each new turn',exact:true});
+    await restart.uncheck();assert.equal(await restart.isChecked(),false);
+   }else{
+    assert.equal(await target.getByTestId('asteria-world-context-panel').count(),1);
+    assert.ok(await target.getByRole('button',{name:'Calendar',exact:true}).isEnabled());
+    const beforeContentWheel=await cameraMatrix();
+    await target.locator('[data-combat-scroll]').dispatchEvent('wheel',{deltaY:80,bubbles:true,cancelable:true});await painted(page);
+    assert.deepEqual(await cameraMatrix(),beforeContentWheel,'window scrolling never navigates the canvas');
+   }
+   await toolbar.getByRole('button',{name:'Unlock Canvas',exact:true}).click();await painted(page);
+   const metrics=()=>page.evaluate(()=>window.AsteriaFirebase.getCanvasFixtureMetrics());
+   const beforeRemoval=await metrics();
+   await target.locator('summary').click();await target.getByRole('button',{name:'Hide window',exact:true}).click();await painted(page);
+   assert.equal(await target.count(),0,'window removal unmounts its interactive system');
+   if(role!=='combat')assert.equal((await metrics()).streams.length,beforeRemoval.streams.length-3,
+    'removing calendar/weather content cleans up its three subscriptions');
+   await toolbar.getByRole('button',{name:'Undo canvas change',exact:true}).click();await painted(page);
+   assert.equal(await target.count(),1,'undo restores the existing authorised window');
+   if(role==='gm'){
+    const dice=root.locator('[data-canvas-window="diceQuick"]'),diceLabel=await dice.getAttribute('data-window-label');
+    await switchTo(diceLabel);
+    await toolbar.getByRole('button',{name:'Lock Canvas',exact:true}).click();await painted(page);
+    const beforeRoll=await metrics();
+    await dice.getByRole('button',{name:'Roll All',exact:true}).click();
+    await dice.locator('[data-result-visible="true"]').waitFor();
+    assert.equal((await dice.locator('[data-result-visible="true"] strong').textContent()).trim(),'17');
+    assert.equal((await metrics()).diceRollRequests,beforeRoll.diceRollRequests+1,
+     'a locked canvas still permits one private official dice request');
+    await toolbar.getByRole('button',{name:'Unlock Canvas',exact:true}).click();await painted(page);
+    await switchTo(targetLabel);
+   }
+   if(role!=='combat'){
+    await target.getByRole('button',{name:'Calendar',exact:true}).click();
+    await page.getByRole('heading',{name:'Asteria Calendar',exact:true}).waitFor();
+    assert.equal(await root.count(),0,'calendar shortcut uses the existing dashboard route');
+    const stopped=await metrics();assert.equal(stopped.diceListeners,0);
+    assert.ok(!stopped.streams.includes('audio-library')&&!stopped.streams.includes('audio-live'),
+     'leaving the canvas releases optional dice and soundboard subscriptions');
+   }
+  }
   if(role==='combat'){
    await open();await painted(page);console.log('CENTRED',role,scale);
    assert.deepEqual(await panel.evaluate(el=>['--combat-x','--combat-y','--combat-w','--combat-h'].map(key=>el.style.getPropertyValue(key))),saved,'Combat layout reload');
    assert.equal(await panel.getAttribute('data-content-sizing'),'responsive');
   }
   assert.deepEqual(errors,[],'no browser runtime errors');
-  results.push({role,zoom:scale,resize:true,contentModes:true,viewportRestoration:true});
+  assert.deepEqual(consoleErrors.filter(message=>/dashboard failed to load|Error: Asteria Firebase service|TypeError:|ReferenceError:|Maximum update depth/.test(message)),[],
+   'no caught dashboard failures or missing panel APIs');
+  results.push({role,zoom:scale,resize:true,contentModes:true,viewportRestoration:true,navigation:true,integration:scale===.5});
   await page.close();console.log('PASS sizing',role,scale);
  }
- console.log('Milestone 2.3 browser sizing:',JSON.stringify(results));
+ console.log('Shared canvas browser regression:',JSON.stringify(results));
  clearTimeout(timeout);await browser.close();process.exit(0);
 })().catch(error=>{console.error(error);process.exit(1);});
