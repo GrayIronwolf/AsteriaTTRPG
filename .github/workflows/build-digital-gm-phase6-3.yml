@@ -1,7 +1,7 @@
 name: Digital GM Phase 6.3 — Battle Maps and Looping Video
 on:
   push:
-    branches: [feat/digital-gm-phase6-3-live-combat-maps, milestone-3-1-encounter-management]
+    branches: [feat/digital-gm-phase6-3-live-combat-maps]
   pull_request:
     paths:
       - 'src/dashboards/BattleMapWorkspace.jsx'
@@ -49,7 +49,7 @@ jobs:
   bundle:
     name: Publish verified frontend bundle to Phase 6.3 branch
     needs: verify
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/feat/digital-gm-phase6-3-live-combat-maps' || github.ref == 'refs/heads/milestone-3-1-encounter-management')
+    if: github.event_name == 'push' && github.ref == 'refs/heads/feat/digital-gm-phase6-3-live-combat-maps'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -68,13 +68,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          branch="${GITHUB_REF#refs/heads/}"
-          case "$branch" in
-            feat/digital-gm-phase6-3-live-combat-maps|milestone-3-1-encounter-management) ;;
-            *) echo 'Ref is not an approved build-only branch'; exit 1;;
-          esac
-          git fetch origin "$branch"
-          if [ "$(git rev-parse "origin/$branch")" != "$GITHUB_SHA" ]; then
+          git fetch origin feat/digital-gm-phase6-3-live-combat-maps
+          if [ "$(git rev-parse origin/feat/digital-gm-phase6-3-live-combat-maps)" != "$GITHUB_SHA" ]; then
             echo "Source advanced; a newer workflow owns bundle publication."
             exit 0
           fi
@@ -84,6 +79,6 @@ jobs:
             exit 0
           fi
           git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "Build Digital GM Phase 6.3 frontend bundle"
-          git fetch origin "$branch"
-          git rebase "origin/$branch"
-          git push origin "HEAD:refs/heads/$branch"
+          git fetch origin feat/digital-gm-phase6-3-live-combat-maps
+          git rebase origin/feat/digital-gm-phase6-3-live-combat-maps
+          git push origin HEAD:feat/digital-gm-phase6-3-live-combat-maps
