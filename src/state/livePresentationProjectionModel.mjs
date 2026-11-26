@@ -56,7 +56,19 @@ export function publicCombatSnapshot(raw={},publishedMap=null){
       }:{}),
       ...(entry.outOfTurn?.round===raw.round?{opportunityUsed:true}:{})
     };
-    else participants[row.id]={turnComplete:entry.turnComplete===true};
+    else participants[row.id]={turnComplete:entry.turnComplete===true,
+      ...(typeof entry.movementDelegateUid==='string'&&entry.movementDelegateUid?
+        {movementDelegated:true,
+          ...(Object.hasOwn(markers||{},row.id)?{mapTokenId:markers[row.id]}:{})}:{}),
+      ...(typeof entry.movementDelegateUid==='string'&&entry.movementDelegateUid&&
+        entry.movement&&Number.isFinite(entry.movement.remaining)?{
+          mapMovement:{remaining:Math.max(0,entry.movement.remaining),
+            kind:name(entry.movement.kind,40),
+            ...(['ground','jump','teleport'].includes(entry.movement.routeKind)?
+              {routeKind:entry.movement.routeKind}:{}),
+            diagonalParity:entry.movement.diagonalParity===1?1:0}
+        }:{}),
+      ...(entry.outOfTurn?.round===raw.round?{opportunityUsed:true}:{})};
   }
   const timer=raw.turnTimer||raw.timer||{};
   const pending=raw.combat?.pending;
