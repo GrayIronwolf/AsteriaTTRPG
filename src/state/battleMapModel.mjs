@@ -1,4 +1,5 @@
 import {validFogCells,resizeFogCells,distanceMetersPerCell} from './battleMapFogModel.mjs';
+import {mapGridType,validateTerrainCells,resizeTerrainCells} from './battleMapTerrainModel.mjs';
 // Digital GM phase 6.1: campaign battle maps, including looping MP4/WebM backgrounds.
 export const BATTLE_MAP_IMAGE_MAX_BYTES=8*1024*1024;
 export const BATTLE_MAP_VIDEO_MAX_BYTES=48*1024*1024;
@@ -50,13 +51,17 @@ export function battleMapEditableSettings(input={}){
   const tokens=battleMapTokens(input.tokens||[]);
   const fogEnabled=input.fogEnabled===true;
   const metresPerCell=distanceMetersPerCell(input.metresPerCell??1);
+  const gridType=mapGridType(input.gridType);
   const previousCols=Number(input.previousGridColumns??gridColumns);
   const previousRows=Number(input.previousGridRows??gridRows);
+  const terrainCells=(previousCols!==gridColumns||previousRows!==gridRows)
+    ?resizeTerrainCells(input.terrainCells,previousCols,previousRows,gridColumns,gridRows)
+    :validateTerrainCells(input.terrainCells,gridColumns,gridRows);
   const fogCells=(previousCols!==gridColumns||previousRows!==gridRows)
     ?resizeFogCells(input.fogCells,previousCols,previousRows,gridColumns,gridRows)
     :validFogCells(input.fogCells,gridColumns,gridRows);
   return {name,description,visibility,gridColumns,gridRows,gridOpacity,gridVisible,
-    tokens,fogEnabled,fogCells,metresPerCell};
+    tokens,fogEnabled,fogCells,metresPerCell,gridType,terrainCells};
 }
 export function battleMapDimensions(width,height){
   return {width:safeNumber(width,1,8192,'map width'),height:safeNumber(height,1,8192,'map height')};
