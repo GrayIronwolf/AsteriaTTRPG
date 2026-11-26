@@ -839,3 +839,36 @@ test('GM forced movement requires a resolved source and records no AP spend',asy
   assert.equal(h.encounter().combat.log[0].source.id,'enemy-knockback');
   assert.equal(h.encounter().combat.log[0].movementKind,'forced');
 });
+
+test('GM can delegate and revoke one mapped token without granting combat actions',async()=>{
+  const h=database();await h.setup();
+  const actor=h.encounter().combatants[0];
+  const owner=actor.characterId==='a'?'alice':'bob',delegate=owner==='alice'?'bob':'alice';
+  const path='campaigns/c/battleMaps/arena';
+  h.store.set(path,{id:'arena',kind:'image',contentType:'image/png',
+    storagePath:path+'/scene.png',name:'Arena',combatId:h.encounter().combatId,
+    visibility:'players',gridColumns:4,gridRows:4,metresPerCell:3,
+    tokens:[{id:'hero',label:actor.name,kind:'character',combatantId:actor.id,x:12.5,y:12.5}]});
+  h.encounter().battleMapId='arena';
+  h.encounter().combat.participants[actor.id].movement={
+    actionId:'approved-movement',kind:'dash',remaining:9
+  };
+  const delegated={mapId:'arena',combatantId:actor.id,delegateUid:delegate};
+  assert.match((await h.command(delegate,actor.id,'map-delegate',delegated)).error,/Only the campaign GM/);
+  assert.equal((await h.command('gm',actor.id,'map-delegate',delegated)).ok,true);
+  assert.equal(h.encounter().combat.participants[actor.id].movementDelegateUid,delegate);
+  assert.match((await h.command(delegate,actor.id,'declare',{
+    optionId:'basic:command'
+  })).error,/cannot control/);
+  const moved=await h.command(delegate,actor.id,'player-map-move',{
+    mapId:'arena',moveKind:'approved',point:{x:37.5,y:12.5}
+  });
+  assert.equal(moved.ok,true,moved.error);
+  assert.equal(h.store.get(path).tokens[0].x,37.5);
+  assert.equal((await h.command('gm',actor.id,'map-delegate',{
+    ...delegated,delegateUid:''
+  })).ok,true);
+  assert.match((await h.command(delegate,actor.id,'player-map-move',{
+    mapId:'arena',moveKind:'approved',point:{x:62.5,y:12.5}
+  })).error,/cannot control/);
+});
