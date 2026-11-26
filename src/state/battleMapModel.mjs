@@ -1,5 +1,6 @@
 import {validFogCells,resizeFogCells,distanceMetersPerCell} from './battleMapFogModel.mjs';
 import {mapGridType,validateTerrainCells,resizeTerrainCells} from './battleMapTerrainModel.mjs';
+import {mapCell,mapCellCenter} from './battleMapRoutes.mjs';
 // Digital GM phase 6.1: campaign battle maps, including looping MP4/WebM backgrounds.
 export const BATTLE_MAP_IMAGE_MAX_BYTES=8*1024*1024;
 export const BATTLE_MAP_VIDEO_MAX_BYTES=48*1024*1024;
@@ -106,15 +107,13 @@ export function battleMapTokens(items){
       x:Math.round(x*100)/100,y:Math.round(y*100)/100,...battleMapTokenAppearance(row)};
   });
 }
-export function battleMapPoint(x,y,{columns=20,rows=15,snap=false}={}){
+export function battleMapPoint(x,y,{columns=20,rows=15,snap=false,gridType='square'}={}){
   const a=Math.max(0,Math.min(100,Number(x))),b=Math.max(0,Math.min(100,Number(y)));
   if(!Number.isFinite(a)||!Number.isFinite(b))throw Error('Invalid map coordinates.');
   if(!snap)return {x:Math.round(a*100)/100,y:Math.round(b*100)/100};
   const cols=safeNumber(columns,1,80,'grid columns'),count=safeNumber(rows,1,80,'grid rows');
-  return {
-    x:Math.round(((Math.min(cols-1,Math.floor(a/100*cols))+.5)/cols)*10000)/100,
-    y:Math.round(((Math.min(count-1,Math.floor(b/100*count))+.5)/count)*10000)/100
-  };
+  const centre=mapCellCenter(mapCell({x:a,y:b},cols,count,gridType),cols,count,gridType);
+  return {x:Math.round(centre.x*100)/100,y:Math.round(centre.y*100)/100};
 }
 export function battleMapIsPublished(record){
   return record?.visibility==='players';
