@@ -106,6 +106,85 @@ const painted=page=>page.evaluate(()=>new Promise(resolve=>requestAnimationFrame
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'no overflow at '+width);
    assert.deepEqual(await panel.evaluate(el=>['--combat-x','--combat-y','--combat-w','--combat-h'].map(key=>el.style.getPropertyValue(key))),saved);
   }
+  // Milestone 2.4: navigation changes only the camera, never window geometry.
+  console.log('NAVIGATION',role,scale);
+  const allGeometry=()=>root.locator('[data-canvas-window]').evaluateAll(nodes=>nodes.map(el=>
+   [el.dataset.canvasWindow,...['--combat-x','--combat-y','--combat-w','--combat-h'].map(key=>el.style.getPropertyValue(key))]));
+  const layoutBeforeNavigation=await allGeometry();
+  const cameraMatrix=()=>root.locator('[data-stage]').evaluate(el=>{
+   const m=new DOMMatrix(getComputedStyle(el).transform);return {x:m.e,y:m.f,scale:m.a};
+  });
+  const toolbar=root.getByRole('toolbar',{name:role==='player'?'Player dashboard canvas controls':role==='gm'?'GM dashboard canvas controls':'Combat canvas controls'});
+  assert.equal(await toolbar.getByRole('button').count(),7,'the approved toolbar has seven controls');
+  const label=await panel.getAttribute('data-window-label');
+  const beforeFocus=await cameraMatrix();
+  await panel.getByRole('button',{name:'Focus on '+label,exact:true}).click();await painted(page);
+  assert.equal(await panel.getByRole('button',{name:'Return from '+label,exact:true}).count(),1);
+  await panel.getByRole('button',{name:'Return from '+label,exact:true}).click();await painted(page);
+  const returned=await cameraMatrix();
+  assert.ok(Math.abs(returned.x-beforeFocus.x)<.02&&Math.abs(returned.y-beforeFocus.y)<.02&&
+   returned.scale===beforeFocus.scale,'focus returns to the prior camera within transform rounding');
+  await panel.locator('header strong').first().dblclick();await painted(page);
+  assert.equal(await panel.getByRole('button',{name:'Return from '+label,exact:true}).count(),1,'double-click focuses the title');
+  await panel.getByRole('button',{name:'Return from '+label,exact:true}).click();await painted(page);
+  const h=await geometry(panel.locator('header').first()),beforePan=await cameraMatrix();
+  await page.mouse.move(h.x+h.w/2,h.y+h.h/2);await page.mouse.down({button:'middle'});
+  await page.mouse.move(h.x+h.w/2+35,h.y+h.h/2+25,{steps:12});await page.mouse.up({button:'middle'});await painted(page);
+  const afterPan=await cameraMatrix();
+  assert.ok(Math.abs(afterPan.x-beforePan.x-35)<2&&Math.abs(afterPan.y-beforePan.y-25)<2,'middle-button pan follows the pointer');
+  await toolbar.getByRole('button',{name:'Zoom into canvas',exact:true}).click();await painted(page);
+  assert.ok((await cameraMatrix()).scale>afterPan.scale);
+  await toolbar.getByRole('button',{name:'Zoom out of canvas',exact:true}).click();await painted(page);
+  await toolbar.getByRole('button',{name:'Fit Canvas',exact:true}).click();await painted(page);
+  const viewport=root.locator('[data-layout-mode]'),v=await geometry(viewport);
+  const findBlank=()=>viewport.evaluate(el=>{
+   const r=el.getBoundingClientRect(),background=(x,y)=>{
+    const node=document.elementFromPoint(x,y);return node===el||node?.hasAttribute('data-stage');
+   };
+   for(let y=Math.max(1,r.top+75);y<Math.min(innerHeight-8,r.bottom-8);y+=35)
+    for(let x=r.left+8;x<r.right-90;x+=45)
+     if(background(x,y)&&background(x+70,y))return {x,y};
+   return null;
+  });
+  const blank=await findBlank();
+  assert.ok(blank,'a visible canvas background supports navigation');
+  await page.mouse.move(blank.x,blank.y);
+  const beforeWheel=await cameraMatrix();await page.mouse.wheel(45,0);
+  await page.waitForTimeout(220);await painted(page);
+  assert.ok(Math.abs((await cameraMatrix()).x-beforeWheel.x+45)<2,'horizontal trackpad input pans '+JSON.stringify({beforeWheel,after:await cameraMatrix(),blank,v}));
+  if(scale===.5){
+   const session=await page.context().newCDPSession(page);
+   await session.send('Emulation.setTouchEmulationEnabled',{enabled:true});
+   const touchBlank=await findBlank();assert.ok(touchBlank);
+   await viewport.evaluate(el=>{
+    window.canvasTouchEvents=[];
+    for(const type of ['pointerdown','pointermove','pointercancel','pointerup','touchstart'])
+     el.addEventListener(type,event=>window.canvasTouchEvents.push({type,id:event.pointerId,
+      x:event.clientX,y:event.clientY,target:event.target.tagName,window:event.target.closest('[data-canvas-window]')?.dataset.canvasWindow}),true);
+   });
+   const a={...touchBlank,id:1},b={x:touchBlank.x+70,y:touchBlank.y,id:2};
+   const touch=(type,touchPoints)=>session.send('Input.dispatchTouchEvent',{type,touchPoints});
+   const beforePinch=await cameraMatrix();
+   await touch('touchStart',[a]);await touch('touchStart',[a,b]);
+   await touch('touchMove',[a,{...b,x:b.x+50}]);await painted(page);
+   await page.waitForFunction(before=>{
+    const stage=document.querySelector('[data-stage]');
+    return stage&&new DOMMatrix(getComputedStyle(stage).transform).a>before;
+   },beforePinch.scale,{timeout:3000}).catch(async error=>{
+    throw Error('Two-finger canvas pinch failed '+JSON.stringify({beforePinch,after:await cameraMatrix(),touchBlank,
+     events:await page.evaluate(()=>window.canvasTouchEvents)})+' '+error.message);
+   });
+   await touch('touchEnd',[]);await painted(page);
+   await session.send('Emulation.setTouchEmulationEnabled',{enabled:false});await session.detach();
+  }
+  await toolbar.getByRole('button',{name:'Lock Canvas',exact:true}).click();await painted(page);
+  assert.equal(await toolbar.getByRole('button',{name:'Unlock Canvas',exact:true}).getAttribute('aria-pressed'),'true');
+  assert.equal(await root.locator('[data-resize-edge]').count(),0);
+  await toolbar.getByRole('button',{name:'Undo canvas change',exact:true}).click();await painted(page);
+  assert.equal(await toolbar.getByRole('button',{name:'Lock Canvas',exact:true}).count(),1);
+  await toolbar.getByRole('button',{name:'Redo canvas change',exact:true}).click();await painted(page);
+  await toolbar.getByRole('button',{name:'Unlock Canvas',exact:true}).click();await painted(page);
+  assert.deepEqual(await allGeometry(),layoutBeforeNavigation,'navigation and locking preserve every saved rectangle');
   if(role==='combat'){
    await open();await painted(page);console.log('CENTRED',role,scale);
    assert.deepEqual(await panel.evaluate(el=>['--combat-x','--combat-y','--combat-w','--combat-h'].map(key=>el.style.getPropertyValue(key))),saved,'Combat layout reload');

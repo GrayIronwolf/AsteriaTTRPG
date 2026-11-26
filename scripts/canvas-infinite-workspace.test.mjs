@@ -180,5 +180,5 @@ test('Advanced canvas minimap and performance preferences remain independent of 
  assert.match(jsx,/Canvas overview minimap/);
  assert.match(jsx,/Show canvas minimap/);
  assert.match(jsx,/Reduce off-screen window effects/);
- assert.match(jsx,/Recover off-screen windows \(Fit All\)/);
+ assert.match(jsx,/Use Fit All Panels in the toolbar to recover off-screen windows/);
 });

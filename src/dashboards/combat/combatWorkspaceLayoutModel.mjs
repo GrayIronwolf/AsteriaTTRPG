@@ -99,7 +99,10 @@ export function openingCombatCamera(layout,visibleIds=[],viewportWidth=0){
 }
 /** Fit and focus change only the camera; window geometry never changes. */
 export function combatWindowBounds(layout,visibleIds){
- const rects=visibleIds.map(id=>layout.freeform.positions[id]).filter(Boolean);
+ const rects=visibleIds.map(id=>{
+   const rect=layout.freeform.positions[id];
+   return rect&&layout.minimized?.includes(id)?{...rect,h:Math.min(rect.h,80)}:rect;
+ }).filter(Boolean);
  if(!rects.length)return null;
  return {left:Math.min(...rects.map(rect=>rect.x)),
   top:Math.min(...rects.map(rect=>rect.y)),
@@ -118,7 +121,8 @@ export function fitCombatCamera(layout,visibleIds,viewportWidth,viewportHeight){
    y:(viewportHeight-(bounds.top+bounds.bottom)*pixels*scale)/2});
 }
 export function focusCombatCamera(layout,id,viewportWidth,viewportHeight){
- const rect=layout.freeform.positions[id];
+ const original=layout.freeform.positions[id];
+ const rect=original&&layout.minimized?.includes(id)?{...original,h:Math.min(original.h,80)}:original;
  if(!rect||!viewportWidth||!viewportHeight)return normalizeCombatCamera({});
  const pixels=viewportWidth/1000;
  const usableWidth=Math.max(100,viewportWidth-80),usableHeight=Math.max(100,viewportHeight-80);

@@ -68,6 +68,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
   const [cameraState,setCameraState]=useState(()=>({scope:storageKey,view:readCamera(storageKey)||DEFAULT_CAMERA}));
   const camera=cameraState.scope===storageKey?cameraState.view:DEFAULT_CAMERA;
   const updateCamera=update=>{
+    if(gesture.current)return;
     const current=cameraRef.current;
     const candidate=normalizeCombatCamera(typeof update==='function'?update(current):update);
     const viewport=canvas.current;
@@ -80,6 +81,8 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
     setCameraState({scope:storageKey,view:next});
   };
   const [focused,setFocused]=useState(null);
+  const focusedView=useRef(focused);focusedView.current=focused;
+  const clearFocus=()=>{if(focusedView.current){focusedView.current=null;setFocused(null);}};
   const [message,setMessage]=useState('');
   const [frontWindow,setFrontWindow]=useState('');
   const [windowSearch,setWindowSearch]=useState('');
@@ -88,6 +91,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
   const [selectedTools,setSelectedTools]=useState(
     playerCanvas?canvasConfig.categories[0]?.id||'character':gmCanvas?'core':'overview');
   const root=useRef(null),canvas=useRef(null),stage=useRef(null),gesture=useRef(null);
+  const touches=useRef(new Map());
   const endGesture=useRef(null);
   const toolToggleRef=useRef(null);
   const cameraRef=useRef(camera),openingCameraPending=useRef(!readCamera(storageKey));
@@ -227,12 +231,15 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
   },[wide,storageKey]);
   useEffect(()=>{
     const onDown=event=>{
-      if(event.code==='Space'&&!/INPUT|TEXTAREA|SELECT/.test(event.target?.tagName||'')&&!event.target?.isContentEditable){
+      if(event.key==='Escape'&&gesture.current)
+        endGesture.current?.({type:'pointercancel',pointerId:gesture.current.pointer});
+      if(event.code==='Space'&&!/INPUT|TEXTAREA|SELECT|BUTTON|SUMMARY|A/.test(event.target?.tagName||'')&&!event.target?.isContentEditable){
         spaceHeld.current=true;
       }
     };
     const onUp=event=>{if(event.code==='Space')spaceHeld.current=false;};
-    const clear=()=>{spaceHeld.current=false;};
+    const clear=()=>{spaceHeld.current=false;
+      if(gesture.current)endGesture.current?.({type:'pointercancel',pointerId:gesture.current.pointer});};
     window.addEventListener('keydown',onDown);
     window.addEventListener('keyup',onUp);
     window.addEventListener('blur',clear);
@@ -261,9 +268,10 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
   // Apply only compositor-friendly transforms during pan and wheel movement.
   // Persist camera state once at the end, not once per pointer/wheel event.
   const drawCamera=value=>{
-    if(stage.current)stage.current.style.transform=
+    if(stage.current){stage.current.style.setProperty('--combat-scale',String(value.scale));
+      stage.current.style.transform=
       'translate3d('+Math.round(value.x*100)/100+'px,'+
-        Math.round(value.y*100)/100+'px,0) scale('+value.scale+')';
+        Math.round(value.y*100)/100+'px,0) scale('+value.scale+')';}
     const viewport=canvas.current;
     if(viewport){
       const grid=combatCanvasGridStyle(value,layout.gridSize);
@@ -286,7 +294,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
   };
   const focusWindow=id=>{
     const viewport=canvas.current;
-    if(!viewport||!wide||!layout.focusMode)return;
+    if(!viewport||!wide||!layout.focusMode||gesture.current)return;
     animateCamera();
     if(focused?.id===id){
       updateCamera(focused.previous);
@@ -302,8 +310,14 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
   useEffect(()=>{
     const viewport=canvas.current;
     if(!viewport||!wide)return;
+    // Cancel native page gestures only on the canvas background. Window
+    // content retains native touch scrolling and its own map/dice gestures.
+    const backgroundTouch=event=>{
+      if(event.target===viewport||event.target===stage.current)event.preventDefault();
+    };
     const wheel=event=>{
       if(gesture.current){event.preventDefault();return;}
+      if(event.target.closest?.('[data-canvas-ui]'))return;
       const overWindow=Boolean(event.target.closest?.('[data-combat-panel]'));
       stage.current?.classList.remove(styles.cameraFocus);
       canvas.current?.classList.remove(styles.cameraFocus);
@@ -325,12 +339,17 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
         return;
       }
       event.preventDefault();
-      if(!event.deltaY)return;
+      if(!event.deltaY&&!event.deltaX)return;
+      clearFocus();
       const rect=viewport.getBoundingClientRect();
-      const delta=event.deltaY*(event.deltaMode===1?16:event.deltaMode===2?
-        viewport.clientHeight:1);
+      const unit=event.deltaMode===1?16:event.deltaMode===2?viewport.clientHeight:1;
+      const delta=event.deltaY*unit;
       const factor=Math.exp(-Math.max(-140,Math.min(140,delta))*.0015);
-      const requested=zoomCombatCamera(cameraRef.current,
+      const panRequested=!event.ctrlKey&&!event.metaKey&&(event.shiftKey||Math.abs(event.deltaX)>0);
+      const requested=panRequested?{...cameraRef.current,
+        x:cameraRef.current.x-(event.deltaX||event.deltaY)*unit,
+        y:cameraRef.current.y-(event.shiftKey?0:event.deltaY)*unit}:
+        zoomCombatCamera(cameraRef.current,
         cameraRef.current.scale*factor,
         layout.zoomTowardCursor?
           {x:event.clientX-rect.left,y:event.clientY-rect.top-60}:
@@ -347,8 +366,10 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
       },140);
     };
     viewport.addEventListener('wheel',wheel,{passive:false,capture:true});
+    viewport.addEventListener('touchstart',backgroundTouch,{passive:false});
     return ()=>{
       viewport.removeEventListener('wheel',wheel,{capture:true});
+      viewport.removeEventListener('touchstart',backgroundTouch);
       clearTimeout(wheelTimer.current);
       if(wheelFrame.current)cancelAnimationFrame(wheelFrame.current);
       wheelFrame.current=0;
@@ -419,15 +440,29 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
     if(commit(next)){setRedoStack(redoStack.slice(1));setUndoStack(rows=>[...rows,layout].slice(-40));}
   };
   const startPan=event=>{
+    const touch=event.pointerType==='touch';
+    if(event.target.closest?.('[data-canvas-ui]'))return;
+    if(touch&&gesture.current?.kind==='pan'&&touches.current.size===1&&
+      (event.target===canvas.current||event.target===stage.current)){
+      touches.current.set(event.pointerId,{x:event.clientX,y:event.clientY});
+      const [a,b]=touches.current.values(),g=gesture.current;
+      g.kind='pinch';g.origin={...cameraRef.current};
+      g.distance=Math.hypot(a.x-b.x,a.y-b.y);
+      const rect=canvas.current.getBoundingClientRect();
+      g.pivot={x:(a.x+b.x)/2-rect.left,y:(a.y+b.y)/2-rect.top-60};
+      event.preventDefault();canvas.current.setPointerCapture?.(event.pointerId);return;
+    }
     const middle=event.button===1,space=spaceHeld.current&&event.button===0;
+    if(space&&event.target.closest?.('button,input,select,textarea,a,summary,details,[contenteditable]'))return;
     if(!wide||gesture.current||event.isPrimary===false||
        (!middle&&!space&&(event.button!==0||
          (event.target!==canvas.current&&event.target!==stage.current))))return;
     stage.current?.classList.remove(styles.cameraFocus);
     canvas.current?.classList.remove(styles.cameraFocus);
-    if(middle||space)setFocused(null);
+    clearFocus();
     gesture.current={kind:'pan',pointer:event.pointerId,x:event.clientX,y:event.clientY,
-      origin:{...cameraRef.current},latestCamera:{...cameraRef.current},frame:0};
+      origin:{...cameraRef.current},cancelOrigin:{...cameraRef.current},latestCamera:{...cameraRef.current},frame:0};
+    if(touch)touches.current.set(event.pointerId,{x:event.clientX,y:event.clientY});
     event.preventDefault();canvas.current?.setPointerCapture?.(event.pointerId);
   };
   const begin=(event,id,kind,edge='se')=>{
@@ -473,10 +508,17 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
   };
   const paintGesture=g=>{
     if(gesture.current!==g||!g.pending)return;
-    if(g.kind==='pan'){
+    if(g.kind==='pan'||g.kind==='pinch'){
       const viewport=canvas.current;
-      const candidate=clampCombatCamera({...g.origin,
-        x:g.origin.x+g.pending.x-g.x,y:g.origin.y+g.pending.y-g.y},
+      let requested;
+      if(g.kind==='pinch'){
+        const [a,b]=touches.current.values();if(!a||!b)return;
+        const rect=viewport.getBoundingClientRect();
+        const pivot={x:(a.x+b.x)/2-rect.left,y:(a.y+b.y)/2-rect.top-60};
+        requested=zoomCombatCamera(g.origin,g.origin.scale*Math.hypot(a.x-b.x,a.y-b.y)/(g.distance||1),g.pivot);
+        requested.x+=pivot.x-g.pivot.x;requested.y+=pivot.y-g.pivot.y;
+      }else requested={...g.origin,x:g.origin.x+g.pending.x-g.x,y:g.origin.y+g.pending.y-g.y};
+      const candidate=clampCombatCamera(requested,
         layout,visible.map(panel=>panel.props.id),
         viewport?.clientWidth||1000,Math.max(200,(viewport?.clientHeight||700)-64));
       g.latestCamera=candidate;
@@ -511,29 +553,44 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
     if(press&&(Math.abs(event.clientX-press.x)>6||
       Math.abs(event.clientY-press.y)>6))lastTitlePress.current=null;
     const g=gesture.current;
-    if(!g||g.pointer!==event.pointerId)return;
+    if(!g||g.pointer!==event.pointerId&&!touches.current.has(event.pointerId))return;
+    if(touches.current.has(event.pointerId))touches.current.set(event.pointerId,{x:event.clientX,y:event.clientY});
     g.latestPointer={x:event.clientX,y:event.clientY};
     if(!g.frame)g.frame=requestAnimationFrame(()=>{
       g.frame=0;
       const point=g.latestPointer;
-      g.pending=g.kind==='pan'?point:proposal(g,point.x,point.y);
+      g.pending=['pan','pinch'].includes(g.kind)?point:proposal(g,point.x,point.y);
       paintGesture(g);
     });
   };
   const end=event=>{
     const g=gesture.current;
-    if(!g||g.pointer!==event.pointerId)return;
+    if(!g||g.pointer!==event.pointerId&&!touches.current.has(event.pointerId))return;
     if(g.frame)cancelAnimationFrame(g.frame);
     g.frame=0;
-    g.pending=g.kind==='pan'?{x:event.clientX,y:event.clientY}:
+    g.pending=['pan','pinch'].includes(g.kind)?{x:event.clientX,y:event.clientY}:
       proposal(g,event.clientX,event.clientY);
     if(event.type==='pointerup')paintGesture(g);
+    if(g.kind==='pinch'&&event.type==='pointerup'){
+      touches.current.delete(event.pointerId);
+      const [remainingId,point]=[...touches.current][0]||[];
+      if(point){
+        g.kind='pan';g.pointer=remainingId;g.x=point.x;g.y=point.y;
+        g.origin={...cameraRef.current};g.latestCamera={...cameraRef.current};
+        try{canvas.current?.releasePointerCapture?.(event.pointerId);}catch{/* released */}
+        return;
+      }
+    }
     gesture.current=null;
+    for(const id of touches.current.keys()){
+      try{canvas.current?.releasePointerCapture?.(id);}catch{/* released */}
+    }
+    touches.current.clear();
     setAlignmentLines([]);
     if(canvas.current)delete canvas.current.dataset.draggingWindow;
-    if(g.kind==='pan'){
+    if(g.kind==='pan'||g.kind==='pinch'){
       if(event.type==='pointerup')updateCamera(g.latestCamera);
-      else{cameraRef.current=g.origin;drawCamera(g.origin);}
+      else{cameraRef.current=g.cancelOrigin||g.origin;drawCamera(cameraRef.current);}
     }else{
       const selected=event.type==='pointerup'?g.lastValid:g.layout;
       for(const panelId of g.ids){
@@ -578,7 +635,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
   },[layout.hidden,focused]);
   const fitAll=()=>{
     const viewport=canvas.current;
-    if(!viewport||!wide)return;
+    if(!viewport||!wide||gesture.current)return;
     setFocused(null);
     animateCamera();
     updateCamera(fitCombatCamera(layout,visible.map(panel=>panel.props.id),
@@ -586,11 +643,17 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
   };
   const openingView=()=>{
     const viewport=canvas.current;
-    if(!viewport||!wide)return;
+    if(!viewport||!wide||gesture.current)return;
     setFocused(null);
     animateCamera();
     updateCamera(openingCombatCamera(layout,
       visible.map(panel=>panel.props.id),viewport.clientWidth));
+  };
+  const zoomView=factor=>{
+    if(gesture.current)return;
+    clearFocus();
+    updateCamera(current=>zoomCombatCamera(current,current.scale*factor,
+      {x:(canvas.current?.clientWidth||0)/2,y:((canvas.current?.clientHeight||0)-60)/2}));
   };
   const minimize=id=>setPreference(previous=>({...previous,
     minimized:previous.minimized.includes(id)?
@@ -664,6 +727,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
             data-testid={'combat-drag-header-'+id}
             title="Drag to move; double-click to focus or return"
             onPointerDown={event=>{
+              if(event.button!==0||spaceHeld.current)return;
               if(event.target.closest('button,input,select,textarea,a,summary,details,label'))return;
               const previous=lastTitlePress.current;
               const doublePress=previous?.id===id&&
@@ -772,7 +836,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
         <i hidden data-axis="x" className={styles.alignmentVertical} style={{left:0}}/>
         <i hidden data-axis="y" className={styles.alignmentHorizontal} style={{top:0}}/>
       </div>:null}
-      <div className={styles.canvasActions} role="toolbar"
+      <div className={styles.canvasActions} role="toolbar" data-canvas-ui
         aria-label={playerCanvas?'Player dashboard canvas controls':
           gmCanvas?'GM dashboard canvas controls':'Combat canvas controls'}>
         <button type="button" ref={toolToggleRef} className={styles.iconButton}
@@ -806,14 +870,8 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
         </button>
         {wide?<>
           <button type="button" className={styles.iconButton}
-            data-testid="site-canvas-opening-zoom"
-            aria-label="Reset canvas view to 50 percent" title="Reset canvas view to 50%"
-            onClick={openingView}><AsteriaIcon name="fitCanvas" size={19}/></button>
-          <button type="button" className={styles.iconButton}
             aria-label="Zoom into canvas" title="Zoom in"
-            onClick={()=>updateCamera(current=>zoomCombatCamera(current,
-              current.scale*1.2,{x:(canvas.current?.clientWidth||0)/2,
-                y:((canvas.current?.clientHeight||0)-60)/2}))}>
+            onClick={()=>zoomView(1.2)}>
             <AsteriaIcon name="zoomIn" size={19}/>
           </button>
           <button type="button" className={styles.iconButton}
@@ -823,16 +881,14 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
           </button>
           <button type="button" className={styles.iconButton}
             aria-label="Zoom out of canvas" title="Zoom out"
-            onClick={()=>updateCamera(current=>zoomCombatCamera(current,
-              current.scale/1.2,{x:(canvas.current?.clientWidth||0)/2,
-                y:((canvas.current?.clientHeight||0)-60)/2}))}>
+            onClick={()=>zoomView(1/1.2)}>
             <AsteriaIcon name="zoomOut" size={19}/>
           </button>
           <output ref={zoomReadout} aria-label="Canvas zoom"
             className={styles.zoomValue}>{Math.round(camera.scale*100)}%</output>
         </>:null}
       </div>
-      {wide&&layout.minimapVisible?<div className={styles.canvasMinimap}
+      {wide&&layout.minimapVisible?<div className={styles.canvasMinimap} data-canvas-ui
         aria-label="Canvas overview minimap">
         <div className={styles.minimapTitle}>Canvas overview</div>
         <svg viewBox="0 0 200 120" role="img" aria-label="Visible window positions">
@@ -844,9 +900,8 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
             rx="2" fill={frontWindow===item.id?'#b5dff1':'#54748a'}
             stroke="#b9d3e3" strokeWidth=".6"/>)}
         </svg>
-        <button type="button" onClick={fitAll}>Fit all windows</button>
       </div>:null}
-      {wide&&layout.windowSwitcher?<nav className={styles.navigationSwitcher}
+      {wide&&layout.windowSwitcher?<nav className={styles.navigationSwitcher} data-canvas-ui
         aria-label="Canvas window switcher">
         <input type="search" aria-label="Search canvas windows"
           placeholder="Find a window" value={windowSearch}
@@ -858,7 +913,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
             {panelLabels[panel.props.id]||panel.props.id}
           </button>)}</div>
       </nav>:null}
-      {gmCanvas?<div className={styles.manageActions} role="toolbar"
+      {gmCanvas?<div className={styles.manageActions} role="toolbar" data-canvas-ui
         aria-label={canvasRole+' dashboard window management'}>
         <button type="button" className={styles.iconButton}
           data-testid={playerCanvas?'player-canvas-add-window':'gm-canvas-add-window'}
@@ -870,10 +925,10 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
           <AsteriaIcon name="plus" size={20}/>
         </button>
       </div>:null}
-      {sidebarExpanded?<button type="button" className={styles.drawerBackdrop}
+      {sidebarExpanded?<button type="button" className={styles.drawerBackdrop} data-canvas-ui
         aria-label={gmCanvas?'Dismiss Dashboard Windows':'Dismiss Combat Tools'}
         onClick={()=>setSidebarExpanded(false)}/>:null}
-      <aside id="asteria-combat-tool-list" hidden={!sidebarExpanded}
+      <aside id="asteria-combat-tool-list" hidden={!sidebarExpanded} data-canvas-ui
         className={styles.toolSidebar} aria-label={playerCanvas?'Player Dashboard Window Library':
           gmCanvas?'GM Dashboard Window Library':'Combat Command Centre tools'}>
         <header className={styles.drawerHeader}>
@@ -947,6 +1002,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
               </select>
             </label>
             {wide?<button type="button" className={styles.openingView}
+              data-testid="site-canvas-opening-zoom"
               aria-label="Show readable opening view at 50 percent"
               onClick={openingView}>Opening view (50%)</button>:null}
             <label><input type="checkbox" checked={layout.gridVisible}
@@ -990,8 +1046,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
                 disabled={!canEditCanvas}
                 onChange={event=>setPreference(previous=>({...previous,
                   reduceOffscreenEffects:event.target.checked}))}/> Reduce off-screen window effects</label>
-              <button type="button" className={styles.openingView}
-                disabled={!wide} onClick={fitAll}>Recover off-screen windows (Fit All)</button>
+              <p className={styles.sidebarHint}>Use Fit All Panels in the toolbar to recover off-screen windows.</p>
             </fieldset>
             <fieldset className={styles.appearanceGroup}>
               <legend>Appearance</legend>
@@ -1028,6 +1083,8 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
               </button>
             </fieldset>
             <p className={styles.sidebarHint}>Initial guide: 100 columns by 60 rows.
+              Wheel zooms; Shift+wheel or horizontal trackpad input pans.
+              Pinch the canvas background to zoom with two fingers. Escape cancels an active gesture.
               The dot grid continues as you pan. At 50% zoom, approximately
               40 dot rows are visible on a typical desktop viewport.</p>
             <fieldset className={styles.appearanceGroup}>
