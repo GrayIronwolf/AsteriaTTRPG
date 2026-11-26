@@ -24,3 +24,7 @@ For an active linked encounter, the GM may grant or revoke map-only movement con
 ## Verification and release hold
 
 The follow-up introduces regression cases for permission denial, delegated movement and revocation, forced movement without AP spend, approved-range limits, and sanitised player projection. CI must pass on the final head before marking PR #394 ready, and the integration and publication safeguards must be rechecked before any merge. No production deployment is part of this change.
+
+## Generated frontend artifact verification
+
+The Milestone 3.3 branch-scoped GitHub Actions rebuild runs `npm ci`, lint, combat tests and the production Vite build, then commits regenerated `react-dist` and canonical compendium outputs on this development branch only. The release check compares regenerated source bundles against these committed assets. Production deployment remains a separate, manually authorised operation.
