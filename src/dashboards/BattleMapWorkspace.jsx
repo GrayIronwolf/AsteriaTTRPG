@@ -284,6 +284,9 @@ export function GMBattleMapManager({campaignId,characters={},encounter={},search
   const [privateDirty,setPrivateDirty]=useState(false);
   const [selectedCombatantId,setSelectedCombatantId]=useState('');
   const [movementMode,setMovementMode]=useState('movement'),[repositionReason,setRepositionReason]=useState('');
+  const [forcedSource,setForcedSource]=useState(''),[forcedKind,setForcedKind]=useState('spell');
+  const [forcedRoute,setForcedRoute]=useState('ground'),[forcedDistance,setForcedDistance]=useState('');
+  const [forcedResolved,setForcedResolved]=useState(false);
   const undoFog=useRef([]);
   const selected=maps.find(row=>row.id===selectedId)||null;
   useEffect(()=>{if(searchTarget?.category==='battle-map'&&maps.some(x=>x.id===searchTarget.id))
@@ -383,9 +386,16 @@ export function GMBattleMapManager({campaignId,characters={},encounter={},search
   };
   const moveCombatToken=async(combatantId,point)=>{
     if(!combatLinked||busy)return;
+    if(movementMode==='forced'&&(!forcedResolved||forcedSource.trim().length<2||
+      !(Number(forcedDistance)>0&&Number(forcedDistance)<=1000)||repositionReason.trim().length<5)){
+      setMessage('Confirm the resolved source, approved range and reason before moving.');
+      return;
+    }
     await act(()=>firebaseService.combatCommand(campaignId,'encounter',{
       operation:'map-move',mapId:selected.id,combatantId,point,mode:movementMode,
-      reason:movementMode==='reposition'?repositionReason:'',
+      reason:movementMode==='movement'?'':repositionReason,
+      ...(movementMode==='forced'?{source:{id:forcedSource.trim(),kind:forcedKind,
+        routeKind:forcedRoute,distance:Number(forcedDistance),resolved:forcedResolved}}:{}),
       revision:Number(encounter.combat?.revision||0)
     }));
   };
@@ -510,12 +520,32 @@ export function GMBattleMapManager({campaignId,characters={},encounter={},search
             <label>Movement method<select value={movementMode} onChange={event=>setMovementMode(event.target.value)}>
               <option value="movement">Approved movement action</option>
               <option value="reposition">GM correction / reposition</option>
+              <option value="forced">Resolved forced movement</option>
             </select></label>
           </div>
-          {movementMode==='reposition'?<label>GM correction reason<input maxLength={160}
-            value={repositionReason} onChange={event=>setRepositionReason(event.target.value)}
-            placeholder="Document the correction or forced movement"/></label>:
-            <p>Remaining approved movement: {combatMoveRemaining===null?'No movement action approved':combatMoveRemaining+' m'}.
+          {movementMode!=='movement'?<>
+            <label>GM adjudication reason<input maxLength={160}
+              value={repositionReason} onChange={event=>setRepositionReason(event.target.value)}
+              placeholder="Document the source, effect and movement"/></label>
+            {movementMode==='forced'?<div className="asteria-battle-form-row">
+              <label>Effect source ID<input maxLength={160} value={forcedSource}
+                onChange={event=>setForcedSource(event.target.value)}/></label>
+              <label>Source type<select value={forcedKind} onChange={event=>setForcedKind(event.target.value)}>
+                {['spell','talent','shove','creature','environment','ability','other'].map(kind=>
+                  <option key={kind} value={kind}>{kind}</option>)}
+              </select></label>
+              <label>Travel mode<select value={forcedRoute} onChange={event=>setForcedRoute(event.target.value)}>
+                <option value="ground">Ground</option>
+                <option value="fly">Airborne</option>
+                <option value="teleport">Teleportation</option>
+              </select></label>
+              <label>Approved range (m)<input type="number" min="0.1" max="1000" step="0.1"
+                value={forcedDistance} onChange={event=>setForcedDistance(event.target.value)}/></label>
+              <label><input type="checkbox" checked={forcedResolved}
+                onChange={event=>setForcedResolved(event.target.checked)}/>
+                GM confirms source and saving throw resolved</label>
+            </div>:null}
+          </>:<p>Remaining approved movement: {combatMoveRemaining===null?'No movement action approved':combatMoveRemaining+' m'}.
               A player must declare a movement action; the GM approves its distance through the existing combat panel.</p>}
           {selectedCombatToken?<LiveTokenAppearance key={selectedCombatToken.id} token={selectedCombatToken}
             busy={busy} onSave={saveCombatToken}/>:null}
