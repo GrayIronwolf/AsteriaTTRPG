@@ -256,6 +256,21 @@ export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigat
       <CombatCommandPanel id="setup">
       {canSetup?<section className={styles.section}>
         <h3>Encounter Setup</h3>
+        <label>Initiative mode
+          <select aria-label="Encounter initiative mode"
+            value={combat.initiativeMode||'automatic'}
+            disabled={busy||!combat.sessionEditable}
+            onChange={event=>submit('encounter',{operation:'save',encounter:{
+              combatants:roster(),initiativeMode:event.target.value
+            }})}>
+            <option value="automatic">Automatic: roll any unset initiatives</option>
+            <option value="manual">Manual: GM sets every initiative</option>
+            <option value="mixed">Mixed: GM sets player initiatives; enemies roll automatically</option>
+          </select>
+        </label>
+        {combat.initiativeMode==='manual'||combat.initiativeMode==='mixed'?<p>
+          Set the required initiative scores in the initiative panel before starting combat.
+        </p>:null}
         <div className={styles.controls}>
           <button type="button" disabled={busy||!combat.sessionEditable||
             !stream.data.candidates.length}
