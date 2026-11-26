@@ -5,6 +5,7 @@
  */
 import {battleMapCanPreview,battleMapTokens} from './battleMapModel.mjs';
 import {validFogCells} from './battleMapFogModel.mjs';
+import {mapGridType,publicTerrainCells} from './battleMapTerrainModel.mjs';
 import {safeCombatPresentation} from './playerPresentationModel.mjs';
 
 const id=value=>typeof value==='string'&&/^[A-Za-z0-9_-]{1,160}$/.test(value);
@@ -158,7 +159,9 @@ export function publicPresentationBattleMap(raw={},campaignId='',mapId='',encoun
     gridColumns:columns,gridRows:rows,
     gridVisible:raw.gridVisible===true,
     gridOpacity:clamp(raw.gridOpacity,0,100,40),
-    fogEnabled,fogCells,metresPerCell:clamp(raw.metresPerCell,0.1,1000,1),
+    fogEnabled,fogCells,gridType:mapGridType(raw.gridType),
+    terrainCells:publicTerrainCells({...raw,gridColumns:columns,gridRows:rows,fogEnabled},fogCells),
+    metresPerCell:clamp(raw.metresPerCell,0.1,1000,1),
     ...(linked?{combatId:encounter.combatId,activeTokenId:focus?.id||''}:{}),
     tokens,description:name(raw.description,300),
     visibility:'players'
