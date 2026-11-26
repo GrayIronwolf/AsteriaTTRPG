@@ -1,4 +1,4 @@
-name: Verify live Pages source stays off the test branch
+name: Verify Pages publishing isolation for the development branch
 on:
   pull_request:
     branches: [Website-Build-Test]
@@ -10,32 +10,40 @@ permissions:
   pages: read
 jobs:
   pages-source-safeguard:
-    name: Verify GitHub Pages cannot publish Website-Build-Test
+    name: Confirm test branch does not deploy GitHub Pages
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Check configured Pages publishing source (read-only)
+      - uses: actions/checkout@v4
+      - name: Verify Pages is workflow-managed with no automatic publishing job
         env:
           GH_TOKEN: ${{ github.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
           node --input-type=module <<'NODE'
+          import {readdirSync,readFileSync} from 'node:fs';
+          import {join} from 'node:path';
           const url='https://api.github.com/repos/'+process.env.GITHUB_REPOSITORY+'/pages';
           const response=await fetch(url,{headers:{
             authorization:'Bearer '+process.env.GH_TOKEN,
             accept:'application/vnd.github+json',
             'x-github-api-version':'2022-11-28'
           }});
-          if(!response.ok)throw Error('Unable to verify current Pages source ('+
-            response.status+'). Refusing integration until repository Pages settings are reviewed.');
+          if(!response.ok)throw Error('Unable to inspect Pages configuration ('+
+            response.status+'). Failing closed.');
           const pages=await response.json();
-          const source=pages.source||{};
-          const buildType=pages.build_type||'legacy';
-          console.log('Pages source branch:',source.branch||'(not supplied)');
-          console.log('Pages source folder:',source.path||'(not supplied)');
-          console.log('Pages build type:',buildType);
-          if(buildType!=='legacy'||source.branch!=='main')
-            throw Error('Pages source is not confirmed as legacy main-only. '+
-              'Website-Build-Test could publish live; do not merge.');
-          console.log('Verified: only main is the configured GitHub Pages branch.');
+          console.log('Pages build mode:',pages.build_type);
+          console.log('Legacy source metadata:',JSON.stringify(pages.source||null));
+          // In workflow mode the GitHub Pages source.branch value can remain from
+          // a former branch deployment, and is NOT the deployment trigger.
+          // In legacy mode a test-branch source would publish automatically.
+          if(pages.build_type!=='workflow')
+            throw Error('Pages is not in explicit GitHub Actions mode; reject test merge.');
+          const dir='.github/workflows';
+          const files=readdirSync(dir).filter(name=>/\.ya?ml$/.test(name));
+          const prohibited=/actions\/deploy-pages(?:@|\/)|actions\/upload-pages-artifact(?:@|\/)|(?:^|\n)\s*pages\s*:\s*write\b|peaceiris\/actions-gh-pages|JamesIves\/github-pages-deploy-action/i;
+          const offenders=files.filter(name=>prohibited.test(readFileSync(join(dir,name),'utf8')));
+          if(offenders.length)throw Error('Potential Pages publish workflow present: '+offenders.join(', '));
+          console.log('Verified '+files.length+' workflows: no Pages deploy action or Pages write permission.');
+          console.log('Development branch CI builds bundles but cannot publish GitHub Pages.');
           NODE
