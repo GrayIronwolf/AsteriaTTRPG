@@ -292,3 +292,70 @@ test('learned spell rank selection rejects ambiguity and resolves only owned cos
   assert.throws(()=>ownedSpellCosts(resolveOwnedSpell(c,{name:'Unknown cost'})),/missing/);
   assert.throws(()=>resolveOwnedSpell(c,{name:'Other'}),/not on the character sheet/);
 });
+
+
+test('Milestone 3.1 initiative modes are GM-only, validated and applied when combat starts',async()=>{
+  const h=database();
+  const players=[
+    {id:'player-a',characterId:'a'},
+    {id:'player-b',characterId:'b'}
+  ];
+  const roster=()=>h.encounter().combatants.map(row=>({
+    id:row.id,characterId:row.characterId,name:row.name,kind:row.kind,
+    defeated:row.defeated,initiative:row.initiative,initiativeSet:row.initiativeSet
+  }));
+  assert.equal((await h.command('alice','encounter','save',{
+    encounter:{combatants:players,initiativeMode:'manual'}
+  })).ok,false);
+  assert.equal((await h.command('gm','encounter','save',{
+    encounter:{combatants:players,initiativeMode:'not-a-mode'}
+  })).ok,false);
+  assert.equal((await h.command('gm','encounter','save',{
+    encounter:{combatants:players,initiativeMode:'manual'}
+  })).ok,true);
+  assert.equal(h.encounter().initiativeMode,'manual');
+  const first=await h.command('gm','encounter','start');
+  assert.equal(first.ok,false);
+  assert.match(first.error,/Set manual initiative/);
+  assert.equal(h.encounter().status,'ready');
+  assert.equal((await h.command('gm','encounter','save',{
+    encounter:{combatants:roster().map((row,i)=>({...row,initiative:20-i*10,initiativeSet:true}))}
+  })).ok,true);
+  assert.equal((await h.command('gm','encounter','start')).ok,true);
+  assert.equal(h.encounter().initiativeMode,'manual');
+  assert.deepEqual(h.encounter().combatants.map(row=>row.initiative),[20,10]);
+  assert.equal((await h.command('gm','encounter','save',{
+    encounter:{combatants:roster(),initiativeMode:'automatic'}
+  })).ok,false);
+  assert.equal((await h.command('gm','encounter','end')).ok,true);
+  assert.equal((await h.command('gm','encounter','clear')).ok,true);
+  assert.equal(h.encounter().initiativeMode,'automatic');
+});
+test('Milestone 3.1 mixed initiative requires players only and automatically rolls unset enemies',async()=>{
+  const h=database();
+  const rows=[
+    {id:'player-a',characterId:'a'},
+    {id:'player-b',characterId:'b'},
+    {id:'enemy-one',name:'Raider',hp:[20,20],initiativeSet:false}
+  ];
+  assert.equal((await h.command('gm','encounter','save',{
+    encounter:{combatants:rows,initiativeMode:'mixed'}
+  })).ok,true);
+  const missing=await h.command('gm','encounter','start');
+  assert.equal(missing.ok,false);
+  assert.match(missing.error,/Set manual initiative/);
+  const current=h.encounter().combatants.map(row=>
+    row.characterId?{...row,initiative:row.characterId==='a'?25:15,initiativeSet:true}:row
+  );
+  assert.equal((await h.command('gm','encounter','save',{
+    encounter:{combatants:current}
+  })).ok,true);
+  const started=await h.command('gm','encounter','start');
+  assert.equal(started.ok,true,started.error);
+  assert.equal(h.encounter().initiativeMode,'mixed');
+  assert.deepEqual(h.encounter().combatants.filter(row=>row.characterId)
+    .map(row=>row.initiative).sort((a,b)=>b-a),[25,15]);
+  const enemy=h.encounter().combatants.find(row=>row.id==='enemy-one');
+  assert.equal(Number.isFinite(enemy.initiative),true);
+  assert.ok(enemy.initiativeRoll);
+});
