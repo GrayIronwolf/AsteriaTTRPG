@@ -943,3 +943,10 @@ test('Milestone 3.4 odd-row hex routes and distance use six neighbours',async()=
   assert.equal(hexCellDistance({column:1,row:1},{column:2,row:2}),1);
   assert.equal(hexCellDistance({column:1,row:1},{column:4,row:4}),4);
 });
+
+test('Milestone 3.4 ruler counts hex steps and keeps legacy square Euclidean distance',async()=>{
+  const {measureGridDistance}=await import('../src/state/battleMapFogModel.mjs');
+  const a={x:30,y:30},b={x:50,y:50};
+  assert.equal(measureGridDistance(a,b,5,5,3,'hex').metres,3);
+  assert.equal(measureGridDistance(a,b,5,5,3,'square').metres,4.24);
+});
