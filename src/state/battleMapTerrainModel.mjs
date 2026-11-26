@@ -68,7 +68,10 @@ export function terrainMoveMultiplier(kind,mode){
 // revealing unseen obstructions through terrain metadata.
 export function publicTerrainCells(map,visibleFog){
   const terrain=validateTerrainCells(map?.terrainCells,Number(map.gridColumns),Number(map.gridRows));
-  if(!map.fogEnabled)return terrain;
+  // Hazard tiles may represent concealed traps; retain them in the GM-only
+  // original and never advertise their classification in public map metadata.
+  const safe=terrain.filter(cell=>cell.kind!=='hazard');
+  if(!map.fogEnabled)return safe;
   const columns=Number(map.gridColumns);
-  return terrain.filter(cell=>visibleFog[cell.row*columns+cell.column]==='1');
+  return safe.filter(cell=>visibleFog[cell.row*columns+cell.column]==='1');
 }
