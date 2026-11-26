@@ -286,6 +286,9 @@ service cloud.firestore {
         data.gridRows is int && data.gridRows >= 1 && data.gridRows <= 80 &&
         data.gridOpacity is int && data.gridOpacity >= 0 && data.gridOpacity <= 100 &&
         data.gridVisible is bool &&
+        data.get('gridType','square') in ['square','hex'] &&
+        data.get('terrainCells',[]) is list &&
+        data.get('terrainCells',[]).size() <= data.gridColumns * data.gridRows &&
         data.get('fogEnabled',false) is bool &&
         data.get('fogCells','') is string &&
         (data.get('fogCells','') == '' ||
@@ -378,7 +381,7 @@ service cloud.firestore {
             'id','campaignId','name','description','visibility','kind','contentType',
             'storagePath','gridColumns','gridRows','gridOpacity','gridVisible',
             'tokens','width','height','createdBy','createdAt','updatedAt',
-            'fogEnabled','fogCells','metresPerCell','combatId'
+            'fogEnabled','fogCells','metresPerCell','combatId','gridType','terrainCells'
           ]) &&
           request.resource.data.keys().hasAll([
             'id','campaignId','name','visibility','kind','contentType','storagePath',
@@ -394,13 +397,15 @@ service cloud.firestore {
           request.resource.data.diff(resource.data).affectedKeys().hasOnly([
             'name','description','visibility','gridColumns','gridRows',
             'gridOpacity','gridVisible','tokens','updatedAt',
-            'fogEnabled','fogCells','metresPerCell'
+            'fogEnabled','fogCells','metresPerCell','gridType','terrainCells'
           ]) &&
           (resource.data.get('combatId','') == '' ||
             (request.resource.data.tokens == resource.data.tokens &&
              request.resource.data.gridColumns == resource.data.gridColumns &&
              request.resource.data.gridRows == resource.data.gridRows &&
-             request.resource.data.get('metresPerCell',1) == resource.data.get('metresPerCell',1))) &&
+             request.resource.data.get('metresPerCell',1) == resource.data.get('metresPerCell',1) &&
+             request.resource.data.get('gridType','square') == resource.data.get('gridType','square') &&
+             request.resource.data.get('terrainCells',[]) == resource.data.get('terrainCells',[]))) &&
           validBattleMapData(campaignId,mapId,request.resource.data);
         allow delete: if isCampaignGM(campaignId) && resource.data.get('combatId','') == '';
       }
