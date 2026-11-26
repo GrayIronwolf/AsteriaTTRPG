@@ -1,10 +1,12 @@
-import React,{useEffect,useRef,useState} from 'react';
+import React,{useEffect,useMemo,useRef,useState} from 'react';
 import {
   battleMapEditableSettings,battleMapFileError,BATTLE_MAP_MAX_RECORDS,
   timestampRevision
 } from './campaignMediaModel.mjs';
 import {paintFogStroke,createFogCells,hiddenFogRuns,measureGridDistance} from '../../state/battleMapFogModel.mjs';
 import {battleMapCameraView,DEFAULT_BATTLE_MAP_CAMERA,encounterMapLink} from '../../state/battleMapCamera.mjs';
+import {mapCell,mapCellCenter,mapCellKey,mapReachableRoutes,mapRoutePoints} from '../../state/battleMapRoutes.mjs';
+import {MAP_MOVE_AP} from '../../state/battleMapMovement.mjs';
 import {battleMapPoint} from '../../state/battleMapModel.mjs';
 import styles from './CampaignMapWorkspace.module.css';
 
@@ -70,11 +72,29 @@ function useAuthenticatedMapBlob(api,campaignId,map,mode,atlas=false,restricted=
   return result.scope===scope?result:{url:'',error:'',loading:Boolean(map)};
 }
 export function CampaignMapCanvas({api,campaignId,map,mode='player',atlas=false,
-  editing=false,onPoint,previewFog=false,showGrid=true,restricted=false,interactive=false,camera=null}){
+  editing=false,onPoint,previewFog=false,showGrid=true,restricted=false,interactive=false,camera=null,movement=null}){
   const media=useAuthenticatedMapBlob(api,campaignId,map,mode,atlas,restricted);
   const node=useRef(null),drag=useRef(null),[playing,setPlaying]=useState(true);
   const [localCamera,setLocalCamera]=useState(DEFAULT_BATTLE_MAP_CAMERA);
   const [tool,setTool]=useState('pan'),[selection,setSelection]=useState(''),[ruler,setRuler]=useState([]);
+  const [destination,setDestination]=useState(null),[moving,setMoving]=useState(false),[moveNotice,setMoveNotice]=useState('');
+  const marker=map?.tokens?.find(row=>row.id===movement?.tokenId);
+  const canMove=Boolean(marker&&movement?.distance>0&&!movement.disabled);
+  const moveMode=tool==='move'&&canMove;
+  const cols=map?.gridColumns||20,rows=map?.gridRows||15;
+  const routes=useMemo(()=>tool==='move'&&canMove?mapReachableRoutes(map,marker,movement.distance,{
+    occupied:map.tokens.filter(row=>row.id!==marker.id),diagonalParity:movement.diagonalParity,revealedOnly:true
+  }):new Map(),[tool,canMove,map,marker,movement?.distance,movement?.diagonalParity]);
+  const route=destination?routes.get(destination):null;
+  const routePoints=route?mapRoutePoints(route,cols,rows):[];
+  useEffect(()=>{setDestination(null);setMoveNotice('');},[movement?.revision,map?.id,marker?.x,marker?.y]);
+  const commitMove=async target=>{
+    if(!target||moving||!moveMode)return;
+    setMoving(true);setMoveNotice('');
+    try{await movement.onMove(mapCellCenter(target,cols,rows));setDestination(null);}
+    catch(error){setMoveNotice(error?.message||'The move could not be confirmed.');}
+    finally{setMoving(false);}
+  };
   useEffect(()=>{setPlaying(true);setLocalCamera(DEFAULT_BATTLE_MAP_CAMERA);
     setSelection('');setRuler([]);drag.current=null;},[campaignId,map?.id]);
   const view=battleMapCameraView(camera||localCamera,map||{});
@@ -95,7 +115,6 @@ export function CampaignMapCanvas({api,campaignId,map,mode='player',atlas=false,
     setLocalCamera(previous=>({...previous,x:move(start.view.x,event.clientX-start.x,start.viewport.width),
       y:move(start.view.y,event.clientY-start.y,start.viewport.height)}));
   };
-  const cols=map?.gridColumns||20,rows=map?.gridRows||15;
   const fog=Boolean(map?.fogEnabled)&&(mode!=='gm'||previewFog);
   const hidden=fog?hiddenFogRuns(map.fogCells,cols,rows):[];
   const tokens=map?.tokens||[];
@@ -107,6 +126,18 @@ export function CampaignMapCanvas({api,campaignId,map,mode='player',atlas=false,
       (event.clientX-bounds.left)*100/bounds.width,
       (event.clientY-bounds.top)*100/bounds.height,
       {columns:cols,rows,snap:showGrid&&map.gridVisible});
+    if(moveMode){
+      const cell=mapCell(raw,cols,rows);
+      if(!cell)return;
+      const key=mapCellKey(cell);
+      if(!routes.has(key)||(fog&&fogCells[cell.row*cols+cell.column]!=='1')){
+        setMoveNotice('Choose a reachable, revealed destination.');setDestination(null);return;
+      }
+      setMoveNotice('');
+      if(destination===key)commitMove(routes.get(key));
+      else setDestination(key);
+      return;
+    }
     if(interactive&&!editing&&tool==='ruler')setRuler(previous=>previous.length===1?[previous[0],raw]:[raw]);
     else onPoint?.(raw);
   };
@@ -126,8 +157,19 @@ export function CampaignMapCanvas({api,campaignId,map,mode='player',atlas=false,
       <button type="button" onClick={()=>setLocalCamera(DEFAULT_BATTLE_MAP_CAMERA)}>Reset view</button>
       <button type="button" aria-pressed={tool==='pan'} onClick={()=>setTool('pan')}>Pan</button>
       <button type="button" aria-pressed={tool==='ruler'} onClick={()=>{setTool('ruler');setRuler([]);}}>Ruler</button>
+      {marker?<button type="button" aria-pressed={tool==='move'} disabled={!canMove}
+        onClick={()=>{setTool('move');setSelection(marker.id);setDestination(null);}}>Move my token</button>:null}
       {tool==='ruler'?<output>{distance?distance.metres+' m':ruler.length?'Choose the end point':'Choose the start point'}</output>:null}
     </div>:null}
+    {moveMode?<div className={styles.controls}>
+      <output aria-live="polite">{movement.outOfTurn?'Out-of-turn move · ':''}
+        {movement.kind==='approved'?(movement.approvedKind==='dash'?'Paid Dash':'Approved move'):'Move'} ·
+        {' '}{route?Number(route.cost.toFixed(2))+' m of ':''}{movement.distance} m ·
+        {' '}{movement.kind==='approved'?0:MAP_MOVE_AP.walk} AP
+      </output>
+      <button type="button" disabled={!route||moving} onClick={()=>commitMove(route)}>Confirm Move</button>
+    </div>:null}
+    {moveNotice?<p role="alert">{moveNotice}</p>:null}
     <div className={styles.canvas} data-map-zoom={view.zoom}
       style={{aspectRatio:map.width+' / '+map.height,minHeight:0,
         ...(interactive&&tool==='pan'&&view.zoom>1?{touchAction:'none',cursor:'grab'}:{})}}
@@ -135,7 +177,7 @@ export function CampaignMapCanvas({api,campaignId,map,mode='player',atlas=false,
       onLostPointerCapture={()=>{drag.current=null;}}>
       <div ref={node} className={styles.cameraLayer} style={{
         transform:'translate('+(50-view.x*view.zoom)+'%, '+(50-view.y*view.zoom)+'%) scale('+view.zoom+')'
-      }} onClick={editing||interactive&&tool==='ruler'?point:undefined} role={editing?'button':undefined}
+      }} onClick={editing||moveMode||interactive&&tool==='ruler'?point:undefined} role={editing?'button':undefined}
       tabIndex={editing?0:undefined}
       onKeyDown={editing?event=>{if(event.key==='Enter')onPoint?.({x:50,y:50});}:undefined}>
       {media.loading?<p role="status">Loading authenticated map media…</p>:null}
@@ -149,6 +191,13 @@ export function CampaignMapCanvas({api,campaignId,map,mode='player',atlas=false,
       {!atlas&&map.gridVisible&&showGrid?<div className={styles.grid} aria-hidden="true"
         style={{backgroundSize:(100/cols)+'% '+(100/rows)+'%',
           opacity:map.gridOpacity/100}}/>:null}
+      {moveMode?<svg className={styles.reachable} data-move-kind={movement.approvedKind||'walk'}
+        aria-label="Reachable destinations" viewBox="0 0 100 100" preserveAspectRatio="none">
+        {[...routes.values()].filter(cell=>!fog||fogCells[cell.row*cols+cell.column]==='1').map(cell=>
+          <rect key={mapCellKey(cell)} x={cell.column*100/cols} y={cell.row*100/rows}
+            width={100/cols} height={100/rows}/>)}
+        {routePoints.length?<polyline points={routePoints.map(p=>p.x+','+p.y).join(' ')}/>:null}
+      </svg>:null}
       {!atlas&&tokens.filter(t=>{
         if(!fog)return true;
         const x=Math.min(cols-1,Math.floor(t.x*cols/100));
@@ -157,7 +206,7 @@ export function CampaignMapCanvas({api,campaignId,map,mode='player',atlas=false,
       }).map(t=>{
         const position={left:t.x+'%',top:t.y+'%'};
         const label=t.kind==='character'?'P':t.kind==='creature'?'C':'•';
-        return interactive&&tool!=='ruler'?<button type="button" className={styles.token} key={t.id}
+        return interactive&&!moveMode&&tool!=='ruler'?<button type="button" className={styles.token} key={t.id}
           style={position} aria-label={t.label} aria-pressed={selection===t.id}
           onClick={()=>setSelection(t.id)}>{label}</button>:
           <span className={styles.token} key={t.id} style={position} title={t.label}>{label}</span>;
@@ -179,7 +228,7 @@ export function CampaignMapCanvas({api,campaignId,map,mode='player',atlas=false,
     {fog?<small>Fog is visual only. Published map files must not contain unrevealed secrets.</small>:null}
   </section>;
 }
-export function CampaignMapWorkspace({api,campaignId,role='player',selectedMapId='',camera=null,interactive=role!=='gm',encounter=null }){
+export function CampaignMapWorkspace({api,campaignId,role='player',selectedMapId='',camera=null,interactive=role!=='gm',encounter=null,movement=null }){
   const mode=role==='gm'?'gm':'player';
   const stream=useCampaignStream(api,'watchMaps',[campaignId,mode]);
   const maps=stream.data||[];
@@ -298,7 +347,7 @@ export function CampaignMapWorkspace({api,campaignId,role='player',selectedMapId
       </div>
       {map?.combatId?<p role="status">Linked combat is active. Grid, tokens and deletion stay locked.</p>:null}
     </div>:null}
-    {preview?<CampaignMapCanvas api={api} campaignId={campaignId} map={preview} camera={camera} interactive={interactive}
+    {preview?<CampaignMapCanvas api={api} campaignId={campaignId} map={preview} camera={camera} interactive={interactive} movement={movement}
       mode={mode} showGrid={showGrid} previewFog={previewFog}
       editing={mode==='gm'&&draft.fogEnabled&&fogMode!=='none'} onPoint={editFog}/>:null}
     {map?<label className={styles.compact}><input type="checkbox" checked={showGrid}

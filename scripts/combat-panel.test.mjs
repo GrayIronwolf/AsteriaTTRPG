@@ -1,6 +1,8 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {executeAction} from '../functions/handler.mjs';
+import {mapReachableRoutes} from '../src/state/battleMapRoutes.mjs';
+import {walkingAllowance} from '../src/state/battleMapMovement.mjs';
 import {assertApprovedEncounterDelivery} from '../src/state/encounterCompletionModel.mjs';
 import {prepareQuickEncounterTemplate} from '../src/state/preparedEncounterModel.mjs';
 import {tierBonus,spellAP,rollD20,checkResult,attackResult,counterspellResult,feedback,deathSave,changeCombatHP,mixedDamage,combatOptions,skillCheck,combatActive,currentCombatant,activeReactionWindow,basicReactionProblem,combatActionScope,manualAPProblem,optionProblem} from '../src/state/combatRules.mjs';
@@ -599,4 +601,51 @@ test('loading a prepared encounter applies the chosen roster and initiative poli
   assert.deepEqual(h.encounter().combatants.filter(row=>row.characterId).map(row=>row.characterId),['b']);
   assert.equal(h.store.get(workspace).combatState.preparedDetails.environment,'Heavy rain');
   assert.equal(JSON.stringify(h.encounter()).includes('GM secret'),false);
+});
+
+test('battle map routes honour occupied cells and alternating diagonal costs',()=>{
+  const map={gridColumns:4,gridRows:4,metresPerCell:3};
+  const start={x:12.5,y:12.5};
+  assert.equal(mapReachableRoutes(map,start,8).has('2:2'),false);
+  assert.equal(mapReachableRoutes(map,start,9).get('2:2').cost,9);
+  assert.equal(mapReachableRoutes(map,start,3,{diagonalParity:1}).has('1:1'),false);
+  assert.equal(mapReachableRoutes(map,start,3,{occupied:[{x:37.5,y:12.5}]}).has('1:1'),false);
+  assert.equal(walkingAllowance({movement:'6m (Walking) - 18m (Flying)'},{}),6);
+  assert.equal(walkingAllowance({movement:null},{}),null);
+});
+
+test('a player moves only their own token and recorded AP is charged once',async()=>{
+  const h=database();await h.setup();
+  for(const id of ['a','b'])h.character(id).movement=9;
+  h.store.set('campaigns/c/battleMaps/arena',{
+    id:'arena',kind:'image',contentType:'image/png',
+    storagePath:'campaigns/c/battleMaps/arena/scene.png',name:'Arena',
+    combatId:'',gridColumns:4,gridRows:4,metresPerCell:3,
+    visibility:'players',fogEnabled:false,tokens:[]
+  });
+  assert.equal((await h.command('gm','encounter','map-link',{mapId:'arena'})).ok,true);
+  const actor=currentCombatant(h.encounter()),uid=actor.characterId==='a'?'alice':'bob';
+  const other=uid==='alice'?'bob':'alice',details={
+    mapId:'arena',moveKind:'walk',point:{x:37.5,y:12.5},revision:h.encounter().combat.revision
+  };
+  assert.match((await h.command(other,actor.id,'player-map-move',details)).error,/cannot control/);
+  const move=await h.command(uid,actor.id,'player-map-move',details,'move-once');
+  assert.equal(move.ok,true,move.error);
+  assert.deepEqual(await h.command(uid,actor.id,'player-map-move',details,'move-once'),move);
+  assert.equal(h.encounter().combat.participants[actor.id].ap,2);
+  assert.equal((await h.command(uid,actor.id,'player-map-move',{
+    mapId:'arena',moveKind:'approved',point:{x:62.5,y:12.5}
+  })).ok,true);
+  assert.equal(h.encounter().combat.participants[actor.id].ap,2);
+  assert.equal((await h.command('gm','encounter','next')).ok,true);
+  assert.equal((await h.command(uid,actor.id,'player-map-move',{
+    mapId:'arena',moveKind:'walk',outOfTurn:true,point:{x:62.5,y:37.5}
+  })).ok,true);
+  assert.equal(h.encounter().combat.participants[actor.id].ap,1);
+  assert.match((await h.command(uid,actor.id,'player-map-move',{
+    mapId:'arena',moveKind:'walk',outOfTurn:true,point:{x:87.5,y:37.5}
+  })).error,/already used/);
+  assert.match((await h.command(uid,actor.id,'declare',{
+    optionId:'basic:attack',outOfTurn:true,targetIds:[currentCombatant(h.encounter()).id]
+  })).error,/already used/);
 });

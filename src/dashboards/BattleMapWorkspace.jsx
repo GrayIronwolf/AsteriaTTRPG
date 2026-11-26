@@ -1,4 +1,5 @@
-import {createSiteCombatMediaApi} from './combat/siteCombatApi.js';
+import {createSiteCombatApi,createSiteCombatMediaApi} from './combat/siteCombatApi.js';
+import {MAP_MOVE_AP,walkingAllowance} from '../state/battleMapMovement.mjs';
 import {CampaignMapWorkspace} from './presentation/CampaignMapWorkspace.jsx';
 import React,{useCallback,useEffect,useMemo,useRef,useState} from 'react';
 import {firebaseService} from '../firebase/asteriaFirebaseService.js';
@@ -507,13 +508,65 @@ export function GMBattleMapManager({campaignId,characters={},encounter={},search
     {message?<p role={message==='Map saved successfully.'?'status':'alert'}>{message}</p>:null}
   </Panel>;
 }
-export function PlayerBattleMapView({campaignId,encounter={},mapId='',presentation=false}){
+function PlayerMapOpportunity({actor,targets,character,submit}){
+  const [target,setTarget]=useState(''),[item,setItem]=useState(''),[message,setMessage]=useState('');
+  const [busy,setBusy]=useState(false);
+  const weapons=(Array.isArray(character.inventory)?character.inventory:[]).filter(row=>row.equipped&&!row.destroyed&&/weapon/i.test(row.type||''));
+  if(!weapons.length||!targets.length)return null;
+  return <details>
+    <summary>Out-of-turn attack</summary>
+    <p>Uses this round's opportunity. The GM resolves the attack through combat.</p>
+    <label>Visible target<select value={target} onChange={event=>setTarget(event.target.value)}>
+      <option value="">Choose a target</option>
+      {targets.map(row=><option key={row.id} value={row.id}>{row.name}</option>)}
+    </select></label>
+    <label>Wielded weapon<select value={item} onChange={event=>setItem(event.target.value)}>
+      <option value="">Choose a weapon</option>
+      {weapons.map(row=><option key={row.id} value={row.id}>{row.name}</option>)}
+    </select></label>
+    <button type="button" disabled={busy||!targets.some(row=>row.id===target)||!weapons.some(row=>row.id===item)}
+      onClick={async()=>{
+        setBusy(true);setMessage('');
+        try{await submit(actor.id,{operation:'declare',optionId:'basic:attack',outOfTurn:true,
+          targetIds:[target],itemId:item});setMessage('Attack sent to the GM for resolution.');}
+        catch(error){setMessage(error?.message||'The attack was rejected.');}
+        finally{setBusy(false);}
+      }}>Declare Attack</button>
+    {message?<p role="status">{message}</p>:null}
+  </details>;
+}
+export function PlayerBattleMapView({campaignId,encounter={},character=null,mapId='',presentation=false}){
   const uid=firebaseService.currentUser()?.uid||'';
   const api=useMemo(()=>uid?createSiteCombatMediaApi():null,[uid]);
+  const combatApi=useMemo(()=>uid&&character?createSiteCombatApi():null,[uid,Boolean(character)]);
+  const actor=(encounter.combatants||[]).find(row=>row.characterId===character?.id);
+  const state=encounter.combat?.participants?.[actor?.id]||{};
+  const offTurn=encounter.combatants?.[encounter.turnIndex]?.id!==actor?.id||state.turnComplete===true;
+  const approved=!offTurn&&state.mapMovement?.remaining>0;
+  const allowance=approved?state.mapMovement.remaining:character?walkingAllowance(character,{encounter}):null;
+  const movement=!presentation&&actor&&state.mapTokenId&&encounter.battleMapId&&combatApi?{
+    tokenId:state.mapTokenId,distance:allowance,revision:encounter.combat.revision,
+    disabled:encounter.paused||Boolean(encounter.combat.pending)||offTurn&&state.opportunityUsed||(!approved&&state.ap<MAP_MOVE_AP.walk),
+    diagonalParity:approved?state.mapMovement.diagonalParity:0,
+    kind:approved?'approved':'walk',approvedKind:approved?state.mapMovement.kind:'',
+    outOfTurn:offTurn,onMove:point=>combatApi.commandPlayer(campaignId,character.id,actor.id,{
+      operation:'player-map-move',revision:encounter.combat.revision,mapId:encounter.battleMapId,
+      moveKind:approved?'approved':'walk',point,outOfTurn:offTurn
+    })
+  }:null;
   if(!campaignId)return null;
   if(!api)return <p role="status">Sign in to view shared battle maps.</p>;
-  const content=<CampaignMapWorkspace key={uid+':'+campaignId} api={api}
+  const attackAvailable=movement&&offTurn&&!encounter.paused&&!state.opportunityUsed&&!encounter.combat?.pending&&state.ap>=1;
+  const content=<><CampaignMapWorkspace key={uid+':'+campaignId} api={api}
     campaignId={campaignId} selectedMapId={mapId} encounter={encounter}
-    interactive={!presentation}/>;
+    interactive={!presentation} movement={movement}/>
+    {attackAvailable?<PlayerMapOpportunity actor={actor}
+      targets={encounter.combatants.filter(row=>row.kind==='enemy'&&!row.defeated)}
+      character={character}
+      submit={(id,input)=>combatApi.commandPlayer(campaignId,character.id,id,{
+        ...input,revision:encounter.combat.revision
+      })}/>:null}
+    {movement&&!approved?<small>Dash costs {MAP_MOVE_AP.dash} AP and uses the distance approved by your GM.</small>:null}
+  </>;
   return presentation?content:<Panel title="Battle Maps" eyebrow="Shared Campaign Scenes">{content}</Panel>;
 }

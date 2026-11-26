@@ -25,6 +25,10 @@ import {
 } from '../src/state/encounterWaveModel.mjs';
 import { currentCombatant, initiativeResult, initiativeOrder, combatOptions, combatRestriction, optionProblem, skillCheck, rollD20, checkResult, attackResult, counterspellResult, validateReactionEquipment, payCombatCosts, changeCombatHP, deathSave, feedback, mixedDamage, rows, SPELL_RANKS, SPELL_SKILL_ACCESS } from '../src/state/combatRules.mjs';
 
+import {mapCell,mapCellCenter,mapCellKey,mapReachableRoutes} from '../src/state/battleMapRoutes.mjs';
+import {MAP_MOVE_AP,validateMapOpportunity,walkingAllowance} from '../src/state/battleMapMovement.mjs';
+import {publicPresentationBattleMap} from '../src/state/livePresentationProjectionModel.mjs';
+
 const copy=value=>JSON.parse(JSON.stringify(value));
 const text=(value,max=1000)=>String(value||'').trim().slice(0,max);
 const bounded=(value,min=0,max=1e9)=>{const n=Number(value);if(!Number.isFinite(n)||n<min||n>max)throw new Error('Choose a numeric value within range.');return n;};
@@ -260,6 +264,11 @@ export function createCombatCommands(context) {
       };
       const begin=(p,approval)=>{
         const option=findOption(p.actorId,p.optionId),s=state(p.actorId),ap=validateAction(p.actorId,option,p,approval);
+        if(p.outOfTurn){
+          validateMapOpportunity(encounter,p.actorId);
+          if(p.outOfTurn!==encounter.round)throw Error('This opportunity belongs to another round.');
+          setState(p.actorId,{outOfTurn:{round:encounter.round,kind:'attack'}});
+        }
         if(['attack','creature-attack'].includes(option.key)&&approval.checkType!=='attack')throw new Error('Weapon attacks use a named weapon skill against AC.');
         const opposed={grapple:[['grappling'],['grappling','acrobatics']],escape:[['grappling','acrobatics'],['grappling']],shove:[['athletics'],['athletics','acrobatics']],hide:[['stealth','stealth-combat'],['perception']]};
         if(opposed[option.key]){const [acting,defending]=opposed[option.key];if(approval.checkType!=='opposed'||!acting.includes(slug(approval.skill))||!defending.includes(slug(approval.opposedSkill)))throw new Error(`Use ${acting.join(' / ')} vs ${defending.join(' / ')}.`);}
@@ -393,6 +402,52 @@ export function createCombatCommands(context) {
         tx.update(mapRef,{combatId:encounter.combatId,tokens,updatedAt:serverTimestamp()});
         encounter.battleMapId=boundMapId;
         log('GM linked combat encounter to a battle map.');
+      }else if(input.operation==='player-map-move'){
+        requireActive();noPending();const actor=controlled();
+        if(input.mapId!==boundMapId||!boundMap||boundMap.combatId!==encounter.combatId||
+          boundMap.visibility!=='players')throw Error('This battle map is not shared for the current encounter.');
+        const character=get(actorId),s=state(actorId);
+        if(actor.defeated||combatRestriction(character,{now,encounter})||s.pendingDeathSave||
+          s.grappledBy)throw Error('This participant cannot move voluntarily.');
+        const offTurn=currentCombatant(encounter)?.id!==actorId||s.turnComplete;
+        if(offTurn&&input.outOfTurn!==true)throw Error('Confirm use of the out-of-turn movement opportunity.');
+        if(offTurn)validateMapOpportunity(encounter,actorId);
+        const original=boundMap.tokens.find(row=>row.combatantId===actorId);
+        const projection=publicPresentationBattleMap(boundMap,campaignId,boundMapId,encounter);
+        if(!original||!projection.tokens.some(row=>row.id===original.id))
+          throw Error('No visible token is assigned to this participant.');
+        const dest=mapCell(input.point,boundMap.gridColumns,boundMap.gridRows);
+        if(!dest)throw Error('Choose a valid destination.');
+        if(boundMap.fogEnabled&&projection.fogCells[dest.row*boundMap.gridColumns+dest.column]!=='1')
+          throw Error('Choose a revealed destination.');
+        const approved=input.moveKind==='approved'&&s.movement?.remaining>0;
+        const walk=input.moveKind==='walk';
+        if(!approved&&!walk)throw Error('This movement needs a GM-approved allowance.');
+        if(offTurn&&approved)throw Error('Use the remaining approved movement during your turn.');
+        if(walk&&s.movement?.remaining>0&&!offTurn)
+          throw Error('Finish the current approved movement first.');
+        const allowance=approved?s.movement.remaining:walkingAllowance(character,{now,encounter});
+        if(!allowance)throw Error('A movement allowance has not been recorded. Ask the GM to approve the movement.');
+        const ap=approved?0:MAP_MOVE_AP.walk;
+        if(s.ap<ap)throw Error('Not enough AP.');
+        const routes=mapReachableRoutes(boundMap,original,allowance,{
+          occupied:boundMap.tokens.filter(row=>row.id!==original.id),
+          diagonalParity:approved?s.movement.diagonalParity:0,revealedOnly:true
+        });
+        const route=routes.get(mapCellKey(dest));
+        if(!route)throw Error('That destination is unavailable within the current movement allowance.');
+        const point=mapCellCenter(dest,boundMap.gridColumns,boundMap.gridRows);
+        const remaining=offTurn?0:Math.round((allowance-route.cost)*100)/100;
+        const tokens=boundMap.tokens.map(row=>row.id===original.id?{...row,...point}:row);
+        tx.update(mapRef,{tokens,updatedAt:serverTimestamp()});
+        setState(actorId,{ap:s.ap-ap,movement:offTurn?s.movement??null:{
+          actionId:approved?s.movement.actionId:context.requestId,
+          kind:approved?s.movement.kind:'walk',remaining,diagonalParity:route.parity
+        },...(offTurn?{outOfTurn:{round:encounter.round,kind:'move'}}:{})});
+        log(`${actor.name} moved ${route.cost} m${offTurn?' out of turn':''}.`,{
+          actorUid:currentUser.uid,targetId:actor.id,from:{x:original.x,y:original.y},to:point,
+          metres:route.cost,ap
+        });
       }else if(input.operation==='map-move'){
         requireActive();noPending();
         if(encounter.battleMapId!==boundMapId)
@@ -643,9 +698,27 @@ export function createCombatCommands(context) {
         const option=findOption(actorId,input.optionId),s=state(actorId);
         if(input.operation==='ambush'){
           if(encounter.status==='active'||s.ambushUsed||!input.approval?.feasible||!input.approval?.unnoticed||option.key!=='attack')throw new Error('An opening ambush requires GM approval, an unnoticed attacker and one attack before initiative.');
-        }else if(currentCombatant(encounter)?.id!==actorId||s.turnComplete)throw new Error('Ordinary actions and preparation are available only on your own turn before it is completed.');
+        }
+        const offTurn=input.operation!=='ambush'&&(currentCombatant(encounter)?.id!==actorId||s.turnComplete);
+        if(offTurn){
+          if(input.operation!=='declare'||input.outOfTurn!==true||!['attack','creature-attack'].includes(option.key)||
+            input.spendId||s.ap<option.ap)
+            throw new Error('Ordinary actions and preparation are available only on your own turn before it is completed.');
+          validateMapOpportunity(encounter,actorId);
+        }
         if(combatRestriction(get(actorId),{now,encounter}))throw new Error('This participant cannot act.');
         const p=makePending(actorId,option,input);validateTargets(p);
+        if(offTurn){
+          if(!gm&&boundMap?.combatId===encounter.combatId){
+            const share=boundMap.visibility==='players'?
+              publicPresentationBattleMap(boundMap,campaignId,boundMapId,encounter):null;
+            const visible=new Set(share?.tokens.map(row=>row.id)||[]);
+            if(p.targetIds.some(target=>!entry(target)?.characterId&&!boundMap.tokens.some(
+              token=>token.combatantId===target&&visible.has(token.id))))
+              throw Error('Choose an authorised visible target.');
+          }
+          p.outOfTurn=encounter.round;
+        }
         if(input.spendId){
           if(input.operation!=='declare')throw new Error('An AP receipt can only be linked to its ordinary action.');
           const receipts=entry(actorId).kind==='player'?s.apSpends:privateState.apSpends?.[actorId];
@@ -669,7 +742,7 @@ export function createCombatCommands(context) {
         }
       }else if(input.operation==='approve'){
         const p=privateState.pending;if(!p||p.status!=='awaiting-approval')throw new Error('No declaration awaits approval.');
-        if(!p.prepared&&!p.ambush&&currentCombatant(encounter)?.id!==p.actorId)throw new Error('The declaring actor is no longer active.');
+        if(!p.prepared&&!p.ambush&&!p.outOfTurn&&currentCombatant(encounter)?.id!==p.actorId)throw new Error('The declaring actor is no longer active.');
         begin(p,input.approval||{});
       }else if(input.operation==='reject'||input.operation==='cancel'){
         const p=privateState.pending;if(!p||p.status!=='awaiting-approval')throw new Error('A begun action cannot be freely cancelled or refunded.');

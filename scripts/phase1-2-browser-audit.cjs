@@ -225,6 +225,21 @@ async function metrics(page) {
     await zoom.press('Enter');
     assert.equal(await panel.getByLabel('Map zoom').textContent(),'125%');
     assert.equal(await panel.locator('[data-map-zoom]').getAttribute('data-map-zoom'),'1.25');
+    await panel.getByRole('button',{name:'Reset view',exact:true}).press('Enter');
+    await panel.getByRole('button',{name:'Move my token',exact:true}).press('Enter');
+    await panel.getByLabel('Reachable destinations',{exact:true}).waitFor();
+    const layer=panel.locator('[data-map-zoom] > div').first();
+    await layer.evaluate(node=>{
+      const box=node.getBoundingClientRect();
+      node.dispatchEvent(new MouseEvent('click',{bubbles:true,
+        clientX:box.left+box.width*.56,clientY:box.top+box.height*.25}));
+    });
+    const confirm=panel.getByRole('button',{name:'Confirm Move',exact:true});
+    assert.equal(await confirm.isEnabled(),true);
+    await confirm.press('Enter');
+    await panel.waitFor({state:'visible'});
+    await panel.locator('[title="Kael"][style*="56.25%"]').waitFor();
+
   });
   await scenario('05-gm-dashboard-canvas',{width:1440},async p=>{
     await gm(p);
