@@ -380,7 +380,7 @@ export function GMBattleMapManager({campaignId,characters={},encounter={},search
   let measurement=null;
   if(measurePoints.length===2){
     try{measurement=measureGridDistance(measurePoints[0],measurePoints[1],
-      draft.gridColumns,draft.gridRows,draft.metresPerCell);}catch{measurement=null;}
+      draft.gridColumns,draft.gridRows,draft.metresPerCell,draft.gridType);}catch{measurement=null;}
   }
   const act=async callback=>{
     setBusy(true);setMessage('');
