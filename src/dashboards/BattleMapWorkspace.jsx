@@ -1,6 +1,6 @@
 import {createSiteCombatApi,createSiteCombatMediaApi} from './combat/siteCombatApi.js';
 import {MAP_MOVE_AP,walkingAllowance} from '../state/battleMapMovement.mjs';
-import {paintTerrainCell,resizeTerrainCells} from '../state/battleMapTerrainModel.mjs';
+import {paintTerrainCell,resizeTerrainCells,publicTerrainCells} from '../state/battleMapTerrainModel.mjs';
 import {mapCell,hexCellPoints} from '../state/battleMapRoutes.mjs';
 import {BattleMapToken,CampaignMapWorkspace} from './presentation/CampaignMapWorkspace.jsx';
 import React,{useCallback,useEffect,useMemo,useRef,useState} from 'react';
@@ -93,6 +93,7 @@ function MapCanvas({campaignId,map,gm=false,onPlaceToken,selectedTokenId='',fogT
   const playerFog=Boolean(map?.fogEnabled)&&(!gm||previewPlayerFog);
   const cols=Number(map?.gridColumns||20),rows=Number(map?.gridRows||15);
   const hex=map?.gridType==='hex';
+  const visibleTerrain=map?(previewPlayerFog?publicTerrainCells(map,map.fogCells):map.terrainCells||[]):[];
   const fogRectangles=playerFog?hiddenFogRuns(map?.fogCells,cols,rows):[];
   const isBrush=gm&&map&&['reveal','hide'].includes(fogTool)&&map.fogEnabled;
   const isPlacing=gm&&fogTool==='token'&&Boolean(selectedTokenId);
@@ -177,10 +178,10 @@ function MapCanvas({campaignId,map,gm=false,onPlaceToken,selectedTokenId='',fogT
             points={hexCellPoints(cell,cols,rows).map(p=>p.join(',')).join(' ')}
             fill="none" stroke="white" strokeWidth=".12"/>)}
       </svg>:<div aria-hidden="true" className="asteria-battle-grid" style={background}/>):null}
-      {gm&&Array.isArray(map.terrainCells)&&map.terrainCells.length>0?<svg
+      {gm&&visibleTerrain.length>0?<svg
         aria-label="GM terrain grid overlay" viewBox="0 0 100 100" preserveAspectRatio="none"
         style={{position:'absolute',inset:0,width:'100%',height:'100%',pointerEvents:'none'}}>
-        {map.terrainCells.map(cell=>{
+        {visibleTerrain.map(cell=>{
           const attrs={key:cell.column+':'+cell.row,
             fill:({wall:'#c74444',water:'#317ec4',difficult:'#a87a32',
               hazard:'#a8429c',cover:'#678663',stairs:'#989bb2'}[cell.kind]||'#94a1ae'),
