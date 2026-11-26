@@ -4,6 +4,7 @@ import {
   BATTLE_MAP_MAX_RECORDS
 } from '../../state/battleMapModel.mjs';
 import {validFogCells} from '../../state/battleMapFogModel.mjs';
+import {publicTerrainCells} from '../../state/battleMapTerrainModel.mjs';
 import {atlasMapCanPreview,atlasPublicProjection} from '../../state/worldAtlasModel.mjs';
 import {PRESENTATION_DEFAULT,presentationDraft,presentationId,safePartyPresentation} from '../../state/playerPresentationModel.mjs';
 
@@ -31,7 +32,8 @@ export function mapForViewer(raw,campaignId,mode='player'){
       gridColumns:settings.gridColumns,gridRows:settings.gridRows,
       gridOpacity:settings.gridOpacity,gridVisible:settings.gridVisible,
       fogEnabled:settings.fogEnabled,fogCells:settings.fogCells,
-      metresPerCell:settings.metresPerCell,
+      metresPerCell:settings.metresPerCell,gridType:settings.gridType,
+      terrainCells:mode==='gm'?settings.terrainCells:publicTerrainCells(settings,settings.fogCells),
       tokens:battleMapTokens(settings.tokens),
       combatId:mapId(raw.combatId)?raw.combatId:'',
       ...(mode==='gm'?{updatedAt:raw.updatedAt||null}:
