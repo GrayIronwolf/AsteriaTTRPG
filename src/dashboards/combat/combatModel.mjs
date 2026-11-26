@@ -118,6 +118,7 @@ export function projectCombat(encounter={},session=null,{role='player',character
       })
     }:{}),
     ...(gm?{
+      initiativeMode:['automatic','manual','mixed'].includes(raw.initiativeMode)?raw.initiativeMode:'automatic',
       battleMapId:validId(raw.battleMapId)?raw.battleMapId:'',
       preparedMapId:validId(raw.preparedMapId)?raw.preparedMapId:'',
       log:Object.freeze(array(raw.combat?.log).slice(0,30).map(row=>({
