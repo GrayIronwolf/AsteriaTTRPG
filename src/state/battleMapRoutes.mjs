@@ -45,7 +45,9 @@ function take(queue){
   queue[i]=last;
   return first;
 }
-export function mapReachableRoutes(map,origin,allowance,{occupied=[],diagonalParity=0,revealedOnly=false}={}){
+export function mapReachableRoutes(map,origin,allowance,{
+  occupied=[],diagonalParity=0,revealedOnly=false,movementKind=''
+}={}){
   const columns=Number(map.gridColumns),rows=Number(map.gridRows),scale=Number(map.metresPerCell??1);
   if(!Number.isInteger(columns)||!Number.isInteger(rows)||columns<1||rows<1||columns>80||rows>80||
     !Number.isFinite(scale)||scale<=0||!Number.isFinite(allowance)||allowance<=0)return new Map();
@@ -66,6 +68,18 @@ export function mapReachableRoutes(map,origin,allowance,{occupied=[],diagonalPar
   const free=(column,row)=>column>=0&&row>=0&&column<columns&&row<rows&&!blocked.has(column+':'+row)&&
     (!revealedOnly||!map.fogEnabled||map.fogCells?.[row*columns+column]==='1');
   const valid=(column,row)=>footprintFits(column,row,origin.cells??1,free);
+  if(movementKind==='fly'){
+    // Approved map flight measures horizontal travel. Ground occupants do not
+    // block its line, but the destination still needs a free legal footprint.
+    for(let row=0;row<rows;row++)for(let column=0;column<columns;column++){
+      const cost=Math.hypot(column-start.column,row-start.row)*scale;
+      if(cost>0&&cost<=allowance+1e-7&&valid(column,row)){
+        const destination={column,row,cost,parity:0,previous:seed};
+        routes.set(mapCellKey(destination),destination);
+      }
+    }
+    return routes;
+  }
   best.set(stateKey(seed),seed);push(queue,seed);
   while(queue.length){
     const current=take(queue);

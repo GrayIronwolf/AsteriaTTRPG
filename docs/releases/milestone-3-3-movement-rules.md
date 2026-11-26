@@ -1,0 +1,14 @@
+# Milestone 3.3 movement rules audit
+
+| Rule | Existing source | Map implementation or gap |
+| --- | --- | --- |
+| Move and Dash AP | `DEFAULT_COMBAT_ACTIONS` in `src/state/combatRules.mjs` sets Move to 1 AP and Dash to 2 AP. | Direct walking spends the existing Move cost. A resolved Dash records a GM-approved distance and uses the AP already charged by combat. |
+| Walking allowance | The character system applies active movement modifiers to a recorded base movement value. The Pixie records include separate walking and flying speeds. | Use the recorded walking speed and evaluated character effects. Some character and race records have an empty movement field. Their allowance requires the GM to consult the source and approve a distance. |
+| Dash allowance | The combat pipeline stores the GM-approved distance. | A universal Dash distance or multiplier was absent from the repository sources reviewed. Keep the approval field as the authority for the actual distance. |
+| Swim, Fly and Climb | The combat pipeline has separate basic actions and checks for capability and feasibility. Climb and climbing Dash also carry their recorded SP cost. | An approved flight uses its own horizontal range and legal destination footprint. Water, elevation, climbing surfaces and mode-specific traversability need terrain data. |
+| Jump | The Meaningful Jump action spends the existing SP cost and requires previously paid movement. | Jump height, length and landing restrictions depend on the source and GM judgement. A map landing still needs to be tied to successful resolution of that action. |
+| Teleport and forced movement | The Swordsmanship opportunity attack rules exempt teleportation and forced movement. Other restrictions are source-specific, such as Arcane Dominion's Wisdom saving throw. | Resolve the source through combat. The GM can record the resulting displacement through the audited reposition command. Automatic source-specific destinations need structured range, target, placement and restriction data. |
+| Movement talents and spells | The effect engine supports structured modifiers with the `movement` target. Some talents describe conditional movement in prose, such as Blood Rush's interaction with Marked Prey. | Recorded movement modifiers can affect basic range. Individual granted movement, its conditions and its action outcome still need source-specific handling. |
+| Opportunity attacks | The existing action queue uses a GM-confirmed leaving-reach trigger and respects Disengage. | The one-per-round out-of-turn move or attack has its own state. Direct map walking still needs to pass applicable leaving-reach movement through the existing reaction flow. |
+
+Existing square maps retain their stored scale. The approved 3 m default, hex geometry and terrain-aware route checks belong to Milestone 3.4.

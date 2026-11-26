@@ -433,7 +433,8 @@ export function createCombatCommands(context) {
         if(s.ap<ap)throw Error('Not enough AP.');
         const routes=mapReachableRoutes(boundMap,original,allowance,{
           occupied:boundMap.tokens.filter(row=>row.id!==original.id),
-          diagonalParity:approved?s.movement.diagonalParity:0,revealedOnly:true
+          diagonalParity:approved?s.movement.diagonalParity:0,revealedOnly:true,
+          movementKind:approved?s.movement.kind:'walk'
         });
         const route=routes.get(mapCellKey(dest));
         if(!route)throw Error('That destination is unavailable within the current movement allowance.');

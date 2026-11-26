@@ -612,6 +612,12 @@ test('battle map routes honour occupied cells and alternating diagonal costs',()
   assert.equal(mapReachableRoutes(map,start,3,{occupied:[{x:37.5,y:12.5}]}).has('1:1'),false);
   assert.equal(mapReachableRoutes(map,{...start,cells:2},3,{occupied:[{x:62.5,y:37.5}]}).has('1:0'),false);
   assert.equal(mapReachableRoutes(map,{x:87.5,y:62.5},3,{occupied:[{x:62.5,y:37.5,cells:2}]}).has('3:1'),false);
+  const occupied=[{x:37.5,y:12.5}];
+  const flight=mapReachableRoutes(map,start,6,{occupied,movementKind:'fly'});
+  assert.equal(flight.has('1:0'),false,'Flight cannot end in an occupied cell');
+  assert.equal(flight.get('2:0').cost,6,'Flight can cross a ground occupant');
+  assert.equal(flight.get('2:0').previous.column,0);
+  assert.equal(mapReachableRoutes(map,start,6,{occupied}).has('2:0'),false);
   assert.equal(walkingAllowance({movement:'6m (Walking) - 18m (Flying)'},{}),6);
   assert.equal(walkingAllowance({movement:null},{}),null);
 });
