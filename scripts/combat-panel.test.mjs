@@ -950,3 +950,18 @@ test('Milestone 3.4 ruler counts hex steps and keeps legacy square Euclidean dis
   assert.equal(measureGridDistance(a,b,5,5,3,'hex').metres,3);
   assert.equal(measureGridDistance(a,b,5,5,3,'square').metres,4.24);
 });
+
+test('Milestone 3.4 pointer picking and snapping round-trip real staggered hex centres',async()=>{
+  const {mapCell,mapCellCenter,hexCellPoints}=await import('../src/state/battleMapRoutes.mjs');
+  const {battleMapPoint}=await import('../src/state/battleMapModel.mjs');
+  for(let row=0;row<5;row++)for(let column=0;column<5;column++){
+    const center=mapCellCenter({column,row},5,5,'hex');
+    assert.deepEqual(mapCell(center,5,5,'hex'),{column,row});
+    assert.deepEqual(mapCell(battleMapPoint(center.x,center.y,{
+      columns:5,rows:5,snap:true,gridType:'hex'
+    }),5,5,'hex'),{column,row});
+    assert.equal(hexCellPoints({column,row},5,5).length,6);
+  }
+  assert.deepEqual(mapCell(mapCellCenter({column:2,row:3},5,5),5,5),
+    {column:2,row:3});
+});
