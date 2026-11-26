@@ -13,7 +13,7 @@ import styles from './CampaignMapWorkspace.module.css';
 const empty=()=>({
   name:'',description:'',visibility:'gm',gridColumns:20,gridRows:15,
   gridOpacity:40,gridVisible:true,fogEnabled:false,
-  fogCells:createFogCells(20,15),metresPerCell:1,tokens:[],gridType:'square',terrainCells:[]
+  fogCells:createFogCells(20,15),metresPerCell:3,tokens:[],gridType:'square',terrainCells:[]
 });
 const fileSize=async file=>{
   const url=URL.createObjectURL(file);
