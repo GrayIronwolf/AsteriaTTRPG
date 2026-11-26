@@ -717,6 +717,34 @@ test('a confirmed movement uses the existing reaction review when a visible oppo
   assert.equal(participants[opponent.id].outOfTurn,undefined);
 });
 
+test('Dash requires its defined AP before approval and moving spends the paid allowance',async()=>{
+  const h=database();await h.setup();
+  const encounter=h.encounter(),actor=currentCombatant(encounter);
+  const uid=actor.characterId==='a'?'alice':'bob';
+  encounter.battleMapId='arena';
+  encounter.combat.participants[actor.id].ap=1;
+  const path='campaigns/c/battleMaps/arena';
+  h.store.set(path,{id:'arena',kind:'image',contentType:'image/png',
+    storagePath:path+'/scene.png',name:'Arena',combatId:encounter.combatId,
+    visibility:'players',gridColumns:4,gridRows:4,metresPerCell:3,tokens:[
+      {id:'hero',label:actor.name,kind:'character',combatantId:actor.id,x:12.5,y:12.5}
+    ]});
+  assert.equal((await h.command(uid,actor.id,'declare',{optionId:'basic:dash'})).ok,true);
+  const approval={checkType:'none',distance:9};
+  assert.match((await h.command('gm',actor.id,'approve',{approval})).error,/Not enough AP/);
+  assert.equal((await h.command('gm',actor.id,'correct',{ap:2,reason:'Restore the recorded held AP'})).ok,true);
+  assert.equal((await h.command('gm',actor.id,'approve',{approval})).ok,true);
+  assert.equal((await h.command('gm',actor.id,'roll')).ok,true);
+  assert.equal((await h.command('gm',actor.id,'resolve',{success:true})).ok,true);
+  assert.equal(h.encounter().combat.participants[actor.id].movement.kind,'dash');
+  const move=await h.command(uid,actor.id,'player-map-move',{
+    mapId:'arena',point:{x:62.5,y:12.5},moveKind:'approved'
+  });
+  assert.equal(move.ok,true,move.error);
+  assert.equal(h.encounter().combat.participants[actor.id].ap,0);
+  assert.equal(h.encounter().combat.participants[actor.id].movement.remaining,3);
+});
+
 test('a player moves only their own token and recorded AP is charged once',async()=>{
   const h=database();await h.setup();
   for(const id of ['a','b'])h.character(id).movement=9;
