@@ -41,6 +41,9 @@ export function battleMapAssetPath(campaignId,mapId,mime){
 export function battleMapFileKind(mime){
   return BATTLE_MAP_FORMATS[String(mime||'').toLowerCase()]?.kind||'';
 }
+export function newBattleMapSettings(input={}){
+  return battleMapEditableSettings({gridType:'hex',metresPerCell:3,...input});
+}
 export function battleMapEditableSettings(input={}){
   const name=String(input.name??'').trim(),description=String(input.description??'').trim();
   if(!name||name.length>100)throw Error('Map name must contain 1–100 characters.');

@@ -109,7 +109,8 @@ export function combatMapMovePlan(map,encounter,actorId,point,{mode='movement',r
     if(!movement||!MAP_COMBAT_ACTIONS.includes(movement.kind)||
        !Number.isFinite(Number(movement.remaining))||Number(movement.remaining)<=0)
       throw Error('The GM must approve and resolve a movement action with a distance allowance first.');
-    const routedMovement=movement.routeKind||['walk','dash','mount-move','fly'].includes(movement.kind);
+    const routedMovement=movement.routeKind||map.gridType==='hex'||Boolean(map.terrainCells?.length)||
+      ['walk','dash','mount-move','fly'].includes(movement.kind);
     if(routedMovement){
       const routes=mapReachableRoutes(map,token,Number(movement.remaining),{
         occupied:tokens.filter(row=>row.id!==token.id),diagonalParity:movement.diagonalParity,

@@ -1,6 +1,6 @@
 import { normalizeInformation, publicInformation } from '../src/state/campaignInformation.mjs';
 import { campaignArtworkFileError } from '../src/state/campaignArtwork.mjs';
-import {battleMapFileError,battleMapFileKind,battleMapAssetPath,battleMapEditableSettings,battleMapDimensions,BATTLE_MAP_MAX_RECORDS} from '../src/state/battleMapModel.mjs';
+import {battleMapFileError,battleMapFileKind,battleMapAssetPath,newBattleMapSettings,battleMapEditableSettings,battleMapDimensions,BATTLE_MAP_MAX_RECORDS} from '../src/state/battleMapModel.mjs';
 import {battleMapPrivatePins} from '../src/state/battleMapFogModel.mjs';
 import {atlasFileError,atlasImagePath,atlasImageDimensions,atlasMapSettings,ATLAS_MAX_MAPS} from '../src/state/worldAtlasModel.mjs';
 import {sessionPdfInput,sessionPdfFileError,sessionPdfPath,SESSION_PDF_LIMIT} from '../src/state/sessionLibraryModel.mjs';
@@ -1365,7 +1365,7 @@ const firebasePublicApi = {
     if(!db||!storage||!currentUser||!campaignId)return {ok:false,error:'Sign in to upload battle maps.'};
     const error=battleMapFileError(file);if(error)return {ok:false,error};
     let details,size;
-    try{details=battleMapEditableSettings(settings);size=battleMapDimensions(dimensions.width,dimensions.height);}
+    try{details=newBattleMapSettings(settings);size=battleMapDimensions(dimensions.width,dimensions.height);}
     catch(error){return {ok:false,error:error.message};}
     const campaignRef=doc(db,'campaigns',campaignId);
     try{

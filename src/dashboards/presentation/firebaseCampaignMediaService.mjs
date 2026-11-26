@@ -13,7 +13,7 @@ import {
 } from '../../state/campaignMediaLibraryModel.mjs';
 import {
   mapId,mapForViewer,publishedAtlas,presentationForViewer,timestampRevision,
-  battleMapEditableSettings,battleMapDimensions,battleMapFileError,battleMapFileKind,
+  newBattleMapSettings,battleMapEditableSettings,battleMapDimensions,battleMapFileError,battleMapFileKind,
   battleMapAssetPath,atlasMapCanPreview,BATTLE_MAP_MAX_RECORDS
 } from './campaignMediaModel.mjs';
 
@@ -283,7 +283,7 @@ export function createFirebaseCampaignMediaService({
   async function uploadMap(id,file,settings,dimensions){
     const issue=battleMapFileError(file);
     if(issue)throw Error(issue);
-    const details=battleMapEditableSettings(settings);
+    const details=newBattleMapSettings(settings);
     const size=battleMapDimensions(dimensions?.width,dimensions?.height);
     const {uid}=await check(id,'gm');
     const existing=await firestoreSdk.getDocsFromServer(

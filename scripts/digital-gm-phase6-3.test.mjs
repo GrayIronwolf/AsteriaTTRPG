@@ -156,3 +156,20 @@ test('published terrain omits concealed cells and keeps a legacy map square',asy
   assert.equal(safe.gridType,'square');assert.equal(safe.metresPerCell,1);
   assert.deepEqual(safe.terrainCells.map(c=>c.kind),['water']);
 });
+
+test('swim and climb routes respect solid terrain on calibrated maps',()=>{
+  const board={...map,gridType:'square',gridColumns:3,gridRows:1,
+    terrainCells:[{column:1,row:0,kind:'wall'}],
+    tokens:[{id:'hero',combatantId:'pc-a',kind:'character',label:'Hero',x:16.67,y:50}]};
+  for(const kind of ['swim','climb','climb-dash']){
+    const actor={...encounter.combat.participants['pc-a'],movement:{kind,remaining:20}};
+    const state={...encounter,combat:{...encounter.combat,participants:{'pc-a':actor}}};
+    assert.throws(()=>combatMapMovePlan(board,state,'pc-a',{x:83.33,y:50}),/No traversable route/);
+  }
+});
+test('new uploads start at three metres per hex and old map geometry survives editing',async()=>{
+  const {newBattleMapSettings,battleMapEditableSettings}=await import('../src/state/battleMapModel.mjs');
+  const create=newBattleMapSettings({name:'New map'}),old=battleMapEditableSettings({name:'Older map'});
+  assert.deepEqual([create.gridType,create.metresPerCell,old.gridType,old.metresPerCell],['hex',3,'square',1]);
+  assert.equal(newBattleMapSettings({name:'Square map',gridType:'square',metresPerCell:2}).metresPerCell,2);
+});
