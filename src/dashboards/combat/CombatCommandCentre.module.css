@@ -4,7 +4,7 @@
   border:0;border-radius:0;box-shadow:none}
 .canvas{position:relative;container-type:inline-size;min-width:0;width:100%;container-name:combatCanvas;
   height:var(--combat-viewport-height,max(580px,calc(100dvh - 190px)));
-  min-height:380px;overflow:hidden;touch-action:none;cursor:grab;
+  min-height:380px;overflow:hidden;touch-action:auto;cursor:grab;
   border:0!important;border-radius:0;box-shadow:none;outline:0;
   --combat-canvas-background:#091623;
   background-color:var(--combat-canvas-background);
@@ -101,7 +101,7 @@
 .focused{border-color:var(--asteria-border-active)!important;box-shadow:0 0 0 1px var(--asteria-accent-soft),0 16px 38px rgb(0 0 0 / .55)!important}
 .focused .windowBar{border-bottom-color:var(--asteria-border-active)}
 .canvas[data-editing='true'] .window:hover{border-color:var(--asteria-border-active)}
-.minimised{height:min(var(--combat-h),5rem)}
+.window.minimised{height:min(var(--combat-h),8cqw)}
 .minimised .windowContent{visibility:hidden;height:0;min-height:0;padding:0;
   overflow:hidden;pointer-events:none}
 .resizeHandle{position:absolute;z-index:5;touch-action:none;user-select:none;

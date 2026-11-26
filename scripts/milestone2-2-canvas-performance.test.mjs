@@ -34,6 +34,8 @@ function fixture(config=null,preferences={},options={}){
  }];}));
  const overlay={children:['x','y'].map(axis=>({dataset:{axis},hidden:true,style:style()}))};
  const viewport={clientWidth:1000,clientHeight:800,style:style(),dataset:{},
+  classList:{add(){},remove(){}},
+  getBoundingClientRect:()=>({left:0,top:0}),
   setPointerCapture(){},releasePointerCapture(){},closest:()=>null,
   querySelector:selector=>nodes[selector.match(/="([^"]+)"/)?.[1]],
   addEventListener:(type,handler)=>listeners.set(type,handler),
@@ -71,10 +73,15 @@ function fixture(config=null,preferences={},options={}){
     if(kind==='move')renderer.root.findByProps({'data-testid':'combat-drag-header-'+id}).props.onPointerDown(e);
     else renderer.root.findAllByProps({'data-resize-edge':edge})[0].props.onPointerDown(e);});
   },
-  move(x,y){act(()=>canvas().props.onPointerMove(event('pointermove',x,y)));},
+  pan(x=100,y=100,extra={}){act(()=>canvas().props.onPointerDown({...event('pointerdown',x,y),...extra,target:viewport}));},
+  move(x,y,extra={}){act(()=>canvas().props.onPointerMove({...event('pointermove',x,y),...extra}));},
   flush(){act(()=>{const pending=[...frames.values()];frames.clear();for(const callback of pending)callback();});},
-  end(type='pointerup',x=100,y=100){act(()=>canvas().props[
-   type==='lostpointercapture'?'onLostPointerCapture':type==='pointercancel'?'onPointerCancel':'onPointerUp'](event(type,x,y)));},
+  end(type='pointerup',x=100,y=100,extra={}){act(()=>canvas().props[
+   type==='lostpointercapture'?'onLostPointerCapture':type==='pointercancel'?'onPointerCancel':'onPointerUp']({...event(type,x,y),...extra}));},
+  button(label){act(()=>renderer.root.findByProps({'aria-label':label}).props.onClick());},
+  toolbar(){return renderer.root.findByProps({role:'toolbar','aria-label':config?.kind==='player'?
+   'Player dashboard canvas controls':config?'GM dashboard canvas controls':'Combat canvas controls'})
+   .findAllByType('button').map(node=>node.props['aria-label']);},
   wheel(){let prevented=false;act(()=>listeners.get('wheel')?.({preventDefault(){prevented=true;}}));return prevented;},
   contentMode(value,id=null){act(()=>renderer.root.findByProps({'aria-label':id?
     'Content layout for '+(config?.labels?.[id]||'GM Player Resources'):'Default canvas content layout'})
@@ -219,6 +226,44 @@ for(const [role,config] of [['Combat',null],['GM',GM_DASHBOARD_CANVAS_CONFIG],['
    f.undo();await act(async()=>{});
    assert.equal(f.saves[2].contentSizing[f.id],undefined);
    assert.equal(f.saves[2].defaultContentSizing,'fixed');
+  }finally{f.close();}
+ });
+}
+
+for(const [role,config] of [['Combat',null],['GM',GM_DASHBOARD_CANVAS_CONFIG],['Player',PLAYER_DASHBOARD_CANVAS_CONFIG]]){
+ test('Milestone 2.4 '+role+': seven approved toolbar controls and navigation never edits layout',()=>{
+  const f=fixture(config);try{
+   assert.equal(f.toolbar().length,7);
+   assert.deepEqual(f.toolbar().slice(1),['Undo canvas change','Lock Canvas','Redo canvas change','Zoom into canvas','Fit Canvas','Zoom out of canvas']);
+   f.button('Zoom into canvas');f.button('Zoom out of canvas');f.button('Fit Canvas');
+   assert.equal(f.saves.length,0);
+   f.pan();const commits=f.commits;
+   for(let n=1;n<=100;n++)f.move(100+n,100+n);
+   assert.equal(f.frames.size,1);f.flush();
+   assert.equal(f.commits,commits);assert.equal(f.saves.length,0);
+   f.end('pointercancel');assert.equal(f.saves.length,0);
+  }finally{f.close();}
+ });
+ test('Milestone 2.4 '+role+': touch pinch batches, rebases to one finger, and keeps geometry private',()=>{
+  const f=fixture(config,{}, {scale:.5});try{
+   f.pan(100,100,{pointerType:'touch'});
+   f.pan(200,100,{pointerType:'touch',pointerId:2,isPrimary:false});
+   const commits=f.commits;
+   f.move(300,100,{pointerType:'touch',pointerId:2,isPrimary:false});f.flush();
+   assert.equal(f.stage.style.transform,'translate3d(-100px,-40px,0) scale(1)');
+   assert.equal(f.commits,commits);assert.equal(f.saves.length,0);
+   f.end('pointerup',300,100,{pointerType:'touch',pointerId:2});
+   f.move(120,130,{pointerType:'touch'});f.flush();
+   assert.equal(f.stage.style.transform,'translate3d(-80px,-10px,0) scale(1)');
+   f.end('pointerup',120,130,{pointerType:'touch'});
+   assert.equal(f.saves.length,0);
+  }finally{f.close();}
+ });
+ test('Milestone 2.4 '+role+': toolbar zoom cannot change coordinates during a geometry gesture',()=>{
+  const f=fixture(config);try{
+   f.start();f.button('Zoom into canvas');f.move(140,150);f.flush();
+   assert.equal(f.nodes[f.id].style.transform,'translate3d(40px,50px,0)');
+   f.end('pointercancel');assert.equal(f.saves.length,0);
   }finally{f.close();}
  });
 }
