@@ -188,7 +188,7 @@ export function createCombatCommands(context) {
           throw Error('No visible token is assigned to this participant.');
         if(move.origin&&(original.x!==move.origin.x||original.y!==move.origin.y))
           throw Error('The confirmed route no longer starts at the token position.');
-        const dest=mapCell(move.point,boundMap.gridColumns,boundMap.gridRows);
+        const dest=mapCell(move.point,boundMap.gridColumns,boundMap.gridRows,boundMap.gridType);
         if(!dest)throw Error('Choose a valid destination.');
         if(boundMap.fogEnabled&&projection.fogCells[dest.row*boundMap.gridColumns+dest.column]!=='1')
           throw Error('Choose a revealed destination.');
@@ -210,7 +210,7 @@ export function createCombatCommands(context) {
         });
         const route=routes.get(mapCellKey(dest));
         if(!route)throw Error('That destination is unavailable within the current movement allowance.');
-        const point=mapCellCenter(dest,boundMap.gridColumns,boundMap.gridRows);
+        const point=mapCellCenter(dest,boundMap.gridColumns,boundMap.gridRows,boundMap.gridType);
         return {original,point,route,movement,kind,offTurn,ap,projection};
       };
       const applyPlayerMapMove=(actor,plan,playerUid,apPaid=false)=>{
