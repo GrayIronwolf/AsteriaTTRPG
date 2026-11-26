@@ -1,0 +1,40 @@
+# Temporary isolated maintenance workflow for PR #391 only.
+# Delete after the generated bundle is synchronized and checks rerun.
+name: Milestone 3.1 temporary bundle synchronization
+on:
+  push:
+    branches:
+      - milestone-3-1-encounter-management
+permissions:
+  contents: write
+jobs:
+  synchronize:
+    if: github.repository == 'GrayIronwolf/AsteriaTTRPG' && github.ref == 'refs/heads/milestone-3-1-encounter-management'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: milestone-3-1-encounter-management
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Generate reviewed frontend bundle
+        run: npm run build
+      - name: Commit only generated build outputs to the current PR branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = 'refs/heads/milestone-3-1-encounter-management'
+          git add -A -- react-dist data/compendium.js data/compendium-handbook.js data/compendium-index.js data/compendium-parts
+          if git diff --cached --quiet; then
+            echo "Generated assets already match committed output."
+          else
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git commit -m "chore(milestone-3-1): synchronize generated frontend bundle"
+            git push origin HEAD:refs/heads/milestone-3-1-encounter-management
+          fi
