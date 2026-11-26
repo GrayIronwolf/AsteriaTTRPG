@@ -1,56 +1,79 @@
 import {onDocumentWritten} from 'firebase-functions/v2/firestore';
 import {getFirestore,FieldValue} from 'firebase-admin/firestore';
+import {isDeepStrictEqual} from 'node:util';
 import {
-  publicCombatSnapshot,publicCombatPresentation,publicPresentationBattleMap
+  combatMapVisibility,publicCombatSnapshot,publicCombatPresentation,publicPresentationBattleMap
 } from '../src/state/livePresentationProjectionModel.mjs';
 import {presentationId} from '../src/state/playerPresentationModel.mjs';
 
-/** Reconciles legacy GM/client updates and canonical combat transactions into
- * safe, separate documents. Never copies private raw state into shared feeds.
- * Same Firebase project, existing deployment runtime, no external transport.
- */
-export async function synchronizeCombatPresentation(db,campaignId,after){
-  const target=db.doc('campaigns/'+campaignId+'/combatPublic/current');
-  const current=db.doc('campaigns/'+campaignId+'/presentationCombat/current');
-  const [presentation,hybrid]=await Promise.all([
-    db.doc('campaigns/'+campaignId+'/presentationShared/current').get(),
-    db.doc('campaigns/'+campaignId+'/hybridSessionControl/current').get()
-  ]);
-  const raw=after||{};
-  const safe=publicCombatSnapshot(raw);
-  const summary=publicCombatPresentation(raw);
-  const presentationMode=presentation.exists?presentation.data()?.scene:'blank';
-  const hybridOpen=hybrid.exists&&hybrid.data()?.status==='open'&&
-    (typeof hybrid.data()?.expiresAt?.toMillis==='function'&&
-      hybrid.data().expiresAt.toMillis()>Date.now());
-  await db.runTransaction(async tx=>{
-    tx.set(target,{...safe,updatedAt:FieldValue.serverTimestamp()});
-    // Restricted display stores only the safe summary. Authorization is
-    // independently checked in Firestore rules on every viewer read.
-    tx.set(current,{...summary,epoch:hybridOpen?hybrid.data().epoch:'',
-      visible:hybridOpen&&presentationMode==='combat',
-      updatedAt:FieldValue.serverTimestamp()});
+const combatMapId=value=>typeof value==='string'&&/^[A-Za-z0-9_-]{1,120}$/.test(value)?value:'';
+function withoutTimestamp(snapshot){
+  const value={...snapshot.data()};
+  delete value.updatedAt;
+  return value;
+}
+function writeProjection(tx,ref,snapshot,value){
+  if(!value){
+    if(snapshot.exists)tx.delete(ref);
+  }else if(!snapshot.exists||!isDeepStrictEqual(withoutTimestamp(snapshot),value))
+    tx.set(ref,{...value,updatedAt:FieldValue.serverTimestamp()});
+}
+function mapProjection(raw,campaignId,mapId,encounter){
+  if(!raw||raw.visibility!=='players')return null;
+  try{return publicPresentationBattleMap(raw,campaignId,mapId,encounter);}
+  catch{return null;}
+}
+async function synchronize(db,campaignId,changedMapId=''){
+  const path='campaigns/'+campaignId;
+  const ref=(collection,id='current')=>db.doc(path+'/'+collection+'/'+id);
+  return db.runTransaction(async tx=>{
+    // Trigger events can arrive out of order. Read the current canonical docs
+    // in the same transaction as the safe combat and map projections.
+    const encounter=(await tx.get(ref('systems','encounter'))).data()||{};
+    const activeMapId=encounter.status==='active'?combatMapId(encounter.battleMapId):'';
+    if(changedMapId&&changedMapId!==activeMapId){
+      const output=ref('battleMapsPublic',changedMapId);
+      const [source,current]=await Promise.all([
+        tx.get(ref('battleMaps',changedMapId)),tx.get(output)
+      ]);
+      const value=mapProjection(source.data(),campaignId,changedMapId,encounter);
+      writeProjection(tx,output,current,value);
+      return value;
+    }
+    const combat=ref('combatPublic'),display=ref('presentationCombat');
+    const [previous,previousDisplay,presentation,hybrid]=await Promise.all([
+      tx.get(combat),tx.get(display),tx.get(ref('presentationShared')),tx.get(ref('hybridSessionControl'))
+    ]);
+    const previousMapId=combatMapId(previous.data()?.battleMapId);
+    const maps=await Promise.all([...new Set([activeMapId,previousMapId].filter(Boolean))].map(async mapId=>{
+      const output=ref('battleMapsPublic',mapId);
+      const [source,current]=await Promise.all([tx.get(ref('battleMaps',mapId)),tx.get(output)]);
+      const raw=source.data();
+      return {output,current,mapId,raw,value:mapProjection(raw,campaignId,mapId,encounter)};
+    }));
+    const active=maps.find(row=>row.mapId===activeMapId);
+    const scope=active&&combatMapVisibility(active.raw,active.value);
+    const safe=publicCombatSnapshot(encounter,scope);
+    const shared=hybrid.data();
+    const hybridOpen=shared?.status==='open'&&shared.expiresAt?.toMillis?.()>Date.now();
+    const summary={...publicCombatPresentation(encounter,scope),epoch:hybridOpen?shared.epoch:'',
+      visible:Boolean(hybridOpen&&presentation.data()?.scene==='combat')};
+    for(const row of maps)writeProjection(tx,row.output,row.current,row.value);
+    writeProjection(tx,combat,previous,safe);
+    writeProjection(tx,display,previousDisplay,summary);
+    return changedMapId?active?.value||null:safe;
   });
-  return safe;
 }
-export async function synchronizeBattleMapPresentation(db,campaignId,mapId,after){
-  const target=db.doc('campaigns/'+campaignId+'/battleMapsPublic/'+mapId);
-  if(!after||after.visibility!=='players'){
-    await target.delete();
-    return null;
-  }
-  const publicMap=publicPresentationBattleMap(after,campaignId,mapId);
-  await target.set({...publicMap,updatedAt:FieldValue.serverTimestamp()});
-  return publicMap;
-}
+
+export const synchronizeCombatPresentation=(db,campaignId)=>synchronize(db,campaignId);
+export const synchronizeBattleMapPresentation=(db,campaignId,mapId)=>synchronize(db,campaignId,mapId);
 
 export const asteriaCombatProjection=onDocumentWritten({
   document:'campaigns/{campaignId}/systems/encounter',
   region:'us-central1',maxInstances:3
 },async event=>{
   if(!presentationId(event.params.campaignId))return;
-  await synchronizeCombatPresentation(getFirestore(),event.params.campaignId,
-    event.data?.after?.exists?event.data.after.data():null);
+  await synchronizeCombatPresentation(getFirestore(),event.params.campaignId);
 });
 
 export const asteriaBattleMapProjection=onDocumentWritten({
@@ -59,6 +82,5 @@ export const asteriaBattleMapProjection=onDocumentWritten({
 },async event=>{
   const {campaignId,mapId}=event.params;
   if(!presentationId(campaignId)||!presentationId(mapId))return;
-  await synchronizeBattleMapPresentation(getFirestore(),campaignId,mapId,
-    event.data?.after?.exists?event.data.after.data():null);
+  await synchronizeBattleMapPresentation(getFirestore(),campaignId,mapId);
 });

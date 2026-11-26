@@ -2,6 +2,7 @@ import React,{useEffect,useState} from 'react';
 import {PRESENTATION_DEFAULT,PRESENTATION_SCENES,PRESENTATION_THEMES,
   safeCombatPresentation
 } from '../../state/playerPresentationModel.mjs';
+import {DEFAULT_BATTLE_MAP_CAMERA} from '../../state/battleMapCamera.mjs';
 import {presentationDraft,partyForPresentation} from './campaignMediaModel.mjs';
 import {HybridSessionManager} from './HybridSessionManager.jsx';
 import {GMScreenCaptureControls} from './GMScreenCaptureControls.jsx';
@@ -20,6 +21,7 @@ const fields=data=>({
   scene:data.scene,title:data.title,subtitle:data.subtitle,mapId:data.mapId,
   characterIds:[...(data.characterIds||[])],showRound:data.showRound,
   showPartyHP:data.showPartyHP,theme:data.theme,
+  ...(data.mapCamera?{mapCamera:data.mapCamera}:{}),
   ...(data.assetId?{assetId:data.assetId}:{})
 });
 function Scene({api,campaignId,display,party=[],combat={}}){
@@ -32,7 +34,7 @@ function Scene({api,campaignId,display,party=[],combat={}}){
       title={display.title} subtitle={display.subtitle}/>;
   if(display.scene==='battle-map')
     return <CampaignMapWorkspace api={api} campaignId={campaignId}
-      selectedMapId={display.mapId}/>;
+      selectedMapId={display.mapId} interactive={false} camera={display.mapCamera}/>;
   if(display.scene==='world-map')
     return <div className={styles.worldPresentation}>
       <CampaignAtlasWorkspace api={api} campaignId={campaignId} mapId={display.mapId}/>
@@ -100,20 +102,23 @@ export function CampaignPresentationController({api,campaignId,party=[]}){
   const atlas=useCampaignStream(api,'watchAtlas',[campaignId]);
   const presentationAssets=useCampaignStream(api,'watchPresentationAssets',[campaignId]);
   const [draft,setDraft]=useState(()=>fields(PRESENTATION_DEFAULT));
+  const [preview,setPreview]=useState(false);
+  const camera=draft.mapCamera||DEFAULT_BATTLE_MAP_CAMERA;
+  const updateCamera=changes=>setDraft(previous=>({...previous,mapCamera:{...(previous.mapCamera||DEFAULT_BATTLE_MAP_CAMERA),...changes}}));
   const [busy,setBusy]=useState(false),[message,setMessage]=useState('');
   useEffect(()=>{
     if(control.data)setDraft(fields(control.data));
   },[control.data?.revision,campaignId]);
   const update=patch=>setDraft(current=>({...current,...patch}));
   const pickScene=scene=>update({scene,mapId:'',assetId:'',characterIds:[],
-    showRound:scene==='combat',showPartyHP:false});
+    showRound:scene==='combat',showPartyHP:false,mapCamera:undefined});
   const run=async(type)=>{
     setBusy(true);setMessage('');
     try{
       const action=type==='blackout'
         ?{type:'blackout',expectedRevision:control.data?.revision||0}
         :{type:'set-scene',expectedRevision:control.data?.revision||0,
-          draft:presentationDraft(draft)};
+          draft:presentationDraft(fields(draft))};
       const result=await api.managePresentation(campaignId,action);
       if(result?.ok!==true)throw Error(result?.error||'Presentation update failed.');
       setMessage('Presentation updated.');
@@ -149,6 +154,25 @@ export function CampaignPresentationController({api,campaignId,party=[]}){
           <option value="">Select published map</option>
           {options.map(x=><option key={x.id} value={x.id}>{x.name}</option>)}
         </select></label>:null}
+      {draft.scene==='battle-map'?<fieldset>
+        <legend>Second-screen camera</legend>
+        <label>Camera mode<select value={camera.mode} onChange={event=>updateCamera({
+          mode:event.target.value,zoom:event.target.value==='follow'&&camera.zoom===1?2:camera.zoom
+        })}>
+          <option value="manual">Manual</option><option value="follow">Follow visible active token</option>
+        </select></label>
+        <label>Zoom ({Math.round(camera.zoom*100)}%)<input type="range" min="1" max="4" step=".25"
+          value={camera.zoom} onChange={event=>updateCamera({zoom:Number(event.target.value)})}/></label>
+        {camera.mode==='manual'?<>
+          <label>Horizontal centre<input type="range" min="0" max="100" value={camera.x}
+            onChange={event=>updateCamera({x:Number(event.target.value)})}/></label>
+          <label>Vertical centre<input type="range" min="0" max="100" value={camera.y}
+            onChange={event=>updateCamera({y:Number(event.target.value)})}/></label>
+        </>:null}
+        <button type="button" aria-pressed={preview} onClick={()=>setPreview(value=>!value)}>
+          Preview Player View
+        </button>
+      </fieldset>:null}
       {PRESENTATION_MEDIA_SCENES.includes(draft.scene)?<label>
         Published presentation media
         <select value={draft.assetId||''} disabled={busy||presentationAssets.loading}
@@ -174,6 +198,8 @@ export function CampaignPresentationController({api,campaignId,party=[]}){
         </fieldset>
       </>:null}
     </div>
+    {preview&&draft.scene==='battle-map'&&draft.mapId?<Scene api={api} campaignId={campaignId}
+      display={{...draft,mapCamera:camera}}/>:null}
     <div className={styles.actions}>
       <button type="button" disabled={busy||control.loading||Boolean(control.error)}
         data-testid="site-presentation-publish" onClick={()=>run('set-scene')}>Present Scene</button>

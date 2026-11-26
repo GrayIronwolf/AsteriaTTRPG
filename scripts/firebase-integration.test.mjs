@@ -6,6 +6,7 @@ import {ref,uploadBytes,getBytes,deleteObject} from 'firebase/storage';
 import {doc,setDoc,getDoc,updateDoc,getDocs,collection,onSnapshot,writeBatch,Timestamp,deleteDoc,query,where} from 'firebase/firestore';
 import {initializeApp,deleteApp} from 'firebase-admin/app';
 import {getFirestore,FieldValue} from 'firebase-admin/firestore';
+import {synchronizeCombatPresentation,synchronizeBattleMapPresentation} from '../functions/livePresentationProjectionTriggers.mjs';
 import {executeAction} from '../functions/handler.mjs';
 import {merchantStockIdentity} from '../src/state/merchantInventoryModel.mjs';
 import {accessInvite} from '../functions/invitations.mjs';
@@ -150,6 +151,39 @@ test('canvas content modes and resized geometry persist privately without changi
    assert.deepEqual(character.hp,[8,10]);assert.equal(character.ownerUid,'alice');
   }
  }
+});
+
+test('encounter and map projections stay in sync when turns, fog and publication change',async()=>{
+  const encounter=db.doc('campaigns/c/systems/encounter');
+  const canonical=db.doc('campaigns/c/battleMaps/forest');
+  const mapPath='campaigns/c/battleMapsPublic/forest';
+  const combatPath='campaigns/c/combatPublic/current';
+  await encounter.set({status:'active',combatId:'forest-fight',battleMapId:'forest',turnIndex:0,round:2,
+    combat:{version:1,revision:3,participants:{}},privateNotes:'Private plan',
+    combatants:[{id:'enemy',name:'Unseen threat'},{id:'hero',name:'Alice',characterId:'a'}]});
+  await canonical.set({id:'forest',combatId:'forest-fight',name:'Forest',visibility:'players',
+    storagePath:'campaigns/c/battleMaps/forest/scene.png',kind:'image',contentType:'image/png',
+    gridColumns:2,gridRows:2,width:800,height:800,fogEnabled:true,fogCells:'1000',
+    tokens:[{id:'hidden-marker',combatantId:'enemy',label:'Unseen threat',kind:'creature',x:80,y:80},
+      {id:'visible-marker',combatantId:'hero',label:'Alice',kind:'character',x:20,y:20}]});
+  await synchronizeCombatPresentation(db,'c');
+  const mine=path=>assertSucceeds(getDoc(doc(user('alice'),path)));
+  assert.equal((await mine(combatPath)).data().turnIndex,-1);
+  assert.equal((await mine(combatPath)).data().battleMapId,'forest');
+  assert.deepEqual((await mine(mapPath)).data().tokens.map(t=>t.id),['visible-marker']);
+  await assertFails(getDoc(doc(user('alice'),'campaigns/c/battleMaps/forest')));
+  await canonical.update({fogCells:'1111'});
+  await synchronizeBattleMapPresentation(db,'c','forest');
+  assert.equal((await mine(mapPath)).data().activeTokenId,'hidden-marker');
+  assert.equal((await mine(combatPath)).data().turnIndex,0);
+  await encounter.update({turnIndex:1});
+  await synchronizeCombatPresentation(db,'c');
+  assert.equal((await mine(mapPath)).data().activeTokenId,'visible-marker');
+  await canonical.update({visibility:'gm'});
+  await synchronizeBattleMapPresentation(db,'c','forest');
+  assert.equal((await mine(mapPath)).exists(),false);
+  assert.equal((await mine(combatPath)).data().battleMapId,undefined);
+  assert.doesNotMatch(JSON.stringify((await mine(combatPath)).data()),/Private plan|Unseen threat/);
 });
 
 test('Combat recovery uses one authoritative transaction across concurrent GM sessions',async()=>{

@@ -98,6 +98,17 @@ export function installDevFixtures() {
   let session = { id: 'session-001', status: 'active', number: 7, startedAt: Date.now(), expiresAt:Date.now()+SESSION_LIMIT_MS, maxDurationHours:10 };
   let events = [];
   let encounter = { status:'ready', round:1, turnIndex:0, combatants:[], enemies:[] };
+  const unifiedMapFixture=new URLSearchParams(window.location.search).get('unifiedMap')==='1';
+  const sharedMap={id:'fixture-arena',name:'Western Gate Arena',visibility:'players',
+    storagePath:'campaigns/demo-campaign/battleMaps/fixture-arena/scene.png',
+    kind:'image',contentType:'image/png',width:800,height:600,gridVisible:true,gridOpacity:40,
+    gridColumns:8,gridRows:6,metresPerCell:3,fogEnabled:true,fogCells:'1'.repeat(24)+'0'.repeat(24),
+    combatId:'fixture-canvas-combat',activeTokenId:'visible-kael',
+    tokens:[{id:'visible-kael',label:'Kael',kind:'character',x:38,y:25}]};
+  if(unifiedMapFixture)encounter={status:'active',round:2,turnIndex:0,
+    combatId:sharedMap.combatId,battleMapId:sharedMap.id,
+    combatants:[{id:'actor-kael',characterId:'kael',kind:'player',name:'Kael'}],
+    combat:{version:1,revision:3,participants:{'actor-kael':{ap:3,bonus:true}}}};
   let gmWorkspace=null;
   let partyWorkspace={ sharedNotes:'Meet at the western gate before the next expedition.', questLog:[] };
   let partyChat=[{ id:'chat-1', characterId:'lyra', ownerUid:'player-lyra', characterName:'Lyra', text:'I will bring the healing supplies.', createdAt:new Date().toISOString() }];
@@ -375,6 +386,15 @@ export function installDevFixtures() {
     subscribeSessionPresence: (_campaignId, _sessionId, callback) => subscribe('presence', callback),
     subscribeCampaignEvents: (_campaignId, callback) => subscribe('events', callback),
     subscribeCampaignEncounter: (_campaignId, callback) => subscribe('encounter', callback),
+    subscribeBattleMaps: (_campaignId, callback) => {
+      let active=true;
+      queueMicrotask(()=>{if(active)callback(unifiedMapFixture?[clone(sharedMap)]:[]);});
+      return ()=>{active=false;};
+    },
+    fetchBattleMapMedia: async () => ({ok:true,blob:new Blob([
+      Uint8Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9ZQmcAAAAASUVORK5CYII='),byte=>byte.charCodeAt(0))
+    ],{type:'image/png'})}),
+
     subscribeGMWorkspace: (_campaignId, callback) => subscribe('gmWorkspace', callback),
     subscribePartyWorkspace: (_campaignId, callback) => subscribe('partyWorkspace', callback),
     subscribePartyChat: (_campaignId, callback) => subscribe('partyChat', callback),

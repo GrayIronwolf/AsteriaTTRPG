@@ -11,6 +11,7 @@ export const HYBRID_SESSION_DEFAULT=Object.freeze({
   revision:0,status:'closed',mode:'in-person',epoch:'',
   expiresAt:null,grantCount:0
 });
+import {validateBattleMapCamera} from './battleMapCamera.mjs';
 import {PRESENTATION_MEDIA_SCENES,presentationAssetId} from './presentationAssetModel.mjs';
 const object=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 export const hybridViewerId=value=>typeof value==='string'&&
@@ -66,7 +67,7 @@ export function restrictedPresentationProjection(scene={},revision=0){
     scene:map?'battle-map':combat?'combat':media?scene.scene:(safe?'title':'blank'),
     title,subtitle,theme,
     ...(media?{assetId:scene.assetId}:{}),
-    ...(map?{mapId:scene.mapId}:{})
+    ...(map?{mapId:scene.mapId,...(scene.mapCamera?{mapCamera:validateBattleMapCamera(scene.mapCamera)}:{})}:{})
   });
 }
 export function sessionTimestampMs(value){

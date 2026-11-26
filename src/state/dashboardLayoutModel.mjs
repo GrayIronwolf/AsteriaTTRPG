@@ -42,7 +42,8 @@ export const DASHBOARD_PANEL_REGISTRY = {
     {id:'explorationOverview',label:'Exploration Overview',category:'Focus Panels',size:'3x3',optional:true},
     {id:'questTracker',label:'Quest Tracker',category:'Focus Panels',size:'3x3',optional:true},
     {id:'inventoryOverview',label:'Inventory Overview',category:'Focus Panels',size:'3x3',optional:true},
-    {id:'worldContext',label:'Calendar & Weather',category:'Adventures',size:'3x3',optional:true}
+    {id:'worldContext',label:'Calendar & Weather',category:'Adventures',size:'3x3',optional:true},
+    {id:'battleMap',label:'Battle Map',category:'Combat',size:'3x3',optional:true}
   ],
   gm: [
     {id:'restRequests',label:'Rest Requests',category:'Session',size:'3x3'},
@@ -226,6 +227,8 @@ export function normalizePlayerCanvasLayout(raw,oldGrid=null){
     const wasArmourHidden=Array.isArray(raw.hidden)&&raw.hidden.includes('armour');
     const next=wasWeaponsVisible&&wasArmourHidden?{...raw,
       hidden:raw.hidden.filter(id=>id!=='armour')} : raw;
+    if(Array.isArray(next.hidden)&&!next.freeform?.positions?.battleMap)
+      return normalizeCombatWorkspace({...next,hidden:[...next.hidden,'battleMap']},PLAYER_DASHBOARD_CANVAS_CONFIG);
     return normalizeCombatWorkspace(next,PLAYER_DASHBOARD_CANVAS_CONFIG);
   }
   const base=defaultPlayerCanvasLayout();
@@ -233,7 +236,7 @@ export function normalizePlayerCanvasLayout(raw,oldGrid=null){
   // One-time conversion keeps explicitly hidden player windows, legacy lock
   // choices and desktop placements. The old grid is not rendered afterwards.
   const legacyHidden=Array.isArray(oldGrid.hidden)?oldGrid.hidden:[];
-  const hidden=Array.isArray(oldGrid.hidden)?legacyHidden:base.hidden;
+  const hidden=Array.isArray(oldGrid.hidden)?[...legacyHidden,'battleMap']:base.hidden;
   const locked=(Array.isArray(oldGrid.lockedPositions)?oldGrid.lockedPositions:[])
     .filter(id=>PLAYER_DASHBOARD_CANVAS_CONFIG.ids.includes(id));
   const positions={...base.freeform.positions};

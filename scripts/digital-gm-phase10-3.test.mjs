@@ -98,7 +98,10 @@ test('Projector uses safe campaign media projections, never raw GM encounter or 
   assert.match(media,/watchRestrictedViewer/);
   assert.match(read('src/state/livePresentationProjectionModel.mjs'),/publicCombatSnapshot/);
   assert.doesNotMatch(view,/subscribeCampaignEncounter/);
-  assert.match(battle,/useBattleMaps\(campaignId,false\)/);
+  const playerBattle=battle.slice(battle.indexOf('export function PlayerBattleMapView'));
+  assert.match(playerBattle,/CampaignMapWorkspace/);
+  assert.doesNotMatch(playerBattle,/useBattleMaps|fetchBattleMapMedia/);
+  assert.match(view,/selectedMapId=\{display.mapId\}/);
   assert.match(read('firestore.rules'),/match \/combatPublic\/\{documentId\}/);
   assert.match(read('firestore.rules'),/match \/battleMapsPublic\/\{mapId\}/);
 });test('Title and announcements share one safe projector scene and responsive fullscreen runtime',()=>{

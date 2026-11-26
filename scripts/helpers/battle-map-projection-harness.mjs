@@ -9,8 +9,7 @@ export function battleMapProjectionHarness(projectId) {
   return {
     async sync(campaignId, mapId) {
       // The rules suite runs Firestore and Storage without the Functions emulator.
-      const source = await db.doc(`campaigns/${campaignId}/battleMaps/${mapId}`).get();
-      return synchronizeBattleMapPresentation(db, campaignId, mapId, source.data());
+      return synchronizeBattleMapPresentation(db, campaignId, mapId);
     },
     close: () => deleteApp(app)
   };

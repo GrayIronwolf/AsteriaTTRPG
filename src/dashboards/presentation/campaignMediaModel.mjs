@@ -33,8 +33,9 @@ export function mapForViewer(raw,campaignId,mode='player'){
       fogEnabled:settings.fogEnabled,fogCells:settings.fogCells,
       metresPerCell:settings.metresPerCell,
       tokens:battleMapTokens(settings.tokens),
-      ...(mode==='gm'?{combatId:typeof raw.combatId==='string'?raw.combatId:'',
-        updatedAt:raw.updatedAt||null}: {})
+      combatId:mapId(raw.combatId)?raw.combatId:'',
+      ...(mode==='gm'?{updatedAt:raw.updatedAt||null}:
+        {activeTokenId:settings.tokens.some(token=>token.id===raw.activeTokenId)?raw.activeTokenId:''})
     });
   }catch{return null;}
 }
@@ -61,6 +62,7 @@ export function presentationForViewer(raw){
   const draft=presentationDraft({
     scene:raw.scene,title:raw.title,subtitle:raw.subtitle,mapId:raw.mapId,
     ...(raw.assetId?{assetId:raw.assetId}:{}),
+    ...(raw.mapCamera?{mapCamera:raw.mapCamera}:{}),
     characterIds:raw.characterIds,showRound:raw.showRound,
     showPartyHP:raw.showPartyHP,theme:raw.theme
   });

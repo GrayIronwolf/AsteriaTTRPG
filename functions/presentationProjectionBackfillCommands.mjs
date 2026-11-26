@@ -8,7 +8,7 @@ import {
  * GM permission is verified using the established canonical action handler.
  */
 export function createPresentationProjectionBackfillCommands(context,{requireCampaignGM}){
-  const {db,doc,runTransaction}=context;
+  const {db,runTransaction}=context;
   return {
     rebuildPresentationProjections:async(campaignId,_scope,action={})=>{
       try{
@@ -17,15 +17,11 @@ export function createPresentationProjectionBackfillCommands(context,{requireCam
         await runTransaction(db,async tx=>{
           await requireCampaignGM(tx,campaignId);
         });
-        const [encounter,maps]=await Promise.all([
-          doc(db,'campaigns',campaignId,'systems','encounter').get(),
-          db.collection('campaigns/'+campaignId+'/battleMaps').limit(40).get()
-        ]);
-        await synchronizeCombatPresentation(db,campaignId,
-          encounter.exists?encounter.data():{});
+        const maps=await db.collection('campaigns/'+campaignId+'/battleMaps').limit(40).get();
+        await synchronizeCombatPresentation(db,campaignId);
         let count=0;
         for(const snapshot of maps.docs){
-          await synchronizeBattleMapPresentation(db,campaignId,snapshot.id,snapshot.data());
+          await synchronizeBattleMapPresentation(db,campaignId,snapshot.id);
           count++;
         }
         return {ok:true,mapsChecked:count,combatRefreshed:true};

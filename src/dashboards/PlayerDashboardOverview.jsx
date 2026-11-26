@@ -1,3 +1,4 @@
+import {PlayerBattleMapView} from './BattleMapWorkspace.jsx';
 import { CombatActionButton } from './CombatPanel.jsx';
 import { talentRules } from '../state/talentMechanics.mjs';
 import { useAsyncAction } from '../components/useAsyncAction.js';
@@ -351,6 +352,7 @@ export function PlayerDashboardOverview({ campaignId, campaign, character, chara
       case 'explorationOverview':return <PlayerExplorationOverview campaign={campaign} partyWorkspace={partyWorkspace} character={character} onNavigate={onNavigate}/>;
       case 'questTracker':return <PlayerQuestTracker character={character} partyWorkspace={partyWorkspace} onNavigate={onNavigate}/>;
       case 'inventoryOverview':return <PlayerInventoryOverview character={character} onNavigate={onNavigate}/>;
+      case 'battleMap':return campaignId?<PlayerBattleMapView campaignId={campaignId} encounter={clock.encounter}/>:null;
       case 'worldContext':return campaignId?<CalendarWeatherQuickPanel campaignId={campaignId}
         role="player" onNavigate={onNavigate}/>:null;
       case 'shortcutInventory':return shortcut('Inventory','View equipment, storage and consumables.','inventory');
@@ -380,7 +382,8 @@ export function PlayerDashboardOverview({ campaignId, campaign, character, chara
       onSaveLayout={saveCanvas}
       canEditCanvas={canEditLayout}
       forcedPanelIds={forcedPanels}
-      suppressedPanelIds={preferences.hiddenInformationFields.includes('currency')?['currency']:[]}>
+      suppressedPanelIds={[...(preferences.hiddenInformationFields.includes('currency')?['currency']:[]),
+        ...(!campaignId?['battleMap']:[])]}>
       {PLAYER_DASHBOARD_CANVAS_CONFIG.ids.map(id=><CombatCommandPanel id={id} key={id}>
         {renderPanel(id)}
       </CombatCommandPanel>)}
