@@ -32,7 +32,7 @@ export const COMBAT_BASIC_DECLARATIONS=Object.freeze([
 export const COMBAT_PLAYER_COMMANDS=Object.freeze(['declare','spend-ap','end-turn','death-save']);
 export const COMBAT_GM_COMMANDS=Object.freeze([
   'save','load-prepared','map-prepare','map-link','map-move',
-  'start','next','end','clear','timer','release-wave','trigger-event',
+  'start','pause','resume','next','end','clear','timer','release-wave','trigger-event',
   'declare','prepare','ambush','approve','reject','cancel','window',
   'close-window','roll','resolve','pass','react','react-ability',
   'resolve-reaction','trigger-prepared','condition',
@@ -105,7 +105,7 @@ export function projectCombat(encounter={},session=null,{role='player',character
     targetIds:array(pending.targetIds).filter(validId).slice(0,40)
   }):null;
   const result={
-    status,revision:combatRevision(raw),round:Math.max(1,whole(raw.round,1)),
+    status,paused:active&&raw.paused===true,revision:combatRevision(raw),round:Math.max(1,whole(raw.round,1)),
     turnIndex:index,combatants:Object.freeze(roster),current:index>=0?roster[index]||null:null,
     ownActor:owned,isActive:active,sessionEditable:gmSessionState(session).editable,
     turnTimer,pending:safePending,

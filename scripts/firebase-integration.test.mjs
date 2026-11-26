@@ -125,6 +125,33 @@ test('private GM notes are inaccessible to players',async()=>{
   await assertFails(getDoc(doc(user('alice'),'campaigns/c/systems/gmWorkspace')));
 });
 
+test('canvas content modes and resized geometry persist privately without changing gameplay',async()=>{
+ const {defaultDashboardLayout,normalizeDashboardLayout}=await import('../src/state/dashboardLayoutModel.mjs');
+ for(const role of ['gm','player']){
+  const value=defaultDashboardLayout(role),key=role==='gm'?'gmCanvas':'playerCanvas';
+  const id=role==='gm'?'gmResources':'armour';
+  value[key].defaultContentSizing='fixed';value[key].contentSizing={[id]:'proportional'};
+  value[key].contentScale={[id]:1.3};
+  value[key].freeform.positions[id]={x:-100,y:800,w:350,h:420};
+  const layout=normalizeDashboardLayout(value,role),reference=doc(user('alice'),'users/alice/dashboardLayouts/'+role+'-c');
+  await assertSucceeds(setDoc(reference,{layout}));
+  const reopened=(await assertSucceeds(getDoc(reference))).data().layout;
+  assert.deepEqual(reopened,layout);
+  await assertFails(getDoc(doc(user('bob'),'users/alice/dashboardLayouts/'+role+'-c')));
+  await assertFails(setDoc(doc(user('bob'),'users/alice/dashboardLayouts/'+role+'-c'),{layout}));
+  if(role==='player'){
+   const preferences={dashboardLayout:layout};
+   const client=user('alice'),batch=writeBatch(client);
+   batch.update(doc(client,'campaigns/c/characters/a'),{dashboardPreferences:preferences});
+   batch.update(doc(client,'users/alice/characters/a'),{dashboardPreferences:preferences});
+   await assertSucceeds(batch.commit());
+   const character=(await assertSucceeds(getDoc(doc(user('alice'),'campaigns/c/characters/a')))).data();
+   assert.deepEqual(character.dashboardPreferences.dashboardLayout.playerCanvas,layout.playerCanvas);
+   assert.deepEqual(character.hp,[8,10]);assert.equal(character.ownerUid,'alice');
+  }
+ }
+});
+
 test('Combat Command Centre prepared plans and completed history are GM-only, and revocation takes effect immediately',async()=>{
   const history='campaigns/c/encounterHistory/combat-1';
   const workspace='campaigns/c/systems/gmWorkspace';

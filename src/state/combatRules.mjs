@@ -19,16 +19,18 @@ export const apState=(encounter,id)=>({ap:0,bonus:false,turns:0,...encounter?.co
 // Shared guards for the dashboard and combat transaction. Keep display and
 // permission checks in sync without storing a second AP pool in the browser.
 export function activeReactionWindow(encounter,actorId) {
+  if(encounter?.paused===true)return null;
   const pending=encounter?.combat?.pending;
   return pending?.reactionWindow && pending.reactorId===actorId && !pending.reaction ? pending : null;
 }
 export function combatActionScope(encounter,actorId) {
   const state=apState(encounter,actorId),pending=encounter?.combat?.pending;
-  return JSON.stringify([encounter?.combatId||'',encounter?.status,actorId,currentCombatant(encounter)?.id,state.turns,Boolean(state.turnComplete),pending?.id,pending?.status,pending?.reactorId,Boolean(pending?.reaction)]);
+  return JSON.stringify([encounter?.combatId||'',encounter?.status,Boolean(encounter?.paused),actorId,currentCombatant(encounter)?.id,state.turns,Boolean(state.turnComplete),pending?.id,pending?.status,pending?.reactorId,Boolean(pending?.reaction)]);
 }
 export function manualAPProblem(character,encounter,actorId,ap) {
   if(!Number.isInteger(ap)||ap<0||ap>3)return 'Choose a whole AP cost from 0 to 3.';
   if(encounter?.status!=='active')return 'Combat is not active.';
+  if(encounter.paused===true)return 'Combat is paused.';
   const state=apState(encounter,actorId);
   if(!actorId||currentCombatant(encounter)?.id!==actorId||state.turnComplete)return 'Spend AP only on your own turn before it is completed.';
   if(encounter.combat?.pending)return 'Resolve the pending action before continuing.';
@@ -233,6 +235,7 @@ export function optionProblem(option,character,encounter,actorId,{reaction=false
   if(option.blocked)return option.blocked;
   const restriction=combatRestriction(character,{encounter});if(restriction)return restriction;
   if(encounter?.status!=='active')return 'Combat is not active.';
+  if(encounter.paused===true)return 'Combat is paused.';
   if(!reaction&&currentCombatant(encounter)?.id!==actorId)return 'Wait for your turn.';
   if(reaction&&!activeReactionWindow(encounter,actorId))return 'No eligible reaction window.';
   const state=apState(encounter,actorId);

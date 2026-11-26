@@ -16,7 +16,7 @@ export function GMLiveCombatPanel({combat,pending=null,log=[],busy,onCommand,vie
     return()=>window.clearInterval(tick);
   },[combat?.turnTimer?.enabled,combat?.turnTimer?.endsAt]);
   const timer=combat?.turnTimer||{};
-  const active=combat?.status==='active',editable=combat?.sessionEditable===true;
+  const active=combat?.status==='active',editable=combat?.sessionEditable===true&&!combat?.paused;
   const advance=gmMayAdvanceTurn(combat,pending);
   const elapsed=timer.enabled?Math.max(0,Math.ceil((timer.endsAt-now)/1000)):
     timer.remainingSeconds||0;

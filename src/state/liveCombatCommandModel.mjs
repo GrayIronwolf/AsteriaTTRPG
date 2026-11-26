@@ -14,7 +14,7 @@ export function liveCombatTimerState(raw={},now=Date.now()){
   const endsAt=Number.isSafeInteger(source.endsAt)&&source.endsAt>0?source.endsAt:0;
   const enabled=source.enabled===true&&Boolean(endsAt);
   const remaining=enabled?Math.max(0,Math.ceil((endsAt-now)/1000)):
-    Math.min(LIVE_COMBAT_TIMER_MAX,int(source.remainingSeconds)||seconds);
+    Math.min(LIVE_COMBAT_TIMER_MAX,(Number.isSafeInteger(source.remainingSeconds)&&source.remainingSeconds>=0?source.remainingSeconds:seconds));
   return Object.freeze({
     configured:seconds>0,durationSeconds:seconds,enabled,
     endsAt:enabled?endsAt:0,remainingSeconds:remaining,
@@ -102,6 +102,7 @@ export function projectGMLiveLog(log){
 }
 export function gmMayAdvanceTurn(combat,pending){
   if(!combat||combat.status!=='active')return {allowed:false,reason:'Combat is not active.'};
+  if(combat.paused)return {allowed:false,reason:'Combat is paused.'};
   if(!combat.sessionEditable)return {allowed:false,reason:'The campaign session is not editable.'};
   if(pending)return {allowed:false,reason:'Resolve the current action first.'};
   if(combat.current?.pendingDeathSave)return {

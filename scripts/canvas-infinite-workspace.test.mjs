@@ -76,7 +76,7 @@ test('Canvas is borderless, fills the viewport and retains responsive stacking',
  assert.match(renderer,/scrollArea.clientHeight-contentTop-2/);
  assert.match(renderer,/viewportRect.top-scrollRect.top\+scrollArea.scrollTop/);
  assert.match(renderer,/host\.style\.setProperty\('--combat-edge-left','0px'\)/);
- assert.match(css,/@container \(max-width:699px\)/);
+ assert.match(css,/@container combatCanvas \(max-width:699px\)/);
  assert.match(css,/\.window\[data-combat-panel\]\{position:relative;left:auto;top:auto;width:100%;height:auto/);
  assert.match(combat,/\.workspace\[data-testid="site-gm-combat"\]\{padding:0;border:0/);
  assert.match(css,/royal-relic-obsidian\.svg/);
@@ -180,5 +180,5 @@ test('Advanced canvas minimap and performance preferences remain independent of 
  assert.match(jsx,/Canvas overview minimap/);
  assert.match(jsx,/Show canvas minimap/);
  assert.match(jsx,/Reduce off-screen window effects/);
- assert.match(jsx,/Recover off-screen windows \(Fit All\)/);
+ assert.match(jsx,/Use Fit All Panels in the toolbar to recover off-screen windows/);
 });

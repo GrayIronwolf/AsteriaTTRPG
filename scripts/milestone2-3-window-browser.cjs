@@ -1,0 +1,306 @@
+/* Real shared-canvas sizing acceptance; fixture-only, all external requests blocked. */
+const assert=require('node:assert/strict');
+const {chromium}=require('playwright');
+require('./local-static-server.js');
+const base='http://127.0.0.1:8123/?reactFixture=1';
+const geometry=locator=>locator.evaluate(el=>{const r=el.getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height};});
+const painted=page=>page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+(async()=>{
+ const {zoomCombatCamera,fitCombatCamera}=await import('../src/dashboards/combat/combatWorkspaceLayoutModel.mjs');
+ const browser=await chromium.launch({headless:true,args:['--no-sandbox'],
+  ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH?{executablePath:process.env.PLAYWRIGHT_EXECUTABLE_PATH}:{})});
+ const results=[];
+ const timeout=setTimeout(()=>{console.error('Canvas sizing browser acceptance timed out');browser.close().finally(()=>process.exit(1));},480000);
+ for(const role of ['gm','player','combat'])for(const scale of [.5,.75,1]){
+  console.log('START sizing',role,scale);
+  const page=await browser.newPage({viewport:{width:1600,height:1100},reducedMotion:'reduce'});
+  await page.addInitScript(()=>localStorage.setItem('asteria:dice:presentation:v1',
+   JSON.stringify({version:1,reducedMotion:'on'})));
+  const errors=[],consoleErrors=[];page.on('pageerror',error=>errors.push(error.message));
+  page.on('console',message=>{if(message.type()==='error')consoleErrors.push(message.text());});
+  await page.route('**/*',route=>new URL(route.request().url()).hostname==='127.0.0.1'?route.continue():route.abort());
+  const scope=role==='player'?'asteria:player-main-canvas:v1:player-demo:demo-campaign:kael':
+   role==='gm'?'asteria:gm-main-canvas:v1:player-demo:demo-campaign':
+    'asteria:gm-combat-workspace:v1:player-demo:demo-campaign';
+  const open=async()=>{
+   await page.goto(base,{waitUntil:'domcontentloaded'});
+   await page.waitForFunction(()=>window.AsteriaReactMigration?.available);
+   if(role==='player')await page.evaluate(()=>window.AsteriaReactMigration.openCharacter('demo-campaign','kael'));
+   else await page.evaluate(()=>window.AsteriaReactMigration.openGM('demo-campaign'));
+   if(role==='combat')await page.getByRole('button',{name:'Combat Command Centre',exact:true}).click();
+   await page.getByTestId(role==='player'?'site-player-main-canvas':role==='gm'?'site-gm-main-canvas':'site-gm-combat-command-centre').waitFor();
+  };
+  await open();
+  const root=page.getByTestId(role==='player'?'site-player-main-canvas':role==='gm'?'site-gm-main-canvas':'site-gm-combat-command-centre');
+  const id=role==='player'?'armour':role==='gm'?'combatOverview':'controls';
+  const panel=root.locator('[data-canvas-window="'+id+'"]');
+  // Centre the chosen saved rectangle without changing its layout geometry.
+  const camera=await panel.evaluate((el,scale)=>{
+   const viewport=el.closest('[data-layout-mode]'),width=viewport.clientWidth;
+   const x=parseFloat(el.style.getPropertyValue('--combat-x'))*width/100;
+   const y=parseFloat(el.style.getPropertyValue('--combat-y'))*width/100;
+   const w=parseFloat(el.style.getPropertyValue('--combat-w'))*width/100;
+   const h=parseFloat(el.style.getPropertyValue('--combat-h'))*width/100;
+   return {scale,x:width/2-(x+w/2)*scale,y:(viewport.clientHeight-60)/2-(y+h/2)*scale};
+  },scale);
+  await page.addInitScript(({scope,camera})=>localStorage.setItem(scope+':camera',JSON.stringify(camera)),{scope,camera});
+  await open();await painted(page);console.log('CENTRED',role,scale);
+  assert.equal((await root.locator('output[aria-label="Canvas zoom"]').textContent()).trim(),Math.round(scale*100)+'%');
+  const resize=async(edge,dx,dy)=>{
+   // Select the window first when adjacent windows' outer grips overlap.
+   const header=panel.locator('header').first(),h=await geometry(header);
+   await page.mouse.click(h.x+Math.min(35,h.w/4),h.y+h.h/2);await painted(page);
+   const handle=panel.locator('[data-resize-edge="'+edge+'"]'),r=await geometry(handle);
+   assert.ok(r.w>=18&&r.h>=18,'corner grips remain usable at '+scale);
+   await page.mouse.move(r.x+r.w/2,r.y+r.h/2);await page.mouse.down();
+   await page.mouse.move(r.x+r.w/2+dx,r.y+r.h/2+dy,{steps:12});await page.mouse.up();
+   await painted(page);
+  };
+  const original=await geometry(panel);console.log('RESIZE',role,scale);
+  await resize('se',40,30);let rect=await geometry(panel);
+  assert.ok(Math.abs(rect.w-original.w-40)<3&&Math.abs(rect.h-original.h-30)<3,'SE resize tracks the pointer at '+scale+' '+JSON.stringify({original,rect}));
+  assert.ok(Math.abs(rect.x-original.x)<2&&Math.abs(rect.y-original.y)<2);
+  await root.getByRole('button',{name:'Undo canvas change',exact:true}).click();await painted(page);
+  await resize('nw',-40,-30);rect=await geometry(panel);
+  assert.ok(Math.abs(rect.x+rect.w-original.x-original.w)<3,'NW holds the right edge');
+  assert.ok(Math.abs(rect.y+rect.h-original.y-original.h)<3,'NW holds the bottom edge');
+  await root.getByRole('button',{name:'Undo canvas change',exact:true}).click();await painted(page);
+  if(scale===.5){
+   const before=await panel.evaluate(el=>['--combat-x','--combat-y','--combat-w','--combat-h'].map(key=>el.style.getPropertyValue(key)));
+   const header=await geometry(panel.locator('header').first());
+   await page.mouse.click(header.x+35,header.y+header.h/2);await painted(page);
+   const handle=await geometry(panel.locator('[data-resize-edge="se"]'));
+   await page.mouse.move(handle.x+handle.w/2,handle.y+handle.h/2);await page.mouse.down();
+   await page.mouse.move(handle.x+handle.w/2+20,handle.y+handle.h/2+20);await painted(page);
+   await page.setViewportSize({width:1280,height:1100});await painted(page);await page.mouse.up();
+   assert.equal(await root.locator('[data-layout-mode]').getAttribute('data-dragging-window'),null,
+    'viewport changes must cancel a gesture measured at the previous width');
+   assert.deepEqual(await panel.evaluate(el=>['--combat-x','--combat-y','--combat-w','--combat-h'].map(key=>el.style.getPropertyValue(key))),before);
+   await page.setViewportSize({width:1600,height:1100});await painted(page);
+  }
+  console.log('MODES',role,scale);
+  const options=panel.locator('summary');await options.click();
+  const select=panel.locator('select[aria-label^="Content layout for"]');
+  await select.selectOption('fixed');await options.click();await painted(page);
+  const body=panel.locator('[data-combat-scroll]>div');
+  await page.waitForFunction(id=>parseFloat(getComputedStyle(document.querySelector(
+   '[data-canvas-window="'+id+'"] [data-combat-scroll]')).getPropertyValue('--combat-design-width'))>0,id);
+  const fixedWidth=await body.evaluate(el=>parseFloat(getComputedStyle(el).width));
+  for(const overflow of ['scroll','hidden','auto']){
+   await panel.locator('[data-combat-scroll]').evaluate((el,value)=>{el.style.overflowY=value;},overflow);
+   await painted(page);
+   assert.ok(Math.abs((await body.evaluate(el=>parseFloat(getComputedStyle(el).width)))-fixedWidth)<2,
+    'scrollbar changes do not alter the fixed design width');
+  }
+  await resize('se',40,30);
+  const afterFixedWidth=await body.evaluate(el=>parseFloat(getComputedStyle(el).width));
+  assert.ok(Math.abs(afterFixedWidth-fixedWidth)<2,'fixed content keeps its width while the window grows '+JSON.stringify({fixedWidth,afterFixedWidth,role,scale}));
+  await options.click();await select.selectOption('proportional');await options.click();await painted(page);
+  const fitted=await body.evaluate(el=>({body:el.getBoundingClientRect().width,viewport:el.parentElement.getBoundingClientRect().width}));
+  assert.ok(fitted.body<=fitted.viewport+3,'proportional content fits its scroll viewport');
+  await options.click();await select.selectOption('responsive');await options.click();await painted(page);
+  assert.equal(await panel.getAttribute('data-content-sizing'),'responsive');
+  assert.ok(await panel.locator('[data-combat-scroll]').evaluate(el=>getComputedStyle(el).overflowY==='auto'));
+  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'no page overflow');
+  // Layout dimensions use world coordinates and survive viewport changes.
+  const saved=await panel.evaluate(el=>['--combat-x','--combat-y','--combat-w','--combat-h'].map(key=>el.style.getPropertyValue(key)));
+  console.log('VIEWPORTS',role,scale);
+  for(const width of [1280,900,390,1600]){
+   await page.setViewportSize({width,height:1100});await painted(page);
+   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'no overflow at '+width);
+   assert.deepEqual(await panel.evaluate(el=>['--combat-x','--combat-y','--combat-w','--combat-h'].map(key=>el.style.getPropertyValue(key))),saved);
+  }
+  // Milestone 2.4: navigation changes only the camera, never window geometry.
+  console.log('NAVIGATION',role,scale);
+  const allGeometry=()=>root.locator('[data-canvas-window]').evaluateAll(nodes=>nodes.map(el=>
+   [el.dataset.canvasWindow,...['--combat-x','--combat-y','--combat-w','--combat-h'].map(key=>el.style.getPropertyValue(key))]));
+  const layoutBeforeNavigation=await allGeometry();
+  const cameraMatrix=()=>root.locator('[data-stage]').evaluate(el=>{
+   const m=new DOMMatrix(getComputedStyle(el).transform);return {x:m.e,y:m.f,scale:m.a};
+  });
+  const viewport=root.locator('[data-layout-mode]');
+  const waitForCamera=async expected=>page.waitForFunction(({testId,expected})=>{
+   const node=document.querySelector('[data-testid="'+testId+'"] [data-stage]');
+   if(!node)return false;
+   const m=new DOMMatrix(getComputedStyle(node).transform);
+   return Math.abs(m.e-expected.x)<.02&&Math.abs(m.f-expected.y)<.02&&Math.abs(m.a-expected.scale)<.0001;
+  },{testId:await root.getAttribute('data-testid'),expected},{timeout:5000});
+  const toolbar=root.getByRole('toolbar',{name:role==='player'?'Player dashboard canvas controls':role==='gm'?'GM dashboard canvas controls':'Combat canvas controls'});
+  assert.equal(await toolbar.getByRole('button').count(),7,'the approved toolbar has seven controls');
+  const label=await panel.getAttribute('data-window-label');
+  const beforeFocus=await cameraMatrix();
+  await panel.getByRole('button',{name:'Focus on '+label,exact:true}).click();await painted(page);
+  assert.equal(await panel.getByRole('button',{name:'Return from '+label,exact:true}).count(),1);
+  await panel.getByRole('button',{name:'Return from '+label,exact:true}).click();await painted(page);
+  await waitForCamera(beforeFocus);
+  const returned=await cameraMatrix();
+  assert.ok(Math.abs(returned.x-beforeFocus.x)<.02&&Math.abs(returned.y-beforeFocus.y)<.02&&
+   returned.scale===beforeFocus.scale,'focus returns to the prior camera within transform rounding');
+  await panel.locator('header strong').first().dblclick();await painted(page);
+  assert.equal(await panel.getByRole('button',{name:'Return from '+label,exact:true}).count(),1,'double-click focuses the title');
+  await panel.getByRole('button',{name:'Return from '+label,exact:true}).click();await painted(page);
+  await waitForCamera(beforeFocus);
+  const h=await geometry(panel.locator('header').first()),beforePan=await cameraMatrix();
+  const panHit=await page.evaluate(point=>{
+   const node=document.elementFromPoint(point.x,point.y);return {tag:node?.tagName,window:node?.closest('[data-canvas-window]')?.dataset.canvasWindow};
+  },{x:h.x+h.w/2,y:h.y+h.h/2});
+  await page.mouse.move(h.x+h.w/2,h.y+h.h/2);await page.mouse.down({button:'middle'});
+  await page.mouse.move(h.x+h.w/2+35,h.y+h.h/2+25,{steps:12});await page.mouse.up({button:'middle'});await painted(page);
+  const afterPan=await cameraMatrix();
+  assert.ok(Math.abs(afterPan.x-beforePan.x-35)<2&&Math.abs(afterPan.y-beforePan.y-25)<2,
+   'middle-button pan follows the pointer '+JSON.stringify({beforePan,afterPan,h,panHit}));
+  const zoomPivot=await viewport.evaluate(el=>({x:el.clientWidth/2,y:(el.clientHeight-60)/2}));
+  await toolbar.getByRole('button',{name:'Zoom into canvas',exact:true}).click();
+  await waitForCamera(zoomCombatCamera(afterPan,afterPan.scale*1.2,zoomPivot));
+  assert.ok((await cameraMatrix()).scale>afterPan.scale);
+  const zoomed=await cameraMatrix();
+  await toolbar.getByRole('button',{name:'Zoom out of canvas',exact:true}).click();
+  await waitForCamera(zoomCombatCamera(zoomed,zoomed.scale/1.2,zoomPivot));
+  const fit=await viewport.evaluate(el=>({width:el.clientWidth,height:Math.max(200,el.clientHeight-64),
+   positions:Object.fromEntries([...el.querySelectorAll('[data-canvas-window]')].map(node=>[node.dataset.canvasWindow,
+    Object.fromEntries([['x','--combat-x'],['y','--combat-y'],['w','--combat-w'],['h','--combat-h']]
+     .map(([key,variable])=>[key,parseFloat(node.style.getPropertyValue(variable))*10]))]))}));
+  await toolbar.getByRole('button',{name:'Fit Canvas',exact:true}).click();
+  await waitForCamera(fitCombatCamera({freeform:{positions:fit.positions},minimized:[]},Object.keys(fit.positions),fit.width,fit.height));
+  const v=await geometry(viewport);
+  const findBlank=()=>viewport.evaluate(el=>{
+   const r=el.getBoundingClientRect(),background=(x,y)=>{
+    const node=document.elementFromPoint(x,y);return node===el||node?.hasAttribute('data-stage');
+   };
+   for(let y=Math.max(1,r.top+75);y<Math.min(innerHeight-8,r.bottom-8);y+=35)
+    for(let x=r.left+8;x<r.right-90;x+=45)
+     if(background(x,y)&&background(x+70,y))return {x,y};
+   return null;
+  });
+  const blank=await findBlank();
+  assert.ok(blank,'a visible canvas background supports navigation');
+  await page.mouse.move(blank.x,blank.y);
+  const beforeWheel=await cameraMatrix();await page.mouse.wheel(45,0);
+  await page.waitForTimeout(220);await painted(page);
+  assert.ok(Math.abs((await cameraMatrix()).x-beforeWheel.x+45)<2,'horizontal trackpad input pans '+JSON.stringify({beforeWheel,after:await cameraMatrix(),blank,v}));
+  if(scale===.5){
+   const session=await page.context().newCDPSession(page);
+   await session.send('Emulation.setTouchEmulationEnabled',{enabled:true});
+   const touchBlank=await findBlank();assert.ok(touchBlank);
+   await viewport.evaluate(el=>{
+    window.canvasTouchEvents=[];
+    for(const type of ['pointerdown','pointermove','pointercancel','pointerup','touchstart'])
+     el.addEventListener(type,event=>window.canvasTouchEvents.push({type,id:event.pointerId,
+      x:event.clientX,y:event.clientY,target:event.target.tagName,window:event.target.closest('[data-canvas-window]')?.dataset.canvasWindow}),true);
+   });
+   const a={...touchBlank,id:1},b={x:touchBlank.x+70,y:touchBlank.y,id:2};
+   const touch=(type,touchPoints)=>session.send('Input.dispatchTouchEvent',{type,touchPoints});
+   const beforePinch=await cameraMatrix();
+   await touch('touchStart',[a]);await touch('touchStart',[a,b]);
+   await touch('touchMove',[a,{...b,x:b.x+50}]);await painted(page);
+   await page.waitForFunction(before=>{
+    const stage=document.querySelector('[data-stage]');
+    return stage&&new DOMMatrix(getComputedStyle(stage).transform).a>before;
+   },beforePinch.scale,{timeout:3000}).catch(async error=>{
+    throw Error('Two-finger canvas pinch failed '+JSON.stringify({beforePinch,after:await cameraMatrix(),touchBlank,
+     events:await page.evaluate(()=>window.canvasTouchEvents)})+' '+error.message);
+   });
+   await touch('touchEnd',[]);await painted(page);
+   await session.send('Emulation.setTouchEmulationEnabled',{enabled:false});await session.detach();
+  }
+  await toolbar.getByRole('button',{name:'Lock Canvas',exact:true}).click();await painted(page);
+  assert.equal(await toolbar.getByRole('button',{name:'Unlock Canvas',exact:true}).getAttribute('aria-pressed'),'true');
+  assert.equal(await root.locator('[data-resize-edge]').count(),0);
+  await toolbar.getByRole('button',{name:'Undo canvas change',exact:true}).click();await painted(page);
+  assert.equal(await toolbar.getByRole('button',{name:'Lock Canvas',exact:true}).count(),1);
+  await toolbar.getByRole('button',{name:'Redo canvas change',exact:true}).click();await painted(page);
+  await toolbar.getByRole('button',{name:'Unlock Canvas',exact:true}).click();await painted(page);
+  assert.deepEqual(await allGeometry(),layoutBeforeNavigation,'navigation and locking preserve every saved rectangle');
+  if(scale===.5){
+   console.log('INTEGRATION',role);
+   const countBefore=await root.locator('[data-canvas-window]').count();
+   await root.getByTestId('site-combat-tools-toggle').click();
+   await root.getByRole('button',{name:/^Show all panels/}).click();await painted(page);
+   const countAfter=await root.locator('[data-canvas-window]').count();
+   assert.ok(countAfter>countBefore,'window library creates existing authorised panels '+JSON.stringify({countBefore,countAfter,
+    messages:await root.getByRole('status').allTextContents(),errors,consoleErrors,
+    dashboard:await page.locator('#reactDashboard').innerText()}));
+   console.log('INTEGRATION windows',role,JSON.stringify({countBefore,countAfter}));
+   await root.locator('aside').getByText('Canvas Preferences',{exact:true}).click();
+   await root.getByRole('checkbox',{name:'Window switcher and search',exact:true}).check();
+   const background=root.getByRole('combobox',{name:'Canvas background',exact:true});
+   for(const theme of ['obsidian','slate','midnight']){
+    await background.selectOption(theme);await painted(page);
+    assert.equal(await viewport.getAttribute('data-background'),theme);
+   }
+   await root.getByRole('button',{name:role==='combat'?'Close Combat Tools menu':'Close Dashboard Windows menu',exact:true}).click();
+   const targetId=role==='combat'?'timer':'worldContext';
+   const target=root.locator('[data-canvas-window="'+targetId+'"]');
+   const targetLabel=await target.getAttribute('data-window-label');
+   const switcher=root.getByRole('navigation',{name:'Canvas window switcher',exact:true});
+   const switchTo=async label=>{
+    const expand=switcher.getByRole('button',{name:'Expand canvas windows',exact:true});
+    if(await expand.count())await expand.click();
+    await switcher.getByRole('searchbox').fill(label);
+    await switcher.getByRole('button',{name:label,exact:true}).click();await painted(page);
+    assert.equal(await switcher.getByRole('searchbox').count(),0,'selection collapses the overlay away from window controls');
+   };
+   await switchTo(targetLabel);
+   await target.getByRole('button',{name:'Minimise '+targetLabel,exact:true}).click();await painted(page);
+   assert.equal(await target.locator('[data-combat-scroll]').getAttribute('aria-hidden'),'true');
+   await target.getByRole('button',{name:'Restore '+targetLabel,exact:true}).click();await painted(page);
+   await toolbar.getByRole('button',{name:'Lock Canvas',exact:true}).click();await painted(page);
+   if(role==='combat'){
+    const length=target.getByRole('combobox',{name:/^Turn length/});
+    assert.equal(await length.count(),1,'turn-length control exists: '+await target.innerText());
+    const choice=await length.evaluate(el=>Array.from(el.options).map(option=>option.value).find(value=>value!==el.value));
+    await length.selectOption(choice);assert.equal(await length.inputValue(),choice,'combat forms stay interactive while canvas is locked');
+    const restart=target.getByRole('checkbox',{name:'Restart on each new turn',exact:true});
+    await restart.uncheck();assert.equal(await restart.isChecked(),false);
+   }else{
+    assert.equal(await target.getByTestId('asteria-world-context-panel').count(),1);
+    assert.ok(await target.getByRole('button',{name:'Calendar',exact:true}).isEnabled());
+    const beforeContentWheel=await cameraMatrix();
+    await target.locator('[data-combat-scroll]').dispatchEvent('wheel',{deltaY:80,bubbles:true,cancelable:true});await painted(page);
+    assert.deepEqual(await cameraMatrix(),beforeContentWheel,'window scrolling never navigates the canvas');
+   }
+   await toolbar.getByRole('button',{name:'Unlock Canvas',exact:true}).click();await painted(page);
+   const metrics=()=>page.evaluate(()=>window.AsteriaFirebase.getCanvasFixtureMetrics());
+   const beforeRemoval=await metrics();
+   await target.locator('summary').click();await target.getByRole('button',{name:'Hide window',exact:true}).click();await painted(page);
+   assert.equal(await target.count(),0,'window removal unmounts its interactive system');
+   if(role!=='combat')assert.equal((await metrics()).streams.length,beforeRemoval.streams.length-3,
+    'removing calendar/weather content cleans up its three subscriptions');
+   await toolbar.getByRole('button',{name:'Undo canvas change',exact:true}).click();await painted(page);
+   assert.equal(await target.count(),1,'undo restores the existing authorised window');
+   if(role==='gm'){
+    const dice=root.locator('[data-canvas-window="diceQuick"]'),diceLabel=await dice.getAttribute('data-window-label');
+    await switchTo(diceLabel);
+    await toolbar.getByRole('button',{name:'Lock Canvas',exact:true}).click();await painted(page);
+    const beforeRoll=await metrics();
+    await dice.getByRole('button',{name:'Roll All',exact:true}).click();
+    await dice.locator('[data-result-visible="true"]').waitFor();
+    assert.equal((await dice.locator('[data-result-visible="true"] strong').textContent()).trim(),'17');
+    assert.equal((await metrics()).diceRollRequests,beforeRoll.diceRollRequests+1,
+     'a locked canvas still permits one private official dice request');
+    await toolbar.getByRole('button',{name:'Unlock Canvas',exact:true}).click();await painted(page);
+    await switchTo(targetLabel);
+   }
+   if(role!=='combat'){
+    await target.getByRole('button',{name:'Calendar',exact:true}).click();
+    await page.getByRole('heading',{name:'Asteria Calendar',exact:true}).waitFor();
+    assert.equal(await root.count(),0,'calendar shortcut uses the existing dashboard route');
+    const stopped=await metrics();assert.equal(stopped.diceListeners,0);
+    assert.ok(!stopped.streams.includes('audio-library')&&!stopped.streams.includes('audio-live'),
+     'leaving the canvas releases optional dice and soundboard subscriptions');
+   }
+  }
+  if(role==='combat'){
+   await open();await painted(page);console.log('CENTRED',role,scale);
+   assert.deepEqual(await panel.evaluate(el=>['--combat-x','--combat-y','--combat-w','--combat-h'].map(key=>el.style.getPropertyValue(key))),saved,'Combat layout reload');
+   assert.equal(await panel.getAttribute('data-content-sizing'),'responsive');
+  }
+  assert.deepEqual(errors,[],'no browser runtime errors');
+  assert.deepEqual(consoleErrors.filter(message=>/dashboard failed to load|Error: Asteria Firebase service|TypeError:|ReferenceError:|Maximum update depth/.test(message)),[],
+   'no caught dashboard failures or missing panel APIs');
+  results.push({role,zoom:scale,resize:true,contentModes:true,viewportRestoration:true,navigation:true,integration:scale===.5});
+  await page.close();console.log('PASS sizing',role,scale);
+ }
+ console.log('Shared canvas browser regression:',JSON.stringify(results));
+ clearTimeout(timeout);await browser.close();process.exit(0);
+})().catch(error=>{console.error(error);process.exit(1);});

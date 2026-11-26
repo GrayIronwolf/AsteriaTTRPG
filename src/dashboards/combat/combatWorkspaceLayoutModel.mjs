@@ -99,7 +99,10 @@ export function openingCombatCamera(layout,visibleIds=[],viewportWidth=0){
 }
 /** Fit and focus change only the camera; window geometry never changes. */
 export function combatWindowBounds(layout,visibleIds){
- const rects=visibleIds.map(id=>layout.freeform.positions[id]).filter(Boolean);
+ const rects=visibleIds.map(id=>{
+   const rect=layout.freeform.positions[id];
+   return rect&&layout.minimized?.includes(id)?{...rect,h:Math.min(rect.h,80)}:rect;
+ }).filter(Boolean);
  if(!rects.length)return null;
  return {left:Math.min(...rects.map(rect=>rect.x)),
   top:Math.min(...rects.map(rect=>rect.y)),
@@ -118,7 +121,8 @@ export function fitCombatCamera(layout,visibleIds,viewportWidth,viewportHeight){
    y:(viewportHeight-(bounds.top+bounds.bottom)*pixels*scale)/2});
 }
 export function focusCombatCamera(layout,id,viewportWidth,viewportHeight){
- const rect=layout.freeform.positions[id];
+ const original=layout.freeform.positions[id];
+ const rect=original&&layout.minimized?.includes(id)?{...original,h:Math.min(original.h,80)}:original;
  if(!rect||!viewportWidth||!viewportHeight)return normalizeCombatCamera({});
  const pixels=viewportWidth/1000;
  const usableWidth=Math.max(100,viewportWidth-80),usableHeight=Math.max(100,viewportHeight-80);
@@ -204,6 +208,23 @@ const allowed=(id,config)=>scopeOf(config).ids.includes(id);
 const unique=(values,config)=>[...new Set(Array.isArray(values)?
   values.filter(id=>allowed(id,config)):[])];
 const nameOf=value=>typeof value==='string'?value.trim().replace(/\s+/g,' ').slice(0,48):'';
+export const CANVAS_CONTENT_SIZING_OPTIONS=Object.freeze([
+ {id:'responsive',label:'Responsive — reflow content'},
+ {id:'proportional',label:'Proportional — scale to fit'},
+ {id:'fixed',label:'Fixed size — scroll content'}
+]);
+const contentSizing=value=>CANVAS_CONTENT_SIZING_OPTIONS.some(option=>option.id===value);
+/** Resize constraints apply to edits; reading an old layout never changes its geometry. */
+export function combatWindowSizeLimits(id,config){
+ const kind=scopeOf(config).kind;
+ if(['map','worldContext','worldQuick','diceQuick'].includes(id))
+  return {minW:280,minH:220,maxW:1800,maxH:2000};
+ if(['resources','gmResources','playerManagement'].includes(id))
+  return {minW:280,minH:240,maxW:1800,maxH:2000};
+ if(['timer','quickNotes','sessionOverview'].includes(id))
+  return {minW:200,minH:140,maxW:1400,maxH:1800};
+ return {minW:kind==='player'?220:200,minH:180,maxW:1400,maxH:2000};
+}
 
 function normaliseBase(raw,config=COMBAT_CANVAS_CONFIG){
   const scope=scopeOf(config);
@@ -253,6 +274,9 @@ function normaliseBase(raw,config=COMBAT_CANVAS_CONFIG){
     locked:unique(source.locked,scope),
     minimized:unique(source.minimized,scope),
     contentScale,
+    defaultContentSizing:contentSizing(source.defaultContentSizing)?source.defaultContentSizing:'responsive',
+    contentSizing:Object.fromEntries(Object.entries(isRecord(source.contentSizing)?source.contentSizing:{})
+      .filter(([id,value])=>allowed(id,scope)&&contentSizing(value))),
     partyCardOrder:[...new Set((Array.isArray(source.partyCardOrder)?source.partyCardOrder:[])
       .filter(id=>typeof id==='string'&&id.length>0&&id.length<=180))].slice(0,200),
     groups,
@@ -296,16 +320,17 @@ export function combatWorkspaceStorageKey(uid,campaignId){
     ?'asteria:gm-combat-workspace:v1:'+uid+':'+campaignId:null;
 }
 /** Align the active window to neighbouring window edges and centres. */
-export function combatWindowAlignment(layout,id,position,{snap=false,strength='medium'}={}){
+export function combatWindowAlignment(layout,id,position,{snap=false,strength='medium',visibleIds=null}={}){
  const current=layout?.freeform?.positions?.[id];
  if(!current||!position||!Number.isFinite(position.x)||!Number.isFinite(position.y))
   return {position,guides:[]};
  const threshold={gentle:8,medium:16,strong:28}[strength]??16;
  const nearest={x:null,y:null};
+ const moving=layout.groups.find(group=>group.includes(id))||[id];
  const own={x:[position.x,position.x+current.w/2,position.x+current.w],
   y:[position.y,position.y+current.h/2,position.y+current.h]};
  for(const [otherId,rect] of Object.entries(layout.freeform.positions)){
-  if(otherId===id||layout.hidden.includes(otherId))continue;
+  if(moving.includes(otherId)||(visibleIds?!visibleIds.includes(otherId):layout.hidden.includes(otherId)))continue;
   for(const [axis,size] of [['x','w'],['y','h']]){
    const other=[rect[axis],rect[axis]+rect[size]/2,rect[axis]+rect[size]];
    for(const source of own[axis])for(const target of other){
@@ -322,9 +347,10 @@ export function combatWindowAlignment(layout,id,position,{snap=false,strength='m
 }
 /** Atomic freeform move/resize with bounds, optional snapping and collision safety.
  * Unlike the shared dashboard grid, x and y may extend beyond the visible viewport. */
-export function editCombatWindow(layout,id,operation,values={},config=COMBAT_CANVAS_CONFIG){
+export function editCombatWindow(layout,id,operation,values={},config=COMBAT_CANVAS_CONFIG,visibleIds=null){
+ const hidden=panel=>visibleIds?!visibleIds.includes(panel):layout.hidden.includes(panel);
  if(!allowed(id,config)||layout.canvasLocked||layout.locked.includes(id)||
-    layout.hidden.includes(id)||!['move','resize'].includes(operation))return layout;
+    hidden(id)||!['move','resize'].includes(operation))return layout;
  const state=layout.freeform,before=state.positions[id];
  if(!before)return layout;
  const step=n=>state.snap===true?Math.round(n/10)*10:n;
@@ -334,13 +360,25 @@ export function editCombatWindow(layout,id,operation,values={},config=COMBAT_CAN
      y:step(Number.isFinite(values.y)?values.y:before.y)}:
    {...before,...Object.fromEntries(['x','y','w','h']
      .filter(key=>Number.isFinite(values[key])).map(key=>[key,step(values[key])]))};
- const next=normalizeCombatCanvasRect(wanted,before);
+ let next=normalizeCombatCanvasRect(wanted,before);
+ if(operation==='resize'){
+   const limits=combatWindowSizeLimits(id,config);
+   next={...next,
+    w:bounded(next.w,limits.minW,Math.max(limits.maxW,before.w)),
+    h:bounded(next.h,limits.minH,Math.max(limits.maxH,before.h))};
+   // A north/west grip keeps the opposite edge anchored even after clamping.
+   if(Number.isFinite(values.x)&&values.x!==before.x)
+    next.x=before.x+before.w-next.w;
+   if(Number.isFinite(values.y)&&values.y!==before.y)
+    next.y=before.y+before.h-next.h;
+   next=normalizeCombatCanvasRect(next,before);
+ }
  if(JSON.stringify(next)===JSON.stringify(before))return layout;
  const positions={...state.positions};
  if(group){
    const dx=next.x-before.x,dy=next.y-before.y;
    for(const member of group){
-     if(layout.locked.includes(member)||layout.hidden.includes(member))return layout;
+     if(layout.locked.includes(member)||hidden(member))return layout;
      const current=positions[member],candidate=normalizeCombatCanvasRect(
        {...current,x:current.x+dx,y:current.y+dy},current);
      if(candidate.x!==current.x+dx||candidate.y!==current.y+dy)return layout;
@@ -353,9 +391,9 @@ export function editCombatWindow(layout,id,operation,values={},config=COMBAT_CAN
  if(!state.allowOverlap){
    const affected=group||[id];
    for(const panel of affected){
-     if(layout.hidden.includes(panel))continue;
+     if(hidden(panel))continue;
      for(const [other,rect] of Object.entries(positions)){
-       if(affected.includes(other)||layout.hidden.includes(other))continue;
+       if(affected.includes(other)||hidden(other))continue;
        if(freeformOverlaps(positions[panel],rect))return layout;
      }
    }
@@ -363,13 +401,14 @@ export function editCombatWindow(layout,id,operation,values={},config=COMBAT_CAN
  return {...layout,freeform:{...state,positions}};
 }
 
-export function dockCombatWindow(layout,id,edge,config=COMBAT_CANVAS_CONFIG){
+export function dockCombatWindow(layout,id,edge,config=COMBAT_CANVAS_CONFIG,visibleIds=null){
   if(!allowed(id,config)||!['left','right'].includes(edge)||layout.canvasLocked||layout.locked.includes(id))return layout;
+  if(visibleIds&&!visibleIds.includes(id))return layout;
   const rect=layout.freeform.positions[id];
   const proposed={...rect,x:edge==='left'?0:1000-rect.w,y:0};
   const state=layout.freeform;
   if(!state.allowOverlap&&scopeOf(config).ids.some(other=>
-    other!==id&&!layout.hidden.includes(other)&&
+    other!==id&&(visibleIds?visibleIds.includes(other):!layout.hidden.includes(other))&&
     freeformOverlaps(proposed,state.positions[other])))return layout;
   return {...layout,freeform:{...state,positions:{...state.positions,[id]:proposed}}};
 }

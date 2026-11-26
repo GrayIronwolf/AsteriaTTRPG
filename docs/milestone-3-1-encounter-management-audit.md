@@ -28,12 +28,18 @@ Status: **In progress; not a completed Milestone 3.1 acceptance. No production d
 - Existing pre-set initiative is preserved; clearing the encounter resets the mode.
 - Regression tests cover permissions, invalid choices, mode change during combat, manual prerequisites and mixed enemy rolls.
 
+## Integration with the current test branch
+
+The canvas changes from PRs #387, #388, #389, #390 and #392 are merged into the test branch. This branch incorporates those merges and rebuilds the generated Vite output alongside the initiative changes from PR #391.
+
+The authoritative encounter now supports GM pause and resume through its existing revision-guarded command. A pause retains the encounter ID, round, current actor, AP, pending actions and timer time. The public document retains its compatible `active` status and carries a separate pause flag. Player End Turn already leaves advancement to the GM. The existing transactional wave and event commands handle mid-combat changes. The GM can now correct initiative, with the previous and new values and GM reason recorded. Reordering preserves the current actor and existing participant AP.
+
 ## Outstanding approved Milestone 3.1 work
 
-1. Confirm the proper lifecycle across prepared, GM-private staged, active, paused and completed encounters. Existing public combat status only supports ready/active/ended. Avoid changing public status without compatibility/migration review.
+1. Finish the private staging workflow and explicit activation. Verify compatibility across prepared, staged, active, paused and completed encounters.
 2. Implement quick encounter creation distinct from reusable prepared templates without destructive replacement of active encounters.
 3. Stage a second encounter privately while a live encounter is active; its map and participants must not leak to public presentation.
-4. Support GM-driven active encounter roster changes, reinforcements and initiative changes without resetting AP or other combat state.
+4. Verify active roster edits, reinforcements and initiative corrections through the authenticated browser flow, including two concurrent GM sessions.
 5. Save/recover original live encounter revisions, manual snapshots and GM audit history. Autosaving of gameplay is already transactional, but named manual snapshots are not yet verified.
 6. Reopen the **same completed** encounter, preserving earlier completion revisions and preventing duplicate rewards. Existing `start` creates a new `combatId`; completion-history guards prohibit overwriting previous history.
 7. Preserve the GM's **personal** canvas layout (no encounter-specific layouts).
@@ -41,7 +47,7 @@ Status: **In progress; not a completed Milestone 3.1 acceptance. No production d
 
 ## Integration / release hazards
 
-- PRs #389 (Milestone 2.3) and #390 (Milestone 2.4) are open and modify the shared canvas. Do not merge competing canvas changes blindly.
+- Keep the merged Milestone 2 canvas behavior intact and run the canvas regression suite.
 - The repository baseline audit documents that GitHub Pages can publish directly from `Website-Build-Test`. Check the active Pages source before merging; user requires no automatic production deployment.
 - `.github/workflows/firebase-checks.yml` runs broad regressions, Firebase emulators, build and bundle-consistency checks. No passing CI for this Milestone 3.1 work is claimed until the actual workflow finishes.
 - Firebase backend deployment is a separate explicitly authorised operation. Do not deploy it as a side effect of this PR.

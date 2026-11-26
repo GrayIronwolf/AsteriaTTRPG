@@ -359,3 +359,51 @@ test('Milestone 3.1 mixed initiative requires players only and automatically rol
   assert.equal(Number.isFinite(enemy.initiative),true);
   assert.ok(enemy.initiativeRoll);
 });
+
+test('pausing combat preserves the encounter and pending action across resume',async()=>{
+  const h=database();
+  await h.setup();
+  const actor=currentCombatant(h.encounter());
+  const uid=actor.characterId==='a'?'alice':'bob';
+  assert.equal((await h.command('gm','encounter','timer',{mode:'configure',seconds:60})).ok,true);
+  assert.equal((await h.command(uid,actor.id,'declare',{optionId:'basic:dash'})).ok,true);
+  const before=structuredClone(h.encounter());
+  assert.match((await h.command(uid,actor.id,'pause')).error,/Only the campaign GM/);
+  assert.equal((await h.command('gm','encounter','pause')).ok,true);
+  assert.equal(h.encounter().status,'active');
+  assert.equal(h.encounter().paused,true);
+  assert.equal(h.encounter().turnTimer.enabled,false);
+  assert.match((await h.command('gm',actor.id,'approve',{approval:{checkType:'none'}})).error,/paused/);
+  assert.match((await h.command('gm','encounter','next')).error,/paused/);
+  assert.equal((await h.command('gm','encounter','resume')).ok,true);
+  const after=h.encounter();
+  assert.equal(after.paused,false);
+  assert.equal(after.turnTimer.enabled,true);
+  assert.equal(after.combatId,before.combatId);
+  assert.equal(after.round,before.round);
+  assert.equal(after.turnIndex,before.turnIndex);
+  assert.deepEqual(after.combat.participants,before.combat.participants);
+  assert.deepEqual(after.combat.pending,before.combat.pending);
+  assert.equal(h.store.has('campaigns/c/encounterHistory/'+before.combatId),false);
+});
+
+test('active initiative correction preserves the current actor and AP and records the change',async()=>{
+  const h=database();
+  await h.setup();
+  const before=structuredClone(h.encounter());
+  const actor=currentCombatant(before);
+  const other=before.combatants.find(row=>row.id!==actor.id);
+  const change={initiative:1000,reason:'Corrected reported initiative'};
+  assert.equal((await h.command('gm',other.id,'correct',change)).ok,true);
+  const after=h.encounter();
+  assert.equal(after.combatants[0].id,other.id);
+  assert.equal(currentCombatant(after).id,actor.id);
+  assert.equal(after.round,before.round);
+  assert.deepEqual(after.combat.participants,before.combat.participants);
+  const [audit]=after.combat.log;
+  assert.equal(audit.actorUid,'gm');
+  assert.equal(audit.targetId,other.id);
+  assert.equal(audit.previousInitiative,other.initiative);
+  assert.equal(audit.initiative,1000);
+  assert.equal(audit.reason,change.reason);
+});

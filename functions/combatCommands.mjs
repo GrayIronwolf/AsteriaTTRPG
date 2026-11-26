@@ -33,7 +33,7 @@ const combatCharacterFields=new Set(['hp','sp','mp','bp','zp','resources','resou
 const ENCOUNTER_INITIATIVE_MODES=new Set(['automatic','manual','mixed']);
 const initiativeMode=value=>ENCOUNTER_INITIATIVE_MODES.has(value)?value:'automatic';
 const needsManualInitiative=(row,mode)=>mode==='manual'||(mode==='mixed'&&Boolean(row.characterId));
-const management=new Set(['release-wave','trigger-event','timer','map-link','map-move','save','load-prepared','map-prepare','start','next','end','clear','approve','reject','window','close-window','resolve','roll','resolve-reaction','correct','condition','ambush','trigger-prepared']);
+const management=new Set(['release-wave','trigger-event','timer','map-link','map-move','save','load-prepared','map-prepare','start','pause','resume','next','end','clear','approve','reject','window','close-window','resolve','roll','resolve-reaction','correct','condition','ambush','trigger-prepared']);
 const publicPending=p=>p?{id:p.id,actorId:p.actorId,actorName:p.actorName,optionId:p.actorKind==='player'?p.optionId:'',name:p.actorKind==='player'?p.name:'Creature action',status:p.status,targetIds:p.targetIds,ap:p.ap,bonus:p.bonus,apPaid:Boolean(p.prepaidAP),costs:p.actorKind==='player'?p.costs:{},reactionWindow:p.status==='reactions',reactorId:p.window?.[p.windowIndex||0]?.actorId||'',reactionChoices:p.window?.[p.windowIndex||0]?.choices||[],reaction:p.reaction?{actorId:p.reaction.actorId,name:p.reaction.name}:null,message:p.publicMessage||''}:null;
 
 // An extension of asteriaAction: one encounter document, existing resource/effect
@@ -53,6 +53,8 @@ export function createCombatCommands(context) {
       if(session.status!=='active'||effectTimeMs(session.expiresAt)<=now)throw new Error('The GM must start the live session first.');
       if(management.has(input.operation)&&!gm)throw new Error('Only the campaign GM can use this combat control.');
       let encounter={status:'ready',round:1,turnIndex:0,combatants:[],enemies:[],...encounterSnap.data()};
+      if(encounter.paused===true&&!['resume','end','correct','condition'].includes(input.operation))
+        throw new Error('Combat is paused. Resume the encounter before continuing.');
       const oldRevision=Number(encounter.combat?.revision||0);
       if(input.revision!==oldRevision)throw new Error('Combat changed. Wait for live sync and try again.');
       encounter.combat={participants:{},log:[],...encounter.combat};
@@ -454,6 +456,27 @@ export function createCombatCommands(context) {
         }
         // Event text does not directly mutate HP, AP, initiative or conditions.
         log('GM triggered '+event.type+' event: '+event.name+'.');
+      }else if(input.operation==='pause'||input.operation==='resume'){
+        requireActive();
+        const pausing=input.operation==='pause';
+        if(!pausing&&encounter.paused!==true)throw new Error('Combat is not paused.');
+        if(pausing){
+          const timer=encounter.turnTimer;
+          privateState.resumeTurnTimer=Boolean(timer?.enabled&&timer.endsAt>now);
+          if(timer?.enabled){
+            encounter.turnTimer={...timer,enabled:false,paused:true,endsAt:null,
+              remainingSeconds:Math.max(0,Math.ceil((timer.endsAt-now)/1000))};
+          }
+        }else{
+          const timer=encounter.turnTimer;
+          if(privateState.resumeTurnTimer&&timer?.remainingSeconds>0){
+            encounter.turnTimer={...timer,enabled:true,paused:false,
+              endsAt:now+timer.remainingSeconds*1000};
+          }
+          delete privateState.resumeTurnTimer;
+        }
+        encounter.paused=pausing;
+        log(pausing?'GM paused the encounter.':'GM resumed the encounter.',{actorUid:currentUser.uid});
       }else if(input.operation==='timer'){
         if(!gm)throw new Error('Only the GM may configure the combat turn timer.');
         encounter.turnTimer=applyLiveTimerCommand(encounter.turnTimer||{},input,
@@ -492,6 +515,8 @@ export function createCombatCommands(context) {
         encounter.combatants=encounter.combatants.filter(row=>!unavailable.has(row.characterId));
         encounter.enemies=encounter.combatants.filter(row=>!row.characterId).map(copy);
         for(const row of encounter.combatants){const character=get(row.id);character.conditions=rows(character.conditions).map(condition=>condition.encounterId||condition.throughOwnTurn!==undefined?{...condition,encounterId:'',untilRound:0,pendingGMExpiry:true}:condition);put(row.id,character);}
+        delete privateState.resumeTurnTimer;
+        delete encounter.paused;
         encounter.status=input.operation==='end'?'ended':'ready';
         encounter.publicEvent=null;encounter.turnIndex=null;encounter.combat.participants={};encounter.combat.firstAid={};
         for(const key of ['turnTimer','timer'])if(encounter[key])encounter[key]={...encounter[key],enabled:false,endsAt:null};
@@ -511,8 +536,21 @@ export function createCombatCommands(context) {
         if(input.resource){let next=input.current!==undefined?setEncounterResource(character,input.resource,bounded(input.current),input.maximum===undefined?undefined:bounded(input.maximum)):changeCombatHP(character,bounded(input.amount),{damage:input.damage===true,nonlethal:input.nonlethal===true,now});if(input.resource==='hp'&&input.current!==undefined){if(resourcePair(next.hp)[0]>0)delete next.downed;else if(!next.downed)next.downed={successes:0,failures:0,dead:false};}put(id,next);}
         if(input.ap!==undefined)setState(id,{ap:bounded(input.ap,0,3)});
         if(input.bonus!==undefined)setState(id,{bonus:input.bonus===true});
-        if(input.initiative!==undefined){if(encounter.status==='active')throw new Error('Initiative positions cannot be delayed or reordered during combat.');entry(id).initiative=bounded(input.initiative,-100,1000);}
-        log(`GM correction for ${entry(id).name}: ${reason}`);
+        const audit={actorUid:currentUser.uid,targetId:id,reason};
+        if(input.initiative!==undefined){
+          noPending();
+          const participant=entry(id);
+          const actingId=currentCombatant(encounter)?.id;
+          audit.previousInitiative=participant.initiative??null;
+          participant.initiative=bounded(input.initiative,-100,1000);
+          participant.initiativeSet=true;
+          if(actingId){
+            encounter.combatants.sort(initiativeOrder);
+            encounter.turnIndex=encounter.combatants.findIndex(row=>row.id===actingId);
+          }
+          audit.initiative=participant.initiative;
+        }
+        log(`GM correction for ${entry(id).name}: ${reason}`,audit);
       }else if(input.operation==='condition'){
         const id=input.targetId||actorId;let character=get(id);
         if(input.condition.action==='remove')character=removeCondition(character,input.condition.id,{isGM:true,uid:currentUser.uid,now});

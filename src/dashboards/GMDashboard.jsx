@@ -575,6 +575,7 @@ export function GMDashboard({ campaignId }) {
   const dashboardSaveScope=useRef('');
   const focusSavePending=useRef(false);
   const canvasSaveChain=useRef(Promise.resolve());
+  const canvasSaveStatus=useRef({pending:0,version:0,confirmed:null});
   const accountUid=firebaseService.currentUser()?.uid || '';
   const combatApi=useMemo(()=>accountUid?createSiteCombatApi():null,[campaignId,accountUid]);
   const combatMediaApi=useMemo(()=>accountUid?createSiteCombatMediaApi():null,[campaignId,accountUid]);
@@ -607,12 +608,14 @@ export function GMDashboard({ campaignId }) {
     dashboardSaveScope.current=campaignId+':'+accountUid;
     focusSavePending.current=false;
     canvasSaveChain.current=Promise.resolve();
+    canvasSaveStatus.current={pending:0,version:0,confirmed:null};
+    setSavingDashboardSettings(false);
     setDashboardLayoutReady(false);
     setSavedDashboardLayout(null);
     setDashboardLayoutError('');
     if(!campaignId||!accountUid)return;
     const subscriptionScope=campaignId+':'+accountUid;
-    return firebaseService.subscribeUserDashboardLayout(campaignId,'gm',layout=>{
+    const unsubscribe=firebaseService.subscribeUserDashboardLayout(campaignId,'gm',layout=>{
       if(dashboardSaveScope.current!==subscriptionScope)return;
       // A pending optimistic Focus switch must not flicker back to a stale
       // server snapshot while the private layout write is in flight.
@@ -620,6 +623,8 @@ export function GMDashboard({ campaignId }) {
       setDashboardLayoutReady(true);
       setDashboardLayoutError('');
     });
+    return ()=>{unsubscribe?.();
+      if(dashboardSaveScope.current===subscriptionScope)dashboardSaveScope.current='';};
   },[campaignId,accountUid]);
 
   useEffect(() => { if(!live.loading && restored.scrollY) window.scrollTo(0, restored.scrollY); }, [live.loading]);
@@ -738,12 +743,18 @@ export function GMDashboard({ campaignId }) {
       return {ok:false,error:'GM dashboard layout is not connected.'};
     const scope=campaignId+':'+accountUid;
     const previous=normalizeDashboardLayout(savedDashboardLayout,'gm');
+    const batch=canvasSaveStatus.current;
+    if(focusSavePending.current&&!batch.pending)
+      return {ok:false,error:'A dashboard Focus save is in progress.'};
+    if(!batch.pending)batch.confirmed=previous;
+    const version=++batch.version;batch.pending++;
     const next=normalizeDashboardLayout({
       ...previous,gmCanvas:normalizeGMCanvasLayout(canvas)
     },'gm');
     // Save through the existing GM-owned dashboard document; do not
     // create a second layout record or store gameplay state here.
-    setSavedDashboardLayout(next);
+    // The shared canvas already paints its optimistic geometry. Keep this
+    // parent document confirmed rather than applying a second optimistic layer.
     setDashboardLayoutError('');
     setSavingDashboardSettings(true);
     focusSavePending.current=true;
@@ -753,19 +764,22 @@ export function GMDashboard({ campaignId }) {
     try{
       const result=await write;
       if(dashboardSaveScope.current!==scope)return {ok:false,error:'GM context changed while saving.'};
-      if(result?.ok===false){
-        setDashboardLayoutError(result.error||'Could not save GM canvas.');
-        setSavedDashboardLayout(current=>
-          current?.gmCanvas===next.gmCanvas?previous:current);
+      if(result?.ok!==false)batch.confirmed=next;
+      if(version===batch.version){
+        setSavedDashboardLayout(batch.confirmed);
+        setDashboardLayoutError(result?.ok===false?(result.error||'Could not save GM canvas.'):'');
       }
       return result;
     }catch(error){
       const failure={ok:false,error:error?.message||'Could not save GM canvas.'};
-      if(dashboardSaveScope.current===scope)setDashboardLayoutError(failure.error);
+      if(dashboardSaveScope.current===scope&&version===batch.version){
+        setSavedDashboardLayout(batch.confirmed);setDashboardLayoutError(failure.error);
+      }
       return failure;
     }finally{
-      if(dashboardSaveScope.current===scope){
-        setSavingDashboardSettings(false);focusSavePending.current=false;
+      batch.pending--;
+      if(dashboardSaveScope.current===scope&&canvasSaveStatus.current===batch){
+        setSavingDashboardSettings(batch.pending>0);focusSavePending.current=batch.pending>0;
       }
     }
   };

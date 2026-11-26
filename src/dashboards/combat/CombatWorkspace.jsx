@@ -75,7 +75,7 @@ function CombatStatusBadges({combat,actor}){
   </div>;
 }
 function Actions({combat,actor,disabled,onCommand,mode}){
-  const own=actor?.current&&combat.isActive&&!actor.turnComplete&&combat.sessionEditable;
+  const own=actor?.current&&combat.isActive&&!combat.paused&&!actor.turnComplete&&combat.sessionEditable;
   const [cost,setCost]=useState(1);
   const [optionId,setOptionId]=useState('basic:command');
   const [targetId,setTargetId]=useState('');
@@ -183,7 +183,7 @@ export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigat
     </CombatCommandPanel>
     {combat?<React.Fragment>
       <CombatCommandPanel id="controls">
-      <p role="status">{combat.status.toUpperCase()} · Round {combat.round} · Revision {combat.revision}
+      <p role="status">{combat.paused?'PAUSED':combat.status.toUpperCase()} · Round {combat.round} · Revision {combat.revision}
         {' · '}Session {stream.data.session.status}</p>
       <div className={styles.controls}>
         <button type="button" disabled={busy||!combat.sessionEditable||!canSetup||
@@ -191,6 +191,10 @@ export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigat
           onClick={()=>submit('encounter',{operation:'start'})}>Start Combat</button>
         <GMLiveCombatPanel combat={combat} pending={stream.data.pending}
           log={stream.data.combatLog||[]} busy={busy} onCommand={submit} view="status"/>
+        {combat.isActive?<button type="button" disabled={busy||!combat.sessionEditable}
+          onClick={()=>submit('encounter',{operation:combat.paused?'resume':'pause'})}>
+          {combat.paused?'Resume Combat':'Pause Combat'}
+        </button>:null}
         <button type="button" disabled={busy||!combat.sessionEditable||!combat.isActive}
           onClick={()=>{if(window.confirm('End combat and archive the final roster for GM reward review? Spent resources remain spent.'))
             submit('encounter',{operation:'end'});}}>End Combat</button>
@@ -225,19 +229,21 @@ export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigat
             <label>Resource<select value={resource} onChange={e=>setResource(e.target.value)}>
               {['hp','sp','mp'].map(k=><option key={k} value={k}>{k.toUpperCase()}</option>)}
               <option value="ap">Action Points</option>
+              <option value="initiative">Initiative</option>
             </select></label>
-            <label>Current value<input type="number" min="0" value={amount}
+            <label>Current value<input type="number" min={resource==='initiative'?-100:0} value={amount}
               onChange={e=>setAmount(e.target.value)}/></label>
-            {resource!=='ap'?<label>Maximum (optional)<input type="number" min="1"
+            {!['ap','initiative'].includes(resource)?<label>Maximum (optional)<input type="number" min="1"
               value={maximum} onChange={e=>setMaximum(e.target.value)}/></label>:null}
             <label>Reason<input value={reason} maxLength={160}
               onChange={e=>setReason(e.target.value)}/></label>
           </div>
           <button type="button" disabled={busy||!combat.sessionEditable||!reason.trim()||
             amount===''||!Number.isFinite(Number(amount))||
-            Number(amount)<0||(resource==='ap'&&Number(amount)>3)}
+            Number(amount)<(resource==='initiative'?-100:0)||
+            (resource==='initiative'&&Number(amount)>1000)||(resource==='ap'&&Number(amount)>3)}
             onClick={()=>submit(current.id,{operation:'correct',targetId:current.id,reason:reason.trim(),
-              ...(resource==='ap'?{ap:Number(amount)}:{
+              ...(['ap','initiative'].includes(resource)?{[resource]:Number(amount)}:{
                 resource,current:Number(amount),
                 ...(maximum!==''?{maximum:Number(maximum)}:{})
               })})}>Apply GM Correction</button>
@@ -391,7 +397,7 @@ export function PlayerCombatWorkspace({api,campaignId,characterId}){
     {stream.loading?<p role="status">Verifying your combat participant…</p>:null}
     {stream.error?<p role="alert">{stream.error}</p>:null}
     {combat?<>
-      <p role="status">{combat.status.toUpperCase()} · Round {combat.round}
+      <p role="status">{combat.paused?'PAUSED':combat.status.toUpperCase()} · Round {combat.round}
         {' · '}Session {stream.data.session.status}</p>
       {combat.publicEvent?<p role="status" data-testid="site-player-encounter-event">
         Encounter event: {combat.publicEvent.name} · Round {combat.publicEvent.round}

@@ -123,12 +123,20 @@ test('Phase 5.2 Chromium acceptance', { timeout: 180000 }, async t => {
       await page.mouse.move(point.x + 45, point.y);
       await page.mouse.up({ button: 'right' });
       await waitForMode(page, 'idle');
+      // Camera transforms are applied by a React effect after the input event.
+      // Wait for that observable result rather than sampling the previous frame.
+      await page.waitForFunction(before => window.phase52.engine.camera.position.toArray()
+        .some((value, index) => value !== before[index]), initial.camera);
       const orbited = await state(page);
       assert.notDeepEqual(orbited.camera, initial.camera);
       assert.deepEqual(orbited.dice, initial.dice);
       await page.mouse.down({ button: 'middle' });
+      await waitForMode(page, 'camera');
       await page.mouse.move(point.x + 30, point.y + 34);
       await page.mouse.up({ button: 'middle' });
+      await waitForMode(page, 'idle');
+      await page.waitForFunction(before => window.phase52.engine.camera.position.toArray()
+        .some((value, index) => value !== before[index]), orbited.camera);
       const panned = await state(page);
       assert.notDeepEqual(panned.camera, orbited.camera);
       assert.deepEqual(panned.dice, orbited.dice);

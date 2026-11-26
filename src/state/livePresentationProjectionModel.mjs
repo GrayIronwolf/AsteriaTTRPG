@@ -67,6 +67,7 @@ export function publicCombatSnapshot(raw={}){
   }:null;
   return Object.freeze({
     version:1,status:['ready','active','ended'].includes(raw.status)?raw.status:'ready',
+    paused:active&&raw.paused===true,
     combatId:active&&id(raw.combatId)?raw.combatId:'',
     round:Math.max(1,int(raw.round,1)),turnIndex:index,
     combatants:roster,
