@@ -807,3 +807,35 @@ test('GM approval of an out-of-turn attack spends AP without changing the active
   assert.deepEqual(h.encounter().combat.participants[actor.id].outOfTurn,{round:1,kind:'attack'});
   assert.equal(currentCombatant(h.encounter()).id,target.id);
 });
+
+test('GM forced movement requires a resolved source and records no AP spend',async()=>{
+  const h=database();await h.setup();
+  const actor=h.encounter().combatants[0];
+  const path='campaigns/c/battleMaps/arena';
+  h.store.set(path,{id:'arena',kind:'image',contentType:'image/png',
+    storagePath:path+'/scene.png',name:'Arena',combatId:h.encounter().combatId,
+    visibility:'players',gridColumns:4,gridRows:4,metresPerCell:3,tokens:[
+      {id:'hero',label:actor.name,kind:'character',combatantId:actor.id,x:12.5,y:12.5},
+      {id:'blocker',label:'Blocker',kind:'creature',x:62.5,y:12.5}
+    ]});
+  h.encounter().battleMapId='arena';
+  const before=h.encounter().combat.participants[actor.id].ap;
+  const command={mapId:'arena',combatantId:actor.id,mode:'forced',
+    reason:'Resolved enemy knockback from the struck location',
+    point:{x:37.5,y:12.5},source:{
+      id:'enemy-knockback',kind:'creature',routeKind:'ground',distance:3,resolved:true
+    }};
+  assert.match((await h.command('alice',actor.id,'map-move',command)).error,/Only the campaign GM/);
+  assert.match((await h.command('gm',actor.id,'map-move',{
+    ...command,source:{...command.source,resolved:false}
+  })).error,/resolved source/);
+  assert.match((await h.command('gm',actor.id,'map-move',{
+    ...command,point:{x:87.5,y:12.5}
+  })).error,/range|blocked/);
+  const moved=await h.command('gm',actor.id,'map-move',command);
+  assert.equal(moved.ok,true,moved.error);
+  assert.equal(h.store.get(path).tokens[0].x,37.5);
+  assert.equal(h.encounter().combat.participants[actor.id].ap,before);
+  assert.equal(h.encounter().combat.log[0].source.id,'enemy-knockback');
+  assert.equal(h.encounter().combat.log[0].movementKind,'forced');
+});
