@@ -287,6 +287,7 @@ export function GMBattleMapManager({campaignId,characters={},encounter={},search
   const [forcedSource,setForcedSource]=useState(''),[forcedKind,setForcedKind]=useState('spell');
   const [forcedRoute,setForcedRoute]=useState('ground'),[forcedDistance,setForcedDistance]=useState('');
   const [forcedResolved,setForcedResolved]=useState(false);
+  const [delegateUid,setDelegateUid]=useState('');
   const undoFog=useRef([]);
   const selected=maps.find(row=>row.id===selectedId)||null;
   useEffect(()=>{if(searchTarget?.category==='battle-map'&&maps.some(x=>x.id===searchTarget.id))
@@ -397,6 +398,13 @@ export function GMBattleMapManager({campaignId,characters={},encounter={},search
       ...(movementMode==='forced'?{source:{id:forcedSource.trim(),kind:forcedKind,
         routeKind:forcedRoute,distance:Number(forcedDistance),resolved:forcedResolved}}:{}),
       revision:Number(encounter.combat?.revision||0)
+    }));
+  };
+  const saveMapDelegate=async()=>{
+    if(!selectedCombatantId||!combatLinked)return;
+    await act(()=>firebaseService.combatCommand(campaignId,'encounter',{
+      operation:'map-delegate',mapId:selected.id,combatantId:selectedCombatantId,
+      delegateUid:delegateUid.trim(),revision:Number(encounter.combat?.revision||0)
     }));
   };
   const saveCombatToken=(tokenId,appearance)=>act(()=>firebaseService.combatCommand(campaignId,'encounter',{
@@ -547,6 +555,16 @@ export function GMBattleMapManager({campaignId,characters={},encounter={},search
             </div>:null}
           </>:<p>Remaining approved movement: {combatMoveRemaining===null?'No movement action approved':combatMoveRemaining+' m'}.
               A player must declare a movement action; the GM approves its distance through the existing combat panel.</p>}
+          {selectedCombatantId?<div className="asteria-battle-form-row">
+            <label>Delegate this token's map movement to a campaign player
+              <input value={delegateUid} maxLength={160} onChange={event=>setDelegateUid(event.target.value)}
+                placeholder="Player account UID; blank to revoke"/>
+            </label>
+            <button type="button" disabled={busy} onClick={saveMapDelegate}>
+              {delegateUid.trim()?'Assign map-only control':'Revoke map delegation'}
+            </button>
+            <small>Only the verified campaign member may use delegated movement. Combat actions remain owner- or GM-controlled. Clear the field to revoke.</small>
+          </div>:null}
           {selectedCombatToken?<LiveTokenAppearance key={selectedCombatToken.id} token={selectedCombatToken}
             busy={busy} onSave={saveCombatToken}/>:null}
           <ol className="asteria-battle-combat-roster">
