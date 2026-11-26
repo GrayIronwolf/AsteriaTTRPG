@@ -30,6 +30,9 @@ const bounded=(value,min=0,max=1e9)=>{const n=Number(value);if(!Number.isFinite(
 const roll=()=>randomInt(1,21);
 const numberDie=()=> (roll()-1)/20;
 const combatCharacterFields=new Set(['hp','sp','mp','bp','zp','resources','resourceDefinitions','resourceState','conditions','downed','activeEffects','effects','talentResourceEffects','talentResourceState','talentStateVersion','talentEffects','talentRestBonus','talentSavingThrows','talentUsage','acModifiers','specialDamage','soulDamage','coreStateVersion','inventory','equipment']);
+const ENCOUNTER_INITIATIVE_MODES=new Set(['automatic','manual','mixed']);
+const initiativeMode=value=>ENCOUNTER_INITIATIVE_MODES.has(value)?value:'automatic';
+const needsManualInitiative=(row,mode)=>mode==='manual'||(mode==='mixed'&&Boolean(row.characterId));
 const management=new Set(['release-wave','trigger-event','timer','map-link','map-move','save','load-prepared','map-prepare','start','next','end','clear','approve','reject','window','close-window','resolve','roll','resolve-reaction','correct','condition','ambush','trigger-prepared']);
 const publicPending=p=>p?{id:p.id,actorId:p.actorId,actorName:p.actorName,optionId:p.actorKind==='player'?p.optionId:'',name:p.actorKind==='player'?p.name:'Creature action',status:p.status,targetIds:p.targetIds,ap:p.ap,bonus:p.bonus,apPaid:Boolean(p.prepaidAP),costs:p.actorKind==='player'?p.costs:{},reactionWindow:p.status==='reactions',reactorId:p.window?.[p.windowIndex||0]?.actorId||'',reactionChoices:p.window?.[p.windowIndex||0]?.choices||[],reaction:p.reaction?{actorId:p.reaction.actorId,name:p.reaction.name}:null,message:p.publicMessage||''}:null;
 
@@ -277,6 +280,8 @@ export function createCombatCommands(context) {
           encounter.status='ready';encounter.turnIndex=0;encounter.round=1;
           encounter.preparedMapId=prepared.mapId||'';
           encounter.preparedEncounterId=prepared.id;
+          // Each loaded encounter starts with an independent initiative choice.
+          encounter.initiativeMode='automatic';
           privateState.encounterSchedule=stageEncounterSchedule(prepared,now);
           encounter.publicEvent=null;
           // A previous encounter's turn state must never leak into a newly loaded template.
@@ -285,6 +290,13 @@ export function createCombatCommands(context) {
           privateState.apSpends={};
         }
         noPending();const requested=loading?{combatants:incoming}:input.encounter||{};
+        if(requested.initiativeMode!==undefined){
+          if(!ENCOUNTER_INITIATIVE_MODES.has(requested.initiativeMode))
+            throw new Error('Choose automatic, manual, or mixed initiative.');
+          if(encounter.status==='active')
+            throw new Error('Initiative mode cannot change during active combat.');
+          encounter.initiativeMode=requested.initiativeMode;
+        }
         const previousRows=encounter.combatants,oldCurrent=currentCombatant(encounter),oldIds=new Set(previousRows.map(row=>row.id));
         const nextRows=(requested.combatants||[]).filter(row=>!unavailable.has(row.characterId)).map(row=>{if(!/^[A-Za-z0-9_-]{1,160}$/.test(row.id))throw new Error('Invalid participant ID.');const old=entry(row.id);if(old&&old.characterId!==row.characterId)throw new Error('Remove a participant before changing its character link.');const next=old?{...old,defeated:Boolean(row.defeated)}:row.characterId?{id:row.id,characterId:row.characterId,name:characters.get(row.characterId)?.name||'Character',kind:'player',initiative:0}: {...copy(row),kind:'enemy',...encounterSourceResources(row)};if(encounter.status!=='active'&&row.initiativeSet===true){next.initiative=bounded(row.initiative,-100,1000);next.initiativeSet=true;}return next;});
         if(new Set(nextRows.map(row=>row.id)).size!==nextRows.length)throw new Error('Duplicate participant.');
@@ -370,6 +382,12 @@ export function createCombatCommands(context) {
         noPending();if(encounter.status==='active'&&encounter.combat?.version===1)throw new Error('The encounter is already active.');
         if(!encounter.combatants.length)throw new Error('Add participants first.');
         if(!['ready','ended','active'].includes(encounter.status))throw new Error('Prepare the encounter before starting combat.');
+        const mode=initiativeMode(encounter.initiativeMode);
+        const missing=encounter.combatants.filter(row=>needsManualInitiative(row,mode)&&!row.initiativeSet);
+        if(missing.length)
+          throw new Error('Set manual initiative for '+missing.map(row=>row.name||row.id).slice(0,5).join(', ')+
+            (missing.length>5?' and '+(missing.length-5)+' others':'')+' before starting combat.');
+        encounter.initiativeMode=mode;
         encounter.status='active';encounter.round=1;encounter.turnIndex=0;
         encounter.publicEvent=null;encounter.combatId=context.requestId;encounter.combat.participants={};encounter.combat.firstAid={};encounter.combat.version=1;
         for(const row of encounter.combatants){if(!row.initiativeSet){const result=initiativeResult(get(row.id),roll(),roll(),{now,encounter});row.initiative=result.total;row.initiativeRoll=result;}setState(row.id,{ap:0,bonus:false,turns:0,turnComplete:false});}
@@ -484,7 +502,7 @@ export function createCombatCommands(context) {
         if(input.operation==='clear'){
           encounter.combatants=[];encounter.enemies=[];encounter.turnIndex=0;encounter.round=1;
           privateState.encounterSchedule=null;encounter.publicEvent=null;
-          encounter.preparedEncounterId='';
+          encounter.preparedEncounterId='';encounter.initiativeMode='automatic';
         }
         log('Combat ended; remaining resources and conditions retained.');
       }else if(input.operation==='correct'){
