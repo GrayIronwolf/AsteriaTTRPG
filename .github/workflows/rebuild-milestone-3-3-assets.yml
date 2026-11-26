@@ -1,0 +1,44 @@
+name: Milestone 3.3 - Synchronize verified frontend assets
+on:
+  push:
+    branches: [milestone-3-3-token-movement]
+    paths:
+      - 'src/**'
+      - 'functions/**'
+      - 'scripts/**'
+      - '.github/workflows/rebuild-milestone-3-3-assets.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: milestone-3-3-assets
+  cancel-in-progress: true
+jobs:
+  build:
+    if: github.ref == 'refs/heads/milestone-3-3-token-movement' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run test:combat
+      - run: npm run build
+      - name: Commit verified generated assets to milestone branch
+        run: |
+          set -euo pipefail
+          git add -A -- react-dist data/compendium.js data/compendium-handbook.js data/compendium-index.js data/compendium-parts
+          if git diff --cached --quiet; then
+            echo "Generated assets already match source."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "build: synchronize milestone 3.3 generated frontend assets"
+          git push origin HEAD:milestone-3-3-token-movement
