@@ -111,14 +111,14 @@ function RestrictedCombatScene({api,campaignId,active}){
     {status.event?.name?<p>{status.event.name}</p>:null}
   </section>;
 }
-function RestrictedBattleMapScene({api,campaignId,mapId,active}){
+function RestrictedBattleMapScene({api,campaignId,mapId,active,camera}){
   const result=useCampaignStream(api,'watchRestrictedMap',
     [campaignId,mapId||''],active&&Boolean(mapId));
   if(!active)return null;
   if(result.error)return <p role="alert">{result.error}</p>;
   if(result.loading)return <p role="status">Synchronising the published battle map…</p>;
   return result.data?<CampaignMapCanvas api={api} campaignId={campaignId}
-    map={result.data} mode="player" restricted/>:
+    map={result.data} mode="player" restricted camera={camera}/>:
     <p role="status">The selected battle map is unavailable.</p>;
 }
 
@@ -133,7 +133,7 @@ function ActiveRestrictedPresentation({api,campaignId}){
       <h2>{scene.title}</h2><p>{scene.subtitle}</p>
     </div>:scene.scene==='battle-map'?
       <RestrictedBattleMapScene api={api} campaignId={campaignId}
-        mapId={scene.mapId} active/>:
+        mapId={scene.mapId} active camera={scene.mapCamera}/>:
     scene.scene==='combat'?
       <RestrictedCombatScene api={api} campaignId={campaignId} active/>:
     PRESENTATION_MEDIA_SCENES.includes(scene.scene)?

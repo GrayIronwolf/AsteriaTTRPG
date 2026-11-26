@@ -205,6 +205,27 @@ async function metrics(page) {
     assert.equal(await canvas.locator('[data-canvas-window]').count(),PLAYER_FIXTURE_IDS.length);
     await p.screenshot({path:path.join(root,'04b-player-canvas-window-management.png'),fullPage:true});
   });
+  await scenario('04c-player-encounter-map-window',{width:1440},async p=>{
+    await p.goto(base+'?reactFixture=1&unifiedMap=1',{waitUntil:'domcontentloaded'});
+    await p.waitForFunction(()=>window.AsteriaReactMigration?.available&&
+      window.AsteriaFirebase?.getUser?.()?.uid==='player-demo');
+    await p.evaluate(()=>window.AsteriaReactMigration.openCharacter('demo-campaign','kael'));
+    const canvas=p.getByTestId('site-player-main-canvas');
+    await canvas.getByTestId('player-canvas-add-window').click();
+    const library=p.getByRole('complementary',{name:'Player Dashboard Window Library'});
+    await library.getByRole('button',{name:'Combat',exact:true}).click();
+    const toggle=library.getByRole('button',{name:'Battle Map',exact:true});
+    assert.equal(await toggle.getAttribute('aria-pressed'),'false');
+    await toggle.click();
+    await library.getByRole('button',{name:'Close Dashboard Windows menu'}).click();
+    const panel=canvas.locator('[data-canvas-window="battleMap"]');
+    await panel.getByText('Live combat · Round 2 · Kael',{exact:true}).waitFor();
+    await panel.getByRole('button',{name:'Kael',exact:true}).waitFor();
+    const zoom=panel.getByRole('button',{name:'Zoom in on map'});
+    await zoom.press('Enter');
+    assert.equal(await panel.getByLabel('Map zoom').textContent(),'125%');
+    assert.equal(await panel.locator('[data-map-zoom]').getAttribute('data-map-zoom'),'1.25');
+  });
   await scenario('05-gm-dashboard-canvas',{width:1440},async p=>{
     await gm(p);
     await checkMenuButtonSkin(p,'gm');

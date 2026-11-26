@@ -65,11 +65,25 @@ test('backend-linked map prevents browser token edits even from GM',async()=>{
    combatId:'combat-1',tokens:[participant]
   });
  });
+ // An orphaned marker is private until the canonical encounter confirms
+ // the same map and combat ID.
+ await projections.sync(campaignId,mapId);
+ const orphan=await assertSucceeds(getDoc(doc(db('alice'),publicPath)));
+ assert.deepEqual(orphan.data().tokens,[]);
+ assert.equal('combatId' in orphan.data(),false);
+ await env.withSecurityRulesDisabled(context=>setDoc(
+   doc(context.firestore(),'campaigns/'+campaignId+'/systems/encounter'),{
+     status:'active',combatId:'combat-1',battleMapId:mapId,turnIndex:0,
+     combatants:[{id:participant.combatantId,characterId:participant.refId,name:'Hero'}],
+     combat:{version:1,revision:1,participants:{}}
+   }));
  await projections.sync(campaignId,mapId);
  await assertFails(getDoc(doc(db('alice'),path)));
  const view=await assertSucceeds(getDoc(doc(db('alice'),publicPath)));
  assert.deepEqual(view.data().tokens,[{id:'hero',label:'Hero',kind:'character',x:25,y:25}]);
- assert.equal('combatId' in view.data(),false);
+ assert.equal(view.data().combatId,'combat-1');
+ assert.equal(view.data().activeTokenId,'hero');
+ assert.equal('combatantId' in view.data().tokens[0],false);
  await assertFails(updateDoc(doc(db('gm'),path),{
   tokens:[{...participant,x:50,y:50}]
  }));

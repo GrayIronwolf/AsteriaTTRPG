@@ -808,7 +808,8 @@ service cloud.firestore {
           (activeHybridViewer(campaignId) &&
             get(/databases/$(database)/documents/campaigns/$(campaignId)/presentationRestricted/current).data.get('scene','') == 'battle-map' &&
             get(/databases/$(database)/documents/campaigns/$(campaignId)/presentationRestricted/current).data.get('mapId','') == mapId &&
-            resource.data.get('visibility','gm') == 'players');
+            resource.data.get('visibility','gm') == 'players' &&
+            get(/databases/$(database)/documents/campaigns/$(campaignId)/battleMaps/$(mapId)).data.get('visibility','gm') == 'players');
         allow list: if isCampaignGM(campaignId) ||
           canUseCampaignSystems(campaignId);
         allow create, update, delete: if false;

@@ -383,21 +383,24 @@ export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigat
           <h3>Battle Map &amp; Player Display</h3>
           <p>Prepare the encounter map using the existing GM Battle Map Manager. A selected prepared map links through the protected combat service when combat begins.</p>
           <p>Prepared map: {stream.data.maps?.find(map=>map.id===combat.preparedMapId)?.name||'Not selected'} · Live map: {stream.data.maps?.find(map=>map.id===combat.battleMapId)?.name||'Not linked'}</p>
-          {canSetup?<label>Encounter battle map<select aria-label="Encounter battle map" value={selectedBattleMap===null?combat.preparedMapId||'':selectedBattleMap}
+          {(canSetup||combat.isActive&&!combat.battleMapId)?<label>Encounter battle map<select aria-label="Encounter battle map" value={selectedBattleMap===null?combat.preparedMapId||'':selectedBattleMap}
             onChange={event=>setSelectedBattleMap(event.target.value)}>
             <option value="">No map</option>
             {(stream.data.maps||[]).map(map=><option key={map.id} value={map.id}>{map.name}</option>)}
           </select></label>:null}
-          <CombatBattleMapPanel mediaApi={mediaApi} campaignId={campaignId} combat={combat}/>
+          <CombatBattleMapPanel key={campaignId+':'+combat.combatId+':'+combat.battleMapId}
+            mediaApi={mediaApi} campaignId={campaignId} combat={combat} onCommand={submit} busy={busy}/>
           <div className={styles.controls}>
             {canSetup?<button type="button" disabled={busy||!combat.sessionEditable}
               onClick={()=>submit('encounter',{operation:'map-prepare',
                 mapId:selectedBattleMap===null?combat.preparedMapId||'':selectedBattleMap})}>
               Save Prepared Map</button>:null}
-            {combat.isActive&&combat.preparedMapId&&!combat.battleMapId?
-              <button type="button" disabled={busy||!combat.sessionEditable}
-                onClick={()=>submit('encounter',{operation:'map-link',mapId:combat.preparedMapId})}>
-                Link Prepared Map to Live Combat</button>:null}
+            {combat.isActive&&!combat.battleMapId?
+              <button type="button" disabled={busy||!combat.sessionEditable||combat.paused||
+                !(selectedBattleMap===null?combat.preparedMapId:selectedBattleMap)}
+                onClick={()=>submit('encounter',{operation:'map-link',mapId:selectedBattleMap===null?
+                  combat.preparedMapId:selectedBattleMap})}>
+                Link Map to Live Combat</button>:null}
             <button type="button" disabled={!onNavigate}
               onClick={()=>onNavigate?.('battle-maps')}>Open Battle Maps</button>
             <button type="button" disabled={!onNavigate}

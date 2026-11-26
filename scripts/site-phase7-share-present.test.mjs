@@ -96,3 +96,36 @@ test('7.7: the existing dashboard is the single projector route',()=>{
   assert.match(application,/PlayerPresentationDisplay/);
   assert.doesNotMatch(dashboard,/subscribeCampaignEncounter/);
 });
+
+test('unified battle map hides concealed actor data and follows only a revealed current token',async()=>{
+  const {combatMapVisibility}=await import('../src/state/livePresentationProjectionModel.mjs');
+  const {battleMapCameraView,encounterMapLink,validateBattleMapCamera}=await import('../src/state/battleMapCamera.mjs');
+  const actors=[{id:'hero',characterId:'player',name:'Hero'},
+    {id:'enemy',name:'Concealed enemy',initiative:19}];
+  const encounter={status:'active',combatId:'fight',battleMapId:'map',turnIndex:1,
+    combatants:actors,combat:{version:1,revision:4,participants:{hero:{ap:2},enemy:{}}}};
+  const map={id:'map',visibility:'players',combatId:'fight',name:'Scene',
+    kind:'image',contentType:'image/png',storagePath:'campaigns/camp/battleMaps/map/scene.png',
+    width:100,height:100,gridColumns:2,gridRows:2,fogEnabled:true,fogCells:'1000',
+    tokens:[{id:'hero-marker',combatantId:'hero',kind:'character',label:'Hero',x:10,y:10},
+      {id:'enemy-marker',combatantId:'enemy',kind:'creature',label:'Concealed enemy',x:80,y:80}]};
+  const project=(source,state)=>publicPresentationBattleMap(source,'camp','map',state);
+  const hidden=project(map,encounter);
+  assert.deepEqual(hidden.tokens.map(row=>row.id),['hero-marker']);
+  assert.equal(hidden.activeTokenId,'');
+  const safe=publicCombatSnapshot(encounter,combatMapVisibility(map,hidden));
+  assert.equal(safe.battleMapId,'map');
+  assert.equal(safe.turnIndex,-1);
+  assert.equal(safe.combatants[0].id,'hero');
+  assert.doesNotMatch(JSON.stringify({hidden,safe}),/Concealed enemy|enemy-marker/);
+  assert.equal(encounterMapLink(safe,hidden),true);
+  assert.equal(encounterMapLink(safe,{...hidden,combatId:'previous-fight'}),false);
+  const follow=validateBattleMapCamera({mode:'follow',x:50,y:50,zoom:2});
+  assert.deepEqual(battleMapCameraView(follow,hidden),{x:50,y:50,zoom:2});
+  const revealed=project({...map,fogCells:'1111'},encounter);
+  assert.equal(revealed.activeTokenId,'enemy-marker');
+  assert.deepEqual(battleMapCameraView(follow,revealed),{x:75,y:75,zoom:2});
+  assert.equal('combatantId' in revealed.tokens[1],false);
+  assert.deepEqual(project(map,{...encounter,status:'ended'}).tokens,[]);
+  assert.throws(()=>validateBattleMapCamera({...follow,zoom:Infinity}));
+});

@@ -1,3 +1,5 @@
+import {createSiteCombatMediaApi} from './combat/siteCombatApi.js';
+import {CampaignMapWorkspace} from './presentation/CampaignMapWorkspace.jsx';
 import React,{useCallback,useEffect,useMemo,useRef,useState} from 'react';
 import {firebaseService} from '../firebase/asteriaFirebaseService.js';
 import {Panel} from '../components/WorkspaceUI.jsx';
@@ -506,21 +508,12 @@ export function GMBattleMapManager({campaignId,characters={},encounter={},search
   </Panel>;
 }
 export function PlayerBattleMapView({campaignId,encounter={},mapId='',presentation=false}){
-  const {maps,error}=useBattleMaps(campaignId,false);
-  const [selectedId,setSelectedId]=useState('');
-  const selected=mapId?maps.find(row=>row.id===mapId)||null:maps.find(row=>row.id===selectedId)||maps[0]||null;
+  const uid=firebaseService.currentUser()?.uid||'';
+  const api=useMemo(()=>uid?createSiteCombatMediaApi():null,[uid]);
   if(!campaignId)return null;
-  const content=<div className={presentation?"asteria-presentation-map":""}>
-    {error?<p role="alert">{error}</p>:null}
-    {!maps.length?<p>No battle maps have been shared with players.</p>:<>
-      {!presentation?<label>Shared map<select value={selected?.id||''} onChange={event=>setSelectedId(event.target.value)}>
-        {maps.map(row=><option key={row.id} value={row.id}>{row.name}{row.kind==='video'?' · Animated':''}</option>)}
-      </select></label>:null}
-      {selected&&combatMapLinked(selected,encounter)?<div className="asteria-battle-combat-status" role="status">
-        <b>Combat active · Round {encounter.round||1}</b>
-        <span>Current turn: {combatMapRoster(encounter).find(row=>row.isCurrent)?.name||'—'}</span>
-      </div>:null}
-      {selected?<MapCanvas key={selected.id} campaignId={campaignId} map={selected} encounter={encounter}/>:<p role="status">This published map is no longer available.</p>}
-    </>}</div>;
+  if(!api)return <p role="status">Sign in to view shared battle maps.</p>;
+  const content=<CampaignMapWorkspace key={uid+':'+campaignId} api={api}
+    campaignId={campaignId} selectedMapId={mapId} encounter={encounter}
+    interactive={!presentation}/>;
   return presentation?content:<Panel title="Battle Maps" eyebrow="Shared Campaign Scenes">{content}</Panel>;
 }

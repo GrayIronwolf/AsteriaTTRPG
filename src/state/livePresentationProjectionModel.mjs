@@ -17,9 +17,15 @@ const clamp=(value,min,max,def)=>Math.max(min,Math.min(max,number(value,def)));
  * never leak enemies' equipment/HP/MP/SP/traits, hidden names, abilities,
  * private conditions, GM rolls, schedule or reward data.
  */
-export function publicCombatSnapshot(raw={}){
+export function publicCombatSnapshot(raw={},publishedMap=null){
   const list=Array.isArray(raw.combatants)?raw.combatants.slice(0,160):[];
-  const roster=list.filter(row=>id(row?.id)).map(row=>{
+  const active=raw.status==='active'&&raw.combat?.version===1;
+  const linked=active&&publishedMap?.id===raw.battleMapId&&publishedMap?.combatId===raw.combatId;
+  const visibleCombatants=new Set(linked?publishedMap.visibleCombatants:[]);
+  const privateMap=active&&id(raw.battleMapId);
+  const currentId=list[int(raw.turnIndex)]?.id;
+  const roster=list.filter(row=>id(row?.id)&&
+    (!privateMap||id(row.characterId)||visibleCombatants.has(row.id))).map(row=>{
     const player=id(row.characterId),shown=player||row.revealed===true;
     return {
       id:row.id,
@@ -31,8 +37,7 @@ export function publicCombatSnapshot(raw={}){
       defeated:row.defeated===true
     };
   });
-  const active=raw.status==='active'&&raw.combat?.version===1;
-  const index=active?Math.max(0,Math.min(roster.length-1,int(raw.turnIndex))):0;
+  const index=active?roster.findIndex(row=>row.id===currentId):0;
   const participants={};
   for(const row of roster){
     const entry=raw.combat?.participants?.[row.id]||{};
@@ -48,7 +53,7 @@ export function publicCombatSnapshot(raw={}){
   const timer=raw.turnTimer||raw.timer||{};
   const pending=raw.combat?.pending;
   const allowedIds=new Set(roster.map(row=>row.id));
-  const safePending=pending&&id(pending.id)?{
+  const safePending=pending&&id(pending.id)&&allowedIds.has(pending.actorId)?{
     id:pending.id,
     status:name(pending.status,60),
     actorId:allowedIds.has(pending.actorId)?pending.actorId:'',
@@ -69,6 +74,7 @@ export function publicCombatSnapshot(raw={}){
     version:1,status:['ready','active','ended'].includes(raw.status)?raw.status:'ready',
     paused:active&&raw.paused===true,
     combatId:active&&id(raw.combatId)?raw.combatId:'',
+    ...(linked?{battleMapId:publishedMap.id}:{}),
     round:Math.max(1,int(raw.round,1)),turnIndex:index,
     combatants:roster,
     combat:{version:active?1:0,revision:Math.max(0,int(raw.combat?.revision)),
@@ -81,8 +87,8 @@ export function publicCombatSnapshot(raw={}){
     ...(publicEvent?{publicEvent}:{})
   });
 }
-export function publicCombatPresentation(raw={}){
-  const combat=publicCombatSnapshot(raw);
+export function publicCombatPresentation(raw={},publishedMap=null){
+  const combat=publicCombatSnapshot(raw,publishedMap);
   const party=Object.fromEntries(combat.combatants
     .filter(row=>row.kind==='player'&&id(row.characterId))
     .map(row=>[row.characterId,{name:row.name}]));
@@ -101,7 +107,7 @@ function tokenIsRevealed(token,cells,columns,rows){
 /** Render map media stays an already-published original map. Visual fog cannot
  * conceal hidden details baked into the original image or looping video.
  */
-export function publicPresentationBattleMap(raw={},campaignId='',mapId=''){
+export function publicPresentationBattleMap(raw={},campaignId='',mapId='',encounter={}){
   const source={...raw,id:mapId};
   if(raw.visibility!=='players'||!battleMapCanPreview(source,campaignId))
     throw Error('Only an existing published map may be presented.');
@@ -110,10 +116,16 @@ export function publicPresentationBattleMap(raw={},campaignId='',mapId=''){
     throw Error('Invalid map grid.');
   const fogEnabled=raw.fogEnabled===true;
   const fogCells=validFogCells(raw.fogCells,columns,rows);
-  const tokens=battleMapTokens(raw.tokens||[])
-    .filter(row=>!fogEnabled||tokenIsRevealed(row,fogCells,columns,rows))
-    .map(row=>({id:row.id,label:row.label.slice(0,48),
-      kind:row.kind,x:row.x,y:row.y}));
+  const linked=encounter.status==='active'&&encounter.combat?.version===1&&
+    id(encounter.combatId)&&encounter.battleMapId===mapId&&raw.combatId===encounter.combatId;
+  const actors=new Set(linked?(encounter.combatants||[]).map(row=>row.id):[]);
+  const visibleTokens=battleMapTokens(raw.tokens||[]).filter(row=>
+    (!row.combatantId||actors.has(row.combatantId))&&
+    (!fogEnabled||tokenIsRevealed(row,fogCells,columns,rows)));
+  const current=linked?encounter.combatants?.[encounter.turnIndex]?.id:'';
+  const focus=current?visibleTokens.find(row=>row.combatantId===current):null;
+  const tokens=visibleTokens.map(row=>({id:row.id,label:row.label.slice(0,48),
+    kind:row.kind,x:row.x,y:row.y}));
   return Object.freeze({
     version:1,id:mapId,
     name:name(raw.name,100)||'Published battle map',
@@ -123,10 +135,18 @@ export function publicPresentationBattleMap(raw={},campaignId='',mapId=''){
     gridColumns:columns,gridRows:rows,
     gridVisible:raw.gridVisible===true,
     gridOpacity:clamp(raw.gridOpacity,0,100,40),
-    fogEnabled,fogCells,
+    fogEnabled,fogCells,metresPerCell:clamp(raw.metresPerCell,0.1,1000,1),
+    ...(linked?{combatId:encounter.combatId,activeTokenId:focus?.id||''}:{}),
     tokens,description:name(raw.description,300),
     visibility:'players'
   });
+}
+// Actor identifiers are used on the server to filter initiative, never in map documents.
+export function combatMapVisibility(map,projection){
+  if(!projection?.combatId)return null;
+  const ids=new Set(projection.tokens.map(row=>row.id));
+  return {id:projection.id,combatId:projection.combatId,
+    visibleCombatants:(map.tokens||[]).filter(row=>ids.has(row.id)).map(row=>row.combatantId)};
 }
 export function mapForRestrictedViewer(raw={},campaignId=''){
   if(!id(raw.id)||raw.visibility!=='players')return null;

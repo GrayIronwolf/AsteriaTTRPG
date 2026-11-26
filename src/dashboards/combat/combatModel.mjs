@@ -87,7 +87,7 @@ export function projectCombat(encounter={},session=null,{role='player',character
     };
     return Object.freeze(result);
   });
-  const index=active?Math.max(0,Math.min(combatants.length-1,whole(raw.turnIndex))):-1;
+  const index=active&&raw.turnIndex!==-1?Math.max(0,Math.min(combatants.length-1,whole(raw.turnIndex))):-1;
   const roster=combatants.map((row,i)=>Object.freeze({...row,current:i===index}));
   const owned=roster.find(row=>row.characterId===characterId)||null;
   const rawTimer=obj(raw.turnTimer)?raw.turnTimer:obj(raw.timer)?raw.timer:null;

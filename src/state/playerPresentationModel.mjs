@@ -13,6 +13,7 @@ export const PRESENTATION_DEFAULT=Object.freeze({
 });
 const isObject=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 export const presentationId=value=>typeof value==='string'&&/^[A-Za-z0-9_-]{1,120}$/.test(value);
+import {validateBattleMapCamera} from './battleMapCamera.mjs';
 import {PRESENTATION_MEDIA_SCENES,presentationAssetId}
   from './presentationAssetModel.mjs';
 function exactKeys(value,allowed,description){
@@ -25,7 +26,7 @@ function shortText(value,max,label){
   return value.trim();
 }
 export function presentationDraft(input={}){
-  exactKeys(input,['scene','title','subtitle','mapId','assetId','characterIds','showRound','showPartyHP','theme'],'presentation');
+  exactKeys(input,['scene','title','subtitle','mapId','assetId','mapCamera','characterIds','showRound','showPartyHP','theme'],'presentation');
   if(!PRESENTATION_SCENES.includes(input.scene))throw Error('Choose a supported display scene.');
   if(!PRESENTATION_THEMES.includes(input.theme))throw Error('Choose a supported display theme.');
   if(typeof input.showRound!=='boolean'||typeof input.showPartyHP!=='boolean')
@@ -51,6 +52,7 @@ export function presentationDraft(input={}){
     characterIds:scene==='party'?[...input.characterIds]:[],
     showRound:scene==='combat'&&input.showRound,
     showPartyHP:scene==='party'&&input.showPartyHP,
+    ...(scene==='battle-map'&&input.mapCamera!==undefined?{mapCamera:validateBattleMapCamera(input.mapCamera)}:{}),
     ...(assetId?{assetId}:{}),theme:input.theme
   };
 }
