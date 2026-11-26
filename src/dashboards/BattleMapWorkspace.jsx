@@ -610,12 +610,20 @@ export function PlayerBattleMapView({campaignId,encounter={},character=null,mapI
   const uid=firebaseService.currentUser()?.uid||'';
   const api=useMemo(()=>uid?createSiteCombatMediaApi():null,[uid]);
   const combatApi=useMemo(()=>uid&&character?createSiteCombatApi():null,[uid,Boolean(character)]);
-  const actor=(encounter.combatants||[]).find(row=>row.characterId===character?.id);
+  const ownedActor=(encounter.combatants||[]).find(row=>row.characterId===character?.id);
+  const [selectedActorId,setSelectedActorId]=useState('');
+  const delegatedActors=(encounter.combatants||[]).filter(row=>row.id!==ownedActor?.id&&
+    encounter.combat?.participants?.[row.id]?.movementDelegated===true&&
+    encounter.combat?.participants?.[row.id]?.mapTokenId);
+  const actor=delegatedActors.find(row=>row.id===selectedActorId)||ownedActor;
+  const delegated=Boolean(actor&&actor.id!==ownedActor?.id);
   const state=encounter.combat?.participants?.[actor?.id]||{};
   const offTurn=encounter.combatants?.[encounter.turnIndex]?.id!==actor?.id||state.turnComplete===true;
   const approved=!offTurn&&state.mapMovement?.remaining>0;
-  const allowance=approved?state.mapMovement.remaining:character?walkingAllowance(character,{encounter}):null;
-  const movement=!presentation&&actor&&state.mapTokenId&&encounter.battleMapId&&combatApi?{
+  const allowance=approved?state.mapMovement.remaining:delegated?null:
+    character?walkingAllowance(character,{encounter}):null;
+  const movement=!presentation&&actor&&state.mapTokenId&&encounter.battleMapId&&combatApi&&
+    (!delegated||approved)?{
     tokenId:state.mapTokenId,distance:allowance,revision:encounter.combat.revision,
     disabled:encounter.paused||Boolean(encounter.combat.pending)||offTurn&&state.opportunityUsed||(!approved&&state.ap<MAP_MOVE_AP.walk),
     diagonalParity:approved?state.mapMovement.diagonalParity:0,
@@ -632,13 +640,22 @@ export function PlayerBattleMapView({campaignId,encounter={},character=null,mapI
   const content=<><CampaignMapWorkspace key={uid+':'+campaignId} api={api}
     campaignId={campaignId} selectedMapId={mapId} encounter={encounter}
     interactive={!presentation} movement={movement}/>
-    {attackAvailable?<PlayerMapOpportunity actor={actor}
+    {!presentation&&delegatedActors.length?<label>Map token control<select
+      value={delegated?actor.id:ownedActor?.id||''}
+      onChange={event=>setSelectedActorId(event.target.value===ownedActor?.id?'':event.target.value)}>
+      {ownedActor?<option value={ownedActor.id}>{ownedActor.name||'Your character'}</option>:null}
+      {delegatedActors.map(row=><option key={row.id} value={row.id}>
+        {row.name||'Combatant'} · GM-delegated map movement
+      </option>)}
+    </select></label>:null}
+    {delegated&&!approved?<small>The GM must approve movement for this token before you can move it.</small>:null}
+    {attackAvailable&&!delegated?<PlayerMapOpportunity actor={actor}
       targets={encounter.combatants.filter(row=>row.kind==='enemy'&&!row.defeated)}
       character={character}
       submit={(id,input)=>combatApi.commandPlayer(campaignId,character.id,id,{
         ...input,revision:encounter.combat.revision
       })}/>:null}
-    {movement&&!approved?<small>Dash costs {MAP_MOVE_AP.dash} AP and uses the distance approved by your GM.</small>:null}
+    {movement&&!approved&&!delegated?<small>Dash costs {MAP_MOVE_AP.dash} AP and uses the distance approved by your GM.</small>:null}
   </>;
   return presentation?content:<Panel title="Battle Maps" eyebrow="Shared Campaign Scenes">{content}</Panel>;
 }
