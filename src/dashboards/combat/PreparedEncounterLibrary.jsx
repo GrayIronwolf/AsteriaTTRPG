@@ -16,10 +16,12 @@ import {CampaignMapCanvas} from './CombatMapCanvas.jsx';
 import {PreparedEncounterScheduleEditor} from './PreparedEncounterScheduleEditor.jsx';
 import styles from './PreparedEncounterLibrary.module.css';
 
-const blank={name:'',notes:'',mapId:'',enemies:[],waves:[],events:[],folder:'',tags:[],archived:false};
+const blank={name:'',description:'',environment:'',rewardNotes:'',initiativeMode:'automatic',playerIds:[],notes:'',mapId:'',enemies:[],waves:[],events:[],folder:'',tags:[],archived:false};
 const enemyBlank={name:'',type:'Creature',hp:'20',sp:'',mp:'',xpReward:'0',ac:'',initiative:''};
 const draftFrom=plan=>plan?{
-  name:plan.name,notes:plan.notes||'',mapId:plan.mapId||'',
+  name:plan.name,description:plan.description||'',environment:plan.environment||'',
+  rewardNotes:plan.rewardNotes||'',initiativeMode:plan.initiativeMode||'automatic',
+  playerIds:[...(plan.playerIds||[])],notes:plan.notes||'',mapId:plan.mapId||'',
   folder:plan.folder||'',tags:[...(plan.tags||[])],archived:plan.archived===true,
   enemies:structuredClone(plan.enemies),
   waves:structuredClone(plan.waves||[]),events:structuredClone(plan.events||[])
@@ -28,7 +30,7 @@ const displayHP=row=>Array.isArray(row.hp)?row.hp[1]:row.hp||0;
 
 /** GM-specific private template storage via the existing combat adapter. */
 export function PreparedEncounterLibrary({
-  api,campaignId,combat,plans=[],maps=[],mediaApi=null,library=[],onLoaded
+  api,campaignId,combat,plans=[],staged=[],party=[],maps=[],mediaApi=null,library=[],onLoaded
 }){
   const [editId,setEditId]=useState(''),[revision,setRevision]=useState(0);
   const [draft,setDraft]=useState(draftFrom(null)),[enemy,setEnemy]=useState(enemyBlank);
@@ -173,6 +175,14 @@ export function PreparedEncounterLibrary({
         await api.deletePrepared(campaignId,plan,plan.revision);
         if(editId===plan.id)reset();
         setMessage('Prepared encounter deleted.');
+      }else if(action==='stage'||action==='unstage'){
+        if(action==='stage'){
+          await api.stagePrepared(campaignId,plan.id,combat.revision,plan.revision);
+          setMessage('Encounter staged privately. Load it when you are ready to prepare the next battle.');
+        }else{
+          await api.unstagePrepared(campaignId,plan.id,combat.revision);
+          setMessage('Encounter removed from staging.');
+        }
       }else if(action==='load'){
         if(!reviewFresh||!loadReview||!plan||plan.id!==loadReview.id)
           throw Error('The encounter or combat revision changed. Review the current encounter again.');
@@ -186,6 +196,8 @@ export function PreparedEncounterLibrary({
     finally{setBusy(false);}
   };
   const canEdit=!combat?.isActive&&combat?.sessionEditable!==false;
+  const canStage=Boolean(combat?.sessionEditable);
+  const stagedById=new Map(staged.map(row=>[row.id,row]));
   return <section className={styles.library} data-testid="site-prepared-encounter-library">
     <header className={styles.top}>
       <div><h3>Prepared Encounters</h3>
@@ -217,14 +229,24 @@ export function PreparedEncounterLibrary({
     </div>
     <div className={styles.saved} aria-label="Saved prepared encounters">
       <strong>Encounter Library ({visiblePlans.length} shown of {plans.length}/{PREPARED_ENCOUNTER_MAX_PLANS})</strong>
+      {staged.length?<p>{staged.length} privately staged. Loading and starting a battle remain separate GM actions.</p>:null}
+      {staged.filter(row=>!plans.some(plan=>plan.id===row.id)).map(row=><div key={row.id}>
+        Staged template unavailable. <button type="button" disabled={busy||!canStage}
+          onClick={()=>run('unstage',row)}>Remove from staging</button>
+      </div>)}
       {visiblePlans.length?visiblePlans.map(plan=><article key={plan.id}>
         <div className={styles.entryInfo}><strong>{plan.name}{plan.archived?' · Archived':''}</strong>
           <small>{plan.folder||'Unfiled'} · {plan.enemies.length} enemies ·
             {' '}{maps.find(m=>m.id===plan.mapId)?.name||'No map'}
             {' · '}Revision {plan.revision}</small>
+          {stagedById.has(plan.id)?<small>{stagedById.get(plan.id).templateRevision===plan.revision
+            ?'Privately staged':'Staged revision changed. Stage the latest revision to update it.'}</small>:null}
           {(plan.tags||[]).length?<small>Tags: {plan.tags.join(', ')}</small>:null}
           {previewId===plan.id?<div className={styles.preview}>
+            {plan.description?<p>{plan.description}</p>:null}
             <p>{plan.notes||'No GM notes.'}</p>
+            {plan.environment?<p>Environment: {plan.environment}</p>:null}
+            {plan.rewardNotes?<p>Reward plan: {plan.rewardNotes}</p>:null}
             <ul>{plan.enemies.map((enemy,index)=><li key={index}>
               {enemy.name} · {enemy.type} · HP {displayHP(enemy)}
               {enemy.initiative!==undefined?' · Initiative '+enemy.initiative:''}
@@ -243,6 +265,11 @@ export function PreparedEncounterLibrary({
             onClick={()=>run('duplicate',plan)}>Duplicate</button>
           <button type="button" disabled={busy}
             onClick={()=>run('archive',plan)}>{plan.archived?'Restore':'Archive'}</button>
+          {stagedById.get(plan.id)?.templateRevision!==plan.revision&&!plan.archived?
+            <button type="button" disabled={busy||!canStage}
+              onClick={()=>run('stage',plan)}>Stage Privately</button>:null}
+          {stagedById.has(plan.id)?<button type="button" disabled={busy||!canStage}
+            onClick={()=>run('unstage',plan)}>Remove from Staging</button>:null}
           <button type="button" disabled={busy||!canEdit||plan.archived}
             onClick={()=>reviewLoad(plan)}>Review Load</button>
           <button type="button" disabled={busy}
@@ -254,14 +281,14 @@ export function PreparedEncounterLibrary({
       aria-label="Confirm prepared encounter replacement" data-testid="site-prepared-load-review">
       <h4>Review Encounter Load</h4>
       {reviewPlan?<><strong>{reviewPlan.name} · Revision {reviewPlan.revision}</strong>
-        <p>This operation replaces the current staged enemies. Linked player
-          characters stay in the encounter. Combat will remain Ready; no
-          initiative rolls or turns start automatically.</p>
+        <p>This replaces the current staged enemies and {reviewPlan.playerIds?.length
+          ?'uses the linked characters selected in this template':'keeps the current linked characters'}.
+          Combat remains Ready until the GM starts it.</p>
         <dl>
           <div><dt>New enemies</dt><dd>{currentReview?.incomingEnemies??0}</dd></div>
           <div><dt>Staged enemies replaced</dt><dd>{currentReview?.stagedEnemies??0}</dd></div>
-          <div><dt>Linked player characters retained</dt>
-            <dd>{currentReview?.linkedPlayers??0}</dd></div>
+          <div><dt>Linked player characters</dt>
+            <dd>{reviewPlan.playerIds?.length||currentReview?.linkedPlayers||0}</dd></div>
           <div><dt>Prepared map</dt><dd>{currentReview?.mapName||'Unavailable'}</dd></div>
         </dl>
         <p>{reviewPlan.waves?.length||0} reinforcement waves and
@@ -291,6 +318,22 @@ export function PreparedEncounterLibrary({
       <label>Encounter Name<input value={draft.name} maxLength={100}
         onChange={event=>setDraft(row=>({...row,name:event.target.value}))}
         placeholder="e.g. The Frostbound Ambush"/></label>
+      {Object.entries({description:'Description',environment:'Environmental Conditions',rewardNotes:'Reward Planning Notes'})
+        .map(([field,label])=><label key={field}>{label}<textarea value={draft[field]} maxLength={600}
+          onChange={event=>setDraft(row=>({...row,[field]:event.target.value}))}/></label>)}
+      <label>Initiative mode<select value={draft.initiativeMode}
+        onChange={event=>setDraft(row=>({...row,initiativeMode:event.target.value}))}>
+        <option value="automatic">Automatic</option><option value="manual">Manual</option>
+        <option value="mixed">Mixed</option>
+      </select></label>
+      <details><summary>Linked characters ({draft.playerIds.length} selected)</summary>
+        <p>With no saved selection, loading keeps the current linked characters.</p>
+        {[...party,...draft.playerIds.filter(id=>!party.some(row=>row.id===id)).map(id=>({id,name:'Unavailable'}))]
+          .map(row=><label key={row.id}><input type="checkbox" checked={draft.playerIds.includes(row.id)}
+            onChange={event=>{const checked=event.target.checked;setDraft(previous=>({...previous,
+              playerIds:checked?[...previous.playerIds,row.id]:previous.playerIds.filter(id=>id!==row.id)}));}}/>
+            {row.name}</label>)}
+      </details>
       <label>GM Notes<textarea value={draft.notes} maxLength={1200} rows={3}
         onChange={event=>setDraft(row=>({...row,notes:event.target.value}))}
         placeholder="Location, tactics, objectives and reminders"/></label>

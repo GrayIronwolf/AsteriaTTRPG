@@ -9,6 +9,7 @@ import styles from './GMLiveCombatPanel.module.css';
 export function GMLiveCombatPanel({combat,pending=null,log=[],busy,onCommand,view='all'}){
   const [seconds,setSeconds]=useState(60);
   const [autoStart,setAutoStart]=useState(true);
+  const [turnReason,setTurnReason]=useState(''),[turnTarget,setTurnTarget]=useState('');
   const [now,setNow]=useState(()=>Date.now());
   useEffect(()=>{
     if((view!=='timer'&&view!=='all')||!combat?.turnTimer?.enabled)return undefined;
@@ -16,7 +17,7 @@ export function GMLiveCombatPanel({combat,pending=null,log=[],busy,onCommand,vie
     return()=>window.clearInterval(tick);
   },[combat?.turnTimer?.enabled,combat?.turnTimer?.endsAt]);
   const timer=combat?.turnTimer||{};
-  const active=combat?.status==='active',editable=combat?.sessionEditable===true;
+  const active=combat?.status==='active',editable=combat?.sessionEditable===true&&!combat?.paused;
   const advance=gmMayAdvanceTurn(combat,pending);
   const elapsed=timer.enabled?Math.max(0,Math.ceil((timer.endsAt-now)/1000)):
     timer.remainingSeconds||0;
@@ -44,6 +45,25 @@ export function GMLiveCombatPanel({combat,pending=null,log=[],busy,onCommand,vie
           title={advance.reason||''} data-testid="site-gm-live-next-turn"
           onClick={next}>Advance Turn</button>
       </div>
+      {active?<details>
+        <summary>Skip or override turn</summary>
+        <label>Reason<input value={turnReason} maxLength={160}
+          onChange={event=>setTurnReason(event.target.value)}/></label>
+        <button type="button" disabled={busy||!advance.allowed||!turnReason.trim()}
+          onClick={()=>onCommand('encounter',{operation:'skip-turn',reason:turnReason.trim()})}>
+          Skip Current Turn
+        </button>
+        <label>Next participant<select value={turnTarget}
+          onChange={event=>setTurnTarget(event.target.value)}>
+          <option value="">Select a participant</option>
+          {combat.combatants.filter(row=>row.id!==combat.current?.id&&!row.actedThisRound).map(row=>
+            <option key={row.id} value={row.id}>{row.name}</option>)}
+        </select></label>
+        <button type="button" disabled={busy||!advance.allowed||!turnReason.trim()||!turnTarget}
+          onClick={()=>onCommand('encounter',{operation:'override-turn',reason:turnReason.trim(),targetId:turnTarget})}>
+          Override Next Turn
+        </button>
+      </details>:null}
       {!advance.allowed&&advance.reason?<p role="status">{advance.reason}</p>:null}
     </div>:null}
     {(view==='all'||view==='timer')?<div className={styles.card}>

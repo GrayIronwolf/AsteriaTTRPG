@@ -66,7 +66,8 @@ export function captureEncounterCompletion(encounter={},privateState={},characte
     endedAt,endedBy,sessionId:label(sessionId),
     preparedEncounterId:label(encounter.preparedEncounterId),
     name:label(encounter.name||'Combat Encounter',120),
-    rounds:Math.max(1,number(encounter.round)),outcome:'unresolved',notes:'',
+    rounds:Math.max(1,number(encounter.round)),outcome:'unresolved',
+    notes:label(privateState.preparedDetails?.rewardNotes,600),
     participants,actions:list(encounter.combat?.log).slice(0,80).map(row=>({
       id:label(row.id),at:number(row.at),message:label(row.message,300)
     })),waves,events,
@@ -140,6 +141,7 @@ export function hasEncounterBundle(row={}){
 }
 
 export function assertApprovedEncounterDelivery(history={},characterId='',kind='',payload){
+  if(history.reopened===true)throw Error('Complete the reopened encounter before delivering rewards.');
   if(history.status!=='approved')throw Error('The GM must approve this encounter before awarding rewards.');
   if(!validId(characterId)||!['xp','bundle'].includes(kind))
     throw Error('Choose a valid encounter reward recipient and type.');

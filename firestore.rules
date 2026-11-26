@@ -778,6 +778,15 @@ service cloud.firestore {
       match /encounterHistory/{encounterId} {
         allow get, list: if isCampaignGM(campaignId);
         allow create, update, delete: if false;
+        match /recovery/{recordId} {
+          // Only the metadata index is needed in the GM browser.
+          allow get: if recordId == 'snapshotIndex' && isCampaignGM(campaignId);
+          allow list, create, update, delete: if false;
+        }
+        match /completionRevisions/{revisionId} {
+          allow get, list: if isCampaignGM(campaignId);
+          allow create, update, delete: if false;
+        }
       }
 
       // Phase 7.4: never expose raw encounter state to campaign members.

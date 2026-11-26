@@ -1,3 +1,4 @@
+import {stagedEncounterList} from '../../state/preparedEncounterLoadModel.mjs';
 import {libraryDraft,updateGMLibrary} from '../../../src/state/gmNpcCreatureLibraryModel.mjs';
 import {assertGMCampaignId,gmCampaignAccess,gmPartySummary} from './combatAccess.mjs';
 import {requireDashboardId,playerCampaignAccess,linkedCharacterAccess,matchesOwnedSource} from './combatAccess.mjs';
@@ -142,6 +143,8 @@ export function createFirebaseCombatService({
                 combatLog:projectGMLiveLog(data.encounter?.combat?.log),
                 encounterSchedule:encounterScheduleForGM(data.workspace?.combatState),
                 party:gmPartySummary(data.roster),
+                preparedDetails:data.workspace?.combatState?.preparedDetails||null,
+                stagedEncounters:stagedEncounterList(data.workspace?.combatState?.stagedEncounters),
                 preparedEncounters:normalizePreparedEncounters(data.workspace?.preparedEncounters),
                 maps:data.maps
               }:{})};
@@ -203,6 +206,22 @@ export function createFirebaseCombatService({
       }catch(error){if(active)onError?.(error);}
     })();
     return ()=>{active=false;stop?.();};
+  }
+  function watchEncounterSnapshots(id,combatId,onUpdate,onError){
+    let active=true,stop=()=>{};
+    (async()=>{
+      try{
+        const {uid}=await check(id,'gm');
+        if(!active)return;
+        const ref=firestoreSdk.doc(db,'campaigns',id,'encounterHistory',combatId,'recovery','snapshotIndex');
+        stop=firestoreSdk.onSnapshot(ref,{includeMetadataChanges:true},snapshot=>{
+          if(!active||snapshot.metadata?.fromCache||snapshot.metadata?.hasPendingWrites)return;
+          try{same(uid);onUpdate(snapshot.data()?.entries||[]);}
+          catch(error){onError(error);}
+        },failure=>{if(active)onError(failure);});
+      }catch(error){if(active)onError(error);}
+    })();
+    return ()=>{active=false;stop();};
   }
   async function completionAction(id,input){
     const {uid}=await check(id,'gm');
@@ -334,13 +353,19 @@ export function createFirebaseCombatService({
     same(uid);return result;
   }
   return Object.freeze({
-    availability:()=>flags,watchGM,watchPlayer,watchGMHistory,saveCreatureVariant,
+    availability:()=>flags,watchGM,watchPlayer,watchGMHistory,watchEncounterSnapshots,saveCreatureVariant,
     reviewCompletion:(id,input)=>completionAction(id,input),
     deliverCompletion,
     commandGM:(id,actorId,input)=>command(id,'gm','',actorId,input),
     commandPlayer:(id,characterId,actorId,input)=>command(id,'player',characterId,actorId,input),
     savePrepared:(id,entry,expectedRevision=0)=>writePrepared(id,'save',entry,expectedRevision),
     deletePrepared:(id,entry,expectedRevision)=>writePrepared(id,'delete',entry,expectedRevision),
+    stagePrepared:(id,preparedId,revision,expectedPreparedRevision)=>command(id,'gm','','encounter',{
+      operation:'stage-prepared',preparedId,revision,expectedPreparedRevision
+    }),
+    unstagePrepared:(id,preparedId,revision)=>command(id,'gm','','encounter',{
+      operation:'unstage-prepared',preparedId,revision
+    }),
     loadPrepared:(id,preparedId,revision,expectedPreparedRevision)=>command(id,'gm','','encounter',{
       operation:'load-prepared',preparedId,replace:true,revision,
       expectedPreparedRevision,confirmation:'replace-staged-enemies'

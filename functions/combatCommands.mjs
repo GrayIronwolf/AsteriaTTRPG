@@ -13,9 +13,10 @@ import { calculateCharacterAC, validateEquipmentChange } from '../src/systems/ar
 import { normalizeInventoryItems, slug } from '../src/state/liveWorkspaceModel.mjs';
 import { encounterSourceResources, setEncounterResource } from '../src/state/encounterResourceModel.mjs';
 import {normalizePreparedEncounters,preparedEncounterRoster} from '../src/state/preparedEncounterModel.mjs';
-import {validatePreparedLoadRequest} from '../src/state/preparedEncounterLoadModel.mjs';
+import {updateStagedEncounter,validatePreparedLoadRequest} from '../src/state/preparedEncounterLoadModel.mjs';
 import {combatMapMovePlan,synchronizeCombatMapTokens,activeMapEncounter} from '../src/state/battleMapCombatModel.mjs';
 import {preparedMapTokenCapacity} from '../src/state/preparedBattleMapModel.mjs';
+import {applyEncounterRecovery,captureEncounterRecovery,nextCompletionRecord,recoveryOperations} from './encounterRecovery.mjs';
 import {captureEncounterCompletion} from '../src/state/encounterCompletionModel.mjs';
 import {applyLiveTimerCommand,resetLiveTurnTimer}
   from '../src/state/liveCombatCommandModel.mjs';
@@ -30,7 +31,10 @@ const bounded=(value,min=0,max=1e9)=>{const n=Number(value);if(!Number.isFinite(
 const roll=()=>randomInt(1,21);
 const numberDie=()=> (roll()-1)/20;
 const combatCharacterFields=new Set(['hp','sp','mp','bp','zp','resources','resourceDefinitions','resourceState','conditions','downed','activeEffects','effects','talentResourceEffects','talentResourceState','talentStateVersion','talentEffects','talentRestBonus','talentSavingThrows','talentUsage','acModifiers','specialDamage','soulDamage','coreStateVersion','inventory','equipment']);
-const management=new Set(['release-wave','trigger-event','timer','map-link','map-move','save','load-prepared','map-prepare','start','next','end','clear','approve','reject','window','close-window','resolve','roll','resolve-reaction','correct','condition','ambush','trigger-prepared']);
+const ENCOUNTER_INITIATIVE_MODES=new Set(['automatic','manual','mixed']);
+const initiativeMode=value=>ENCOUNTER_INITIATIVE_MODES.has(value)?value:'automatic';
+const needsManualInitiative=(row,mode)=>mode==='manual'||(mode==='mixed'&&Boolean(row.characterId));
+const management=new Set([...recoveryOperations,'skip-turn','override-turn','release-wave','trigger-event','timer','map-link','map-move','save','stage-prepared','unstage-prepared','load-prepared','map-prepare','start','pause','resume','next','end','clear','approve','reject','window','close-window','resolve','roll','resolve-reaction','correct','condition','ambush','trigger-prepared']);
 const publicPending=p=>p?{id:p.id,actorId:p.actorId,actorName:p.actorName,optionId:p.actorKind==='player'?p.optionId:'',name:p.actorKind==='player'?p.name:'Creature action',status:p.status,targetIds:p.targetIds,ap:p.ap,bonus:p.bonus,apPaid:Boolean(p.prepaidAP),costs:p.actorKind==='player'?p.costs:{},reactionWindow:p.status==='reactions',reactorId:p.window?.[p.windowIndex||0]?.actorId||'',reactionChoices:p.window?.[p.windowIndex||0]?.choices||[],reaction:p.reaction?{actorId:p.reaction.actorId,name:p.reaction.name}:null,message:p.publicMessage||''}:null;
 
 // An extension of asteriaAction: one encounter document, existing resource/effect
@@ -50,11 +54,32 @@ export function createCombatCommands(context) {
       if(session.status!=='active'||effectTimeMs(session.expiresAt)<=now)throw new Error('The GM must start the live session first.');
       if(management.has(input.operation)&&!gm)throw new Error('Only the campaign GM can use this combat control.');
       let encounter={status:'ready',round:1,turnIndex:0,combatants:[],enemies:[],...encounterSnap.data()};
+      if(['stage-prepared','unstage-prepared'].includes(input.operation)){
+        const workspace=gmSnap.data()||{};
+        const plan=normalizePreparedEncounters(workspace.preparedEncounters)
+          .find(row=>row.id===input.preparedId);
+        const combatState=workspace.combatState||{};
+        const stagedEncounters=updateStagedEncounter(combatState.stagedEncounters,input,plan,now);
+        tx.set(gmRef,{combatState:{...combatState,stagedEncounters}},{merge:true});
+        return {ok:true,revision:Number(encounter.combat?.revision||0)};
+      }
+      if(encounter.paused===true&&!recoveryOperations.has(input.operation)&&!['resume','end','correct','condition'].includes(input.operation))
+        throw new Error('Combat is paused. Resume the encounter before continuing.');
       const oldRevision=Number(encounter.combat?.revision||0);
       if(input.revision!==oldRevision)throw new Error('Combat changed. Wait for live sync and try again.');
       encounter.combat={participants:{},log:[],...encounter.combat};
       const privateState=copy(gmSnap.data()?.combatState||{pending:null});
       privateState.preparations=privateState.preparations||{};
+      if(recoveryOperations.has(input.operation))return applyEncounterRecovery({
+        tx,db,doc,campaignId,encounterRef,gmRef,gmSnap,encounter,privateState,input,now,
+        uid:currentUser.uid,requestId:context.requestId,serverTimestamp,
+        isLinked:(id,character)=>isLinkedCharacter(campaign,id,character,campaignId)
+      });
+      if(input.operation==='clear'&&encounter.reopened===true)
+        throw Error('Complete the reopened encounter before clearing it.');
+      if(encounter.status==='active'&&!encounter.combat.turnsTaken)
+        encounter.combat.turnsTaken=Object.fromEntries(encounter.combatants
+          .slice(0,(encounter.turnIndex??0)+1).map(row=>[row.id,true]));
       const loading=input.operation==='load-prepared';
       const prepared=loading?normalizePreparedEncounters(gmSnap.data()?.preparedEncounters)
         .find(plan=>plan.id===input.preparedId):null;
@@ -143,6 +168,7 @@ export function createCombatCommands(context) {
       };
       const startTurn=()=>{
         const current=currentCombatant(encounter);if(!current)return;
+        encounter.combat.turnsTaken={...encounter.combat.turnsTaken,[current.id]:true};
         encounter.turnTimer=resetLiveTurnTimer(encounter.turnTimer||{},now);
         const previous=state(current.id),turns=(previous.turns||0)+1;
         setState(current.id,{ap:3,bonus:true,turns,prepared:null,disengaged:false,movement:null,turnStartedAt:now,pendingDeathSave:false,turnComplete:false,apSpends:[]});
@@ -277,6 +303,10 @@ export function createCombatCommands(context) {
           encounter.status='ready';encounter.turnIndex=0;encounter.round=1;
           encounter.preparedMapId=prepared.mapId||'';
           encounter.preparedEncounterId=prepared.id;
+          encounter.initiativeMode=prepared.initiativeMode;
+          encounter.name=prepared.name;
+          privateState.preparedDetails={description:prepared.description,notes:prepared.notes,
+            environment:prepared.environment,rewardNotes:prepared.rewardNotes};
           privateState.encounterSchedule=stageEncounterSchedule(prepared,now);
           encounter.publicEvent=null;
           // A previous encounter's turn state must never leak into a newly loaded template.
@@ -285,12 +315,26 @@ export function createCombatCommands(context) {
           privateState.apSpends={};
         }
         noPending();const requested=loading?{combatants:incoming}:input.encounter||{};
-        const previousRows=encounter.combatants,oldCurrent=currentCombatant(encounter),oldIds=new Set(previousRows.map(row=>row.id));
-        const nextRows=(requested.combatants||[]).filter(row=>!unavailable.has(row.characterId)).map(row=>{if(!/^[A-Za-z0-9_-]{1,160}$/.test(row.id))throw new Error('Invalid participant ID.');const old=entry(row.id);if(old&&old.characterId!==row.characterId)throw new Error('Remove a participant before changing its character link.');const next=old?{...old,defeated:Boolean(row.defeated)}:row.characterId?{id:row.id,characterId:row.characterId,name:characters.get(row.characterId)?.name||'Character',kind:'player',initiative:0}: {...copy(row),kind:'enemy',...encounterSourceResources(row)};if(encounter.status!=='active'&&row.initiativeSet===true){next.initiative=bounded(row.initiative,-100,1000);next.initiativeSet=true;}return next;});
-        if(new Set(nextRows.map(row=>row.id)).size!==nextRows.length)throw new Error('Duplicate participant.');
+        if(requested.initiativeMode!==undefined){
+          if(!ENCOUNTER_INITIATIVE_MODES.has(requested.initiativeMode))
+            throw new Error('Choose automatic, manual, or mixed initiative.');
+          if(encounter.status==='active')
+            throw new Error('Initiative mode cannot change during active combat.');
+          encounter.initiativeMode=requested.initiativeMode;
+        }
+        const oldCurrent=currentCombatant(encounter),oldIds=new Set(encounter.combatants.map(row=>row.id));
+        const nextRows=(requested.combatants||[]).filter(row=>!unavailable.has(row.characterId)).map(row=>{if(!/^[A-Za-z0-9_-]{1,160}$/.test(row.id))throw new Error('Invalid participant ID.');const old=entry(row.id);if(old&&old.characterId!==row.characterId)throw new Error('Remove a participant before changing its character link.');const next=old?{...old,defeated:Boolean(row.defeated)}:row.characterId?{id:row.id,characterId:row.characterId,name:characters.get(row.characterId)?.name||'Character',kind:'player',initiative:0}: {...copy(row),kind:'enemy',...encounterSourceResources(row)};if((encounter.status!=='active'||!old)&&row.initiativeSet===true){next.initiative=bounded(row.initiative,-100,1000);next.initiativeSet=true;}return next;});
+        const linkedIds=nextRows.map(row=>row.characterId).filter(Boolean);
+        if(new Set(nextRows.map(row=>row.id)).size!==nextRows.length||new Set(linkedIds).size!==linkedIds.length)
+          throw new Error('Duplicate participant.');
+        if(loading&&prepared.playerIds.some(id=>unavailable.has(id)))
+          throw Error('A character selected in the template is no longer linked to this campaign.');
         encounter.combatants=nextRows;
         for(const row of nextRows)if(!oldIds.has(row.id)){
-          if(encounter.status==='active'&&!row.initiativeSet){const result=initiativeResult(get(row.id),roll(),roll(),{now,encounter});row.initiative=result.total;row.initiativeRoll=result;}
+          if(encounter.status==='active'&&!row.initiativeSet){
+            if(needsManualInitiative(row,initiativeMode(encounter.initiativeMode)))
+              throw Error('Set manual initiative before adding this participant.');
+            const result=initiativeResult(get(row.id),roll(),roll(),{now,encounter});row.initiative=result.total;row.initiativeRoll=result;}
           if(row.initiativeSet===undefined&&!row.initiativeRoll)row.initiativeSet=false;
           setState(row.id,{ap:0,bonus:false,turns:0});
         }
@@ -299,9 +343,9 @@ export function createCombatCommands(context) {
           if(!nextRows.some(row=>row.id===oldCurrent?.id)){
             if(!unavailable.has(oldCurrent?.characterId))throw new Error('Advance the current turn before removing its participant.');
             if(!nextRows.length)throw new Error('End combat before removing its last participant.');
-            const previousIndex=previousRows.findIndex(row=>row.id===oldCurrent.id);
-            const successor=[...previousRows.slice(previousIndex+1),...previousRows.slice(0,previousIndex)].find(row=>nextRows.some(next=>next.id===row.id))||nextRows[0];
-            if(previousRows.findIndex(row=>row.id===successor.id)<=previousIndex)encounter.round++;
+            const waiting=nextRows.find(row=>!Object.hasOwn(encounter.combat.turnsTaken,row.id));
+            if(!waiting){encounter.round++;encounter.combat.turnsTaken={};}
+            const successor=waiting||nextRows[0];
             encounter.turnIndex=encounter.combatants.findIndex(row=>row.id===successor.id);startTurn();
           }else encounter.turnIndex=encounter.combatants.findIndex(row=>row.id===oldCurrent.id);
         }
@@ -317,6 +361,8 @@ export function createCombatCommands(context) {
           // An edited manual roster must never silently edit the private wave template.
           // The existing schedule remains a snapshot of the last prepared load.
         }
+        if(loading&&Array.isArray(privateState.stagedEncounters))
+          privateState.stagedEncounters=privateState.stagedEncounters.filter(row=>row.id!==prepared.id);
         log(loading?'GM loaded prepared encounter: '+prepared.name+'.':'GM updated encounter participants.');
       }else if(input.operation==='map-prepare'){
         if(encounter.status==='active'||privateState.pending)
@@ -370,8 +416,14 @@ export function createCombatCommands(context) {
         noPending();if(encounter.status==='active'&&encounter.combat?.version===1)throw new Error('The encounter is already active.');
         if(!encounter.combatants.length)throw new Error('Add participants first.');
         if(!['ready','ended','active'].includes(encounter.status))throw new Error('Prepare the encounter before starting combat.');
+        const mode=initiativeMode(encounter.initiativeMode);
+        const missing=encounter.combatants.filter(row=>needsManualInitiative(row,mode)&&!row.initiativeSet);
+        if(missing.length)
+          throw new Error('Set manual initiative for '+missing.map(row=>row.name||row.id).slice(0,5).join(', ')+
+            (missing.length>5?' and '+(missing.length-5)+' others':'')+' before starting combat.');
+        encounter.initiativeMode=mode;
         encounter.status='active';encounter.round=1;encounter.turnIndex=0;
-        encounter.publicEvent=null;encounter.combatId=context.requestId;encounter.combat.participants={};encounter.combat.firstAid={};encounter.combat.version=1;
+        encounter.publicEvent=null;encounter.combatId=context.requestId;encounter.combat.participants={};encounter.combat.firstAid={};encounter.combat.turnsTaken={};encounter.combat.version=1;
         for(const row of encounter.combatants){if(!row.initiativeSet){const result=initiativeResult(get(row.id),roll(),roll(),{now,encounter});row.initiative=result.total;row.initiativeRoll=result;}setState(row.id,{ap:0,bonus:false,turns:0,turnComplete:false});}
         encounter.combatants.sort(initiativeOrder);startTurn();
         if(preparedMapRef){
@@ -402,6 +454,8 @@ export function createCombatCommands(context) {
         for(const enemy of enemies){
           const next={...enemy,...encounterSourceResources(enemy)};
           if(next.initiativeSet!==true){
+            if(needsManualInitiative(next,initiativeMode(encounter.initiativeMode)))
+              throw Error('Set manual initiative on each planned reinforcement before releasing this wave.');
             const result=initiativeResult(next,roll(),roll(),{now,encounter});
             next.initiative=result.total;next.initiativeRoll=result;
           }
@@ -436,6 +490,27 @@ export function createCombatCommands(context) {
         }
         // Event text does not directly mutate HP, AP, initiative or conditions.
         log('GM triggered '+event.type+' event: '+event.name+'.');
+      }else if(input.operation==='pause'||input.operation==='resume'){
+        requireActive();
+        const pausing=input.operation==='pause';
+        if(!pausing&&encounter.paused!==true)throw new Error('Combat is not paused.');
+        if(pausing){
+          const timer=encounter.turnTimer;
+          privateState.resumeTurnTimer=Boolean(timer?.enabled&&timer.endsAt>now);
+          if(timer?.enabled){
+            encounter.turnTimer={...timer,enabled:false,paused:true,endsAt:null,
+              remainingSeconds:Math.max(0,Math.ceil((timer.endsAt-now)/1000))};
+          }
+        }else{
+          const timer=encounter.turnTimer;
+          if(privateState.resumeTurnTimer&&timer?.remainingSeconds>0){
+            encounter.turnTimer={...timer,enabled:true,paused:false,
+              endsAt:now+timer.remainingSeconds*1000};
+          }
+          delete privateState.resumeTurnTimer;
+        }
+        encounter.paused=pausing;
+        log(pausing?'GM paused the encounter.':'GM resumed the encounter.',{actorUid:currentUser.uid});
       }else if(input.operation==='timer'){
         if(!gm)throw new Error('Only the GM may configure the combat turn timer.');
         encounter.turnTimer=applyLiveTimerCommand(encounter.turnTimer||{},input,
@@ -449,9 +524,28 @@ export function createCombatCommands(context) {
         if(state(actorId).pendingDeathSave)throw new Error('Resolve the pending death save before ending this turn.');
         if(state(actorId).turnComplete)throw new Error('This turn is already complete.');
         setState(actorId,{turnComplete:true});log(`${entry(actorId).name} ends their turn; unused AP held for reactions. Waiting for the GM to advance.`);
-      }else if(input.operation==='next'){
-        requireActive();noPending();const current=currentCombatant(encounter);if(state(current.id).pendingDeathSave)throw new Error('Resolve the pending death save before ending this turn.');conditionBoundary(current.id,'end');
-        encounter.turnIndex=(encounter.turnIndex+1)%encounter.combatants.length;if(encounter.turnIndex===0)encounter.round++;startTurn();
+      }else if(['next','skip-turn','override-turn'].includes(input.operation)){
+        requireActive();noPending();
+        const current=currentCombatant(encounter);
+        if(!current)throw Error('No participant is taking a turn.');
+        if(state(current.id).pendingDeathSave)throw Error('Resolve the pending death save before ending this turn.');
+        const reason=text(input.reason,160);
+        if(input.operation!=='next'&&!reason)throw Error('Record a reason for this turn change.');
+        const waiting=encounter.combatants.filter(row=>!Object.hasOwn(encounter.combat.turnsTaken,row.id));
+        const override=input.operation==='override-turn';
+        const target=override?waiting.find(row=>row.id===input.targetId):waiting[0];
+        if(override&&!target)throw Error('Choose a participant who has not taken a turn this round.');
+        conditionBoundary(current.id,'end');
+        if(!target){encounter.round++;encounter.combat.turnsTaken={};}
+        const successor=target||encounter.combatants[0];
+        encounter.turnIndex=encounter.combatants.findIndex(row=>row.id===successor.id);
+        if(input.operation!=='next'){
+          setState(current.id,{turnComplete:true});
+          log(`GM ${override?'overrode':'skipped'} ${current.name}'s turn: ${reason}`,{
+            actorUid:currentUser.uid,reason,previousActorId:current.id,nextActorId:successor.id
+          });
+        }
+        startTurn();
       }else if(input.operation==='end'||input.operation==='clear'){
         if(input.operation==='end'){
           requireActive();
@@ -464,18 +558,26 @@ export function createCombatCommands(context) {
           });
           const historyRef=doc(db,'campaigns',campaignId,'encounterHistory',history.id);
           const existingHistory=await tx.get(historyRef);
-          if(existingHistory.exists())
-            throw new Error('This encounter was already completed and archived.');
-          tx.set(historyRef,{...history,createdAt:serverTimestamp(),
-            updatedAt:serverTimestamp()});
+          const previous=existingHistory.data();
+          const record=nextCompletionRecord(history,previous);
+          const recoveryRef=doc(db,'campaigns',campaignId,'encounterHistory',history.id,'recovery','latest');
+          const revisionRef=doc(db,'campaigns',campaignId,'encounterHistory',history.id,
+            'completionRevisions',String(record.completionNumber));
+          const checkpoint=captureEncounterRecovery(encounter,privateState,boundMap,now);
+          tx.set(recoveryRef,checkpoint);
+          tx.set(revisionRef,{...history,completionNumber:record.completionNumber});
+          tx.set(historyRef,{...record,createdAt:previous?.createdAt??serverTimestamp(),updatedAt:serverTimestamp()});
         }
         if(privateState.pending)log(`GM closes the pending ${privateState.pending.status} action at combat end; committed costs remain spent.`);
         privateState.pending=null;privateState.preparations={};privateState.apSpends={};
         encounter.combatants=encounter.combatants.filter(row=>!unavailable.has(row.characterId));
         encounter.enemies=encounter.combatants.filter(row=>!row.characterId).map(copy);
         for(const row of encounter.combatants){const character=get(row.id);character.conditions=rows(character.conditions).map(condition=>condition.encounterId||condition.throughOwnTurn!==undefined?{...condition,encounterId:'',untilRound:0,pendingGMExpiry:true}:condition);put(row.id,character);}
+        delete privateState.resumeTurnTimer;
+        delete encounter.paused;
+        delete encounter.reopened;
         encounter.status=input.operation==='end'?'ended':'ready';
-        encounter.publicEvent=null;encounter.turnIndex=null;encounter.combat.participants={};encounter.combat.firstAid={};
+        encounter.publicEvent=null;encounter.turnIndex=null;encounter.combat.participants={};encounter.combat.firstAid={};encounter.combat.turnsTaken={};
         for(const key of ['turnTimer','timer'])if(encounter[key])encounter[key]={...encounter[key],enabled:false,endsAt:null};
         if(boundMap&&boundMap.combatId===encounter.combatId){
           tx.update(mapRef,{combatId:'',tokens:(boundMap.tokens||[]).filter(token=>!token.combatantId),updatedAt:serverTimestamp()});
@@ -484,7 +586,8 @@ export function createCombatCommands(context) {
         if(input.operation==='clear'){
           encounter.combatants=[];encounter.enemies=[];encounter.turnIndex=0;encounter.round=1;
           privateState.encounterSchedule=null;encounter.publicEvent=null;
-          encounter.preparedEncounterId='';
+          encounter.preparedEncounterId='';encounter.initiativeMode='automatic';encounter.name='';
+          delete privateState.preparedDetails;
         }
         log('Combat ended; remaining resources and conditions retained.');
       }else if(input.operation==='correct'){
@@ -493,8 +596,21 @@ export function createCombatCommands(context) {
         if(input.resource){let next=input.current!==undefined?setEncounterResource(character,input.resource,bounded(input.current),input.maximum===undefined?undefined:bounded(input.maximum)):changeCombatHP(character,bounded(input.amount),{damage:input.damage===true,nonlethal:input.nonlethal===true,now});if(input.resource==='hp'&&input.current!==undefined){if(resourcePair(next.hp)[0]>0)delete next.downed;else if(!next.downed)next.downed={successes:0,failures:0,dead:false};}put(id,next);}
         if(input.ap!==undefined)setState(id,{ap:bounded(input.ap,0,3)});
         if(input.bonus!==undefined)setState(id,{bonus:input.bonus===true});
-        if(input.initiative!==undefined){if(encounter.status==='active')throw new Error('Initiative positions cannot be delayed or reordered during combat.');entry(id).initiative=bounded(input.initiative,-100,1000);}
-        log(`GM correction for ${entry(id).name}: ${reason}`);
+        const audit={actorUid:currentUser.uid,targetId:id,reason};
+        if(input.initiative!==undefined){
+          noPending();
+          const participant=entry(id);
+          const actingId=currentCombatant(encounter)?.id;
+          audit.previousInitiative=participant.initiative??null;
+          participant.initiative=bounded(input.initiative,-100,1000);
+          participant.initiativeSet=true;
+          if(actingId){
+            encounter.combatants.sort(initiativeOrder);
+            encounter.turnIndex=encounter.combatants.findIndex(row=>row.id===actingId);
+          }
+          audit.initiative=participant.initiative;
+        }
+        log(`GM correction for ${entry(id).name}: ${reason}`,audit);
       }else if(input.operation==='condition'){
         const id=input.targetId||actorId;let character=get(id);
         if(input.condition.action==='remove')character=removeCondition(character,input.condition.id,{isGM:true,uid:currentUser.uid,now});

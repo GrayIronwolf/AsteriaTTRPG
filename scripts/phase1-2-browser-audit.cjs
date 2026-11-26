@@ -490,6 +490,45 @@ async function metrics(page) {
       'Combat workspace causes horizontal overflow: '+JSON.stringify(layout));
     await p.screenshot({path:path.join(root,'09-gm-combat-mobile.png'),fullPage:true});
   });
+  await scenario('09b-gm-encounter-recovery-controls',{width:390,height:844},async p=>{
+    await gm(p);
+    await p.getByTestId('asteria-gm-hybrid-menu')
+      .getByRole('button',{name:'Combat',exact:true}).click();
+    await p.getByTestId('asteria-dashboard-card-dropdown')
+      .getByRole('button',{name:'Open Combat Command Centre',exact:true}).click();
+    const combat=p.getByTestId('site-gm-combat');
+    await combat.getByTestId('site-combat-tools-toggle').click();
+    const tools=combat.getByRole('complementary',{name:'Combat Command Centre tools'});
+    await tools.getByRole('button',{name:'Encounter Builder',exact:true}).press('Enter');
+    const setup=combat.locator('[data-combat-panel="setup"]');
+    if(!await setup.count())await tools.getByRole('button',{name:/Encounter Setup/}).press('Enter');
+    const history=combat.getByTestId('site-gm-encounter-history');
+    if(!await history.count()){
+      await tools.getByRole('button',{name:'Rewards & History',exact:true}).press('Enter');
+      if(!await history.count())await tools.getByRole('button',{name:/Encounter Completion & History/}).press('Enter');
+    }
+    await combat.getByRole('button',{name:'Close Combat Tools menu'}).press('Enter');
+    const creature=setup.getByRole('group',{name:'Custom Creature / NPC'});
+    await creature.getByLabel('Name',{exact:true}).fill('Recovery test guard');
+    await creature.getByRole('button',{name:'Add Custom Creature'}).click();
+    const controls=combat.locator('[data-combat-panel="controls"]');
+    await controls.getByRole('button',{name:'Start Combat',exact:true}).click();
+    await controls.getByRole('button',{name:'Pause Combat',exact:true}).click();
+    await controls.getByRole('button',{name:'Resume Combat',exact:true}).waitFor();
+    assert.equal(await controls.getByRole('button',{name:'Advance Turn',exact:true}).isDisabled(),true);
+    await controls.getByRole('button',{name:'Resume Combat',exact:true}).click();
+    await combat.getByText('GM encounter snapshots',{exact:true}).click();
+    await combat.getByLabel('Snapshot name',{exact:true}).fill('Before the guard acts');
+    await combat.getByRole('button',{name:'Save Snapshot',exact:true}).click();
+    await combat.getByText(/Before the guard acts ·/).waitFor();
+    p.on('dialog',dialog=>dialog.accept());
+    await controls.getByRole('button',{name:'End Combat',exact:true}).click();
+    await history.getByLabel('Reason for reopening').fill('Continue the original encounter');
+    await history.getByRole('button',{name:'Reopen Encounter',exact:true}).click();
+    await controls.getByRole('button',{name:'Resume Combat',exact:true}).waitFor();
+    assert.equal(await controls.getByRole('button',{name:'Advance Turn',exact:true}).isDisabled(),true);
+    await history.getByText('Completion 1 · Reopened',{exact:true}).waitFor();
+  });
   await scenario('10-gm-combat-camera-and-player-resources',{width:1440,height:900},async p=>{
     await gm(p);
     await p.getByTestId('asteria-gm-hybrid-menu')

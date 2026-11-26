@@ -152,6 +152,37 @@ test('canvas content modes and resized geometry persist privately without changi
  }
 });
 
+test('Combat recovery uses one authoritative transaction across concurrent GM sessions',async()=>{
+  const ref=db.doc('campaigns/c/systems/encounter');
+  const command=(operation,revision,details={},requestId=crypto.randomUUID())=>
+    action('gm','combatCommand',['c','encounter',{operation,revision,...details}],requestId);
+  const combatants=[{id:'player-a',characterId:'a',initiative:20,initiativeSet:true},
+    {id:'player-b',characterId:'b',initiative:10,initiativeSet:true}];
+  assert.equal((await command('save',0,{encounter:{combatants}})).ok,true);
+  assert.equal((await command('start',1)).ok,true);
+  const started=(await ref.get()).data();
+  const results=await Promise.all([command('next',2),command('next',2)]);
+  assert.equal(results.filter(row=>row.ok).length,1);
+  assert.match(results.find(row=>!row.ok).error,/Combat changed/);
+  const advanced=(await ref.get()).data();
+  assert.equal(advanced.round,1);
+  assert.equal(advanced.combatants[advanced.turnIndex].id,'player-b');
+  const capture={name:'Before the next action'};
+  const replay=[await command('save-snapshot',3,capture,'stable-save'),await command('save-snapshot',3,capture,'stable-save')];
+  assert.deepEqual(...replay);
+  const index='campaigns/c/encounterHistory/'+started.combatId+'/recovery/snapshotIndex';
+  const reconnected=await assertSucceeds(getDoc(doc(user('gm'),index)));
+  assert.deepEqual(reconnected.data().entries.map(row=>row.name),[capture.name]);
+  assert.equal((await command('end',3)).ok,true);
+  const reopen={encounterId:started.combatId,expectedHistoryRevision:1,reason:'Resume original fight'};
+  assert.equal((await command('reopen',4,reopen)).ok,true);
+  const restored=(await ref.get()).data();
+  assert.equal(restored.combatId,started.combatId);
+  assert.equal(restored.paused,true);
+  assert.equal(restored.turnIndex,advanced.turnIndex);
+  assert.deepEqual(restored.combat.participants,advanced.combat.participants);
+});
+
 test('Combat Command Centre prepared plans and completed history are GM-only, and revocation takes effect immediately',async()=>{
   const history='campaigns/c/encounterHistory/combat-1';
   const workspace='campaigns/c/systems/gmWorkspace';
@@ -167,6 +198,22 @@ test('Combat Command Centre prepared plans and completed history are GM-only, an
   const gmHistory=doc(user('gm'),history);
   assert.equal((await assertSucceeds(getDoc(gmHistory))).data().name,'Fixture encounter');
   await assertSucceeds(getDocs(collection(user('gm'),'campaigns/c/encounterHistory')));
+  const index=history+'/recovery/snapshotIndex',checkpoint=history+'/recovery/private';
+  const edition=history+'/completionRevisions/1';
+  await db.doc(index).set({entries:[{id:'private',name:'Before the fight'}]});
+  await db.doc(checkpoint).set({encounter:{name:'Hidden enemies'}});
+  await db.doc(edition).set({rounds:3});
+  await assertSucceeds(getDoc(doc(user('gm'),index)));
+  await assertSucceeds(getDoc(doc(user('gm'),edition)));
+  await assertFails(getDoc(doc(user('gm'),checkpoint)));
+  await assertFails(setDoc(doc(user('gm'),checkpoint),{encounter:{}}));
+  await assertFails(updateDoc(doc(user('gm'),index),{entries:[]}));
+  await assertFails(deleteDoc(doc(user('gm'),edition)));
+  for(const uid of ['alice','bob','eve']){
+    await assertFails(getDoc(doc(user(uid),index)));
+    await assertFails(getDoc(doc(user(uid),checkpoint)));
+    await assertFails(getDoc(doc(user(uid),edition)));
+  }
   await assertSucceeds(getDoc(doc(user('gm'),workspace)));
   for(const uid of ['alice','bob','eve']){
     await assertFails(getDoc(doc(user(uid),history)));

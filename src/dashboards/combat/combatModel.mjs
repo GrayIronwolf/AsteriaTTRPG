@@ -31,8 +31,8 @@ export const COMBAT_BASIC_DECLARATIONS=Object.freeze([
 ]);
 export const COMBAT_PLAYER_COMMANDS=Object.freeze(['declare','spend-ap','end-turn','death-save']);
 export const COMBAT_GM_COMMANDS=Object.freeze([
-  'save','load-prepared','map-prepare','map-link','map-move',
-  'start','next','end','clear','timer','release-wave','trigger-event',
+  'save','stage-prepared','unstage-prepared','load-prepared','map-prepare','map-link','map-move',
+  'start','pause','resume','next','skip-turn','override-turn','reopen','save-snapshot','restore-snapshot','delete-snapshot','end','clear','timer','release-wave','trigger-event',
   'declare','prepare','ambush','approve','reject','cancel','window',
   'close-window','roll','resolve','pass','react','react-ability',
   'resolve-reaction','trigger-prepared','condition',
@@ -61,7 +61,9 @@ export function projectCombat(encounter={},session=null,{role='player',character
       name:title(row.name||saved?.name||'Participant',120)||'Participant',
       initiative:Number.isFinite(Number(row.initiative))?Number(row.initiative):null,
       initiativeSet:row.initiativeSet===true,defeated:row.defeated===true,
-      current:false,turnComplete:p.turnComplete===true,
+      current:false,...(gm?{actedThisRound:raw.combat?.turnsTaken
+        ?Object.hasOwn(raw.combat.turnsTaken,row.id):array(raw.combatants).findIndex(entry=>entry.id===row.id)<=raw.turnIndex}:{}),
+      turnComplete:p.turnComplete===true,
       ...(allowed&&!player?{
         ...safeEnemyProfile(saved||{}),
         conditions:array(saved?.conditions).slice(0,24).map(condition=>({
@@ -105,7 +107,7 @@ export function projectCombat(encounter={},session=null,{role='player',character
     targetIds:array(pending.targetIds).filter(validId).slice(0,40)
   }):null;
   const result={
-    status,revision:combatRevision(raw),round:Math.max(1,whole(raw.round,1)),
+    status,paused:active&&raw.paused===true,revision:combatRevision(raw),round:Math.max(1,whole(raw.round,1)),
     turnIndex:index,combatants:Object.freeze(roster),current:index>=0?roster[index]||null:null,
     ownActor:owned,isActive:active,sessionEditable:gmSessionState(session).editable,
     turnTimer,pending:safePending,
@@ -118,6 +120,8 @@ export function projectCombat(encounter={},session=null,{role='player',character
       })
     }:{}),
     ...(gm?{
+      combatId:validId(raw.combatId)?raw.combatId:'',
+      initiativeMode:['automatic','manual','mixed'].includes(raw.initiativeMode)?raw.initiativeMode:'automatic',
       battleMapId:validId(raw.battleMapId)?raw.battleMapId:'',
       preparedMapId:validId(raw.preparedMapId)?raw.preparedMapId:'',
       log:Object.freeze(array(raw.combat?.log).slice(0,30).map(row=>({

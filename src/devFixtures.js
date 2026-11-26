@@ -189,7 +189,7 @@ export function installDevFixtures() {
 
   // Local-only combat provider uses the SAME fixture encounter state. It is
   // never installed outside ?reactFixture=1 on a loopback host.
-  const combatListeners=new Set(),combatHistory=[];
+  const combatListeners=new Set(),combatHistory=[],fixtureSnapshots=new Map(),fixtureCheckpoints=new Map();
   const publishCombat=()=>{
     const projected=projectCombat(encounter,session,{role:'gm',party:Object.values(characters)});
     const state={combat:projected,session:{id:session.id,status:session.status,editable:session.status==='active'},
@@ -206,15 +206,23 @@ export function installDevFixtures() {
       return()=>combatListeners.delete(onUpdate);
     },
     watchGMHistory:(_campaignId,onUpdate)=>{
-      queueMicrotask(()=>onUpdate(clone(combatHistory)));
-      return()=>{};
+      const listener=()=>onUpdate(clone(combatHistory));
+      combatListeners.add(listener);
+      queueMicrotask(()=>{if(combatListeners.has(listener))listener();});
+      return()=>combatListeners.delete(listener);
+    },
+    watchEncounterSnapshots:(_campaignId,combatId,onUpdate)=>{
+      const listener=()=>onUpdate(clone(fixtureSnapshots.get(combatId)||[]));
+      combatListeners.add(listener);
+      queueMicrotask(()=>{if(combatListeners.has(listener))listener();});
+      return()=>combatListeners.delete(listener);
     },
     commandGM:async(_campaignId,actorId,input)=>{
       const nextRev=Number(encounter.combat?.revision||0)+1;
       const previous={...encounter};
       switch(input.operation){
       case 'start':
-        encounter={...encounter,status:'active',round:1,turnIndex:0,
+        encounter={...encounter,status:'active',combatId:eventId('combat'),round:1,turnIndex:0,
           combat:{version:1,revision:nextRev,participants:Object.fromEntries(
             (encounter.combatants||[]).map(x=>[x.id,{ap:3,bonus:true,turnComplete:false}]))}};
         break;
@@ -224,7 +232,34 @@ export function installDevFixtures() {
           round:Number(encounter.round||1)+(Number(encounter.turnIndex||0)+1>=
             (encounter.combatants||[]).length?1:0),combat:{...(encounter.combat||{}),revision:nextRev}};
         break;
-      case 'end':encounter={...encounter,status:'ended',combat:{...(encounter.combat||{}),revision:nextRev}};break;
+      case 'pause':
+      case 'resume':
+        encounter={...encounter,paused:input.operation==='pause',combat:{...encounter.combat,revision:nextRev}};
+        break;
+      case 'save-snapshot':{
+        const entries=fixtureSnapshots.get(encounter.combatId)||[];
+        fixtureSnapshots.set(encounter.combatId,[...entries,{id:eventId('snapshot'),name:input.name,at:Date.now()}]);
+        break;
+      }
+      case 'restore-snapshot':
+        encounter={...encounter,combat:{...encounter.combat,revision:nextRev}};
+        break;
+      case 'end':{
+        fixtureCheckpoints.set(encounter.combatId,clone(encounter));
+        combatHistory.unshift({id:encounter.combatId,name:'Fixture encounter',recoveryAvailable:true,
+          endedAt:Date.now(),status:'pending-review',rounds:encounter.round,revision:1,
+          participants:[],rewards:[],deliveries:{}});
+        encounter={...encounter,status:'ended',paused:false,combat:{...encounter.combat,revision:nextRev}};
+        break;
+      }
+      case 'reopen':{
+        const checkpoint=fixtureCheckpoints.get(input.encounterId);
+        if(!checkpoint)throw Error('No fixture checkpoint.');
+        const entry=combatHistory.find(row=>row.id===input.encounterId);
+        entry.reopened=true;entry.revision++;
+        encounter={...checkpoint,paused:true,combat:{...checkpoint.combat,revision:nextRev}};
+        break;
+      }
       case 'clear':encounter={status:'ready',round:1,turnIndex:0,combatants:[],enemies:[],combat:{revision:nextRev}};break;
       case 'save':encounter={...encounter,...(input.encounter||{}),combat:{...(encounter.combat||{}),revision:nextRev}};break;
       case 'map-prepare':encounter={...encounter,preparedMapId:input.mapId||'',combat:{...(encounter.combat||{}),revision:nextRev}};break;
