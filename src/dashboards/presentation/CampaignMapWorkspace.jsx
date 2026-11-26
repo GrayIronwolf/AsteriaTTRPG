@@ -5,7 +5,7 @@ import {
 } from './campaignMediaModel.mjs';
 import {paintFogStroke,createFogCells,hiddenFogRuns,measureGridDistance} from '../../state/battleMapFogModel.mjs';
 import {battleMapCameraView,DEFAULT_BATTLE_MAP_CAMERA,encounterMapLink} from '../../state/battleMapCamera.mjs';
-import {mapCell,mapCellCenter,mapCellKey,mapReachableRoutes,mapRoutePoints} from '../../state/battleMapRoutes.mjs';
+import {mapCell,mapCellCenter,mapCellKey,mapReachableRoutes,mapRoutePoints,hexCellPoints} from '../../state/battleMapRoutes.mjs';
 import {MAP_MOVE_AP} from '../../state/battleMapMovement.mjs';
 import {battleMapPoint} from '../../state/battleMapModel.mjs';
 import styles from './CampaignMapWorkspace.module.css';
@@ -13,7 +13,7 @@ import styles from './CampaignMapWorkspace.module.css';
 const empty=()=>({
   name:'',description:'',visibility:'gm',gridColumns:20,gridRows:15,
   gridOpacity:40,gridVisible:true,fogEnabled:false,
-  fogCells:createFogCells(20,15),metresPerCell:1,tokens:[]
+  fogCells:createFogCells(20,15),metresPerCell:1,tokens:[],gridType:'square',terrainCells:[]
 });
 const fileSize=async file=>{
   const url=URL.createObjectURL(file);
@@ -103,19 +103,23 @@ export function CampaignMapCanvas({api,campaignId,map,mode='player',atlas=false,
   const canMove=Boolean(marker&&movement?.distance>0&&!movement.disabled);
   const moveMode=tool==='move'&&canMove;
   const cols=map?.gridColumns||20,rows=map?.gridRows||15;
+  const hex=map?.gridType==='hex';
+  const hexShapes=useMemo(()=>hex?Array.from({length:rows*cols},(_,i)=>
+    hexCellPoints({column:i%cols,row:Math.floor(i/cols)},cols,rows)
+      .map(pair=>pair.join(',')).join(' ')):[],[hex,cols,rows]);
   const routes=useMemo(()=>tool==='move'&&canMove?mapReachableRoutes(map,marker,movement.distance,{
     occupied:map.tokens.filter(row=>row.id!==marker.id),diagonalParity:movement.diagonalParity,revealedOnly:true,
     movementKind:movement.routeKind||movement.approvedKind
   }):new Map(),[tool,canMove,map,marker,movement?.distance,movement?.diagonalParity,movement?.approvedKind,movement?.routeKind]);
   const route=destination?routes.get(destination):null;
-  const routePoints=route?mapRoutePoints(route,cols,rows):[];
+  const routePoints=route?mapRoutePoints(route,cols,rows,map.gridType):[];
   useEffect(()=>{setDestination(null);setMoveNotice('');setMoveQueued(false);},[map?.id,marker?.x,marker?.y]);
   useEffect(()=>setDestination(null),[movement?.revision]);
   const commitMove=async target=>{
     if(!target||moving||!moveMode)return;
     setMoving(true);setMoveNotice('');
     try{
-      const result=await movement.onMove(mapCellCenter(target,cols,rows));
+      const result=await movement.onMove(mapCellCenter(target,cols,rows,map.gridType));
       setDestination(null);setMoveQueued(result?.queued===true);
     }
     catch(error){setMoveNotice(error?.message||'The move could not be confirmed.');}
@@ -151,9 +155,9 @@ export function CampaignMapCanvas({api,campaignId,map,mode='player',atlas=false,
     const raw=battleMapPoint(
       (event.clientX-bounds.left)*100/bounds.width,
       (event.clientY-bounds.top)*100/bounds.height,
-      {columns:cols,rows,snap:showGrid&&map.gridVisible});
+      {columns:cols,rows,snap:showGrid&&map.gridVisible,gridType:map.gridType});
     if(moveMode){
-      const cell=mapCell(raw,cols,rows);
+      const cell=mapCell(raw,cols,rows,map.gridType);
       if(!cell)return;
       const key=mapCellKey(cell);
       if(!routes.has(key)||(fog&&fogCells[cell.row*cols+cell.column]!=='1')){
@@ -218,12 +222,31 @@ export function CampaignMapCanvas({api,campaignId,map,mode='player',atlas=false,
           ref={el=>{if(!el)return;if(playing)el.play().catch(()=>{});else el.pause();}}
           aria-label={'Looping map: '+map.name}/>
         :<img className={styles.image} src={media.url} alt={map.name}/>)}
-      {!atlas&&map.gridVisible&&showGrid?<div className={styles.grid} aria-hidden="true"
+      {!atlas&&map.gridVisible&&showGrid?(hex?<svg aria-hidden="true"
+        viewBox="0 0 100 100" preserveAspectRatio="none" className={styles.reachable}
+        style={{opacity:map.gridOpacity/100}}>
+        {hexShapes.map((points,index)=><polygon key={index} points={points}
+          fill="none" stroke="white" strokeWidth=".12"/>)}
+      </svg>:<div className={styles.grid} aria-hidden="true"
         style={{backgroundSize:(100/cols)+'% '+(100/rows)+'%',
-          opacity:map.gridOpacity/100}}/>:null}
+          opacity:map.gridOpacity/100}}/>):null}
+      {!atlas&&Array.isArray(map.terrainCells)&&map.terrainCells.length>0?<svg
+        aria-label="Map terrain overlay" viewBox="0 0 100 100" preserveAspectRatio="none"
+        className={styles.reachable} style={{pointerEvents:'none'}}>
+        {map.terrainCells.map(cell=>{
+          const fill={wall:'#c74444',water:'#317ec4',difficult:'#a87a32',
+            hazard:'#a8429c',cover:'#678663',stairs:'#989bb2'}[cell.kind]||'#94a1ae';
+          return hex?<polygon key={mapCellKey(cell)} points={hexCellPoints(cell,cols,rows)
+            .map(pair=>pair.join(',')).join(' ')} fill={fill} fillOpacity=".22"/>:
+            <rect key={mapCellKey(cell)} x={cell.column*100/cols} y={cell.row*100/rows}
+              width={100/cols} height={100/rows} fill={fill} fillOpacity=".22"/>;
+        })}
+      </svg>:null}
       {moveMode?<svg className={styles.reachable} data-move-kind={movement.approvedKind||'walk'}
         aria-label="Reachable destinations" viewBox="0 0 100 100" preserveAspectRatio="none">
         {[...routes.values()].filter(cell=>!fog||fogCells[cell.row*cols+cell.column]==='1').map(cell=>
+          hex?<polygon key={mapCellKey(cell)} points={hexCellPoints(cell,cols,rows)
+            .map(pair=>pair.join(',')).join(' ')}/>:
           <rect key={mapCellKey(cell)} x={cell.column*100/cols} y={cell.row*100/rows}
             width={100/cols} height={100/rows}/>)}
         {routePoints.length?<polyline points={routePoints.map(p=>p.x+','+p.y).join(' ')}/>:null}
@@ -280,6 +303,7 @@ export function CampaignMapWorkspace({api,campaignId,role='player',selectedMapId
       name:map.name,description:map.description,visibility:map.visibility,
       gridColumns:map.gridColumns,gridRows:map.gridRows,gridOpacity:map.gridOpacity,
       gridVisible:map.gridVisible,fogEnabled:map.fogEnabled,
+      gridType:map.gridType||'square',terrainCells:map.terrainCells||[],
       fogCells:map.fogCells,metresPerCell:map.metresPerCell,tokens:map.tokens
     }:empty());
     setError('');
@@ -347,6 +371,10 @@ export function CampaignMapWorkspace({api,campaignId,role='player',selectedMapId
         <label>Grid opacity<input type="number" min={0} max={100}
           value={draft.gridOpacity} onChange={e=>setDraft(d=>({...d,gridOpacity:Number(e.target.value)}))}/></label>
       </div>
+      <label>Grid geometry<select value={draft.gridType||'square'} disabled={Boolean(map?.combatId)}
+        onChange={e=>setDraft(d=>({...d,gridType:e.target.value}))}>
+        <option value="square">Square grid</option><option value="hex">Hexagonal grid</option>
+      </select></label>
       <label>Description<textarea maxLength={300} value={draft.description}
         onChange={e=>setDraft(d=>({...d,description:e.target.value}))}/></label>
       <div className={styles.controls}>
