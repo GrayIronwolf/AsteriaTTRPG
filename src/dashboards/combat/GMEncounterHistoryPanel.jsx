@@ -13,7 +13,7 @@ const fromHistory=record=>({
     currency:row.currency||{key:'copper',amount:0},items:row.items||[]
   }))
 });
-export function GMEncounterHistoryPanel({api,campaignId,busy=false}){
+export function GMEncounterHistoryPanel({api,campaignId,combat,onCommand,busy=false}){
   const [history,setHistory]=useState([]),[error,setError]=useState(''),
     [notice,setNotice]=useState(''),[loading,setLoading]=useState(true),
     [chosen,setChosen]=useState(''),[draft,setDraft]=useState(null),
@@ -58,7 +58,8 @@ export function GMEncounterHistoryPanel({api,campaignId,busy=false}){
     }catch(failure){setError(failure?.message||'Reward delivery was not confirmed. Do not retry until the record refreshes.');}
     finally{setSending(false);}
   };
-  const locked=busy||sending;
+  const [reopenReason,setReopenReason]=useState('');
+  const locked=busy||sending||selected?.reopened===true;
   return <section className={styles.panel} data-testid="site-gm-encounter-history">
     <h3>Encounter Completion &amp; History</h3>
     <p>Completed encounters are separate from reusable prepared templates.
@@ -74,6 +75,18 @@ export function GMEncounterHistoryPanel({api,campaignId,busy=false}){
       <p>Round {selected.rounds} · {selected.summary?.players||0} players ·
         {' '}{selected.summary?.defeatedEnemies||0} defeated enemies /
         {' '}{selected.summary?.enemies||0} total</p>
+      <p>Completion {selected.completionNumber||1}{selected.reopened?' · Reopened':''}</p>
+      {selected.recoveryAvailable&&combat?.sessionEditable&&!combat.isActive&&!selected.reopened?<div className={styles.fields}>
+        <label>Reason for reopening<input value={reopenReason} maxLength={160}
+          onChange={event=>setReopenReason(event.target.value)}/></label>
+        <button type="button" disabled={locked||!reopenReason.trim()}
+          onClick={()=>{
+            if(window.confirm('Reopen the original encounter in a paused state? This replaces the current setup. Character resources and reward receipts are kept.'))
+              onCommand('encounter',{operation:'reopen',encounterId:selected.id,
+                expectedHistoryRevision:selected.revision,reason:reopenReason.trim()});
+          }}>Reopen Encounter</button>
+      </div>:null}
+      {selected.reopened?<p>Complete the reopened encounter before reviewing or delivering rewards.</p>:null}
       <p>Suggested defeated-enemy XP: {selected.xpSuggested||0}
         {selected.xpUnconfigured?' ('+selected.xpUnconfigured+' enemies without configured XP)':''}.
         XP is not automatically divided or awarded.</p>

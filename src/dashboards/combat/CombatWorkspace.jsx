@@ -123,20 +123,55 @@ function Actions({combat,actor,disabled,onCommand,mode}){
       onClick={()=>onCommand(actor.id,{operation:'spend-ap',ap:cost})}>Spend selected AP</button></label>:null}
   </div>;
 }
+function GMEncounterSnapshots({api,campaignId,combat,busy,onCommand}){
+  const [entries,setEntries]=useState([]),[name,setName]=useState(''),[reason,setReason]=useState('');
+  const [error,setError]=useState('');
+  const activeId=combat.isActive?combat.combatId:'';
+  useEffect(()=>{
+    setEntries([]);setError('');setName('');setReason('');
+    if(!activeId||!api?.watchEncounterSnapshots)return undefined;
+    return api.watchEncounterSnapshots(campaignId,activeId,setEntries,
+      failure=>setError(failure?.message||'Encounter snapshots could not load.'));
+  },[api,campaignId,activeId]);
+  if(!activeId||!api?.watchEncounterSnapshots)return null;
+  const disabled=busy||!combat.sessionEditable;
+  return <details className={styles.section}>
+    <summary>GM encounter snapshots</summary>
+    <p>Restore map positions, fog and initiative. Current resources, AP and turn progress are kept.</p>
+    <div className={styles.fields}>
+      <label>Snapshot name<input value={name} maxLength={80}
+        onChange={event=>setName(event.target.value)}/></label>
+      <button type="button" disabled={disabled||!name.trim()||entries.length>=8}
+        onClick={()=>onCommand('encounter',{operation:'save-snapshot',name:name.trim()})}>Save Snapshot</button>
+      <label>Restore reason<input value={reason} maxLength={160}
+        onChange={event=>setReason(event.target.value)}/></label>
+    </div>
+    {entries.map(entry=><div className={styles.controls} key={entry.id}>
+      <span>{entry.name} · {new Date(entry.at).toLocaleString()}</span>
+      <button type="button" disabled={disabled||Boolean(combat.pending)||!reason.trim()}
+        onClick={()=>onCommand('encounter',{operation:'restore-snapshot',snapshotId:entry.id,
+          reason:reason.trim()})}>Restore</button>
+      <button type="button" disabled={disabled}
+        onClick={()=>{if(window.confirm('Remove this encounter snapshot?'))
+          onCommand('encounter',{operation:'delete-snapshot',snapshotId:entry.id});}}>Remove</button>
+    </div>)}
+    {error?<p role="alert">{error}</p>:null}
+  </details>;
+}
 export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigate=null,legacyEncounter=null,legacyCharacters={},legacyCombatState=null,renderPartyResources=null}){
   const stream=useCombatStream(api,'watchGM',[campaignId]);
   const [selected,setSelected]=useState(''),[busy,setBusy]=useState(false),
     [notice,setNotice]=useState(''),[error,setError]=useState('');
   const [enemy,setEnemy]=useState(emptyEnemy),[library,setLibrary]=useState('');
   const [selectedBattleMap,setSelectedBattleMap]=useState(null);
-  const [quickTemplateName,setQuickTemplateName]=useState('');
+  const [quickTemplateName,setQuickTemplateName]=useState(''),[reinforcementInitiative,setReinforcementInitiative]=useState('');
 
   const [resource,setResource]=useState('hp'),[amount,setAmount]=useState(''),
     [maximum,setMaximum]=useState(''),[reason,setReason]=useState('');
   const combat=stream.data?.combat;
   const current=selected&&combat?.combatants.find(row=>row.id===selected)||
     combat?.current||combat?.combatants[0]||null;
-  useEffect(()=>{setSelected('');setError('');setNotice('');setSelectedBattleMap(null);setQuickTemplateName('');},[campaignId]);
+  useEffect(()=>{setSelected('');setError('');setNotice('');setSelectedBattleMap(null);setQuickTemplateName('');setReinforcementInitiative('');},[campaignId]);
   const submit=async(actorId,input)=>{
     if(busy||!combat)return;
     setBusy(true);setNotice('');setError('');
@@ -166,11 +201,15 @@ export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigat
       add([creature]);setEnemy(emptyEnemy);
     }catch(failure){setError(failure.message);}
   };
+  const manualReinforcement=combat?.isActive&&['manual','mixed'].includes(combat.initiativeMode);
+  const validReinforcement=reinforcementInitiative!==''&&Number.isInteger(Number(reinforcementInitiative))&&
+    Number(reinforcementInitiative)>=-100&&Number(reinforcementInitiative)<=1000;
+  const withReinforcementInitiative=row=>({...row,initiativeSet:true,initiative:Number(reinforcementInitiative)});
   const addLibrary=()=>{
     const candidate=stream.data.library.find(row=>row.id===library);
     if(!candidate)return;
     const creature=libraryEnemy({...candidate,id:candidate.sourceId},'enemy-'+crypto.randomUUID());
-    add([creature]);
+    add([combat.initiativeMode==='manual'&&combat.isActive?withReinforcementInitiative(creature):creature]);
   };
   const saveQuickTemplate=async()=>{
     if(!combat?.sessionEditable||busy)return;
@@ -218,7 +257,8 @@ export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigat
 
       </CombatCommandPanel>
       <CombatCommandPanel id="history">
-        <GMEncounterHistoryPanel api={api} campaignId={campaignId} busy={busy}/>
+        <GMEncounterHistoryPanel api={api} campaignId={campaignId} busy={busy} combat={combat} onCommand={submit}/>
+        <GMEncounterSnapshots api={api} campaignId={campaignId} combat={combat} busy={busy} onCommand={submit}/>
       </CombatCommandPanel>
       <CombatCommandPanel id="enemyTracker">
         <EnemyCombatTracker combat={combat} onCommand={submit}
@@ -277,6 +317,9 @@ export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigat
       <CombatCommandPanel id="setup">
       {!combat.paused?<section className={styles.section}>
         <h3>Encounter Setup</h3>
+        {Object.entries(stream.data.preparedDetails||{}).filter(([,value])=>value).map(([key,value])=>
+          <p key={key}><strong>{({description:'Description',notes:'GM notes',environment:'Environment',
+            rewardNotes:'Reward notes'})[key]}</strong> {value}</p>)}
         <label>Initiative mode
           <select aria-label="Encounter initiative mode"
             value={combat.initiativeMode||'automatic'}
@@ -292,15 +335,26 @@ export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigat
         {combat.initiativeMode==='manual'||combat.initiativeMode==='mixed'?<p>
           Set the required initiative scores in the initiative panel before starting combat.
         </p>:null}
+        {manualReinforcement?<label>New participant initiative<input type="number" min="-100" max="1000"
+          value={reinforcementInitiative} onChange={event=>setReinforcementInitiative(event.target.value)}/></label>:null}
         <div className={styles.controls}>
-          <button type="button" disabled={busy||!combat.sessionEditable||
+          <button type="button" disabled={busy||!combat.sessionEditable||manualReinforcement||
             !stream.data.candidates.length}
             onClick={()=>add(stream.data.candidates)}>Add Linked Players</button>
+          {stream.data.candidates.length?<label>Add a character<select value=""
+            disabled={busy||!combat.sessionEditable||Boolean(combat.pending)||(manualReinforcement&&!validReinforcement)}
+            onChange={event=>{
+              const row=stream.data.candidates.find(candidate=>candidate.id===event.target.value);
+              if(row)add([manualReinforcement?withReinforcementInitiative(row):row]);
+            }}>
+            <option value="">Choose a linked character</option>
+            {stream.data.candidates.map(row=><option key={row.id} value={row.id}>{row.name}</option>)}
+          </select></label>:null}
           {stream.data.library.length?<label>Creature or NPC<select value={library}
             onChange={e=>setLibrary(e.target.value)}>
             <option value="">Select an existing GM source</option>
             {stream.data.library.map(row=><option key={row.id} value={row.id}>{row.name}</option>)}
-          </select><button disabled={busy||!combat.sessionEditable||!library}
+          </select><button disabled={busy||!combat.sessionEditable||!library||(combat.isActive&&combat.initiativeMode==='manual'&&!validReinforcement)}
             onClick={addLibrary}>Add Source</button></label>:null}
         </div>
         <fieldset className={styles.fields}><legend>Custom Creature / NPC</legend>
@@ -310,9 +364,10 @@ export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigat
             onChange={e=>setEnemy(x=>({...x,type:e.target.value}))}>
             <option>Creature</option><option>NPC</option></select></label>
           {['hp','sp','mp','xpReward','ac','initiative'].map(k=><label key={k}>
-            {k.toUpperCase()}<input type="number" min={k==='hp'?1:0}
+            {k.toUpperCase()}<input type="number" min={k==='initiative'?-100:k==='hp'?1:0}
               value={enemy[k]} onChange={e=>setEnemy(x=>({...x,[k]:e.target.value}))}/></label>)}
-          <button disabled={busy||!combat.sessionEditable||!enemy.name.trim()||!enemy.hp}
+          <button disabled={busy||!combat.sessionEditable||!enemy.name.trim()||!enemy.hp||
+            (combat.isActive&&combat.initiativeMode==='manual'&&enemy.initiative==='')}
             type="button" onClick={addEnemy}>Add Custom Creature</button>
         </fieldset>
       </section>:<p>Resume combat to change the roster.</p>}
@@ -381,7 +436,7 @@ export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigat
       <CombatCommandPanel id="prepared">
         <PreparedEncounterLibrary api={api} campaignId={campaignId}
           combat={combat} plans={stream.data.preparedEncounters||[]}
-          staged={stream.data.stagedEncounters||[]}
+          staged={stream.data.stagedEncounters||[]} party={stream.data.party||[]}
           maps={stream.data.maps||[]} mediaApi={mediaApi}
           library={stream.data.library||[]}/>
       </CombatCommandPanel>

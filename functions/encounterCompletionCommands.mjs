@@ -18,6 +18,7 @@ export function createEncounterCompletionCommands(context,{requireCampaignGM}){
           const history=snap.data();
           if(history.revision!==input.expectedRevision)
             throw Error('The encounter review changed. Refresh before continuing.');
+          if(history.reopened===true)throw Error('Complete the reopened encounter before reviewing rewards.');
           if(history.status!=='pending-review')
             throw Error('This encounter has already been approved for delivery.');
           if(input.type==='review'){

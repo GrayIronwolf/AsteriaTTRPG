@@ -143,6 +143,7 @@ export function createFirebaseCombatService({
                 combatLog:projectGMLiveLog(data.encounter?.combat?.log),
                 encounterSchedule:encounterScheduleForGM(data.workspace?.combatState),
                 party:gmPartySummary(data.roster),
+                preparedDetails:data.workspace?.combatState?.preparedDetails||null,
                 stagedEncounters:stagedEncounterList(data.workspace?.combatState?.stagedEncounters),
                 preparedEncounters:normalizePreparedEncounters(data.workspace?.preparedEncounters),
                 maps:data.maps
@@ -205,6 +206,22 @@ export function createFirebaseCombatService({
       }catch(error){if(active)onError?.(error);}
     })();
     return ()=>{active=false;stop?.();};
+  }
+  function watchEncounterSnapshots(id,combatId,onUpdate,onError){
+    let active=true,stop=()=>{};
+    (async()=>{
+      try{
+        const {uid}=await check(id,'gm');
+        if(!active)return;
+        const ref=firestoreSdk.doc(db,'campaigns',id,'encounterHistory',combatId,'recovery','snapshotIndex');
+        stop=firestoreSdk.onSnapshot(ref,{includeMetadataChanges:true},snapshot=>{
+          if(!active||snapshot.metadata?.fromCache||snapshot.metadata?.hasPendingWrites)return;
+          try{same(uid);onUpdate(snapshot.data()?.entries||[]);}
+          catch(error){onError(error);}
+        },failure=>{if(active)onError(failure);});
+      }catch(error){if(active)onError(error);}
+    })();
+    return ()=>{active=false;stop();};
   }
   async function completionAction(id,input){
     const {uid}=await check(id,'gm');
@@ -336,7 +353,7 @@ export function createFirebaseCombatService({
     same(uid);return result;
   }
   return Object.freeze({
-    availability:()=>flags,watchGM,watchPlayer,watchGMHistory,saveCreatureVariant,
+    availability:()=>flags,watchGM,watchPlayer,watchGMHistory,watchEncounterSnapshots,saveCreatureVariant,
     reviewCompletion:(id,input)=>completionAction(id,input),
     deliverCompletion,
     commandGM:(id,actorId,input)=>command(id,'gm','',actorId,input),

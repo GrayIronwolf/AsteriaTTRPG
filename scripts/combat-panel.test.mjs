@@ -1,6 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {executeAction} from '../functions/handler.mjs';
+import {assertApprovedEncounterDelivery} from '../src/state/encounterCompletionModel.mjs';
 import {prepareQuickEncounterTemplate} from '../src/state/preparedEncounterModel.mjs';
 import {tierBonus,spellAP,rollD20,checkResult,attackResult,counterspellResult,feedback,deathSave,changeCombatHP,mixedDamage,combatOptions,skillCheck,combatActive,currentCombatant,activeReactionWindow,basicReactionProblem,combatActionScope,manualAPProblem,optionProblem} from '../src/state/combatRules.mjs';
 import compendium from '../data/compendium.js';
@@ -17,7 +18,7 @@ function database(){
   const ref=path=>({path,id:path.split('/').at(-1)});
   const db={doc:ref,collection:path=>({...ref(path),doc:()=>ref(`${path}/random`)}),runTransaction:async fn=>{
     const next=new Map([...store].map(([k,v])=>[k,structuredClone(v)]));let writing=false;
-    const tx={get:async r=>{assert.equal(writing,false,'Firestore reads must precede writes');return {exists:next.has(r.path),data:()=>structuredClone(next.get(r.path)),id:r.id};},set:(r,value,options)=>{writing=true;next.set(r.path,options?.merge?{...next.get(r.path),...structuredClone(value)}:structuredClone(value));},update:(r,value)=>{writing=true;assert.ok(next.has(r.path));next.set(r.path,{...next.get(r.path),...structuredClone(value)});}};
+    const tx={get:async r=>{assert.equal(writing,false,'Firestore reads must precede writes');return {exists:next.has(r.path),data:()=>structuredClone(next.get(r.path)),id:r.id};},set:(r,value,options)=>{writing=true;next.set(r.path,options?.merge?{...next.get(r.path),...structuredClone(value)}:structuredClone(value));},update:(r,value)=>{writing=true;assert.ok(next.has(r.path));next.set(r.path,{...next.get(r.path),...structuredClone(value)});},delete:r=>{writing=true;next.delete(r.path);}};
     const result=await fn(tx);store.clear();for(const row of next)store.set(...row);return result;
   }};
   const encounter=()=>store.get('campaigns/c/systems/encounter');
@@ -457,4 +458,145 @@ test('saving a quick encounter resets copied creature resources and excludes liv
   assert.equal(plan.enemies[0].initiative,undefined);
   assert.equal(plan.enemies[0].id,undefined);
   assert.equal(plan.enemies[0].rewardReceipt,undefined);
+});
+
+test('reopening preserves original identity, completion revisions and approved reward receipts',async()=>{
+  const h=database();
+  await h.setup();
+  await h.command('gm','encounter','timer',{mode:'configure',seconds:60});
+  const combat=structuredClone(h.encounter());
+  const historyPath='campaigns/c/encounterHistory/'+combat.combatId;
+  assert.equal((await h.command('gm','encounter','end')).ok,true);
+  const manage=(uid,action)=>executeAction(h.db,uid,{action:'manageEncounterCompletion',
+    args:['c','encounter',{encounterId:combat.combatId,...action}],requestId:crypto.randomUUID()},()=>Date.now());
+  const first=h.store.get(historyPath);
+  const rewards=first.rewards.map(row=>row.characterId==='a'?{...row,xp:5,
+    currency:{key:'copper',amount:10},items:[{name:'Iron key',qty:1}]}:row);
+  const review={type:'review',expectedRevision:1,outcome:'victory',notes:'Reviewed',rewards};
+  assert.match((await manage('alice',review)).error,/Only a GM/);
+  assert.equal((await manage('gm',review)).ok,true);
+  assert.equal((await manage('gm',{type:'approve',expectedRevision:2,confirmation:'approve-rewards'})).ok,true);
+  assert.equal(first.completionNumber,1);
+  assert.equal(first.recoveryAvailable,true);
+  const grant=(action,args,requestId=crypto.randomUUID())=>
+    executeAction(h.db,'gm',{action,args:['c','a',...args],requestId},()=>Date.now());
+  const grantXP=()=>grant('grantCharacterXP',[5,'Approved encounter reward',combat.combatId]);
+  const grantBundle=()=>grant('grantGMRewardBundle',[{...rewards.find(row=>row.characterId==='a'),
+    encounterHistoryId:combat.combatId}]);
+  for(const deliver of [grantXP,grantBundle]){
+    const result=await deliver();
+    assert.equal(result.ok,true,result.error);
+  }
+  const approved=structuredClone(h.store.get(historyPath));
+  assert.ok(approved.deliveries.a.xp);
+  assert.ok(approved.deliveries.a.bundle);
+  const options={encounterId:combat.combatId,expectedHistoryRevision:approved.revision,reason:'Continue the original encounter'};
+  h.character('a').hp=[53,100];
+  const current=structuredClone(h.character('a'));
+  assert.match((await h.command('alice','encounter','reopen',options)).error,/Only the campaign GM/);
+  assert.match((await h.command('gm','encounter','reopen',{...options,expectedHistoryRevision:3})).error,/completion changed/);
+  const reopen=await h.command('gm','encounter','reopen',options);
+  assert.equal(reopen.ok,true,reopen.error);
+  assert.equal(h.encounter().paused,true);
+  assert.equal(h.encounter().combatId,combat.combatId);
+  assert.equal(h.encounter().round,combat.round);
+  assert.equal(h.encounter().turnIndex,combat.turnIndex);
+  assert.deepEqual(h.encounter().combat.participants,combat.combat.participants);
+  assert.deepEqual(h.character('a'),current);
+  assert.throws(()=>assertApprovedEncounterDelivery(h.store.get(historyPath),'a','xp',5),/reopened/);
+  assert.match((await h.command('gm','encounter','clear')).error,/paused/);
+  assert.equal((await h.command('gm','encounter','resume')).ok,true);
+  assert.equal(h.encounter().turnTimer.enabled,true);
+  assert.equal((await h.command('gm','encounter','end')).ok,true);
+  const revised=h.store.get(historyPath);
+  assert.equal(revised.completionNumber,2);
+  assert.equal(revised.status,'approved');
+  assert.equal(revised.reopened,false);
+  assert.deepEqual(revised.deliveries,approved.deliveries);
+  assert.match((await grantXP()).error,/already been delivered/);
+  assert.match((await grantBundle()).error,/already been delivered/);
+  assert.deepEqual(h.character('a').coins,current.coins);
+  assert.deepEqual(h.character('a').pendingItemRewards,current.pendingItemRewards);
+  assert.equal(h.character('a').xp,current.xp);
+  assert.throws(()=>assertApprovedEncounterDelivery(revised,'a','xp',5),/already been delivered/);
+  assert.throws(()=>assertApprovedEncounterDelivery(revised,'a','bundle',{}),/already been delivered/);
+  assert.equal(h.store.get(historyPath+'/completionRevisions/1').rounds,combat.round);
+  assert.equal(h.store.get(historyPath+'/completionRevisions/2').rounds,revised.rounds);
+});
+
+test('manual recovery restores mapped positions, fog and initiative without replaying combat',async()=>{
+  const h=database();
+  await h.setup();
+  const id=h.encounter().combatId;
+  const mapPath='campaigns/c/battleMaps/forest';
+  const baseMap={id:'forest',combatId:'',gridColumns:2,gridRows:2,metresPerCell:3,fogEnabled:true,fogCells:'1000',tokens:[]};
+  h.store.set(mapPath,baseMap);
+  assert.equal((await h.command('gm','encounter','map-link',{mapId:'forest'})).ok,true);
+  const map=structuredClone(h.store.get(mapPath));
+  const actor=currentCombatant(h.encounter());
+  const uid=actor.characterId==='a'?'alice':'bob';
+  const oldRevision=h.encounter().combat.revision;
+  assert.match((await h.command(uid,actor.id,'save-snapshot',{name:'Private'})).error,/Only the campaign GM/);
+  assert.equal((await h.command('gm','encounter','save-snapshot',{name:'Before the raid'},'checkpoint-one')).ok,true);
+  assert.equal(h.encounter().combat.revision,oldRevision);
+  assert.equal((await h.command(uid,actor.id,'spend-ap',{ap:1})).ok,true);
+  const state=structuredClone(h.encounter().combat.participants);
+  h.store.get(mapPath).tokens[0].x=50;
+  h.store.get(mapPath).fogCells='1111';
+  assert.equal((await h.command('gm',actor.id,'correct',{initiative:99,reason:'Try revised order'})).ok,true);
+  const input={snapshotId:'checkpoint-one',reason:'Restore recorded positions'};
+  assert.match((await h.command('gm','encounter','restore-snapshot',{...input,revision:oldRevision})).error,/Combat changed/);
+  const restore=await h.command('gm','encounter','restore-snapshot',input);
+  assert.equal(restore.ok,true,restore.error);
+  assert.deepEqual(h.store.get(mapPath).tokens,map.tokens);
+  assert.equal(h.store.get(mapPath).fogCells,'1000');
+  assert.deepEqual(h.encounter().combat.participants,state);
+  assert.equal(currentCombatant(h.encounter()).id,actor.id);
+  assert.equal(currentCombatant(h.encounter()).initiative,actor.initiative);
+  const root='campaigns/c/encounterHistory/'+id+'/recovery/';
+  assert.equal(h.store.get(root+'snapshotIndex').entries[0].name,'Before the raid');
+  assert.equal((await h.command('gm','encounter','delete-snapshot',input)).ok,true);
+  assert.equal(h.store.has(root+'checkpoint-one'),false);
+  assert.deepEqual(h.store.get(root+'snapshotIndex').entries,[]);
+});
+
+test('an audited override and skip keep each participant to one turn per round',async()=>{
+  const h=database();
+  const combatants=[{id:'player-a',characterId:'a',initiative:30,initiativeSet:true},
+    {id:'player-b',characterId:'b',initiative:20,initiativeSet:true},
+    {id:'guard',name:'Guard',hp:[20,20],initiative:10,initiativeSet:true}];
+  assert.equal((await h.command('gm','encounter','save',{encounter:{combatants}})).ok,true);
+  assert.equal((await h.command('gm','encounter','start')).ok,true);
+  const old=h.encounter().combat.revision;
+  assert.match((await h.command('alice','encounter','override-turn',{targetId:'guard',reason:'Override'})).error,/Only the campaign GM/);
+  assert.equal((await h.command('gm','encounter','override-turn',{targetId:'guard',reason:'Guard acts before Bob'})).ok,true);
+  assert.equal(currentCombatant(h.encounter()).id,'guard');
+  assert.match((await h.command('gm','encounter','next',{revision:old})).error,/Combat changed/);
+  assert.match((await h.command('gm','encounter','override-turn',{targetId:'player-a',reason:'No double turn'})).error,/not taken a turn/);
+  assert.equal((await h.command('gm','encounter','skip-turn',{reason:'Guard yields the turn'})).ok,true);
+  assert.equal(currentCombatant(h.encounter()).id,'player-b');
+  assert.equal(h.encounter().round,1);
+  assert.equal((await h.command('gm','encounter','next')).ok,true);
+  assert.equal(currentCombatant(h.encounter()).id,'player-a');
+  assert.equal(h.encounter().round,2);
+  assert.equal(h.encounter().combat.participants.guard.turns,1);
+});
+
+test('loading a prepared encounter applies the chosen roster and initiative policy privately',async()=>{
+  const h=database();
+  await h.setup();
+  await h.command('gm','encounter','end');
+  const workspace='campaigns/c/systems/gmWorkspace';
+  h.store.get(workspace).preparedEncounters=[{id:'prepared-tower',revision:1,name:'Tower',
+    notes:'GM secret',description:'A watchtower',environment:'Heavy rain',rewardNotes:'Review 5 XP',
+    initiativeMode:'mixed',playerIds:['b'],enemies:[{name:'Scout',hp:[10,10]}]}];
+  const load=await h.command('gm','encounter','load-prepared',{
+    preparedId:'prepared-tower',expectedPreparedRevision:1,confirmation:'replace-staged-enemies',replace:true
+  });
+  assert.equal(load.ok,true,load.error);
+  assert.equal(h.encounter().status,'ready');
+  assert.equal(h.encounter().initiativeMode,'mixed');
+  assert.deepEqual(h.encounter().combatants.filter(row=>row.characterId).map(row=>row.characterId),['b']);
+  assert.equal(h.store.get(workspace).combatState.preparedDetails.environment,'Heavy rain');
+  assert.equal(JSON.stringify(h.encounter()).includes('GM secret'),false);
 });

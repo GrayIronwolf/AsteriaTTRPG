@@ -1,63 +1,13 @@
-# Milestone 3.1 — Encounter Preparation & Management: Initial Repository Audit
+# Milestone 3.1 encounter management
 
-Branch: `milestone-3-1-encounter-management` (PR target: `Website-Build-Test`).
-Baseline: `b9c7a1f6e158980070c2e092ebc2f940e2c338d3` (Milestone 2.2).
-Status: **In progress; not a completed Milestone 3.1 acceptance. No production deployment.**
+This phase extends the existing revision-guarded combat transaction and private GM workspace. It keeps the existing public encounter statuses and uses an additional pause flag.
 
-## Existing code to preserve
+- A prepared template can include a private description, GM notes, environmental conditions, a reward plan, selected linked characters, initiative mode, map and token placement, enemies, waves and planned events. The preparation notes and staging queue stay GM-only. Environment notes do not assign any automatic gameplay penalties.
+- The GM can stage several templates without changing live combat. Loading a reviewed template and starting combat remain separate actions. The quick encounter setup edits the same live engine and can save a fresh reusable template.
+- Player End Turn updates the GM's live view without advancing. The GM can skip or change the next participant with a recorded reason. A participant does not get an extra turn or AP refresh because the order changes.
+- The GM can pause, resume and correct initiative without resetting the active participant, pending action or AP.
+- Completion keeps a server-owned original encounter checkpoint and immutable completion editions. Reopening starts the same encounter paused. Sheet resources retain their current values, and settled reward receipts stay on the original history record. A previously approved reward plan remains approved and is held while the encounter is reopened.
+- Manual recovery keeps up to eight named checkpoints per encounter. Restoration changes the saved combat-token positions, fog and initiative only. The roster, linked map, and map geometry must match. Current turn progress, AP, resources, campaign membership, and personal layouts are preserved.
+- Legacy completions created before this phase have no exact checkpoint. They remain available in history with their reward receipts. Exact reopening requires a completion recorded by this version.
 
-- `src/state/preparedEncounterModel.mjs`: GM-only reusable templates, bounded enemy roster, map spawn information, waves/events.
-- `src/state/preparedEncounterLibraryModel.mjs`: search, sort, archive, and duplicate prepared templates.
-- `src/state/preparedEncounterLoadModel.mjs`: guarded loading into an inactive encounter; preservation of linked PCs.
-- `src/dashboards/combat/PreparedEncounterLibrary.jsx`: existing prepared template editing interface.
-- `src/dashboards/combat/CombatWorkspace.jsx`: current roster, combat start/end, initiative editing, combat canvas.
-- `functions/combatCommands.mjs`: authoritative transactional combat command/state machine, revision checking, private schedule and combatant resources.
-- `src/state/encounterCompletionModel.mjs` and `functions/encounterCompletionCommands.mjs`: private completion snapshots, reward proposal/approval and idempotent reward delivery tracking.
-- `src/state/encounterWaveModel.mjs`: staged GM-only waves and events.
-- `src/state/battleMapModel.mjs` and `src/state/preparedBattleMapModel.mjs`: prepared map/encounter link.
-- `src/dashboards/combat/CombatCommandCentre.jsx`: shared canvas shell; preserve Milestone 2.2 performance work.
-
-## First implemented subtask: initiative mode
-
-- GM chooses automatic (default), manual, or mixed initiative **before** starting combat.
-- Manual mode requires all combatants to have GM-set initiative.
-- Mixed mode requires player initiative to be set manually; enemies without initiative are rolled by the existing server-side initiative engine.
-- Existing automatic behavior stays the default for old encounter records.
-- The authoritative server validates the choice and refuses an unprepared manual/mixed start.
-- The GM interface displays the current initiative mode and saves it via the existing encounter revision-based service.
-- Existing pre-set initiative is preserved; clearing the encounter resets the mode.
-- Regression tests cover permissions, invalid choices, mode change during combat, manual prerequisites and mixed enemy rolls.
-
-## Integration with the current test branch
-
-The canvas changes from PRs #387, #388, #389, #390 and #392 are merged into the test branch. This branch incorporates those merges and rebuilds the generated Vite output alongside the initiative changes from PR #391.
-
-The authoritative encounter now supports GM pause and resume through its existing revision-guarded command. A pause retains the encounter ID, round, current actor, AP, pending actions and timer time. The public document retains its compatible `active` status and carries a separate pause flag. Player End Turn already leaves advancement to the GM. The existing transactional wave and event commands handle mid-combat changes. The GM can now correct initiative, with the previous and new values and GM reason recorded. Reordering preserves the current actor and existing participant AP.
-
-Prepared templates can be staged by the GM during combat. Staging writes only the private GM workspace, pins each template revision, and leaves the active encounter, battle map, and presentation unchanged. Reviewing and loading a staged template uses the existing inactive-combat guard and a separate Start Combat action.
-
-## Outstanding approved Milestone 3.1 work
-
-1. Verify staging, activation and lifecycle compatibility through the authenticated browser flow.
-2. Implement quick encounter creation distinct from reusable prepared templates without destructive replacement of active encounters.
-3. Stage a second encounter privately while a live encounter is active; its map and participants must not leak to public presentation.
-4. Verify active roster edits, reinforcements and initiative corrections through the authenticated browser flow, including two concurrent GM sessions.
-5. Save/recover original live encounter revisions, manual snapshots and GM audit history. Autosaving of gameplay is already transactional, but named manual snapshots are not yet verified.
-6. Reopen the **same completed** encounter, preserving earlier completion revisions and preventing duplicate rewards. Existing `start` creates a new `combatId`; completion-history guards prohibit overwriting previous history.
-7. Preserve the GM's **personal** canvas layout (no encounter-specific layouts).
-8. Audit Firestore security rules, completion receipts, presentation visibility and connected participant access before enabling new live writes.
-
-## Integration / release hazards
-
-- Keep the merged Milestone 2 canvas behavior intact and run the canvas regression suite.
-- The repository baseline audit documents that GitHub Pages can publish directly from `Website-Build-Test`. Check the active Pages source before merging; user requires no automatic production deployment.
-- `.github/workflows/firebase-checks.yml` runs broad regressions, Firebase emulators, build and bundle-consistency checks. No passing CI for this Milestone 3.1 work is claimed until the actual workflow finishes.
-- Firebase backend deployment is a separate explicitly authorised operation. Do not deploy it as a side effect of this PR.
-
-## Exit gates for Milestone 3.1
-
-- All approved 3.1 functional behaviors implemented with server-side authorization and compatibility tests.
-- Manual and automated/browser tests pass; all required GitHub checks pass on reviewed head SHA.
-- No newly introduced regressions to Milestone 2.2 canvas performance, current combat, reward delivery or player privacy.
-- Production publishing is verified disabled or otherwise explicitly authorised before merging to `Website-Build-Test`.
-- Only after these gates are satisfied is a merge eligible.
+The new callable commands run through `asteriaAction`. Deployment of the website, this callable, and the updated Firestore rules is a separate owner action. Deploy the backend and rules before enabling this frontend in production. No Storage rules change is required.

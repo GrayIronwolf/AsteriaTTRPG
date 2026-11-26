@@ -109,6 +109,17 @@ export function validatePreparedEncounterInput(input){
   const name=text(input.name,100),notes=text(input.notes||'',1200);
   if(!name||name!==String(input.name||'').trim()||notes!==String(input.notes||'').trim())
     throw Error('Encounter name must be 1–100 characters; notes must be 1,200 or fewer.');
+  const details=Object.fromEntries(Object.entries({description:600,environment:600,rewardNotes:600})
+    .map(([key,limit])=>{
+      const value=input[key]??'';
+      if(typeof value!=='string'||value.trim().length>limit)throw Error('Prepared encounter details must be 600 characters or fewer.');
+      return [key,value.trim()];
+    }));
+  const initiativeMode=input.initiativeMode??'automatic';
+  if(!['automatic','manual','mixed'].includes(initiativeMode))throw Error('Choose a valid initiative mode.');
+  const playerIds=input.playerIds??[];
+  if(!Array.isArray(playerIds)||playerIds.length>60||!playerIds.every(id)||new Set(playerIds).size!==playerIds.length)
+    throw Error('Choose up to 60 different linked characters.');
   const mapId=input.mapId||'';
   if(mapId&&!id(mapId))throw Error('Choose a valid campaign battle map.');
   if(!Array.isArray(input.enemies)||input.enemies.length<1||
@@ -132,12 +143,12 @@ export function validatePreparedEncounterInput(input){
     enemies.length,mapId);
   const events=validatePreparedEvents(input.events??[]);
   return {name,notes,mapId,enemies,folder:folder.trim(),
-    tags:normalizedTags,archived,waves,events};
+    tags:normalizedTags,archived,waves,events,...details,initiativeMode,playerIds:[...playerIds]};
 }
 // Copy only reusable creature data through the existing template allowlist.
 export function prepareQuickEncounterTemplate(name,encounter={}){
   return validatePreparedEncounterInput({
-    name,mapId:encounter.battleMapId||encounter.preparedMapId||'',
+    name,initiativeMode:encounter.initiativeMode,mapId:encounter.battleMapId||encounter.preparedMapId||'',
     enemies:(Array.isArray(encounter.combatants)?encounter.combatants:[])
       .filter(row=>row?.kind==='enemy'&&!row.characterId)
       .map(row=>{
@@ -186,7 +197,11 @@ export function instantiatePreparedEnemies(plan,requestId){
 
 /** Preserve only currently linked PCs, then replace the enemy roster atomically. */
 export function preparedEncounterRoster(plan,previous=[],requestId){
-  const players=(Array.isArray(previous)?previous:[]).filter(row=>row?.characterId&&id(row.id));
+  const existing=(Array.isArray(previous)?previous:[]).filter(row=>row?.characterId&&id(row.id));
+  const players=plan.playerIds?.length?plan.playerIds.map((characterId,index)=>
+    existing.find(row=>row.characterId===characterId)||{
+      id:'player-'+requestId+'-'+(index+1),characterId,kind:'player'
+    }):existing;
   const enemies=instantiatePreparedEnemies(plan,requestId);
   if(players.length+enemies.length>160)
     throw Error('Too many combatants to load this prepared encounter.');

@@ -167,6 +167,22 @@ test('Combat Command Centre prepared plans and completed history are GM-only, an
   const gmHistory=doc(user('gm'),history);
   assert.equal((await assertSucceeds(getDoc(gmHistory))).data().name,'Fixture encounter');
   await assertSucceeds(getDocs(collection(user('gm'),'campaigns/c/encounterHistory')));
+  const index=history+'/recovery/snapshotIndex',checkpoint=history+'/recovery/private';
+  const edition=history+'/completionRevisions/1';
+  await db.doc(index).set({entries:[{id:'private',name:'Before the fight'}]});
+  await db.doc(checkpoint).set({encounter:{name:'Hidden enemies'}});
+  await db.doc(edition).set({rounds:3});
+  await assertSucceeds(getDoc(doc(user('gm'),index)));
+  await assertSucceeds(getDoc(doc(user('gm'),edition)));
+  await assertFails(getDoc(doc(user('gm'),checkpoint)));
+  await assertFails(setDoc(doc(user('gm'),checkpoint),{encounter:{}}));
+  await assertFails(updateDoc(doc(user('gm'),index),{entries:[]}));
+  await assertFails(deleteDoc(doc(user('gm'),edition)));
+  for(const uid of ['alice','bob','eve']){
+    await assertFails(getDoc(doc(user(uid),index)));
+    await assertFails(getDoc(doc(user(uid),checkpoint)));
+    await assertFails(getDoc(doc(user(uid),edition)));
+  }
   await assertSucceeds(getDoc(doc(user('gm'),workspace)));
   for(const uid of ['alice','bob','eve']){
     await assertFails(getDoc(doc(user(uid),history)));
