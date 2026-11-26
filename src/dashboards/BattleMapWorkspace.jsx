@@ -1,7 +1,7 @@
 import {createSiteCombatApi,createSiteCombatMediaApi} from './combat/siteCombatApi.js';
 import {MAP_MOVE_AP,walkingAllowance} from '../state/battleMapMovement.mjs';
 import {paintTerrainCell,resizeTerrainCells} from '../state/battleMapTerrainModel.mjs';
-import {mapCell} from '../state/battleMapRoutes.mjs';
+import {mapCell,hexCellPoints} from '../state/battleMapRoutes.mjs';
 import {BattleMapToken,CampaignMapWorkspace} from './presentation/CampaignMapWorkspace.jsx';
 import React,{useCallback,useEffect,useMemo,useRef,useState} from 'react';
 import {firebaseService} from '../firebase/asteriaFirebaseService.js';
@@ -92,6 +92,7 @@ function MapCanvas({campaignId,map,gm=false,onPlaceToken,selectedTokenId='',fogT
   useEffect(()=>{setPlaying(true);setShowGrid(true);},[map?.id]);
   const playerFog=Boolean(map?.fogEnabled)&&(!gm||previewPlayerFog);
   const cols=Number(map?.gridColumns||20),rows=Number(map?.gridRows||15);
+  const hex=map?.gridType==='hex';
   const fogRectangles=playerFog?hiddenFogRuns(map?.fogCells,cols,rows):[];
   const isBrush=gm&&map&&['reveal','hide'].includes(fogTool)&&map.fogEnabled;
   const isPlacing=gm&&fogTool==='token'&&Boolean(selectedTokenId);
@@ -145,7 +146,7 @@ function MapCanvas({campaignId,map,gm=false,onPlaceToken,selectedTokenId='',fogT
     if(!isPlacing||!onPlaceToken)return;
     const point=pointFromEvent(event);
     if(!point)return;
-    const snapped=battleMapPoint(point.x,point.y,{columns:map.gridColumns,rows:map.gridRows,snap:grid});
+    const snapped=battleMapPoint(point.x,point.y,{columns:map.gridColumns,rows:map.gridRows,snap:grid,gridType:map.gridType});
     onPlaceToken(selectedTokenId,snapped);
   };
   if(!map)return <p>Select a battle map.</p>;
@@ -168,16 +169,27 @@ function MapCanvas({campaignId,map,gm=false,onPlaceToken,selectedTokenId='',fogT
         ref={element=>{if(!element)return;if(playing)element.play().catch(()=>{});else element.pause();}}
         onError={()=>{}} aria-label={'Looping animated map: '+map.name}/>:
         <img src={media.url} alt={map.name} className="asteria-battle-media"/>):null}
-      {grid?<div aria-hidden="true" className="asteria-battle-grid" style={background}/>:null}
+      {grid?(hex?<svg aria-hidden="true" viewBox="0 0 100 100"
+        preserveAspectRatio="none" style={{position:'absolute',inset:0,width:'100%',height:'100%',
+          opacity:Math.max(0,Math.min(100,Number(map.gridOpacity)))/100,pointerEvents:'none'}}>
+        {Array.from({length:cols*rows},(_,i)=>({column:i%cols,row:Math.floor(i/cols)}))
+          .map(cell=><polygon key={cell.column+':'+cell.row}
+            points={hexCellPoints(cell,cols,rows).map(p=>p.join(',')).join(' ')}
+            fill="none" stroke="white" strokeWidth=".12"/>)}
+      </svg>:<div aria-hidden="true" className="asteria-battle-grid" style={background}/>):null}
       {gm&&Array.isArray(map.terrainCells)&&map.terrainCells.length>0?<svg
         aria-label="GM terrain grid overlay" viewBox="0 0 100 100" preserveAspectRatio="none"
         style={{position:'absolute',inset:0,width:'100%',height:'100%',pointerEvents:'none'}}>
-        {map.terrainCells.map(cell=><rect key={cell.column+':'+cell.row}
-          x={cell.column*100/cols} y={cell.row*100/rows}
-          width={100/cols} height={100/rows}
-          fill={({wall:'#c74444',water:'#317ec4',difficult:'#a87a32',
-            hazard:'#a8429c',cover:'#678663',stairs:'#989bb2'}[cell.kind]||'#94a1ae')}
-          fillOpacity=".33" stroke="#d8dbe0" strokeOpacity=".45" strokeWidth=".12"/>)}
+        {map.terrainCells.map(cell=>{
+          const attrs={key:cell.column+':'+cell.row,
+            fill:({wall:'#c74444',water:'#317ec4',difficult:'#a87a32',
+              hazard:'#a8429c',cover:'#678663',stairs:'#989bb2'}[cell.kind]||'#94a1ae'),
+            fillOpacity:'.33',stroke:'#d8dbe0',strokeOpacity:'.45',strokeWidth:'.12'};
+          return hex?<polygon {...attrs} points={hexCellPoints(cell,cols,rows)
+            .map(p=>p.join(',')).join(' ')}/>:<rect {...attrs}
+            x={cell.column*100/cols} y={cell.row*100/rows}
+            width={100/cols} height={100/rows}/>;
+        })}
       </svg>:null}
       {tokens.filter(token=>{
         if((!gm||previewPlayerFog)&&token.visibility==='gm')return false;
@@ -374,7 +386,7 @@ export function GMBattleMapManager({campaignId,characters={},encounter={},search
   const paintTerrain=point=>{
     if(combatLinked)return;
     try{patch({terrainCells:paintTerrainCell(draft.terrainCells||[],draft.gridColumns,
-      draft.gridRows,mapCell(point,draft.gridColumns,draft.gridRows),terrainKind,Number(terrainElevation))});}
+      draft.gridRows,mapCell(point,draft.gridColumns,draft.gridRows,draft.gridType),terrainKind,Number(terrainElevation))});}
     catch(error){setMessage(error.message);}
   };
   let measurement=null;
