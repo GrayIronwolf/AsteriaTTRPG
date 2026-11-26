@@ -1,0 +1,41 @@
+name: Verify live Pages source stays off the test branch
+on:
+  pull_request:
+    branches: [Website-Build-Test]
+  push:
+    branches: [Website-Build-Test]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: read
+jobs:
+  pages-source-safeguard:
+    name: Verify GitHub Pages cannot publish Website-Build-Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check configured Pages publishing source (read-only)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          node --input-type=module <<'NODE'
+          const url='https://api.github.com/repos/'+process.env.GITHUB_REPOSITORY+'/pages';
+          const response=await fetch(url,{headers:{
+            authorization:'Bearer '+process.env.GH_TOKEN,
+            accept:'application/vnd.github+json',
+            'x-github-api-version':'2022-11-28'
+          }});
+          if(!response.ok)throw Error('Unable to verify current Pages source ('+
+            response.status+'). Refusing integration until repository Pages settings are reviewed.');
+          const pages=await response.json();
+          const source=pages.source||{};
+          const buildType=pages.build_type||'legacy';
+          console.log('Pages source branch:',source.branch||'(not supplied)');
+          console.log('Pages source folder:',source.path||'(not supplied)');
+          console.log('Pages build type:',buildType);
+          if(buildType!=='legacy'||source.branch!=='main')
+            throw Error('Pages source is not confirmed as legacy main-only. '+
+              'Website-Build-Test could publish live; do not merge.');
+          console.log('Verified: only main is the configured GitHub Pages branch.');
+          NODE
