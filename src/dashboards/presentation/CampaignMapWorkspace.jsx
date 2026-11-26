@@ -168,7 +168,7 @@ export function CampaignMapCanvas({api,campaignId,map,mode='player',atlas=false,
     else onPoint?.(raw);
   };
   if(!map)return <p>No map selected.</p>;
-  const distance=ruler.length===2?measureGridDistance(ruler[0],ruler[1],cols,rows,map.metresPerCell):null;
+  const distance=ruler.length===2?measureGridDistance(ruler[0],ruler[1],cols,rows,map.metresPerCell,map.gridType):null;
   return <section className={styles.viewer} aria-label={'Campaign map: '+map.name}
     data-testid="site-media-map-canvas">
     {map.kind==='video'?<div className={styles.controls}>
