@@ -56,7 +56,10 @@ export function synchronizeCombatMapTokens(map,encounter,idFactory=()=>crypto.ra
     const linked=already||manual.find(t=>!usedManual.has(t.id)&&
       isPlayer&&t.kind==='character'&&t.refId===row.characterId);
     if(linked&&!already)usedManual.add(linked.id);
-    const point=suggestedPoint(isPlayer?playerIndex++:enemyIndex++,isPlayer);
+    const suggested=suggestedPoint(isPlayer?playerIndex++:enemyIndex++,isPlayer);
+    const point=map.gridType==='hex'?battleMapPoint(suggested.x,suggested.y,{
+      columns:map.gridColumns,rows:map.gridRows,gridType:'hex',snap:true
+    }):suggested;
     const placed=!isPlayer&&already===undefined&&
       typeof encounter.combatants?.find(entry=>entry.id===row.id)?.spawn?.x==='number'
       ?encounter.combatants.find(entry=>entry.id===row.id).spawn:null;
