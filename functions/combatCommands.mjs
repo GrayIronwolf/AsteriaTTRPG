@@ -40,7 +40,7 @@ const combatCharacterFields=new Set(['hp','sp','mp','bp','zp','resources','resou
 const ENCOUNTER_INITIATIVE_MODES=new Set(['automatic','manual','mixed']);
 const initiativeMode=value=>ENCOUNTER_INITIATIVE_MODES.has(value)?value:'automatic';
 const needsManualInitiative=(row,mode)=>mode==='manual'||(mode==='mixed'&&Boolean(row.characterId));
-const management=new Set([...recoveryOperations,'skip-turn','override-turn','release-wave','trigger-event','timer','map-link','map-move','map-token-appearance','save','stage-prepared','unstage-prepared','load-prepared','map-prepare','start','pause','resume','next','end','clear','approve','reject','window','close-window','resolve','roll','resolve-reaction','correct','condition','ambush','trigger-prepared']);
+const management=new Set([...recoveryOperations,'skip-turn','override-turn','release-wave','trigger-event','timer','map-link','map-move','map-delegate','map-token-appearance','save','stage-prepared','unstage-prepared','load-prepared','map-prepare','start','pause','resume','next','end','clear','approve','reject','window','close-window','resolve','roll','resolve-reaction','correct','condition','ambush','trigger-prepared']);
 const publicPending=p=>p?{id:p.id,actorId:p.actorId,actorName:p.actorName,optionId:p.actorKind==='player'?p.optionId:'',name:p.actorKind==='player'?p.name:'Creature action',status:p.status,targetIds:p.targetIds,ap:p.ap,bonus:p.bonus,apPaid:Boolean(p.prepaidAP),costs:p.actorKind==='player'?p.costs:{},reactionWindow:p.status==='reactions',reactorId:p.window?.[p.windowIndex||0]?.actorId||'',reactionChoices:p.window?.[p.windowIndex||0]?.choices||[],reaction:p.reaction?{actorId:p.reaction.actorId,name:p.reaction.name}:null,message:p.publicMessage||''}:null;
 
 // An extension of asteriaAction: one encounter document, existing resource/effect
@@ -119,7 +119,7 @@ export function createCombatCommands(context) {
       }
       // Fetch the bound map before any transaction writes; map and encounter are
       // committed atomically. Never trust client-supplied turn order or distance.
-      const mapOperation=['map-link','map-move','map-token-appearance'].includes(input.operation);
+      const mapOperation=['map-link','map-move','map-delegate','map-token-appearance'].includes(input.operation);
       const preparingMap=input.operation==='map-prepare';
       if(mapOperation&&!gm)throw new Error('Only the campaign GM can control combat maps.');
       const boundMapId=mapOperation?String(input.mapId||''):String(encounter.battleMapId||'');
@@ -157,7 +157,16 @@ export function createCombatCommands(context) {
       const state=id=>encounter.combat.participants[id]||{ap:0,bonus:false,turns:0};
       const setState=(id,value)=>{encounter.combat.participants[id]={...state(id),...value};};
       const log=(message,details={})=>{encounter.combat.log=[{id:context.requestId,at:now,message,...details},...encounter.combat.log].slice(0,80);};
-      const controlled=()=>{const actor=entry(actorId);if(!actor||(!gm&&(!actor.characterId||get(actorId).ownerUid!==currentUser.uid)))throw new Error('You cannot control this encounter participant.');return actor;};
+      const mapControlAllowed=actor=>Boolean(actor&&
+        (gm||actor.characterId&&get(actor.id).ownerUid===currentUser.uid||
+          input.operation==='player-map-move'&&
+          state(actor.id).movementDelegateUid===currentUser.uid));
+      const controlled=()=>{const actor=entry(actorId);
+        if(!actor||(!gm&&!(actor.characterId&&get(actorId).ownerUid===currentUser.uid)&&
+          !(input.operation==='player-map-move'&&mapControlAllowed(actor))))
+          throw new Error('You cannot control this encounter participant.');
+        return actor;
+      };
       const requireActive=()=>{if(encounter.status!=='active')throw new Error('Combat is not active.');};
       const noPending=()=>{if(privateState.pending)throw new Error('Resolve the pending action before continuing.');};
       let queuedMovement=false;
@@ -165,7 +174,8 @@ export function createCombatCommands(context) {
         if(move.mapId!==boundMapId||!boundMap||boundMap.combatId!==encounter.combatId||
           boundMap.visibility!=='players')throw Error('This battle map is not shared for the current encounter.');
         const id=actor.id,character=get(id),s=state(id);
-        if(move.requesterUid&&character.ownerUid!==move.requesterUid)
+        if(move.requesterUid&&character.ownerUid!==move.requesterUid&&
+          s.movementDelegateUid!==move.requesterUid)
           throw Error('The player no longer controls this participant.');
         if(actor.defeated||combatRestriction(character,{now,encounter})||s.pendingDeathSave||s.grappledBy)
           throw Error('This participant cannot move voluntarily.');
@@ -497,6 +507,30 @@ export function createCombatCommands(context) {
           queuedMovement=true;
           log(actor.name+' requests map movement for GM reaction review.');
         }else applyPlayerMapMove(actor,plan,currentUser.uid);
+      }else if(input.operation==='map-delegate'){
+        requireActive();noPending();
+        if(encounter.battleMapId!==boundMapId||boundMap.combatId!==encounter.combatId)
+          throw Error('This map is not linked to the current encounter.');
+        const target=entry(String(input.combatantId||''));
+        if(!target||!boundMap.tokens.some(row=>row.combatantId===target.id))
+          throw Error('Choose a mapped combat participant.');
+        const uid=String(input.delegateUid||'').trim();
+        if(uid&&!/^[A-Za-z0-9_-]{1,160}$/.test(uid))
+          throw Error('Choose a valid campaign member.');
+        if(uid){
+          const delegatedRecord=await readCampaignMember({get:async ref=>{
+            const snapshot=await tx.get(ref);return {exists:snapshot.exists(),data:()=>snapshot.data()};
+          }},db,campaignId,campaign,uid);
+          if(!isCampaignMember(campaign,uid,delegatedRecord)||isCampaignGM(campaign,uid,delegatedRecord))
+            throw Error('Only a participating campaign player may receive map movement authority.');
+        }
+        setState(target.id,{movementDelegateUid:uid||null});
+        log(uid?'GM delegated map movement for '+target.name+'.':
+          'GM revoked delegated map movement for '+target.name+'.',{
+            actorUid:currentUser.uid,targetId:target.id,
+            reason:uid?'Map movement delegated to campaign member.':'Delegated movement revoked.',
+            ...(uid?{delegateUid:uid}:{})
+          });
       }else if(input.operation==='map-token-appearance'){
         requireActive();
         if(encounter.battleMapId!==boundMapId||boundMap.combatId!==encounter.combatId)
