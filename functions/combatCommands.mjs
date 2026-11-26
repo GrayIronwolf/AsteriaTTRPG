@@ -517,7 +517,7 @@ export function createCombatCommands(context) {
           throw new Error('This map is not the encounter-linked battle map.');
         const plan=combatMapMovePlan({...boundMap,id:boundMapId},encounter,
           String(input.combatantId||''),input.point,
-          {mode:input.mode||'movement',reason:input.reason});
+          {mode:input.mode||'movement',reason:input.reason,source:input.source});
         const tokens=boundMap.tokens.map(token=>token.combatantId===plan.actorId?
           {...token,...plan.to}:token);
         tx.update(mapRef,{tokens,updatedAt:serverTimestamp()});
@@ -529,9 +529,12 @@ export function createCombatCommands(context) {
         }
         log(plan.mode==='movement'
           ?entry(plan.actorId).name+' moved '+plan.distance.metres+' m on the map.'
-          :'GM repositioned '+entry(plan.actorId).name+': '+plan.reason,{
+          :plan.mode==='forced'
+            ?'GM resolved forced movement of '+entry(plan.actorId).name+': '+plan.reason
+            :'GM repositioned '+entry(plan.actorId).name+': '+plan.reason,{
             actorUid:currentUser.uid,targetId:plan.actorId,from:plan.from,to:plan.to,
-            ...(plan.reason?{reason:plan.reason}:{})
+            ...(plan.reason?{reason:plan.reason}:{}),
+            ...(plan.source?{source:plan.source,metres:plan.distance.metres,movementKind:'forced'}:{})
           });
       }else if(input.operation==='start'){
         noPending();if(encounter.status==='active'&&encounter.combat?.version===1)throw new Error('The encounter is already active.');
