@@ -7,6 +7,8 @@ on:
       - 'functions/playerPresentationCommands.mjs'
       - 'functions/hybridPresentationSessionCommands.mjs'
       - 'functions/encounterRecovery.mjs'
+      - 'functions/livePresentationProjectionTriggers.mjs'
+      - 'src/dashboards/presentation/CampaignPresentationWorkspace.jsx'
       - 'src/state/hybridPresentationSessionModel.mjs'
       - 'scripts/milestone-3-6-hybrid-recovery.test.mjs'
       - '.github/workflows/milestone-3-6-verify.yml'
