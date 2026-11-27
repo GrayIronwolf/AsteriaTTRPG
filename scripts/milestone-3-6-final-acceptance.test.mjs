@@ -162,3 +162,59 @@ test('3.6 final: GM witnessed physical rolls pass client allowlist, players are 
   assert.doesNotThrow(()=>validateCombatCommand('gm','encounter',command));
   assert.throws(()=>validateCombatCommand('player','hero',command),/unavailable/);
 });
+
+test('3.6 final: physical roll transaction is GM-only, revision-safe and never changes HP or AP',async()=>{
+  const {createCombatCommands}=await import('../functions/combatCommands.mjs');
+  const campaignId='hybrid-transaction',encounterRef='campaigns/'+campaignId+'/systems/encounter';
+  const combatant={id:'enemy',name:'Orc',kind:'enemy',initiative:10,hp:[12,12]};
+  const initial=new Map([
+    ['campaigns/'+campaignId,{id:campaignId,ownerUid:'gm',playerUids:['player'],
+      membershipSchemaVersion:1}],
+    ['campaigns/'+campaignId+'/liveSession/current',
+      {status:'active',expiresAt:4102444800000}],
+    [encounterRef,{status:'active',combatId:'combat36',round:1,turnIndex:0,
+      combatants:[combatant],enemies:[combatant],combat:{
+        version:1,revision:2,participants:{enemy:{ap:3,bonus:false}},
+        log:[],turnsTaken:{enemy:true}
+      }}],
+    ['campaigns/'+campaignId+'/systems/gmWorkspace',{combatState:{
+      preparations:{},pending:null
+    }}]
+  ]);
+  function harness(uid='gm'){
+    const store=new Map([...initial].map(([key,value])=>[key,
+      JSON.parse(JSON.stringify(value))])),writes=[];
+    const doc=(_db,...parts)=>({path:parts.join('/')});
+    const tx={
+      get:async ref=>({exists:()=>store.has(ref.path),data:()=>store.get(ref.path)}),
+      set:(ref,value)=>{writes.push(ref.path);store.set(ref.path,value);},
+      update:(ref,value)=>{writes.push(ref.path);
+        store.set(ref.path,{...store.get(ref.path),...value});}
+    };
+    const command=createCombatCommands({db:{},doc,currentUser:{uid},
+      runTransaction:async(_db,fn)=>fn(tx),requestId:'witness36',
+      serverTimestamp:()=>123456}).combatCommand;
+    return {store,writes,send:input=>command(campaignId,'encounter',input)};
+  }
+  const gm=harness();
+  const action={operation:'record-physical-roll',revision:2,
+    targetId:'enemy',faces:20,result:19,reason:'GM witnessed initiative roll'};
+  const result=await gm.send(action);
+  assert.equal(result.ok,true,result.error);
+  assert.equal(result.revision,3);
+  const next=gm.store.get(encounterRef);
+  assert.equal(next.combat.revision,3);
+  assert.equal(next.combat.log[0].rollSource,'physical-gm-verified');
+  assert.equal(next.combat.log[0].faceResult,19);
+  assert.deepEqual(next.combatants[0].hp,[12,12]);
+  assert.equal(next.combat.participants.enemy.ap,3);
+  const stale=await gm.send(action);
+  assert.equal(stale.ok,false);
+  assert.match(stale.error,/Combat changed/);
+  const unauthorized=harness('player');
+  assert.equal((await unauthorized.send(action)).ok,false);
+  assert.deepEqual(unauthorized.writes,[]);
+  const malformed=harness();
+  assert.equal((await malformed.send({...action,result:21})).ok,false);
+  assert.deepEqual(malformed.writes,[]);
+});
