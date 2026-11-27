@@ -40,6 +40,7 @@
   const indexByWebsite=()=>new Map(mappings.filter(row=>row.websiteId).map(row=>[row.websiteId,row]));
   const indexByAsteria=()=>new Map(mappings.map(row=>[row.asteriaId,row]));
   function forWebsite(id){return indexByWebsite().get(id)||null;}
+  function all(){return mappings.slice();}
   function forAsteria(id){return indexByAsteria().get(id)||null;}
   function placeholders(existingIds=[],domain=null){
     const present=new Set(existingIds);
@@ -50,5 +51,5 @@
     const checked=normalize(rows),present=new Set(existingIds);
     return checked.filter(row=>!row.websiteId&&!present.has(row.asteriaId)&&(!domain||row.domain===domain));
   }
-  return Object.freeze({categories:Object.freeze(Object.keys(categoryDomains)),forWebsite,forAsteria,placeholders,preview,validate:normalize});
+  return Object.freeze({categories:Object.freeze(Object.keys(categoryDomains)),all,forWebsite,forAsteria,placeholders,preview,validate:normalize});
 });
