@@ -1,3 +1,4 @@
+import {campaignMembershipRole,isGameMasterRole} from '../state/campaignMembershipAccess.mjs';
 import {PlayerSessionLibraryWorkspace} from './SessionLibraryWorkspace.jsx';
 import {PlayerCampaignAmbience} from './CampaignSoundboardWorkspace.jsx';
 import {PlayerSessionRecordingWorkspace,PlayerRecordingNotice} from './SessionRecordingWorkspace.jsx';
@@ -114,6 +115,13 @@ function MagicRewardModal({ campaignId, character, event, onResolved }) {
 
 export function CharacterDashboard({ campaignId, characterId, embedded=false }) {
   const live = useCampaignLiveData(campaignId, { mode: 'character', characterId });
+  if(live.campaign?.membershipSchemaVersion===2){
+    if(live.membershipLoading)return <div className="react-route-state">Verifying campaign membership...</div>;
+    const uid=firebaseService.currentUser()?.uid;
+    const role=campaignMembershipRole(live.campaign,uid,live.membership,campaignId);
+    if(!role||(!isGameMasterRole(role)&&live.character&&live.character.ownerUid!==uid))
+      return <div className="react-route-state" role="alert">You do not have access to this character dashboard.</div>;
+  }
   return <CharacterDashboardContent campaignId={campaignId} characterId={characterId} live={live} embedded={embedded}/>;
 }
 

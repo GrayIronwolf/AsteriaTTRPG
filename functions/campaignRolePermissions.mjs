@@ -70,7 +70,7 @@ export async function changeCampaignMemberRole(db,ownerUid,
         throw new Error('Member role changed. Refresh the roster before continuing.');
       // Demoting an active co-GM adds one Player: never exceed campaign capacity.
       if(newRole==='player'){
-        const count=await countActivePlayers(tx,db,campaignId);
+        const count=await countActivePlayers(tx,db,campaignId,campaign.ownerUid);
         if(count>=campaignPlayerCapacity(campaign))
           throw new Error('Campaign player capacity has been reached. Demotion is blocked.');
       }

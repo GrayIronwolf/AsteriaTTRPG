@@ -57,8 +57,8 @@ export function createCombatCommands(context) {
       const memberRecord=await readCampaignMember({get:async ref=>{
         const snap=await tx.get(ref);return {exists:snap.exists(),data:()=>snap.data()};
       }},db,campaignId,campaign,currentUser.uid);
-      if(!isCampaignMember(campaign,currentUser.uid,memberRecord)) throw new Error('Campaign membership is required.');
-      const gm=isCampaignGM(campaign,currentUser.uid,memberRecord);
+      if(!isCampaignMember(campaign,currentUser.uid,memberRecord,campaignId)) throw new Error('Campaign membership is required.');
+      const gm=isCampaignGM(campaign,currentUser.uid,memberRecord,campaignId);
       if(session.status!=='active'||effectTimeMs(session.expiresAt)<=now)throw new Error('The GM must start the live session first.');
       if(management.has(input.operation)&&!gm)throw new Error('Only the campaign GM can use this combat control.');
       let encounter={status:'ready',round:1,turnIndex:0,combatants:[],enemies:[],...encounterSnap.data()};
@@ -523,7 +523,7 @@ export function createCombatCommands(context) {
           const delegatedRecord=await readCampaignMember({get:async ref=>{
             const snapshot=await tx.get(ref);return {exists:snapshot.exists(),data:()=>snapshot.data()};
           }},db,campaignId,campaign,uid);
-          if(!isCampaignMember(campaign,uid,delegatedRecord)||isCampaignGM(campaign,uid,delegatedRecord))
+          if(!isCampaignMember(campaign,uid,delegatedRecord,campaignId)||isCampaignGM(campaign,uid,delegatedRecord,campaignId))
             throw Error('Only a participating campaign player may receive map movement authority.');
         }
         setState(target.id,{movementDelegateUid:uid||null});

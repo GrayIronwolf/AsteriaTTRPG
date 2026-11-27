@@ -1,3 +1,4 @@
+import {campaignMembershipRole} from '../src/state/campaignMembershipAccess.mjs';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -119,7 +120,7 @@ test('unreadable and removed saved campaigns do not trigger roster reads or fals
   const calls=[],errors=[];
   let result='denied';
   const load=campaignBrowserMethod('loadSharedCampaignDetails',{
-    db:{},doc:(_db,...parts)=>parts.join('/'),collection:(_db,...parts)=>parts.join('/'),
+    db:{},currentUser:{uid:'alice'},doc:(_db,...parts)=>parts.join('/'),collection:(_db,...parts)=>parts.join('/'),
     getDoc:async path=>{calls.push(path);if(result==='denied')throw Object.assign(new Error('Denied'),{code:'permission-denied'});return {exists:()=>false};},
     getDocs:async()=>{throw Error('Roster read should not be attempted');},
     reportSyncError:(...args)=>errors.push(args),mergeSharedCampaign:()=>{throw Error('An inaccessible campaign must not be promoted');}
@@ -133,7 +134,7 @@ test('discovery publishes only verified campaign records and retains authorized 
   const watchers=new Map(),emissions=[],errors=[];let stopped=0;
   const subscribe=campaignBrowserMethod('subscribeAccountCampaigns',{
     db:{},currentUser:{uid:'alice'},doc:(_db,...parts)=>parts.join('/'),collection:(_db,...parts)=>parts.join('/'),
-    campaignMembershipQueries:()=>['owner-query','gm-query','player-query'],linkedCampaignIdsFromOwnedCharacters:()=>['stale'],
+    campaignMembershipRole,discoveryRoles:null,campaignMembershipQueries:()=>['owner-query','gm-query','player-query'],linkedCampaignIdsFromOwnedCharacters:()=>['stale'],
     onSnapshot:(path,_options,success,failure)=>{watchers.set(path,{success,failure});return ()=>{stopped++;};},
     reportSyncError:(...args)=>errors.push(args),mergeSharedCampaign:(a,b)=>({...a,...b})
   });

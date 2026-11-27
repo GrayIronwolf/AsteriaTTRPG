@@ -1,3 +1,4 @@
+import {campaignMembershipRole,isGameMasterRole} from '../src/state/campaignMembershipAccess.mjs';
 import {legacyMembershipPlan, MEMBER_ROLES, MEMBER_STATUSES} from './campaignMembership.mjs';
 import {allowedMemberControls} from './campaignMemberControls.mjs';
 
@@ -80,8 +81,7 @@ export async function listCampaignPlayerRoster(db,actorUid,campaignId){
       const memberSnap=await db.doc('campaigns/'+campaignId+'/members/'+actorUid).get();
       const gm=memberSnap.exists?memberSnap.data():null;
       actorMember=gm;
-      if(!gm || gm.uid!==actorUid || gm.campaignId!==campaignId ||
-        gm.role!=='co-gm' || gm.status!=='active')throw new Error('Only an active campaign GM may view the roster.');
+      if(campaignMembershipRole(campaign,actorUid,gm,campaignId)!=='co-gm')throw new Error('Only an active campaign GM may view the roster.');
     }
     const [membershipRows,requests]=await Promise.all([
       db.collection('campaigns/'+campaignId+'/members').limit(MAX_ROSTER+1).get(),
@@ -94,7 +94,7 @@ export async function listCampaignPlayerRoster(db,actorUid,campaignId){
       const row=doc.data();
       if(!validId(doc.id)||!record(row)||row.uid!==doc.id||row.campaignId!==campaignId ||
         !safeRole(row.role)||!safeStatus(row.status))throw new Error('Campaign membership records require review.');
-      if(row.role==='owner' && (doc.id!==campaign.ownerUid||row.status!=='active'))
+      if((row.role==='owner')!==(doc.id===campaign.ownerUid) || (row.role==='owner'&&row.status!=='active'))
         throw new Error('Campaign owner membership requires review.');
       const entry=summarizeMember(campaign,row);
       entry.controls=allowedMemberControls(campaign,actorUid,actorMember,row);
@@ -107,9 +107,7 @@ export async function listCampaignPlayerRoster(db,actorUid,campaignId){
     pending=requests.docs.map(row=>safePending(row,campaignId)).filter(Boolean)
       .filter(row=>!members.some(member=>member.uid===row.uid));
   }else if(version===undefined||version===null||version===1){
-    const isGM=actorUid===campaign.ownerUid ||
-      (Array.isArray(campaign.gmUids)&&campaign.gmUids.includes(actorUid)) ||
-      campaign.roles?.[actorUid]==='gm';
+    const isGM=isGameMasterRole(campaignMembershipRole(campaign,actorUid,null,campaignId));
     if(!isGM)throw new Error('Only a campaign GM may view the roster.');
     const plan=legacyMembershipPlan(campaign,campaignId);
     if(plan.issues.length)throw new Error('Legacy campaign roster has unresolved membership conflicts.');

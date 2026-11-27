@@ -1,3 +1,4 @@
+import {campaignMembershipRole,isGameMasterRole} from '../../state/campaignMembershipAccess.mjs';
 const CAMPAIGN_ID=/^[A-Za-z0-9_-]{1,160}$/;
 import { effectiveSession } from '../../../src/state/liveWorkspaceModel.mjs';
 import {hudImageSource as safeDashboardArtwork} from '../../../src/state/playerHudMedia.mjs';
@@ -16,20 +17,10 @@ export function assertGMCampaignId(id) {
  * The member argument MUST be the user's server-fetched /members/{uid} doc,
  * never a role supplied by URL, localStorage, or an account profile.
  */
-export function gmCampaignAccess(campaign, member, uid, id) {
-  if (!uid || !record(campaign) || !CAMPAIGN_ID.test(String(id || '')) ||
-      campaign.id !== id) return Object.freeze({allowed:false,role:''});
-  const version = campaign.membershipSchemaVersion ?? 1;
-  if (version !== 1 && version !== 2) return Object.freeze({allowed:false,role:''});
-  if (campaign.ownerUid === uid) return Object.freeze({allowed:true,role:'owner'});
-  if (version === 2) {
-    const valid = record(member) && member.uid === uid && member.campaignId === id &&
-      member.status === 'active' && member.role === 'co-gm';
-    return Object.freeze({allowed:Boolean(valid),role:valid?'co-gm':''});
-  }
-  const valid = (Array.isArray(campaign.gmUids) && campaign.gmUids.includes(uid)) ||
-    (record(campaign.roles) && campaign.roles[uid] === 'gm');
-  return Object.freeze({allowed:Boolean(valid),role:valid?'gm':''});
+export function gmCampaignAccess(campaign,member,uid,campaignId){
+  const role=!uid || !CAMPAIGN_ID.test(String(campaignId || '')) || campaign?.id!==campaignId
+    ? '' : campaignMembershipRole(campaign,uid,member,campaignId);
+  return Object.freeze({allowed:isGameMasterRole(role),role:isGameMasterRole(role)?role:''});
 }
 
 export function gmCampaignSummary(campaign, access) {
@@ -109,20 +100,9 @@ const obj=record;
 const list=value=>Array.isArray(value)?value:[];
 export function requireDashboardId(value){if(typeof value!=='string'||!DASHBOARD_ID.test(value))throw Error('Invalid character or campaign identifier.');return value;}
 export function playerCampaignAccess(campaign,member,uid,campaignId){
-  if(!uid||!obj(campaign)||campaign.id!==campaignId||
-    !DASHBOARD_ID.test(String(campaignId||'')))
-    return Object.freeze({allowed:false,isGM:false});
-  const v=campaign.membershipSchemaVersion??1;
-  if(v!==1&&v!==2)return Object.freeze({allowed:false,isGM:false});
-  if(campaign.ownerUid===uid)return Object.freeze({allowed:true,isGM:true});
-  if(v===2){
-    const active=obj(member)&&member.uid===uid&&member.campaignId===campaignId&&
-      member.status==='active'&&['player','co-gm'].includes(member.role);
-    return Object.freeze({allowed:Boolean(active),isGM:active&&member.role==='co-gm'});
-  }
-  const gm=list(campaign.gmUids).includes(uid)||campaign.roles?.[uid]==='gm';
-  const player=list(campaign.playerUids).includes(uid)||campaign.roles?.[uid]==='player';
-  return Object.freeze({allowed:Boolean(gm||player),isGM:Boolean(gm)});
+  const role=!uid || !CAMPAIGN_ID.test(String(campaignId || '')) || campaign?.id!==campaignId
+    ? '' : campaignMembershipRole(campaign,uid,member,campaignId);
+  return Object.freeze({allowed:Boolean(role),isGM:isGameMasterRole(role)});
 }
 export function linkedCharacterAccess(campaign,character,uid,access){
   if(!access?.allowed||!obj(character)||!DASHBOARD_ID.test(String(character.id||''))||

@@ -36,7 +36,7 @@
     "test:campaign-connections": "node --test scripts/campaign-connection-phase1-3.test.mjs",
     "test:campaign-ucn": "node --test scripts/campaign-ucn.test.mjs",
     "test:campaign-membership": "node --test scripts/campaign-membership.test.mjs",
-    "test:campaign-access": "node --test scripts/campaign-access-phase2-3.test.mjs",
+    "test:campaign-access": "node --test scripts/campaign-access-phase2-3.test.mjs scripts/campaign-membership-consolidation.test.mjs",
     "test:campaign-join": "node --test scripts/campaign-join-phase3-1.test.mjs",
     "test:campaign-join-requests": "node --test scripts/campaign-join-phase3-2.test.mjs",
     "test:campaign-join-review": "node --test scripts/campaign-join-phase3-3.test.mjs",

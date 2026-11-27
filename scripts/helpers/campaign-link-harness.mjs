@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import {campaignMembershipRole} from '../../src/state/campaignMembershipAccess.mjs';
 import * as firestore from 'firebase/firestore';
 import {mergeLinkedCharacter,safeLinkedCharacterPatch} from '../../src/state/characterIntegrityModel.mjs';
 import {validateOwnedRecord} from '../../src/state/ownedCharacterRecords.mjs';
@@ -14,7 +15,7 @@ export function browserCampaignLink(db,uid) {
     return source.slice(match.index,match.index+1+end);
   }).join('\n');
   const start=source.indexOf('  linkCharacterToCampaign: async function('),end=source.indexOf('\n  },',start)+4;
-  const dependencies={...firestore,db,currentUser:{uid},currentProfile:{username:uid},window:{},mergeLinkedCharacter,safeLinkedCharacterPatch};
+  const dependencies={...firestore,db,campaignMembershipRole,currentUser:{uid},currentProfile:{username:uid},window:{},mergeLinkedCharacter,safeLinkedCharacterPatch};
   return Function(...Object.keys(dependencies),`${declarations}\nreturn ({${source.slice(start,end)}}).linkCharacterToCampaign;`)(...Object.values(dependencies));
 }
 

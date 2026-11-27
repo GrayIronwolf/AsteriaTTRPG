@@ -178,7 +178,7 @@ export function createItemStoreCommands({db,currentUser,requestId,doc,runTransac
     const membership=await readCampaignMember({get:async ref=>{
       const record=await tx.get(ref);return {exists:exists(record),data:()=>record.data()};
     }},db,campaignId,campaign,currentUser.uid);
-    if(!isCampaignGM(campaign,currentUser.uid,membership))throw Error('Only the campaign GM can manage this system.');
+    if(!isCampaignGM(campaign,currentUser.uid,membership,campaignId))throw Error('Only the campaign GM can manage this system.');
     return campaign;
   };
   return {

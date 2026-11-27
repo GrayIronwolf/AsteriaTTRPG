@@ -68,7 +68,7 @@ async function requireCampaignGM(transaction,campaignId){
   const membership=await readCampaignMember({get:async ref=>{
     const row=await transaction.get(ref);return {exists:row.exists(),data:()=>row.data()};
   }},db,campaignId,campaign,uid);
-  if(!isCampaignGM(campaign,uid,membership)) throw new Error('Only a GM for this campaign can make this change.');
+  if(!isCampaignGM(campaign,uid,membership,campaignId)) throw new Error('Only a GM for this campaign can make this change.');
   return campaign;
 }
 async function requireMerchantStanding(transaction,campaignId,shopId,characterId,stock){
