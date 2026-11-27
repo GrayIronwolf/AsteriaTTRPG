@@ -130,3 +130,55 @@ test('owner link repair UI shows rejection and permits retry without local owner
   await h.repair('campaign');assert.equal(h.refreshes(),0);assert.equal(h.button.disabled,false);
   assert.match(h.status.textContent,/existing character owner/);assert.equal(h.sheet.ownerUid,'alice');
 });
+
+test('Forge edits preserve the private identity and both campaign link formats',async()=>{
+  const h=forgeRuntime(async()=>false);
+  await h.save();
+  const id=h.window.forgeTest.draft().editCharacterId;
+  Object.assign(h.window.chars[id],{sourceCharacterId:id,sharedCampaignId:'legacy',linkedCampaignIds:['legacy','v2'],campaignCharacterIds:{v2:'reserved-id'}});
+  let submitted;
+  h.window.AsteriaFirebase.saveCharacter=async(_id,character)=>{submitted=character;return true;};
+  await h.save();
+  assert.equal(submitted.ownerUid,'alice');assert.equal(submitted.sourceCharacterId,id);
+  assert.equal(submitted.sharedCampaignId,'legacy');
+  assert.deepEqual(Array.from(submitted.linkedCampaignIds),['legacy','v2']);
+  assert.equal(submitted.campaignCharacterIds?.v2,'reserved-id');
+});
+
+test('Forge surfaces actionable permission errors and retries the same character ID',async()=>{
+  const ids=[];
+  const h=forgeRuntime(async(id)=>{ids.push(id);throw Object.assign(new Error('denied'),{code:'permission-denied'});});
+  assert.equal(await h.save(),false);
+  assert.match(h.messages.at(-1),/Firebase denied the save/);
+  h.window.AsteriaFirebase.saveCharacter=async(id)=>{ids.push(id);return true;};
+  await h.save();
+  assert.equal(ids.length,2);assert.equal(ids[0],ids[1]);
+  assert.equal(Object.keys(h.window.chars).length,1);
+});
+
+test('Forge waits for authenticated readiness without modifying the draft',async()=>{
+  let saves=0;
+  const h=forgeRuntime(async()=>{saves++;return true;});
+  h.window.AsteriaFirebase.isReady=()=>false;
+  assert.equal(await h.save(),false);
+  assert.equal(saves,0);assert.equal(Object.keys(h.window.chars).length,0);
+  assert.equal(h.draft.details.name,'Ty');assert.match(h.messages.at(-1),/Sign in and wait/);
+});
+
+test('Forge does not join campaigns or reset the new account draft after an in-flight account change',async()=>{
+  let finish;
+  const h=forgeRuntime(()=>new Promise(resolve=>{finish=resolve;}));
+  const saving=h.save();
+  h.window.AsteriaFirebase.getUser=()=>({uid:'bob'});
+  finish(true);await saving;
+  assert.deepEqual(h.order,[]);
+  assert.match(h.messages.at(-1),/saved to the original account/);
+});
+
+test('a pending campaign join exception cannot hide a successful personal save',async()=>{
+  const h=forgeRuntime(async()=>true);
+  h.window.AsteriaWorkspace.consumePendingCampaignJoin=async()=>{throw new Error('Campaign offline');};
+  await h.save();
+  assert.match(h.messages.at(-1),/Character saved: Ty.*campaign link.*retry/i);
+  assert.equal(Object.keys(h.window.chars).length,1);
+});

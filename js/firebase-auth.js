@@ -18,7 +18,7 @@ import { getFunctions, connectFunctionsEmulator, httpsCallable } from 'https://w
    ========================= */
 import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, sendPasswordResetEmail, sendEmailVerification, reload, setPersistence, browserLocalPersistence, connectAuthEmulator } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js';
-import { getFirestore, connectFirestoreEmulator, orderBy, limit, startAfter, doc, setDoc, getDoc, getDocFromServer, collection, getDocs, deleteDoc, onSnapshot, query, where, runTransaction, serverTimestamp, Timestamp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
+import { getFirestore, connectFirestoreEmulator, orderBy, limit, startAfter, doc, setDoc, getDoc, getDocFromServer, collection, getDocs, deleteDoc, onSnapshot, query, where, runTransaction, writeBatch, arrayUnion, serverTimestamp, Timestamp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
 import { getStorage, connectStorageEmulator, ref as storageRef, uploadBytes, getDownloadURL, getBlob, deleteObject } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js';
 import {accountIdRegistrationEnabled,finalizeRegisteredAccountId} from '../src/state/accountIdRegistration.mjs';
 import {canSendVerificationEmail,canCompleteNewAccountId,accountIdCompletionEnabled} from '../src/state/accountEmailVerification.mjs';
@@ -2445,22 +2445,43 @@ const firebasePublicApi = {
       return {ok:false,error:error.message||String(error)};
     }
   },
-  saveCharacter: async function(id, character){
-    if(!db || !currentUser || !id || !character || character.ownerUid !== currentUser.uid) return false;
+  saveCharacter: async function(id, character, options={}){
+    const fail=(message)=>{ if(options.throwOnError) throw new Error(message); return false; };
+    if(!db) return fail('Firebase storage is unavailable.');
+    if(!currentUser) return fail('Sign in before saving your character.');
+    if(!id || !character) return fail('Character data is missing.');
+    if(character.ownerUid !== currentUser.uid) return fail('Character ownership does not match the signed-in account.');
     const uid=currentUser.uid;
     try{
       const clean = JSON.parse(JSON.stringify(character));
-      await setDoc(doc(db, 'users', uid, 'characters', id), Object.assign({}, clean, { id, ownerUid: uid, updatedAt: serverTimestamp() }), { merge:true });
-      if(currentUser?.uid!==uid) return false;
-      const profileRef = doc(db, 'users', uid);
-      const chars = Array.from(new Set([...(currentProfile?.characters || []), id]));
-      currentProfile = Object.assign({}, currentProfile || {}, { characters: chars });
-      await setDoc(profileRef, { characters: chars, updatedAt: serverTimestamp() }, { merge:true });
-      saveLocalProfile(uid, Object.assign({}, currentProfile, { characters: chars }));
-      if(currentUser?.uid!==uid) return false;
-      await syncCharacterToCampaigns(id, clean);
+      const batch = writeBatch(db);
+      batch.set(doc(db, 'users', uid, 'characters', id),
+        Object.assign({}, clean, { id, ownerUid:uid, updatedAt:serverTimestamp() }), { merge:true });
+      // Atomic personal character and profile index persistence. arrayUnion
+      // prevents concurrent saves from replacing other character IDs.
+      batch.set(doc(db, 'users', uid),
+        { characters:arrayUnion(id), updatedAt:serverTimestamp() }, { merge:true });
+      if(currentUser?.uid!==uid) return fail('Account changed during character save.');
+      await batch.commit();
+      // The write belongs to the captured account even if sign-in changed
+      // while Firestore was acknowledging it. Do not touch the new session.
+      if(currentUser?.uid!==uid) return true;
+      currentProfile = Object.assign({}, currentProfile || {}, {
+        characters:Array.from(new Set([...(currentProfile?.characters || []), id]))
+      });
+      saveLocalProfile(uid, currentProfile);
+      // Campaign projections are secondary. A projection failure must not
+      // report an already committed personal character as unsaved.
+      if(currentUser?.uid===uid){
+        try{ await syncCharacterToCampaigns(id, clean); }
+        catch(error){ reportSyncError('character-campaign-projection',error,{characterId:id}); }
+      }
       return true;
-    }catch(err){ console.warn('Could not save character to Firestore.', err); return false; }
+    }catch(err){
+      console.warn('Could not save character to Firestore.', err);
+      if(options.throwOnError) throw err;
+      return false;
+    }
   },
   saveCharacters: async function(characterMap){
     if(!db || !currentUser || !characterMap) return false;

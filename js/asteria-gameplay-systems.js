@@ -2782,6 +2782,12 @@
       console.warn('Character save deferred until rules are available.',error);
       return false;
     }
+    const firebase = window.AsteriaFirebase;
+    const authenticatedUid = firebase?.getUser?.()?.uid;
+    if(firebase && (!authenticatedUid || !firebase.isReady?.())) {
+      window.toast?.('Sign in and wait for Firebase to reconnect before saving. Your draft is retained.');
+      return false;
+    }
     const d = draft();
     if(!d.raceSlug){
       activeTab = 'Race';
@@ -2976,8 +2982,8 @@
       origin:d.originSlug || d.backgroundSlug || '',
       originTitle:originEntry?.title || '',
       originNotes:d.origin.notes || d.origin.backstory || '',
-      ownerUid:existingCharacter?.ownerUid || currentUserKey(),
-      ...(existingCharacter ? {sourceCharacterId:existingCharacter.sourceCharacterId,sharedCampaignId:existingCharacter.sharedCampaignId,linkedCampaignIds:existingCharacter.linkedCampaignIds} : {}),
+      ownerUid:existingCharacter?.ownerUid || authenticatedUid || currentUserKey(),
+      ...(existingCharacter ? {sourceCharacterId:existingCharacter.sourceCharacterId,sharedCampaignId:existingCharacter.sharedCampaignId,linkedCampaignIds:existingCharacter.linkedCampaignIds,campaignCharacterIds:existingCharacter.campaignCharacterIds} : {}),
       level:Number(existingCharacter?.level ?? 0),
       hp:existingCharacter?.hp ? [Math.min(Number(existingCharacter.hp[0] || 0), hpMax), hpMax] : [hpMax, hpMax],
       sp:existingCharacter?.sp ? [Math.min(Number(existingCharacter.sp[0] || 0), spMax), spMax] : [spMax, spMax],
@@ -3049,15 +3055,40 @@
     d.editCharacterId = id;
     saveState(editingId ? 'phase3a-character-updated' : 'phase3a-character-forged');
     try {
-      if(window.AsteriaFirebase && !await window.AsteriaFirebase.saveCharacter(id, window.chars[id])) {
+      if(firebase && firebase.getUser?.()?.uid !== authenticatedUid) {
+        window.toast?.('Account changed during save. Your character is retained locally. Sign in to the original account.');
+        return false;
+      }
+      if(firebase && !await firebase.saveCharacter(id, window.chars[id], { throwOnError:true })) {
         window.toast?.('Character kept locally, but Firebase could not save it. Check the connection and retry Save.');
         return false;
       }
     } catch(error) {
-      window.toast?.(`Character kept locally. Save failed: ${error.message || error}`);
+      const code = String(error?.code || '').replace(/^firestore\//,'');
+      const messages = {
+        'permission-denied':'Firebase denied the save. Check character ownership and deployed permissions.',
+        'unauthenticated':'Authentication expired. Sign in to the original account and retry.',
+        'invalid-argument':'Firebase rejected the character data.',
+        'unavailable':'Firebase is temporarily unavailable. Retry when connected.',
+        'deadline-exceeded':'Firebase did not respond in time. Retry Save.',
+        'resource-exhausted':'Firebase storage or request limits were reached.'
+      };
+      window.toast?.(`Character kept locally. ${messages[code] || error?.message || 'Save failed.'}`);
+      console.warn('Character Forge cloud save failed.', error);
       return false;
     }
-    const joinedCampaign = await window.AsteriaWorkspace?.consumePendingCampaignJoin?.(id);
+    if(firebase && firebase.getUser?.()?.uid !== authenticatedUid) {
+      window.toast?.('Character saved to the original account. Sign in to that account to continue.');
+      return true;
+    }
+    let joinedCampaign = null;
+    let campaignJoinFailed = false;
+    try {
+      joinedCampaign = await window.AsteriaWorkspace?.consumePendingCampaignJoin?.(id);
+    } catch(error) {
+      campaignJoinFailed = true;
+      console.warn('Character saved, but the pending campaign link failed.', error);
+    }
     state.drafts.characterCreator = defaultState().drafts.characterCreator;
     saveState('phase3a-character-save-confirmed');
     window.ensureProgressionData?.();
@@ -3066,7 +3097,7 @@
     window.renderUnlockedTalentSummary?.(id);
     window.renderTalentTreeUI?.(id);
     if(document.getElementById('player')?.classList.contains('show')) window.loadPlayer?.(id);
-    window.toast?.(`${editingId ? 'Character updated' : 'Character saved'}: ${name}${joinedCampaign?.name ? ` linked to ${joinedCampaign.name}` : ''}`);
+    window.toast?.(`${editingId ? 'Character updated' : 'Character saved'}: ${name}${joinedCampaign?.name ? ` linked to ${joinedCampaign.name}` : ''}${campaignJoinFailed ? '. The campaign link failed; retry linking from the campaign.' : ''}`);
     openCharacterForgeHub();
   }
 
