@@ -25,6 +25,10 @@ export function mapForViewer(raw,campaignId,mode='player'){
       gridColumns:cols,gridRows:rows,
       fogCells:validFogCells(raw.fogCells,cols,rows)});
     const dimensions=battleMapDimensions(raw.width,raw.height);
+    // Defence in depth: even a malformed public map document must not
+    // expose a GM-only token or its active-turn identifier.
+    const visibleTokens=battleMapTokens(settings.tokens).filter(token=>
+      mode==='gm'||token.visibility!=='gm');
     return Object.freeze({
       id:raw.id,name:settings.name,description:settings.description,
       kind:raw.kind,contentType:raw.contentType,storagePath:raw.storagePath,
@@ -39,10 +43,10 @@ export function mapForViewer(raw,campaignId,mode='player'){
       ...(raw.exploredCells?{exploredCells:validFogCells(raw.exploredCells,cols,rows)}:{}),
       ...(mode!=='gm'&&typeof raw.lightingCells==='string'&&raw.lightingCells.length===cols*rows&&/^[012]+$/.test(raw.lightingCells)?
         {lightingCells:raw.lightingCells,effectCells:raw.effectCells||{}}:{}),
-      tokens:battleMapTokens(settings.tokens),
+      tokens:visibleTokens,
       combatId:mapId(raw.combatId)?raw.combatId:'',
       ...(mode==='gm'?{updatedAt:raw.updatedAt||null}:
-        {activeTokenId:settings.tokens.some(token=>token.id===raw.activeTokenId)?raw.activeTokenId:''})
+        {activeTokenId:visibleTokens.some(token=>token.id===raw.activeTokenId)?raw.activeTokenId:''})
     });
   }catch{return null;}
 }
