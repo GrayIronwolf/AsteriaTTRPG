@@ -389,6 +389,23 @@ export function CampaignMapWorkspace({api,campaignId,role='player',selectedMapId
         {map&&draft.fogEnabled?<button type="button" onClick={()=>fillFog(true)}>Reveal all</button>:null}
         {map&&draft.fogEnabled?<button type="button" onClick={()=>fillFog(false)}>Hide all</button>:null}
       </div>
+      {map&&Array.isArray(draft.tokens)&&draft.tokens.length?<fieldset data-testid="gm-map-token-visibility">
+        <legend>Individual token visibility</legend>
+        <p>Choose which markers may appear on published player maps. Unrevealed fog
+          still hides tokens. Active encounter tokens must be changed in Combat Command Centre.</p>
+        {draft.tokens.map(token=><label key={token.id}>
+          {token.label}
+          <select value={token.visibility==='gm'?'gm':'players'}
+            disabled={busy||Boolean(map.combatId)}
+            onChange={event=>setDraft(previous=>({...previous,
+              tokens:previous.tokens.map(row=>row.id===token.id?
+                {...row,...(event.target.value==='gm'?{visibility:'gm'}:{visibility:'players'})}:row)
+            }))}>
+            <option value="gm">GM only</option>
+            <option value="players">Show to players</option>
+          </select>
+        </label>)}
+      </fieldset>:null}
       {!map?<label>Upload map media<input type="file"
         accept="image/png,image/jpeg,image/webp,image/gif,video/mp4,video/webm"
         onChange={e=>setFile(e.target.files?.[0]||null)}/></label>:null}
