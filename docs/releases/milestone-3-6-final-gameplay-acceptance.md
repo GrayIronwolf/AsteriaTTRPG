@@ -35,3 +35,9 @@
 CI can confirm the implementation and isolated browser/backend fixtures, **not** that every possible device, multi-user network interruption or physical dice interaction has been manually experienced. Manual acceptance on actual in-person and remote devices should still verify GM/player sessions, reconnect, projected fog and dice entry. Do not declare production readiness without that evidence.
 
 No code is to be merged until all required GitHub checks have passed, and no deployment of `main` or Firebase production resources is authorised.
+
+## Final integration safeguards
+
+- Generated frontend assets are compiled and committed on the milestone branch before the final pull-request verification.
+- GitHub checks on automatically generated commits may require a subsequent human-authored PR verification run; only successful results on the latest reviewed head count.
+- The development-branch merge requires the combined gameplay, cross-system, Firebase, browser, map and publishing-isolation gates to pass.
