@@ -9,6 +9,47 @@ function ReactionApproval({character,value={},onChange}) {
   const options=combatOptions(character,window.ASTERIA_UNIVERSAL_COMPENDIUM_INDEX?.entries||[]).filter(row=>['spell','talent','technique'].includes(row.kind));
   return <div className="react-form-grid" style={{gridColumn:'1 / -1'}}><label>Owned reaction source<select value={value.optionId||''} onChange={e=>change('optionId',e.target.value)}><option value="">Choose actual ability / rank</option>{options.map(option=><option key={option.id} value={option.id}>{option.name} · {option.rank||''}</option>)}</select></label><label>Casting method<select value={value.castingMethod||''} onChange={e=>change('castingMethod',e.target.value)}><option value="">Not a spell / choose method</option>{['mancer','wizard','occultist','sorcerer','summoner','warlock','witch-doctor','source-defined'].map(row=><option key={row}>{row}</option>)}</select></label><label>Elemental skill<input value={value.elementalSkill||''} onChange={e=>change('elementalSkill',e.target.value)}/></label><label>Element relationship<select value={value.elementRelation||''} onChange={e=>change('elementRelation',e.target.value)}><option value="">Choose approved relationship</option><option value="same">Same (−2)</option><option value="opposite">Opposite (0)</option></select></label><label>Source / cost / eligibility approval<input value={value.sourceReason||''} onChange={e=>change('sourceReason',e.target.value)}/></label><label className="combat-check"><input type="checkbox" checked={Boolean(value.feasible)} onChange={e=>onChange({...value,feasible:e.target.checked,rankEligible:e.target.checked,triggerConfirmed:e.target.checked})}/>Confirmed actual reaction permission, rank access, prerequisites and range</label></div>;
 }
+function HybridPhysicalDiceEntry({busy,onSubmit,actionId}){
+  const [primary,setPrimary]=useState(''),[defence,setDefence]=useState(''),
+    [opposed,setOpposed]=useState(''),[error,setError]=useState('');
+  useEffect(()=>{setPrimary('');setDefence('');setOpposed('');setError('');},[actionId]);
+  const parse=value=>{
+    const text=value.trim();
+    if(!text)return null;
+    if(!/^(?:[1-9]|1[0-9]|20)(?:\\s*,\\s*(?:[1-9]|1[0-9]|20))?$/.test(text))
+      throw Error('Enter one or two d20 faces (1–20), separated by a comma.');
+    return text.split(',').map(Number);
+  };
+  const submitPhysical=()=>{
+    try{
+      const dice={};
+      for(const [key,value] of [['primary',primary],['defence',defence],['opposed',opposed]]){
+        const faces=parse(value);
+        if(faces)dice[key]=faces;
+      }
+      if(!dice.primary)throw Error('Enter the primary physical d20 result.');
+      setError('');onSubmit({operation:'roll',physicalDice:dice});
+    }catch(failure){setError(failure.message);}
+  };
+  return <div className="combat-react-form" data-testid="hybrid-physical-dice">
+    <p>Choose automatic digital dice or record physical d20 faces. Use two faces
+      for advantage/disadvantage. Unentered defence or opposed checks use digital dice.
+      The GM still approves and resolves the outcome through the combat engine.</p>
+    <div className="react-form-grid">
+      <label>Physical primary d20<input value={primary} disabled={busy}
+        placeholder="e.g. 14 or 14, 8" onChange={e=>setPrimary(e.target.value)}/></label>
+      <label>Physical defence d20 (optional)<input value={defence} disabled={busy}
+        placeholder="GM reaction roll" onChange={e=>setDefence(e.target.value)}/></label>
+      <label>Physical opposed d20 (optional)<input value={opposed} disabled={busy}
+        placeholder="Opposing check" onChange={e=>setOpposed(e.target.value)}/></label>
+    </div>
+    {error?<p role="alert">{error}</p>:null}
+    <button type="button" className="primary" disabled={busy}
+      onClick={()=>onSubmit({operation:'roll'})}>Roll digitally</button>
+    <button type="button" disabled={busy||!primary.trim()}
+      onClick={submitPhysical}>Record physical dice</button>
+  </div>;
+}
 function GMActionReview({api,campaignId,encounter,characters,combatState,run,busy}) {
   const p=combatState?.pending;
   const [form,setForm]=useState({checkType:'none',skill:'',dc:'',opposedSkill:'',castingMethod:'',personalMP:'',sourceReason:'',feasible:false,rankEligible:false,sizeEligible:false}),[reason,setReason]=useState(''),[target,setTarget]=useState(''),[amount,setAmount]=useState(''),[healing,setHealing]=useState(false),[damageType,setDamageType]=useState(''),[sharedArea,setSharedArea]=useState(false),[outcome,setOutcome]=useState('manifested'),[reactors,setReactors]=useState({});
@@ -35,7 +76,8 @@ function GMActionReview({api,campaignId,encounter,characters,combatState,run,bus
       </select></label>:null}
       <div className="combat-buttons"><button disabled={busy} className="primary" onClick={approve}>Validate & begin</button><button disabled={busy} onClick={()=>send({operation:'reject'})}>{p.prepaidAP?'Reject resolution · keep AP spent':'Reject · no costs'}</button></div></>:null}
     {p.status==='reactions'?<><p>Confirm awareness, range and the actual trigger. Eligible reactors act in initiative order.</p>{!p.window?.length?<><div className="combat-reactor-list">{encounter.combatants.filter(row=>row.id!==p.actorId).map(row=><div key={row.id}><b>{row.name}</b><select value={reactors[row.id]?.choice||''} onChange={e=>setReactors(previous=>({...previous,[row.id]:{...previous[row.id],choice:e.target.value}}))}><option value="">No eligible reaction</option>{['dodge','block','parry','opportunity','prepared','counterspell','ability'].map(key=><option key={key}>{key}</option>)}</select><input placeholder="Trigger, awareness, range and suitability" value={reactors[row.id]?.reason||''} onChange={e=>setReactors(previous=>({...previous,[row.id]:{...previous[row.id],reason:e.target.value}}))}/>{['counterspell','ability'].includes(reactors[row.id]?.choice)?<ReactionApproval character={characters[row.characterId]||row} value={reactors[row.id]?.approval||{}} onChange={approval=>setReactors(previous=>({...previous,[row.id]:{...previous[row.id],approval}}))}/>:null}</div>)}</div><button disabled={busy} onClick={()=>send({operation:'window',reactors:Object.entries(reactors).filter(([,row])=>row.choice).map(([actorId,row])=>({actorId,choices:[row.choice],reason:row.reason,approval:row.approval||{},abilityIds:row.approval?.optionId?[row.approval.optionId]:[]}))})}>Open eligible reactions</button></>:null}{p.reaction?<button disabled={busy} onClick={()=>send({operation:'resolve-reaction',reason,success:true})}>{p.reaction.key==='counterspell'?'Roll elemental clash':'Resolve committed reaction'}</button>:<button disabled={busy} onClick={()=>send({operation:'close-window',reason})}>Close reaction window</button>}</>:null}
-    {p.status==='awaiting-roll'?<button className="primary" disabled={busy} onClick={()=>send({operation:'roll'})}>Roll recorded check / confirm no check</button>:null}
+    {p.status==='awaiting-roll'?<HybridPhysicalDiceEntry
+      key={p.id} actionId={p.id} busy={busy} onSubmit={send}/>:null}
     {p.result?<pre className="combat-result">{p.result.attack?`Attack ${p.result.attack.total} (d20: ${p.result.attack.die}) vs AC ${p.result.ac}. ${p.result.critical?'Critical: max base weapon dice + rolled base dice + modifiers once. ':''}${p.result.defence?`Defence ${p.result.defence.total}. `:''}${p.result.success?'Hit':'Miss / defended'}`:p.result.roll?`${p.result.roll.skill}: ${p.result.roll.total} (d20: ${p.result.roll.die}) ${p.result.opponent?`vs ${p.result.opponent.skill}: ${p.result.opponent.total}`:`vs DC ${p.result.dc}`} · ${p.result.success?'Success':'Failure'}`:p.result.success?'No check / success':'Failed or prevented'}</pre>:null}
     {['awaiting-roll','awaiting-resolution'].includes(p.status)?<><div className="react-form-grid"><label>Effect target<select value={target} onChange={e=>setTarget(e.target.value)}><option value="">No numeric effect</option>{[...new Set([p.actorId,...p.targetIds])].map(id=><option key={id} value={id}>{encounter.combatants.find(row=>row.id===id)?.name}</option>)}</select></label><label>Resolved damage / healing amount<ManualNumberInput min="0" value={amount} onChange={e=>setAmount(e.target.value)}/></label><label>Damage type from source<input value={damageType} onChange={e=>setDamageType(e.target.value)} placeholder="e.g. fire, psychic, piercing"/></label><label>Outcome<select value={outcome} onChange={e=>setOutcome(e.target.value)}>{['manifested','failed-before-manifestation','feedback','countered'].map(row=><option key={row} value={row}>{row.replaceAll('-',' ')}</option>)}</select></label></div><label className="combat-check"><input type="checkbox" checked={healing} onChange={e=>setHealing(e.target.checked)}/>Healing rather than damage</label><label className="combat-check"><input type="checkbox" checked={sharedArea} onChange={e=>setSharedArea(e.target.checked)}/>One shared area damage roll; apply to each declared target once</label><p>Damage dice, location, areas and source-specific effects need GM adjudication. Recorded failures do not grant effects.</p><button disabled={busy||amount!==''&&!healing&&!damageType} className="primary" onClick={()=>send({operation:'resolve',reason,success:true,outcome,results:amount!==''&&target?(sharedArea?p.targetIds:[target]).map(targetId=>({targetId,...(healing?{healing:Number(amount)}:{damage:[{type:damageType.toLowerCase().trim(),amount:Number(amount)}]})})):[]})}>Apply result once</button></>:null}
     <label>GM result / correction / closure reason<textarea value={reason} onChange={e=>setReason(e.target.value)} maxLength={1000}/></label>
