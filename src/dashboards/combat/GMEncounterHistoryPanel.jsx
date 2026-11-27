@@ -24,7 +24,7 @@ export function GMEncounterHistoryPanel({api,campaignId,combat,onCommand,busy=fa
       setError('Encounter history is unavailable in this build.');return;}
     return api.watchGMHistory(campaignId,records=>{
       setHistory(records);setLoading(false);setError('');
-    },failure=>{setLoading(false);
+    },failure=>{setLoading(false);setHistory([]);setChosen('');setDraft(null);
       setError(failure?.message||'Encounter history access denied.');});
   },[api,campaignId]);
   const selected=history.find(row=>row.id===chosen)||history[0]||null;
