@@ -81,6 +81,27 @@ export function CombatBattleMapPanel({mediaApi,campaignId,combat,pending,onComma
       </div>:null}
       {positioning?<p>Choose the destination on the map.</p>:null}
     </details>:null}
+    {!preview&&map&&combat?.isActive&&map.id===combat.battleMapId&&
+      map.tokens?.length?<details data-testid="gm-active-token-visibility">
+      <summary>GM token visibility on live map</summary>
+      <p>Control each token independently. Player-facing map projections still enforce
+        fog and automatic vision. Visibility changes are GM-authorised and recorded.</p>
+      {map.tokens.map(token=><label key={token.id}>
+        {token.label}
+        <select value={token.visibility==='gm'?'gm':'players'}
+          disabled={busy||!combat.sessionEditable||combat.paused}
+          onChange={event=>onCommand('encounter',{
+            operation:'map-token-appearance',mapId:map.id,tokenId:token.id,
+            appearance:{
+              portrait:token.portrait||'',faction:token.faction||'',
+              cells:token.cells??1,visibility:event.target.value
+            }
+          })}>
+          <option value="gm">GM only</option>
+          <option value="players">Visible to players</option>
+        </select>
+      </label>)}
+    </details>:null}
     {map?<><p>{combat?.battleMapId?
       'Live combat map — combatant tokens are managed by the existing server.':
       'Prepared map preview — live combat tokens will be linked on Start Combat.'}</p>
