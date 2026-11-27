@@ -218,3 +218,12 @@ test('3.6 final: physical roll transaction is GM-only, revision-safe and never c
   assert.equal((await malformed.send({...action,result:21})).ok,false);
   assert.deepEqual(malformed.writes,[]);
 });
+
+test('3.6 final: GM-only history and snapshots clear after permission failure',()=>{
+  const history=source('src/dashboards/combat/GMEncounterHistoryPanel.jsx');
+  const combat=source('src/dashboards/combat/CombatWorkspace.jsx');
+  assert.ok(history.includes("setLoading(false);setHistory([]);setChosen('');setDraft(null);"));
+  assert.ok(combat.includes("failure=>{setEntries([]);"));
+  assert.ok(combat.includes("setState({loading:false,data:null,error:"));
+  assert.ok(combat.includes("Reconnect combat status"));
+});
