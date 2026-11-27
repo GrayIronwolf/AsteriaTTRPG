@@ -318,6 +318,16 @@ export const asteriaCampaignJoinReview=onCall({region:'us-central1',maxInstances
         mode:data.mode,expectedRevision:data.expectedRevision
       });
     }
+    if(data.action==='attendance-change'){
+      if(process.env.ASTERIA_PLAYER_ROSTER_ENABLED!=='1'||
+        process.env.ASTERIA_CAMPAIGN_ATTENDANCE_ENABLED!=='1')
+        throw new Error('Campaign attendance management is not enabled yet.');
+      const {updateCampaignAttendance}=await import('./campaignAttendance.mjs');
+      return await updateCampaignAttendance(db,uid,{
+        campaignId:data.campaignId,memberUid:data.memberUid,
+        mode:data.mode,expectedRevision:data.expectedRevision
+      });
+    }
     if(data.action==='roster'){
       if(process.env.ASTERIA_PLAYER_ROSTER_ENABLED!=='1')
         throw new Error('Campaign player roster is not enabled yet.');
