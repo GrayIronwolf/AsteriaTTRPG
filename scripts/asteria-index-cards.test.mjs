@@ -5,10 +5,14 @@ import fs from 'node:fs';
 const require=createRequire(import.meta.url);
 const cards=require('../js/asteria-index-cards.js');
 const sample={asteriaId:'01-05-001-001',name:'Example Race',category:'Races'};
-test('Asteria card registry remains empty until an ID assignment is verified',()=>{
-  assert.equal(cards.all().length,0);
-  assert.equal(cards.placeholders().length,0);
+test('Asteria verified catalogue contains only metadata and retains all 12 priority categories',()=>{
   assert.equal(cards.categories.length,12);
+  assert.equal(cards.all().length,4495);
+  assert.equal(cards.placeholders().length,4495);
+  assert.ok(cards.all().every(row=>/^\d{2}-\d{2}-\d{3}-\d{3}$/.test(row.asteriaId)));
+  assert.ok(cards.all().every(row=>Object.keys(row).sort().join(',')==='asteriaId,category,domain,name,websiteId'));
+  assert.equal(cards.forAsteria('07-05-002-025')?.name,'Red Primdale');
+  assert.equal(cards.all().filter(row=>row.category==='Schematics').length,336);
 });
 test('metadata-only mappings create Coming Soon placeholder candidates',()=>{
   assert.deepEqual(cards.preview([sample]),[{...sample,websiteId:null,domain:'race'}]);
