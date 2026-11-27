@@ -21,7 +21,7 @@ export function createPlayerPresentationCommands(context,{requireCampaignGM}){
           const sharedRef=doc(db,'campaigns',campaignId,'presentationShared','current');
           const snapshot=await transaction.get(controlRef);
           const previous=exists(snapshot)?snapshot.data():PRESENTATION_DEFAULT;
-          if(Number(previous.revision||0)!==action.expectedRevision)
+          if(type!=='blackout'&&Number(previous.revision||0)!==action.expectedRevision)
             throw Error('Presentation changed. Refresh and try again.');
           const draft=type==='blackout'
             ?presentationDraft({
@@ -60,7 +60,9 @@ export function createPlayerPresentationCommands(context,{requireCampaignGM}){
           const accessRef=doc(db,'campaigns',campaignId,'presentationAssetAccess','current');
           const accessSnap=await transaction.get(accessRef);
           const existingAccess=exists(accessSnap)?accessSnap.data():{};
-          const revision=action.expectedRevision+1;
+          // Emergency hide must remain available even when another GM tab has published.
+          // The transaction serializes the blackout against the authoritative revision.
+          const revision=Number(previous.revision||0)+1;
           const safe=publicPresentation(draft,revision);
           transaction.set(controlRef,{...safe,updatedBy:currentUser.uid,updatedAt:serverTimestamp()});
           transaction.set(sharedRef,{...safe,updatedAt:serverTimestamp()});
@@ -71,6 +73,12 @@ export function createPlayerPresentationCommands(context,{requireCampaignGM}){
               ...restrictedPresentationProjection(safe,revision),
               epoch:hybrid.epoch,updatedAt:serverTimestamp()
             });
+            if(safe.scene==='blank'){
+              transaction.set(doc(db,'campaigns',campaignId,'presentationCombat','current'),{
+                active:false,round:0,current:'',endsAt:0,epoch:hybrid.epoch,
+                visible:false,updatedAt:serverTimestamp()
+              });
+            }
             if(safe.scene==='combat'){
               transaction.set(doc(db,'campaigns',campaignId,'presentationCombat','current'),{
                 ...publicCombatPresentation(exists(combatSnap)?combatSnap.data():{}),
