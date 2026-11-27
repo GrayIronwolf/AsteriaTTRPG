@@ -1,0 +1,190 @@
+/* GM Player Manager: one administration workspace; existing Firebase callables own writes. */
+.react-gm-player-manager{display:grid;gap:16px;min-width:0;margin:0 0 22px;color:var(--asteria-text);}
+.react-gm-player-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  padding:clamp(14px,2vw,24px);background:#101f2c;border:1px solid #5a7282;border-radius:4px;}
+.react-gm-player-heading h2{font:550 clamp(1.3rem,2.3vw,1.8rem)/1.2 var(--asteria-font-display);margin:3px 0 8px;color:#efdfc0;}
+.react-gm-player-heading p:not(.react-eyebrow){max-width:72ch;margin:0;color:#b7cad7;font-size:.88rem;line-height:1.5;}
+.react-gm-player-head-actions,.react-gm-player-badges,.react-gm-player-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.react-gm-player-head-actions{margin-left:auto;}
+.react-gm-player-manager :is(button,select,input){font:inherit;}
+.react-gm-player-manager button{min-height:38px;padding:7px 11px;color:#eaf3f7;background:#213648;
+  border:1px solid #688496;border-radius:3px;cursor:pointer;font-size:.82rem;font-weight:600;}
+.react-gm-player-manager button:hover:not(:disabled){background:#305169;border-color:#a8c4d5;}
+.react-gm-player-manager button:disabled{cursor:not-allowed;opacity:.48;}
+.react-gm-player-manager :is(input,select,button):focus-visible{outline:2px solid #92d7ff;outline-offset:2px;}
+.react-gm-player-manager select,.react-gm-player-manager input{min-width:0;max-width:100%;min-height:42px;
+  padding:7px 10px;background:#081925;color:#eaf2f8;border:1px solid #647e90;border-radius:3px;box-sizing:border-box;}
+.react-gm-player-manager label{display:grid;gap:6px;color:#c0d1db;font-size:.82rem;min-width:0;}
+.react-gm-player-metrics{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;}
+.react-gm-player-metric{display:grid;gap:7px;min-width:0;padding:14px 16px;min-height:70px;
+  background:#132837;border:1px solid #547386;border-radius:3px;}
+.react-gm-player-metric small{color:#b6cbd7;font-size:.76rem;}
+.react-gm-player-metric strong{font:600 1.4rem/1.1 var(--asteria-font-display);color:#f0ddbd;font-variant-numeric:tabular-nums;}
+.react-gm-player-sections{display:flex;align-items:stretch;gap:5px;overflow-x:auto;min-width:0;
+  border-bottom:1px solid #587183;padding:2px 0 6px;scrollbar-width:thin;}
+.react-gm-player-sections button{flex:none;border:1px solid transparent;background:transparent;
+  color:#c4d4df;white-space:nowrap;border-radius:3px;padding:9px 13px;}
+.react-gm-player-sections button[aria-current='page']{border-color:#849aa7;background:#233d50;color:#f4dfb9;}
+.react-gm-player-sections button span{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:2px;
+  background:#456379;color:#fff;font-size:.72rem;}
+.react-gm-player-manager>.asteria-react-panel{min-width:0;}
+.react-gm-player-notice,.react-gm-player-loading,.react-gm-player-feedback{padding:12px 14px;
+  border:1px solid #567488;background:#132a39;color:#d4e4ed;margin:10px 0;line-height:1.5;font-size:.85rem;}
+.react-gm-player-feedback{border-left:3px solid #7cb7da;}
+.react-gm-player-filters{display:grid;grid-template-columns:minmax(210px,2fr) repeat(2,minmax(130px,1fr));
+  gap:10px;margin:12px 0 18px;}
+.react-gm-player-filters input,.react-gm-player-filters select{width:100%;}
+.react-gm-player-roster,.react-gm-player-record-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-content:start;}
+.react-gm-player-account,.react-gm-player-record-list>article{min-width:0;display:grid;gap:11px;
+  background:#102536;border:1px solid #526f83;padding:14px;border-radius:3px;align-content:start;}
+.react-gm-player-account-title{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;}
+.react-gm-player-account h3,.react-gm-player-record-list h3{margin:0 0 4px;
+  font-size:1.05rem;font-weight:650;color:#f0dfc1;overflow-wrap:anywhere;}
+.react-gm-player-account small,.react-gm-player-record-list small{display:block;color:#aec6d5;
+  line-height:1.4;overflow-wrap:anywhere;font-size:.76rem;}
+.react-gm-player-role,.react-gm-player-online,.react-gm-player-offline{display:inline-flex;align-items:center;
+  padding:4px 7px;border:1px solid #667e8d;font-size:.75rem;white-space:normal;color:#c7d8e4;border-radius:2px;}
+.react-gm-player-online{border-color:#43866e;color:#9cddbe;}
+.react-gm-player-offline{color:#b5c6d0;}
+.react-gm-player-character-list{display:grid;gap:8px;}
+.react-gm-player-character{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:10px 11px;flex-wrap:wrap;border:1px solid #395b71;background:#081d2c;}
+.react-gm-player-character>div:first-child{display:grid;gap:3px;min-width:0;}
+.react-gm-player-character strong{font-size:.88rem;color:#ebdfc6;overflow-wrap:anywhere;}
+.react-gm-player-actions button{min-height:35px;padding:6px 9px;font-size:.76rem;}
+.react-gm-player-manager button.react-gm-player-danger{border-color:#a25c65;color:#f8cbd1;background:#442631;}
+.react-gm-player-manager button.react-gm-player-danger:hover:not(:disabled){background:#60303c;}
+.react-gm-player-empty-note,.react-gm-player-hint,.react-gm-player-footnote{
+  color:#aebfca;font-size:.81rem;line-height:1.55;margin:9px 0;}
+.react-gm-player-capacity{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:12px 0;}
+.react-gm-player-capacity>div{padding:12px;min-width:0;display:grid;gap:4px;
+  border:1px solid #527182;background:#132a3a;}
+.react-gm-player-capacity small{font-size:.75rem;color:#bfd0d8;}
+.react-gm-player-capacity strong{font-size:.97rem;overflow-wrap:anywhere;color:#e8ddc5;}
+.react-gm-player-mode{max-width:290px;margin:12px 0 16px;}
+.react-gm-player-section-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start;}
+.react-gm-player-section-grid>.asteria-react-panel{min-width:0;}
+.react-gm-player-section-grid .react-gm-player-record-list{grid-template-columns:minmax(0,1fr);}
+.react-gm-player-record-list>article p{margin:4px 0 0;font-size:.82rem;color:#ccdae2;}
+.react-gm-player-invite-controls{display:flex;align-items:end;gap:10px;flex-wrap:wrap;margin:12px 0;}
+.react-gm-player-invite-controls>label{flex:1 1 120px;max-width:230px;}
+.react-gm-player-invite-controls>button{min-height:42px;}
+.react-gm-player-one-time{display:grid;gap:8px;padding:14px;border:1px solid #a28b62;
+  background:#253242;margin:14px 0;}
+.react-gm-player-one-time strong{font-size:.94rem;color:#f4dbad;}
+.react-gm-player-one-time p{margin:0;font-size:.82rem;}
+.react-gm-player-qr:empty{display:none;}
+.react-gm-player-qr{width:max-content;max-width:100%;padding:10px;background:white;}
+.react-gm-player-events{display:grid;gap:9px;padding:0;list-style:none;margin:12px 0;}
+.react-gm-player-events li{display:grid;gap:4px;padding:12px;border:1px solid #4b6d83;background:#0e2435;}
+.react-gm-player-events strong{color:#f3dec0;font-size:.9rem;}
+.react-gm-player-events small{color:#b6cbd7;font-size:.77rem;}
+.react-gm-player-events p{margin:0;color:#d0dde6;font-size:.83rem;}
+@media(max-width:1100px){.react-gm-player-metrics{grid-template-columns:repeat(3,minmax(0,1fr));}
+  .react-gm-player-section-grid{grid-template-columns:1fr;}}
+@media(max-width:740px){.react-gm-player-metrics{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .react-gm-player-roster,.react-gm-player-record-list{grid-template-columns:1fr;}
+  .react-gm-player-filters{grid-template-columns:1fr 1fr;}
+  .react-gm-player-filters>label:first-child{grid-column:1/-1;}}
+@media(max-width:460px){.react-gm-player-metrics{grid-template-columns:1fr 1fr;gap:6px;}
+  .react-gm-player-metric{padding:10px;min-height:57px;}
+  .react-gm-player-heading{padding:12px;}
+  .react-gm-player-filters,.react-gm-player-capacity{grid-template-columns:1fr;}
+  .react-gm-player-head-actions{margin-left:0;}}
+@media(prefers-reduced-motion:reduce){.react-gm-player-manager *{scroll-behavior:auto!important;transition:none!important;}}
+
+
+/* Priorities 8–10: focused player tools, interactions and live campaign history. */
+.react-gm-player-focus-choice{display:flex;align-items:end;gap:12px;flex-wrap:wrap;padding:12px;
+  border:1px solid #4c6a7d;background:#112636;}
+.react-gm-player-focus-choice>label{width:min(450px,100%);}
+.react-gm-player-focus-choice select{width:100%;}
+.react-gm-player-focus-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;align-items:start;}
+.react-gm-player-focus-grid>.asteria-react-panel{min-width:0;}
+.react-gm-player-detail-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:12px 0;}
+.react-gm-player-detail-head>div:first-child{display:grid;gap:4px;color:#e8d9bf;}
+.react-gm-player-detail-head small{color:#b7cbd8;font-size:.78rem;}
+.react-gm-player-details{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0;}
+.react-gm-player-details>div{display:grid;gap:5px;min-width:0;border:1px solid #506e82;background:#142d3e;padding:10px;}
+.react-gm-player-details small{color:#bdcdd8;font-size:.75rem;}
+.react-gm-player-details strong{color:#f1e0c1;font-size:.94rem;overflow-wrap:anywhere;}
+.react-gm-player-resource-list{display:grid;gap:10px;margin:14px 0;}
+.react-gm-player-action-form{display:grid;gap:9px;border:1px solid #4c6c81;background:#102536;padding:12px;margin:12px 0;}
+.react-gm-player-action-form h3{font-size:1rem;color:#ecdbbd;margin:0;}
+.react-gm-player-action-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;}
+.react-gm-player-action-form>button{justify-self:start;}
+.react-gm-player-focus-wide{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start;}
+.react-gm-player-expand-section,.react-gm-player-detail-expand{border:1px solid #4b7087;background:#142b3b;min-width:0;padding:11px;}
+.react-gm-player-expand-section summary,.react-gm-player-detail-expand summary{
+  cursor:pointer;font-weight:600;color:#ebdbbf;padding:5px 0;}
+.react-gm-player-expand-section>.asteria-react-panel{margin-top:10px;min-width:0;}
+.react-gm-player-expand-section ul{padding-left:20px;}
+.react-gm-player-live{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start;gap:12px;}
+.react-gm-player-live>.asteria-react-panel{min-width:0;}
+.react-gm-player-live .react-gm-player-record-list{grid-template-columns:1fr;}
+.react-gm-player-live .react-panel{min-width:0;}
+.react-gm-player-activity .react-gm-player-events{max-height:none;}
+.react-gm-player-activity .react-gm-player-events li[data-activity-kind="membership"]{border-left:3px solid #9d8797;}
+.react-gm-player-activity .react-gm-player-events li[data-activity-kind="checks"]{border-left:3px solid #789cb6;}
+.react-gm-player-activity .react-gm-player-events li[data-activity-kind="rewards"]{border-left:3px solid #a99a70;}
+@media(max-width:1120px){.react-gm-player-focus-grid,.react-gm-player-live{grid-template-columns:1fr;}
+  .react-gm-player-focus-wide{grid-template-columns:1fr;}}
+@media(max-width:640px){.react-gm-player-details{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .react-gm-player-action-fields{grid-template-columns:1fr;}
+  .react-gm-player-action-form>button{width:100%;}}
+
+
+/* Priority 11: constrain the full management workspace within desktop or canvas
+ * containers without forcing fixed page widths or horizontal document scroll. */
+.react-gm-player-manager{container-type:inline-size;container-name:gm-player;overflow-wrap:anywhere;isolation:isolate;}
+.react-gm-player-manager :is(.react-gm-player-account,.react-gm-player-character,
+  .react-gm-player-record-list>article,.react-gm-player-metric){min-width:0;}
+.react-gm-player-manager :is(.react-gm-player-sections,.react-gm-player-roster,
+  .react-gm-player-focus-grid,.react-gm-player-live){max-width:100%;}
+.react-gm-player-online-filter{display:flex!important;align-items:center;gap:9px;align-self:end;
+  padding:6px 0;min-height:42px;cursor:pointer;}
+.react-gm-player-online-filter input{min-height:20px!important;width:20px;height:20px;flex:none;accent-color:#8cc5dc;}
+.react-gm-player-filters{grid-template-columns:minmax(210px,2fr) repeat(2,minmax(125px,1fr));align-items:end;}
+.react-gm-player-filters>.react-gm-player-online-filter{align-self:end;}
+.react-gm-player-filters>label:last-child{max-width:200px;}
+.react-gm-player-pagination{display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:10px;margin:16px 0 6px;color:#c8d5dd;font-size:.82rem;}
+.react-gm-player-pagination .react-gm-player-actions{margin-left:auto;}
+.react-gm-player-pagination button{min-width:86px;}
+.react-gm-player-sections{overscroll-behavior-x:contain;scroll-snap-type:x proximity;}
+.react-gm-player-sections button{scroll-snap-align:start;touch-action:manipulation;}
+.react-gm-player-character{align-items:flex-start;}
+.react-gm-player-character .react-gm-player-actions{flex:1 1 240px;justify-content:flex-end;}
+.react-gm-player-actions{max-width:100%;}
+.react-gm-player-manager :is(.react-gm-player-actions button,.react-gm-player-sections button){white-space:normal;overflow-wrap:anywhere;}
+.react-gm-player-roster{align-items:start;}
+.react-gm-player-one-time{min-width:0;overflow-wrap:anywhere;}
+.react-gm-player-one-time .react-gm-player-qr{overflow:hidden;}
+@container gm-player (max-width:850px){
+  .react-gm-player-roster,.react-gm-player-record-list,.react-gm-player-focus-grid,
+  .react-gm-player-live,.react-gm-player-focus-wide,.react-gm-player-section-grid{grid-template-columns:minmax(0,1fr);}
+  .react-gm-player-filters{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .react-gm-player-filters>label:first-child{grid-column:1/-1;}
+  .react-gm-player-character .react-gm-player-actions{justify-content:flex-start;}
+}
+@container gm-player (max-width:540px){
+  .react-gm-player-heading{padding:12px;}
+  .react-gm-player-metrics,.react-gm-player-details{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .react-gm-player-filters,.react-gm-player-capacity,.react-gm-player-action-fields{grid-template-columns:minmax(0,1fr);}
+  .react-gm-player-filters>label:first-child{grid-column:auto;}
+  .react-gm-player-filters>label:last-child{max-width:none;}
+  .react-gm-player-character .react-gm-player-actions{flex-basis:100%;}
+  .react-gm-player-character .react-gm-player-actions button{flex:1 1 auto;min-height:44px;}
+  .react-gm-player-pagination .react-gm-player-actions{margin-left:0;width:100%;}
+  .react-gm-player-pagination .react-gm-player-actions button{flex:1;}
+}
+@media(prefers-reduced-motion:reduce){
+  .react-gm-player-manager *{scroll-snap-type:none!important;animation:none!important;}
+}
+
+/* M4.1: attendance is a separate roster attribute, never an access toggle. */
+.react-gm-player-attendance{display:flex;align-items:end;gap:12px;flex-wrap:wrap;
+  padding:10px 12px;background:#0b2030;border:1px solid #405e70;}
+.react-gm-player-attendance label{flex:0 1 230px;}
+.react-gm-player-attendance select{width:100%;}
+.react-gm-player-attendance small{flex:1 1 190px;}

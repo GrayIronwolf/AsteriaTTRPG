@@ -14,7 +14,7 @@ export const GM_TOOLKIT_GROUPS=Object.freeze([
     id:'session',label:'Session & Combat',
     description:'Run encounters and manage the live session.',
     tools:[
-      {id:'encounter',label:'GM Main & Encounter Board',tab:'main',description:'Initiative, encounters, rest requests, XP and special damage.',keywords:'combat initiative creature turn encounter'},
+      {id:'encounter',label:'Combat Command Centre',tab:'combat',description:'Open the unified Combat Command Centre for initiative, encounters and prepared battles.',keywords:'combat initiative creature turn encounter'},
       {id:'encounter-rewards',label:'Encounter & Reward Generator',tab:'encounter-rewards',description:'Generate and approve TT-matched encounters and GM-private treasure drafts.',keywords:'encounter generator rewards creatures threat tier random loot preview'},
       {id:'random-tables',label:'Random Table Builder',tab:'random-tables',description:'GM-only weighted encounter, NPC, event, travel and custom tables with saved rolls.',keywords:'weighted random encounter npc events travel custom loot reference templates tables'},
       {id:'advanced-dice',label:'Advanced Dice Roller',tab:'advanced-dice',description:'Secure digital dice pools, modifiers, private roll history and saved presets.',keywords:'dice d4 d6 d8 d10 d12 d20 d100 roll random presets modifier'},
@@ -34,7 +34,8 @@ export const GM_TOOLKIT_GROUPS=Object.freeze([
     tools:[
       {id:'quests',label:'Quest Manager',tab:'quests',description:'Manage campaign objectives, quest offers and progress.',keywords:'quest tasks objective'},
       {id:'party',label:'Party Inventory',tab:'inventory',description:'Review linked characters and their inventory.',keywords:'pc equipment player items'},
-      {id:'campaign-manager',label:'Campaign Manager',tab:'tools',description:'Campaign details, linked accounts and party membership.',keywords:'players invitations management'},
+      {id:'player-manager',label:'Player Manager',tab:'player-manager',description:'Unified campaign account roster, join approvals, character links, invitations, roles and access.',keywords:'players player manager campaign party membership co-gm invites approvals permissions moderation'},
+      {id:'campaign-manager',label:'Campaign Manager',tab:'tools',description:'Campaign identity, artwork, settings and linked-account summary.',keywords:'campaign settings ucn code artwork administration'},
       {id:'rewards',label:'Rewards & Advancement',tab:'tools',description:'Existing GM reward tools, magic rewards and character management.',keywords:'xp loot award titles magic'},
       {id:'gameplay',label:'Gameplay Systems',tab:'gameplay',description:'Manage existing gameplay records and system settings.',keywords:'systems templates encounter'},
       {id:'npc-library',label:'NPC & Creature Library',tab:'bestiary',description:'Find, generate and create custom character cards for campaign NPCs and creatures.',keywords:'npc generator character card portrait creature bestiary customise custom library'}

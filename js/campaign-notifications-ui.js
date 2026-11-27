@@ -114,9 +114,14 @@
                 const preview=await api.previewCampaignNotificationInvitation(
                   notice.campaignId,notice.inviteId);
                 if(!current())return;
-                if(!preview?.requiresGMApproval||
-                   !['available','pending'].includes(preview.status))
+                if(preview?.requiresGMApproval!==true||preview.campaignId!==notice.campaignId)
                   throw Error('This invitation is unavailable.');
+                if(['pending','approved','declined'].includes(preview.status)){
+                  status.textContent=preview.status==='pending'?'Your request is pending GM approval.':
+                    'The GM '+preview.status+' your request.';
+                  return;
+                }
+                if(preview.status!=='available')throw Error('This invitation is unavailable.');
                 if(!root.confirm?.('Request to join '+
                    String(preview.campaignName||'this campaign')+
                    '? The GM must approve your request before you can join.')){
@@ -138,7 +143,6 @@
                   'Unable to accept this invitation. Please try again.';
               }finally{
                 setBusy(false);
-                if(current())void load();
               }
             });
             row.appendChild(accept);

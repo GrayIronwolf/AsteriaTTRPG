@@ -1,0 +1,33 @@
+name: Dice Phase 5.2 physical interaction
+on:
+  pull_request:
+    branches: [Website-Build-Test]
+    paths:
+      - 'src/dice/**'
+      - 'src/dashboards/AdvancedDiceWorkspace.jsx'
+      - 'src/styles/advanced-dice.css'
+      - 'scripts/dice-engine-*.test.mjs'
+      - 'scripts/dice-prototype/phase4*'
+      - 'scripts/dice-prototype/phase5-2*'
+      - 'package*.json'
+      - '.github/workflows/dice-phase5-2-acceptance.yml'
+permissions:
+  contents: read
+jobs:
+  physical-dice:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run test:advanced-dice
+      - name: Install the browser test driver
+        run: npm install --no-save --package-lock=false --ignore-scripts --no-audit --no-fund playwright@1.56.1
+      - name: Verify the Dice Window and physical pointer gestures in Chromium
+        run: |
+          node scripts/dice-prototype/phase4-runner.mjs
+          node scripts/dice-prototype/phase5-2-runner.mjs

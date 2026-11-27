@@ -8,7 +8,7 @@ import {advanceAsteriaDate,validateCalendarDefinition,validateCalendarDate,forma
 
 export const WEATHER_BIOMES=Object.freeze([
  'temperate','forest','grassland','desert','mountain','tundra','swamp',
- 'coast','ocean','jungle','volcanic','urban','other'
+ 'coast','ocean','jungle','volcanic','urban','other','polar','tropical','rainforest'
 ]);
 export const WEATHER_CONDITIONS=Object.freeze([
  'clear','cloudy','showers','downpour','thunderstorm','snow','blizzard',
@@ -16,6 +16,35 @@ export const WEATHER_CONDITIONS=Object.freeze([
 ]);
 export const WEATHER_SEVERITIES=Object.freeze(['mild','moderate','severe','extreme']);
 export const WEATHER_VOLATILITY=Object.freeze(['calm','normal','volatile']);
+export const WEATHER_CONTINENTS=Object.freeze([
+ 'Altarin','Atla Natoa','Erona','Eziroth','Kardyth Isles','Makamoha Isles',
+ 'Maltryn','Noran','Raemar','Uwari','Valaskar','Yakoto'
+]);
+export const WEATHER_LATITUDE_BANDS=Object.freeze(['polar','subpolar','temperate','subtropical','tropical']);
+export const WEATHER_SEASON_MODES=Object.freeze(['aligned','reversed','fixed']);
+/** These temperatures are editable simulation defaults, never locked world lore. */
+export const WEATHER_CLIMATE_PRESETS=Object.freeze({
+ temperate:{temperatureC:15,humidityPct:58,band:'temperate'},
+ forest:{temperatureC:14,humidityPct:72,band:'temperate'},
+ grassland:{temperatureC:18,humidityPct:45,band:'temperate'},
+ desert:{temperatureC:29,humidityPct:20,band:'subtropical'},
+ mountain:{temperatureC:8,humidityPct:53,band:'subpolar'},
+ tundra:{temperatureC:-8,humidityPct:64,band:'subpolar'},
+ swamp:{temperatureC:21,humidityPct:83,band:'subtropical'},
+ coast:{temperatureC:17,humidityPct:75,band:'temperate'},
+ ocean:{temperatureC:16,humidityPct:80,band:'temperate'},
+ jungle:{temperatureC:27,humidityPct:86,band:'tropical'},
+ volcanic:{temperatureC:23,humidityPct:36,band:'subtropical'},
+ urban:{temperatureC:16,humidityPct:55,band:'temperate'},
+ other:{temperatureC:15,humidityPct:55,band:'temperate'},
+ polar:{temperatureC:-22,humidityPct:60,band:'polar'},
+ tropical:{temperatureC:28,humidityPct:77,band:'tropical'},
+ rainforest:{temperatureC:26,humidityPct:90,band:'tropical'}
+});
+export const WEATHER_METRIC_KEYS=Object.freeze([
+ 'temperatureC','lowC','highC','feelsLikeC','precipitationMm','windKmh','windDirection',
+ 'humidityPct','cloudCoverPct','visibilityMeters','sunrise','sunset','daylightHours'
+]);
 export const MAX_FORECAST_DAYS=7;
 export const MAX_REPORT_DAYS=7;
 const isObject=x=>Boolean(x)&&typeof x==='object'&&!Array.isArray(x);
@@ -39,14 +68,35 @@ export const weatherLabel=label;
 
 export function validateWeatherZone(input,zoneId,previous=null){
  if(!validId(zoneId))throw Error('Choose a valid weather zone identifier.');
- allKeys(input,['name','region','biome','volatility','magicWeather','gmNotes'],'weather zone');
+ allKeys(input,['name','region','biome','volatility','magicWeather','gmNotes',
+  'continent','kingdom','settlement','atlasMapId','atlasPinId',
+  'latitudeBand','elevationMeters','coastal','temperatureOffsetC','seasonMode'],'weather zone');
  if(previous?.status==='archived')throw Error('Archived weather zones cannot be edited.');
  if(!WEATHER_BIOMES.includes(input.biome))throw Error('Choose a supported landscape or biome.');
  if(!WEATHER_VOLATILITY.includes(input.volatility))throw Error('Choose a valid weather variability level.');
  if(typeof input.magicWeather!=='boolean')throw Error('Set magical weather to enabled or disabled.');
+ if(input.latitudeBand!==undefined&&!WEATHER_LATITUDE_BANDS.includes(input.latitudeBand))
+  throw Error('Choose a supported climate latitude band.');
+ if(input.seasonMode!==undefined&&!WEATHER_SEASON_MODES.includes(input.seasonMode))
+  throw Error('Choose how seasonal changes affect this location.');
+ if(input.coastal!==undefined&&typeof input.coastal!=='boolean')
+  throw Error('Coastal setting must be enabled or disabled.');
+ const atlasMapId=input.atlasMapId??'',atlasPinId=input.atlasPinId??'';
+ if((atlasMapId&&!validId(atlasMapId))||(atlasPinId&&!validId(atlasPinId))||
+  Boolean(atlasMapId)!==Boolean(atlasPinId))
+  throw Error('Choose a valid atlas map and location together.');
  return {id:zoneId,name:bounded(input.name,100,'zone name'),
   region:bounded(input.region??'',100,'region',false),
   biome:input.biome,volatility:input.volatility,magicWeather:input.magicWeather,
+  continent:bounded(input.continent??'',80,'continent',false),
+  kingdom:bounded(input.kingdom??'',100,'kingdom',false),
+  settlement:bounded(input.settlement??'',100,'settlement',false),
+  atlasMapId,atlasPinId,
+  latitudeBand:input.latitudeBand??WEATHER_CLIMATE_PRESETS[input.biome].band,
+  elevationMeters:integer(input.elevationMeters??0,-500,9000,'Elevation (metres)'),
+  coastal:input.coastal??['coast','ocean'].includes(input.biome),
+  temperatureOffsetC:integer(input.temperatureOffsetC??0,-35,35,'Temperature offset (C)'),
+  seasonMode:input.seasonMode??'aligned',
   gmNotes:bounded(input.gmNotes??'',1500,'private GM zone notes',false),
   status:'active',revision:(previous?.revision||0)+1};
 }
@@ -90,6 +140,7 @@ const BASE=Object.freeze({
  snow:4,blizzard:2,fog:8,wind:10,heatwave:3,duststorm:1,'arcane-surge':1
 });
 const BIOME_BONUS={
+ polar:{snow:55,blizzard:45,heatwave:-3},tropical:{showers:26,downpour:21,thunderstorm:15,heatwave:6,snow:-4,blizzard:-2},rainforest:{showers:29,downpour:30,thunderstorm:17,fog:14,snow:-4,blizzard:-2},
  temperate:{},forest:{showers:10,cloudy:8,fog:8},grassland:{wind:12,clear:8},
  desert:{heatwave:35,duststorm:24,clear:18,snow:-4,blizzard:-2,downpour:-5},
  mountain:{snow:17,blizzard:10,wind:15,heatwave:-3},
@@ -134,6 +185,30 @@ const FLAVOUR={
  duststorm:'Blowing grit and reduced sightlines.',
  'arcane-surge':'Localized magical turbulence.'
 };
+export function weatherLocationLabel(zone){
+ return [zone?.settlement,zone?.kingdom,zone?.continent||zone?.region].filter(Boolean).join(' · ')||
+  zone?.region||zone?.name||'Unnamed region';
+}
+export function weatherEffectiveSeason(zone,season=''){
+ if(zone.seasonMode==='fixed')return '';
+ if(zone.seasonMode==='reversed'){
+  return {Summer:'Winter',Autumn:'Spring',Winter:'Summer',Spring:'Autumn'}[season]||season;
+ }
+ return season;
+}
+export function weatherClimateProfile(zone){
+ if(!isObject(zone)||!WEATHER_CLIMATE_PRESETS[zone.biome])
+  throw Error('Select a valid climate biome.');
+ const preset=WEATHER_CLIMATE_PRESETS[zone.biome];
+ return {biome:zone.biome,
+  latitudeBand:zone.latitudeBand??preset.band,
+  temperatureC:preset.temperatureC+(zone.temperatureOffsetC??0)-
+   Math.round(((zone.elevationMeters??0)/1000)*6.5),
+  humidityPct:preset.humidityPct,
+  elevationMeters:zone.elevationMeters??0,
+  coastal:zone.coastal??['coast','ocean'].includes(zone.biome),
+  seasonMode:zone.seasonMode||'aligned'};
+}
 export function weatherWeights(zone,season=''){
  if(!isObject(zone)||!WEATHER_BIOMES.includes(zone.biome))
   throw Error('Choose a valid weather landscape.');
@@ -142,6 +217,9 @@ export function weatherWeights(zone,season=''){
   weights[condition]+=adjustment;
  for(const [condition,adjustment] of Object.entries(SEASON_BONUS[season]||{}))
   weights[condition]+=adjustment;
+ if(zone.coastal===true){
+  weights.wind+=7;weights.showers+=6;weights.fog+=4;
+ }
  if(zone.magicWeather!==true)weights['arcane-surge']=0;
  else weights['arcane-surge']+=6;
  if(zone.volatility==='calm'){
@@ -193,10 +271,109 @@ export function describeWeather(condition,severity){
   hazards,
   guidance:'Environmental effects are narrative guidance. The GM decides any checks, penalties, resistances or movement changes.'};
 }
-export function buildWeatherDay(date,season,condition,severity,index,source='generated'){
+
+const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
+const rounded=value=>Math.round(value*10)/10;
+function hashWeather(value){
+ let hash=2166136261;
+ for(const char of String(value)){
+  hash^=char.charCodeAt(0);
+  hash=Math.imul(hash,16777619);
+ }
+ return hash>>>0;
+}
+/** Independent keyed draws: changing the start date or forecast length does
+ * not change an earlier day's weather. Older saved reports are unaffected. */
+function weatherRng(key){
+ let state=hashWeather(key)||1;
+ return (min,max)=>{
+  state^=state<<13;state^=state>>>17;state^=state<<5;state>>>=0;
+  return min+Math.floor((state/4294967296)*(max-min));
+ };
+}
+function weatherDayKey(seed,zone,date){
+ return [seed,zone.id||zone.name,zone.revision||1,
+  date.era,date.year,date.month,date.day].join('|');
+}
+export function weatherMetrics(zone,calendar,date,season,condition,severity,rng){
+ const config=validateCalendarDefinition(calendar.definition);
+ const climate=weatherClimateProfile(zone);
+ const adjusted=weatherEffectiveSeason(zone,season);
+ const seasonal={Summer:8,Autumn:-1,Winter:-9,Spring:3}[adjusted]??0;
+ const intensity=WEATHER_SEVERITIES.indexOf(severity)+1;
+ const n=(min,max)=>rng(min,max);
+ const cold=['snow','blizzard'].includes(condition)?-4:
+  condition==='heatwave'?9:condition==='clear'?2:0;
+ const temperature=clamp(climate.temperatureC+seasonal*(climate.coastal?0.65:1)+cold+n(-5,6),-85,75);
+ const low=temperature-(2+n(0,5));
+ const high=temperature+(2+n(0,7));
+ const windCondition=['wind','blizzard','duststorm','thunderstorm'].includes(condition);
+ const windKmh=clamp(5+n(0,20)+intensity*(windCondition?12:3),0,200);
+ const rain=['showers','downpour','thunderstorm'].includes(condition);
+ const snow=['snow','blizzard'].includes(condition);
+ const precipitationMm=rain||snow?rounded((rain?2:1)*(intensity**2)+n(0,8)):0;
+ const humidityPct=clamp(climate.humidityPct+(climate.coastal?5:0)+(rain||snow?14:0)+
+  (condition==='heatwave'?-22:0)+n(-12,13),5,100);
+ const cloudCoverPct=clamp((condition==='clear'?8:
+  condition==='cloudy'?75:rain||snow?90:condition==='fog'?98:45)+n(-14,15),0,100);
+ const foggy=['fog','blizzard','duststorm','downpour','thunderstorm'].includes(condition);
+ const visibilityMeters=foggy?clamp(Math.round((5000-n(0,2200)-intensity*900)/100)*100,100,5000):
+  clamp(10000+n(0,12000),10000,30000);
+ const feelsLikeC=rounded(temperature-(windKmh>25&&temperature<15?Math.min(12,windKmh/10):0)+
+  (condition==='heatwave'?2:0));
+ const directions=['N','NE','E','SE','S','SW','W','NW'];
+ // Sunrise/sunset are illustrative estimates, not canonical astronomy.
+ const hours=config.hoursPerDay;
+ const latitudeFactor={polar:0.19,subpolar:0.13,temperate:0.09,
+  subtropical:0.06,tropical:0.025}[climate.latitudeBand]??0.09;
+ const swing=adjusted==='Summer'?1:adjusted==='Winter'?-1:
+  adjusted==='Spring'?0.3:adjusted==='Autumn'?-0.3:0;
+ const daylightHours=rounded(clamp(hours*(0.5+swing*latitudeFactor),hours*0.08,hours*0.92));
+ const clockMinutes=hours*config.minutesPerHour;
+ const rise=Math.round((hours-daylightHours)/2*config.minutesPerHour);
+ const set=Math.round((hours+daylightHours)/2*config.minutesPerHour);
+ const fmt=minutes=>String(Math.floor(minutes/config.minutesPerHour)).padStart(2,'0')+':'+
+  String(minutes%config.minutesPerHour).padStart(2,'0');
+ return {
+  temperatureC:rounded(temperature),lowC:rounded(low),highC:rounded(high),
+  feelsLikeC,precipitationMm,windKmh,windDirection:directions[n(0,8)],
+  humidityPct,cloudCoverPct,visibilityMeters,
+  sunrise:fmt(clamp(rise,0,clockMinutes-1)),
+  sunset:fmt(clamp(set,0,clockMinutes-1)),daylightHours
+ };
+}
+export function buildWeatherDay(date,season,condition,severity,index,source='generated',metrics=null){
  const advisory=describeWeather(condition,severity);
  return {dayIndex:index,date,season:season||'',condition,severity,
-  ...advisory,source};
+  ...advisory,source,...(metrics?{metrics}:{})};
+}
+/** Stable daily simulation; server-created forecasts use an explicit
+ * campaign-scoped seed with no client-side random draws. */
+export function generateDeterministicWeatherForecast(zone,calendar,days,seed){
+ if(!isObject(calendar)||!calendar.definition||!calendar.date)
+  throw Error('Configure the Asteria Calendar before generating weather.');
+ if(typeof seed!=='string'||!seed.trim()||seed.length>200)
+  throw Error('A scoped campaign weather seed is required.');
+ const config=validateCalendarDefinition(calendar.definition);
+ const initial=validateCalendarDate(calendar.date,config);
+ const count=integer(days,1,MAX_FORECAST_DAYS,'Forecast days');
+ return Array.from({length:count},(_,index)=>{
+  const date=index?advanceAsteriaDate(initial,config,'day',index):initial;
+  const season=config.months[date.month-1].season||'';
+  const rng=weatherRng(weatherDayKey(seed,zone,date));
+  const condition=drawWeighted(weatherWeights(zone,weatherEffectiveSeason(zone,season)),rng);
+  const severity=drawSeverity(zone,condition,rng);
+  const metrics=weatherMetrics(zone,calendar,date,season,condition,severity,rng);
+  return buildWeatherDay(date,season,condition,severity,index,'deterministic',metrics);
+ });
+}
+/** An override recomputes metrics without exposing GM-private zone details. */
+export function overrideWeatherDay(original,zone,calendar,condition,severity,seed){
+ const date=validateCalendarDate(original.date,calendar.definition);
+ const rng=weatherRng(weatherDayKey(seed,zone,date)+'|gm-override|'+condition+'|'+severity);
+ const metrics=weatherMetrics(zone,calendar,date,original.season||'',condition,severity,rng);
+ return buildWeatherDay(date,original.season,condition,severity,
+  original.dayIndex,'gm-override',metrics);
 }
 export function generateWeatherForecast(zone,calendar,days,rng){
  if(!isObject(calendar)||!calendar.definition||!calendar.date)
@@ -224,8 +401,15 @@ export function publicWeatherReport(report){
    dayIndex:row.dayIndex,date:row.date,season:row.season,
    condition:row.condition,severity:row.severity,summary:row.summary,
    visibility:row.visibility,travel:row.travel,hazards:[...row.hazards],
-   guidance:row.guidance
-  }))};
+   guidance:row.guidance,
+   ...(row.metrics?{metrics:Object.fromEntries(WEATHER_METRIC_KEYS.filter(
+    key=>Object.hasOwn(row.metrics,key)).map(key=>[key,row.metrics[key]]))}:{})
+  })),
+  location:{
+   continent:report.location?.continent||'',
+   kingdom:report.location?.kingdom||'',
+   settlement:report.location?.settlement||''
+  }};
 }
 export function weatherDateLabel(day,definition){
  return definition?formatAsteriaDate(day.date,definition,{time:false}):

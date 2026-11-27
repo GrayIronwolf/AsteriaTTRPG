@@ -1,18 +1,23 @@
 import { createInformationCommands } from './informationCommands.mjs';
 import { isCampaignGM, readCampaignMember } from './characterPermissions.mjs';
 import { createCombatCommands } from './combatCommands.mjs';
+import { resolveOwnedSpell, ownedSpellCosts, combatRestriction } from '../src/state/combatRules.mjs';
+import {createEncounterCompletionCommands} from './encounterCompletionCommands.mjs';
+import {assertApprovedEncounterDelivery,encounterDeliveryPatch} from '../src/state/encounterCompletionModel.mjs';
+import {grantXP as grantServerXP} from '../src/state/combatProgressionCore.mjs';
 import { isDeepStrictEqual } from 'node:util';
 import { createCoreCommands } from './coreCommands.mjs';
 import { reconcileCharacterSystems } from '../src/state/characterSystems.mjs';
-import { applyResourceChanges, parseResourceCosts, resourceId, resourceSnapshot } from '../src/state/resourceEngine.mjs';
+import { applyResourceChanges, resourceId, resourceSnapshot } from '../src/state/resourceEngine.mjs';
 import { buildTalentCatalog, prerequisiteProblem, rankDefined, reconcileTalentEffects, saveTalentRank, talentRank } from '../src/state/talentModel.mjs';
 import { talentRules, useLearnedTalent } from '../src/state/talentMechanics.mjs';
 import { changeQuestProgress, changeQuestStatus } from '../src/state/questWorkflowModel.mjs';
-import { applyCharacteristicAllocations, applyCharacteristicPoints, characterKnowsIdentify, firstFreeStorageSlot, nextSkillProgress, normalizeCharacterStorages, normalizeInventoryItems, normalizeLiveItem, parseResourceCost, slug as liveSlug, stableInventoryItemId, stackableStorageItem, unidentifiedItemName, structuredCloneSafe, talentRankCost, talentTierUnlocked, timestampMs } from '../src/state/liveWorkspaceModel.mjs';
+import { applyCharacteristicAllocations, applyCharacteristicPoints, characterKnowsIdentify, firstFreeStorageSlot, nextSkillProgress, normalizeCharacterStorages, normalizeInventoryItems, normalizeLiveItem, slug as liveSlug, stableInventoryItemId, stackableStorageItem, unidentifiedItemName, structuredCloneSafe, talentRankCost, talentTierUnlocked, timestampMs } from '../src/state/liveWorkspaceModel.mjs';
 import { createAsteriaItem, marketPricingStatus, normalizeMarketPricing } from '../src/systems/items/marketPricing.mjs';
 import { shopStockCompatible, shopVariantKey, merchantPriceCopper } from '../src/state/shopTransactionModel.mjs';
 import { validateMerchantProposal, assertMerchantDealMatches } from '../src/state/merchantDealModel.mjs';
-import { equipCharacterInventoryItem, stageDirectEquipReward } from './rewardDelivery.mjs';
+import { inventoryItemPresent, inventoryRecoveryProblem, itemRecoveryEffect, liveQuickSlots, quickSlotIndex } from '../src/state/inventoryQuickActions.mjs';
+import { equipCharacterInventoryItem, unequipCharacterInventoryItem, stageDirectEquipReward } from './rewardDelivery.mjs';
 import { createItemStoreCommands } from './itemStoreCommands.mjs';
 import { createCraftingCommands } from './craftingCommands.mjs';
 import { createEnhancementCommands } from './enhancementCommands.mjs';
@@ -30,6 +35,9 @@ import {createSessionLibraryCommands} from './sessionLibraryCommands.mjs';
 import {createCampaignAudioCommands} from './campaignAudioCommands.mjs';
 import {createSessionRecordingCommands} from './sessionRecordingCommands.mjs';
 import {createPlayerPresentationCommands} from './playerPresentationCommands.mjs';
+import {createHybridPresentationSessionCommands} from './hybridPresentationSessionCommands.mjs';
+import {createPresentationAssetCommands} from './presentationAssetCommands.mjs';
+import {createPresentationProjectionBackfillCommands} from './presentationProjectionBackfillCommands.mjs';
 import { addGrantedMagicElement } from '../src/state/characterIntegrityModel.mjs';
 import { markQuestRewardClaimed, normalizeQuestReward, questRewardClaimed, questRewardSummary } from '../src/state/questRewardModel.mjs';
 import { validateGMRewardPayload } from '../src/state/gmRewardModel.mjs';
@@ -60,7 +68,7 @@ async function requireCampaignGM(transaction,campaignId){
   const membership=await readCampaignMember({get:async ref=>{
     const row=await transaction.get(ref);return {exists:row.exists(),data:()=>row.data()};
   }},db,campaignId,campaign,uid);
-  if(!isCampaignGM(campaign,uid,membership)) throw new Error('Only a GM for this campaign can make this change.');
+  if(!isCampaignGM(campaign,uid,membership,campaignId)) throw new Error('Only a GM for this campaign can make this change.');
   return campaign;
 }
 async function requireMerchantStanding(transaction,campaignId,shopId,characterId,stock){
@@ -133,6 +141,7 @@ function repairLegacyTradeMirror(transaction,refs,character){
 function writeLiveCharacter(transaction,refs,character){
   const clean=reconcileCharacterSystems(character,buildTalentCatalog(character,context.catalog),{encounter:refs.encounter});
   clean.inventory=normalizeInventoryItems(clean.inventory,clean);
+  if(Array.isArray(clean.quickSlots))clean.quickSlots=liveQuickSlots(clean,clean.inventory);
   if(clean.equipment&&typeof clean.equipment==='object') clean.equipment=Object.fromEntries(Object.entries(clean.equipment).map(([slot,item],index)=>[
     slot,
     item&&typeof item==='object'?normalizeLiveItem(Object.assign({},item,{equipped:true,equippedSlot:item.equippedSlot||slot}),index,clean):item
@@ -373,6 +382,54 @@ async function mutateQuest(campaignId,characterId,questId,operation,{gm=false,no
 }
 
 const commands = {
+  grantCharacterXP: async function(campaignId,characterId,amount,reason='',encounterHistoryId=''){
+    const xp=Number(amount),why=String(reason||'').trim().slice(0,300);
+    if(!Number.isSafeInteger(xp)||xp<1||xp>1000000)
+      return {ok:false,error:'Choose between 1 and 1,000,000 XP.'};
+    if(why.length<3)return {ok:false,error:'An XP award needs a recorded reason.'};
+    const refs=liveCharacterRefs(campaignId,characterId);
+    try{
+      const result=await runTransaction(db,async transaction=>{
+        await requireLiveSession(transaction,campaignId);
+        const campaign=await requireCampaignGM(transaction,campaignId);
+        const snapshot=await transaction.get(refs.campaign);
+        if(!snapshot.exists())throw Error('The linked character is unavailable.');
+        const character={id:characterId,...snapshot.data()},owner=character.ownerUid;
+        let completionRef=null,completion=null;
+        if(encounterHistoryId){
+          if(!/^[A-Za-z0-9_-]{1,160}$/.test(encounterHistoryId))
+            throw Error('Invalid completed encounter identifier.');
+          completionRef=doc(db,'campaigns',campaignId,'encounterHistory',encounterHistoryId);
+          const record=await transaction.get(completionRef);
+          if(!record.exists())throw Error('Completed encounter is unavailable.');
+          completion=record.data();
+          assertApprovedEncounterDelivery(completion,characterId,'xp',xp);
+        }
+        if(!owner || !(campaign.playerCharacterLinks?.[characterId]===owner ||
+          campaign.characters?.[characterId]?.ownerUid===owner ||
+          (campaign.players?.[owner]?.characterIds||[]).includes(characterId)))
+          throw Error('Recipient character is no longer linked.');
+        refs.original=structuredCloneSafe(character);
+        refs.private=doc(db,'users',owner,'characters',ownedCharacterSourceId(characterId,character));
+        const owned=await transaction.get(refs.private);
+        if(!owned.exists()||owned.data().ownerUid!==owner)
+          throw Error('The owner character record is unavailable.');
+        refs.privateExists=true;
+        if(typeof grantServerXP!=='function')
+          throw Error('Canonical progression engine is unavailable.');
+        const applied=grantServerXP(character,xp);
+        appendActivity(character,{type:'xp-reward',message:'GM awarded '+xp+' XP: '+why+'.'});
+        writeLiveCharacter(transaction,refs,character);
+        if(completionRef)transaction.update(completionRef,{
+          ...encounterDeliveryPatch(completion,characterId,'xp',requestId,Date.now(),
+            currentUser.uid),updatedAt:serverTimestamp()
+        });
+        return {amount:xp,level:character.level,xp:character.xp,xpMax:character.xpMax,
+          levels:Number(applied.levels||0),messages:applied.messages||[]};
+      });
+      return {ok:true,...result};
+    }catch(error){return {ok:false,error:error.message||String(error)};}
+  },
   // Bootstrap the public shop projection and migrate historical requests away
   // from the broadly readable legacy ecosystem. Safe to call outside a session.
   syncCampaignItemPrivacy: async function(campaignId,characterId){
@@ -500,13 +557,7 @@ const commands = {
     if(input.expectedRank!==undefined && input.expectedRank!==rank) throw new Error('Talent rank changed. Reopen the talent before using it.');
     let spellCosts;
     if(talentRules(talent,rank).needsSpell){
-      const source=character.spells||character.activeSpells||character.knownSpells||[];
-      const rows=Array.isArray(source)?source:Object.entries(source).map(([name,value])=>({name,...(typeof value==='object'?value:{})}));
-      const known=rows.find(row=>liveSlug(row.name||row.title||row)===liveSlug(selection.spell));
-      const entry=context.catalog.find(row=>row.type==='spell' && liveSlug(row.title)===liveSlug(selection.spell));
-      const cost=known && (known.costs??known.resourceCosts??known.cost??known.manaCost??entry?.metadata?.manaCost??entry?.metadata?.cost);
-      if(cost===undefined || cost===false) throw new Error('Choose a known spell with a recorded resource cost.');
-      spellCosts=parseResourceCosts(cost,'mp',true);
+      spellCosts=ownedSpellCosts(resolveOwnedSpell(character,selection.spellKey?{key:selection.spellKey}:selection.spell,context.catalog));
     }
     const used=useLearnedTalent(character,talent,selection,{catalog,encounter:refs.encounter,sessionId:session.id||String(timestampMs(session.startedAt)),spellCosts});
     if(selection.targetId && selection.targetId!==characterId){
@@ -574,17 +625,12 @@ const commands = {
         if(!snapshot.exists()) throw new Error('Character not found.');
         const character=Object.assign({id:characterId},snapshot.data());
         await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
-        const spellSource=character.spells||character.activeSpells||character.knownSpells||[];
-        const spellRows=Array.isArray(spellSource)?spellSource:Object.entries(spellSource).map(([name,value])=>typeof value==='object'?{name,...value}:{name});
-        const known=spellRows.find(value=>liveSlug(value?.name||value?.title||value)===liveSlug(spell.name));
-        if(!known) throw new Error('This spell is not on the character sheet.');
-        const canonical=context.catalog.find(entry=>entry.type==='spell' && liveSlug(entry.title)===liveSlug(spell.name));
-        const savedCost=known.costs??known.resourceCosts??known.cost??known.manaCost??canonical?.metadata?.manaCost??canonical?.metadata?.cost;
-        if(savedCost===undefined) throw new Error('Spell cost is missing from this character sheet. Ask the GM to correct it.');
-        costs=parseResourceCosts(savedCost,'mp',true);
+        const restriction=combatRestriction(character);if(restriction)throw new Error(restriction);
+        const resolved=resolveOwnedSpell(character,spell,context.catalog),known=resolved.owned;
+        costs=ownedSpellCosts(resolved);
         const paid=costs;
         Object.assign(character,applyResourceChanges(character,{costs,restore:known.restoreResources || known.resourceRestoration || {}}));
-        appendActivity(character,{type:'spell-cast',message:`Cast ${spell.name}.`,costs:paid});
+        appendActivity(character,{type:'spell-cast',message:`Cast ${resolved.name}${resolved.rank?' · '+resolved.rank:''}.`,costs:paid});
         writeLiveCharacter(transaction,refs,character);
         return paid;
       });
@@ -595,7 +641,10 @@ const commands = {
     if(!db || !currentUser || !campaignId || !characterId) return {ok:false,error:'Choose a linked character.'};
     const refs=liveCharacterRefs(campaignId,characterId);
     try {
-      const reward=validateGMRewardPayload(input);
+      const encounterHistoryId=String(input.encounterHistoryId||'');
+      const rewardInput={...input};
+      delete rewardInput.encounterHistoryId;
+      const reward=validateGMRewardPayload(rewardInput);
       const ids=reward.items.map((_,index)=>`gm-reward-${requestId}-${index}`);
       const eventRefs=ids.map(id=>doc(db,'campaigns',campaignId,'events',id));
       const currencyRef=reward.currency.amount
@@ -606,6 +655,16 @@ const commands = {
         const snapshot=await transaction.get(refs.campaign);
         if(!snapshot.exists()) throw new Error('The linked campaign character was not found.');
         const character={...snapshot.data(),id:characterId};
+        let completionRef=null,completion=null;
+        if(encounterHistoryId){
+          if(!/^[A-Za-z0-9_-]{1,160}$/.test(encounterHistoryId))
+            throw Error('Invalid completed encounter identifier.');
+          completionRef=doc(db,'campaigns',campaignId,'encounterHistory',encounterHistoryId);
+          const record=await transaction.get(completionRef);
+          if(!record.exists())throw Error('Completed encounter is unavailable.');
+          completion=record.data();
+          assertApprovedEncounterDelivery(completion,characterId,'bundle',reward);
+        }
         if(!character.ownerUid ||
           !(campaign.playerCharacterLinks?.[characterId]===character.ownerUid ||
             campaign.characters?.[characterId]?.ownerUid===character.ownerUid ||
@@ -666,6 +725,10 @@ const commands = {
           });
         }
         writeLiveCharacter(transaction,refs,character);
+        if(completionRef)transaction.update(completionRef,{
+          ...encounterDeliveryPatch(completion,characterId,'bundle',requestId,Date.now(),
+            currentUser.uid),updatedAt:serverTimestamp()
+        });
         return {itemEvents:ids,currencyEvent:currencyRef?.id||'',itemCount:reward.items.length,currency:reward.currency};
       });
       return {ok:true,...result};
@@ -786,8 +849,15 @@ const commands = {
           writeLiveCharacter(transaction,refs,character);
           return;
         }
+        if(operation.type==='clear-quick'){
+          const index=quickSlotIndex(operation.index);
+          character.quickSlots=liveQuickSlots(character,inventory);character.quickSlots[index]=null;
+          character.inventory=inventory;writeLiveCharacter(transaction,refs,character);
+          return {index};
+        }
         const item=inventory.find((value,index)=>liveItemId(value,index)===String(operation.itemId||''));
         if(!item) throw new Error('Inventory item not found.');
+        if(operation.type!=='set-quantity'&&!inventoryItemPresent(item))throw new Error('This item is no longer available.');
         if(operation.type==='split-stack'){
           if(item.equipped || item.stackable===false || item.unique===true || item.bound===true ||
              item.questItem===true || Number(item.maxStack||0)===1)
@@ -838,23 +908,26 @@ const commands = {
           writeLiveCharacter(transaction,refs,character);
           return;
         }else if(operation.type==='unequip'){
-          const slot=item.equippedSlot||item.slot;
-          item.equipped=false;item.equippedSlot='';item.location='inventory';
-          if(slot&&character.equipment) delete character.equipment[slot];
+          unequipCharacterInventoryItem(character,liveItemId(item));
           appendActivity(character,{type:'item-unequipped',message:`Unequipped ${item.name}.`});
+          writeLiveCharacter(transaction,refs,character);
+          return;
         }else if(operation.type==='quick'){
-          const index=Math.max(0,Math.min(3,Number(operation.index||0)));
-          character.quickSlots=Array.isArray(character.quickSlots)?character.quickSlots.slice(0,4):[];
-          while(character.quickSlots.length<4) character.quickSlots.push(null);
+          const index=quickSlotIndex(operation.index);
+          character.quickSlots=liveQuickSlots(character,inventory);
           character.quickSlots[index]=item;
           appendActivity(character,{type:'quick-slot',message:`Assigned ${item.name} to Quick Slot ${index+1}.`});
         }else if(operation.type==='use'){
-          const effect=item.effect||item.effects||{};
-          const parsed=effect.resource ? {[String(effect.resource).toLowerCase()]:Number(effect.amount||0)} : parseResourceCost(effect);
-          const changes=Object.entries(parsed).filter(([,amount])=>Number(amount)>0);
-          if(!changes.length) throw new Error('This item does not have a usable resource effect.');
+          const restriction=combatRestriction(character,{encounter:refs.encounter});if(restriction)throw new Error(restriction);
+          const problem=inventoryRecoveryProblem(item);if(problem)throw new Error(problem);
+          const changes=Object.entries(itemRecoveryEffect(item));
           Object.assign(character,applyResourceChanges(character,{restore:Object.fromEntries(changes)}));
-          item.qty=Math.max(0,Number(item.qty||1)-1);
+          if(item.charges!==undefined)item.charges=Number(item.charges)-1;
+          else item.qty=Number(item.qty??item.quantity??1)-1;
+          if(character.equipment)for(const [slot,entry] of Object.entries(character.equipment)){
+            if(String(entry?.instanceId||entry?.id||'')!==String(item.id))continue;
+            if(Number(item.qty??item.quantity??1)<=0)delete character.equipment[slot];else character.equipment[slot]={...item};
+          }
           appendActivity(character,{type:'item-used',message:`Used ${item.name}: ${changes.map(([resource,amount])=>`+${amount} ${resource.toUpperCase()}`).join(', ')}.`});
         }else if(operation.type==='move-storage'){
           if(item.equipped) throw new Error('Unequip this item before moving it between containers.');
@@ -1609,5 +1682,5 @@ const commands = {
     }catch(error){return {ok:false,error:error.message||String(error)};}
   },
 };
-return {...commands,...createCoreCommands(context),...createInformationCommands(context),...createCombatCommands(context),...createItemStoreCommands(context),...createCraftingCommands(context,{requireCampaignGM,requireLiveSession,liveCharacterRefs,verifyOwnedLiveCharacter,writeLiveCharacter,characterInventory,placeCharacterItem,appendActivity}),...createEnhancementCommands(context,{requireCampaignGM,requireLiveSession,liveCharacterRefs,verifyOwnedLiveCharacter,writeLiveCharacter,characterInventory,liveItemId,appendActivity}),...createCraftingServiceCommands(context,{requireCampaignGM,requireLiveSession,liveCharacterRefs,verifyOwnedLiveCharacter,writeLiveCharacter,characterInventory,liveItemId,appendActivity,currencyTotal,setCurrencyTotal}),...createItemLoreCommands(context),...createLootTableCommands(context,{requireCampaignGM}),...createRandomTableCommands(context,{requireCampaignGM}),...createEncounterRewardCommands(context,{requireCampaignGM}),...createAsteriaCalendarCommands(context,{requireCampaignGM}),...createWeatherEnvironmentCommands(context,{requireCampaignGM}),...createWorldAtlasCommands(context,{requireCampaignGM}),...createSessionLibraryCommands(context,{requireCampaignGM}),...createCampaignAudioCommands(context,{requireCampaignGM}),...createSessionRecordingCommands(context,{requireCampaignGM}),...createPlayerPresentationCommands(context,{requireCampaignGM}),...createPartyLootCommands(context,{requireLiveSession,requireCampaignGM,liveCharacterRefs,verifyOwnedLiveCharacter,verifyLiveTradeCounterparty,writeLiveCharacter,characterInventory,liveItemId,placeCharacterItem,appendActivity,currencyTotal,setCurrencyTotal})};
+return {...commands,...createEncounterCompletionCommands(context,{requireCampaignGM}),...createCoreCommands(context),...createInformationCommands(context),...createCombatCommands(context),...createItemStoreCommands(context),...createCraftingCommands(context,{requireCampaignGM,requireLiveSession,liveCharacterRefs,verifyOwnedLiveCharacter,writeLiveCharacter,characterInventory,placeCharacterItem,appendActivity}),...createEnhancementCommands(context,{requireCampaignGM,requireLiveSession,liveCharacterRefs,verifyOwnedLiveCharacter,writeLiveCharacter,characterInventory,liveItemId,appendActivity}),...createCraftingServiceCommands(context,{requireCampaignGM,requireLiveSession,liveCharacterRefs,verifyOwnedLiveCharacter,writeLiveCharacter,characterInventory,liveItemId,appendActivity,currencyTotal,setCurrencyTotal}),...createItemLoreCommands(context),...createLootTableCommands(context,{requireCampaignGM}),...createRandomTableCommands(context,{requireCampaignGM}),...createEncounterRewardCommands(context,{requireCampaignGM}),...createAsteriaCalendarCommands(context,{requireCampaignGM}),...createWeatherEnvironmentCommands(context,{requireCampaignGM}),...createWorldAtlasCommands(context,{requireCampaignGM}),...createSessionLibraryCommands(context,{requireCampaignGM}),...createCampaignAudioCommands(context,{requireCampaignGM}),...createSessionRecordingCommands(context,{requireCampaignGM}),...createPlayerPresentationCommands(context,{requireCampaignGM}),...createHybridPresentationSessionCommands(context,{requireCampaignGM}),...createPresentationAssetCommands(context,{requireCampaignGM}),...createPresentationProjectionBackfillCommands(context,{requireCampaignGM}),...createPartyLootCommands(context,{requireLiveSession,requireCampaignGM,liveCharacterRefs,verifyOwnedLiveCharacter,verifyLiveTradeCounterparty,writeLiveCharacter,characterInventory,liveItemId,placeCharacterItem,appendActivity,currencyTotal,setCurrencyTotal})};
 }

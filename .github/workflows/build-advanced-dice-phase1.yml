@@ -1,0 +1,190 @@
+name: Build Advanced Dice 3D on test branch (no Firebase deploy)
+on:
+  push:
+    branches: [Website-Build-Test]
+    paths:
+      - 'src/dice/**'
+      - 'src/dashboards/AdvancedDiceWorkspace.jsx'
+      - 'src/styles/advanced-dice.css'
+      - 'scripts/dice-engine-phase1.test.mjs'
+      - 'scripts/dice-engine-phase2.test.mjs'
+      - 'scripts/dice-engine-phase3-1.test.mjs'
+      - 'scripts/dice-engine-phase3-2.test.mjs'
+      - 'scripts/dice-engine-phase3-3.test.mjs'
+      - 'scripts/dice-engine-phase3-4.test.mjs'
+      - 'scripts/dice-engine-phase3-5.test.mjs'
+      - 'scripts/dice-engine-phase3-6.test.mjs'
+      - 'scripts/dice-engine-phase3-7.test.mjs'
+      - 'scripts/dice-engine-phase3-8.test.mjs'
+      - 'scripts/dice-engine-phase3-9.test.mjs'
+      - 'scripts/dice-engine-phase3-10.test.mjs'
+      - 'scripts/dice-engine-phase4.test.mjs'
+      - 'scripts/dice-prototype/phase4*'
+      - 'docs/audits/ADVANCED-DICE-PHASE4-TEST-ACCEPTANCE.md'
+      - 'docs/audits/ADVANCED-DICE-3D-PHASE3-10-IMPLEMENTATION.md'
+      - 'scripts/dice-prototype/phase3-10*'
+      - 'scripts/dice-prototype/phase3-9*'
+      - 'scripts/dice-prototype/phase3-8*'
+      - 'scripts/dice-prototype/phase3-7*'
+      - 'scripts/dice-prototype/phase3-6*'
+      - 'scripts/dice-prototype/phase2*'
+      - 'scripts/dice-prototype/phase3-2*'
+      - 'scripts/dice-prototype/phase3-3*'
+      - 'scripts/dice-prototype/phase3-4*'
+      - 'scripts/dice-prototype/phase3-5*'
+      - 'scripts/digital-gm-phase7-1.test.mjs'
+      - 'package.json'
+      - '.github/workflows/build-advanced-dice-phase1.yml'
+permissions:
+  contents: write
+concurrency:
+  group: asteria-advanced-dice-phase1
+  cancel-in-progress: true
+jobs:
+  verify-and-build:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Update lockfile for the pinned 3D engine
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+      - run: npm ci
+      - name: Verify dice rules, rendering adapter and lint
+        run: |
+          npm run test:advanced-dice
+          npm run lint
+      - name: Build React/Vite site on test branch only
+        run: npm run build
+      - name: Install isolated browser test driver
+        run: npm install --no-save --package-lock=false --ignore-scripts --no-audit --no-fund playwright@1.56.1
+      - name: Verify the redesigned dice tray in Chromium
+        run: node scripts/dice-prototype/phase2-runner.mjs
+      - name: Verify twelve Asteria PBR dice in Chromium
+        run: node scripts/dice-prototype/phase3-2-runner.mjs
+      - name: Verify Familiar Dice artwork and animations in Chromium
+        run: node scripts/dice-prototype/phase3-3-runner.mjs
+      - name: Verify Watcher Dice transparent shell and animated eyes in Chromium
+        run: node scripts/dice-prototype/phase3-4-runner.mjs
+      - name: Verify six 3D trays and collision physics in Chromium
+        run: node scripts/dice-prototype/phase3-5-runner.mjs
+      - name: Verify unified customisation studio in Chromium
+        run: node scripts/dice-prototype/phase3-6-runner.mjs
+      - name: Verify Phase 3.7 saved collections in Chromium
+        run: node scripts/dice-prototype/phase3-7-runner.mjs
+      - name: Verify Castle Tower physical feasibility in Chromium
+        run: node scripts/dice-prototype/phase3-8-runner.mjs
+      - name: Verify five additional physical tower families in Chromium
+        run: node scripts/dice-prototype/phase3-9-runner.mjs
+      - name: Verify Phase 3.10 effects, audio and mobile controls in Chromium
+        run: node scripts/dice-prototype/phase3-10-runner.mjs
+      - name: Verify Phase 4 immersive Dice Window and drawer controls in Chromium
+        run: node scripts/dice-prototype/phase4-runner.mjs
+      - name: Store Phase 4 UI acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asteria-dice-phase4-window
+          path: dice-phase4-evidence/
+          if-no-files-found: warn
+      - name: Store Phase 3.10 visual and audio acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asteria-dice-phase3-10-fx
+          path: dice-phase3-10-evidence/
+          if-no-files-found: warn
+      - name: Store Phase 3.9 five-tower physical evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asteria-dice-phase3-9-towers
+          path: dice-phase3-9-evidence/
+          if-no-files-found: warn
+      - name: Store Phase 3.8 Castle physics evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asteria-dice-phase3-8-castle
+          path: dice-phase3-8-evidence/
+          if-no-files-found: warn
+      - name: Store Phase 3.7 collection browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asteria-dice-phase3-7
+          path: dice-phase3-7-evidence/
+          if-no-files-found: warn
+      - name: Store Phase 3.6 studio browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asteria-dice-phase3-6
+          path: dice-phase3-6-evidence/
+          if-no-files-found: warn
+      - name: Store Phase 3.5 tray browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asteria-dice-phase3-5
+          path: dice-phase3-5-evidence/
+          if-no-files-found: warn
+      - name: Store Watcher Phase 3.4 browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asteria-dice-phase3-4
+          path: dice-phase3-4-evidence/
+          if-no-files-found: warn
+      - name: Store Phase 3.3 Familiar Dice evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asteria-dice-phase3-3
+          path: dice-phase3-3-evidence/
+          if-no-files-found: warn
+      - name: Store Phase 3.2 preview evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asteria-dice-phase3-2
+          path: dice-phase3-2-evidence/
+          if-no-files-found: warn
+      - name: Store Phase 2 responsive browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asteria-dice-phase2-ui
+          path: dice-phase2-evidence/
+          if-no-files-found: warn
+      - name: Commit generated lockfile and built assets
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- package-lock.json react-dist data/compendium.js data/compendium-handbook.js data/compendium-index.js data/compendium-parts
+          if git diff --cached --quiet; then
+            echo "Generated files are already in sync."
+            exit 0
+          fi
+          SOURCE_SHA="$(git rev-parse HEAD)"
+          git fetch --no-tags origin Website-Build-Test
+          if [ "$(git rev-parse FETCH_HEAD)" != "$SOURCE_SHA" ]; then
+            echo "::notice::Test branch advanced during verification. Skipping stale generated assets; the newer commit owns its own build."
+            exit 0
+          fi
+          git commit -m "build(dice): synchronize 3D engine lockfile and React bundle [skip ci]"
+          if ! git push origin HEAD:Website-Build-Test; then
+            git fetch --no-tags origin Website-Build-Test
+            if [ "$(git rev-parse FETCH_HEAD)" != "$SOURCE_SHA" ]; then
+              echo "::notice::Test branch advanced during push. Stale assets were not published."
+              exit 0
+            fi
+            echo "::error::Could not push generated assets to unchanged test branch."
+            exit 1
+          fi

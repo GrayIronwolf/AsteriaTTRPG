@@ -1,0 +1,36 @@
+name: Rebuild player resource PR bundle (no deployment)
+on:
+  push:
+    branches: [fix/player-resource-hud-m1]
+    paths:
+      - '.github/workflows/rebuild-player-resource-pr380.yml'
+permissions:
+  contents: write
+jobs:
+  build:
+    if: github.ref == 'refs/heads/fix/player-resource-hud-m1' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run test:inputs
+      - run: npm run test:core
+      - run: npm run build
+      - name: Commit generated assets only to PR branch
+        run: |
+          set -euo pipefail
+          git add -A -- react-dist data/compendium.js data/compendium-handbook.js data/compendium-index.js data/compendium-parts
+          if git diff --cached --quiet; then exit 0; fi
+          SOURCE_SHA="$(git rev-parse HEAD)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "build: regenerate verified player resource frontend assets"
+          git fetch --no-tags origin fix/player-resource-hud-m1
+          test "$(git rev-parse FETCH_HEAD)" = "$SOURCE_SHA"
+          git push origin HEAD:fix/player-resource-hud-m1

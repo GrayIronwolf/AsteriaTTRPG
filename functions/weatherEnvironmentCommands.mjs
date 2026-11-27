@@ -1,7 +1,7 @@
-import {randomInt} from 'node:crypto';
+import {effectiveCalendarDate} from '../src/state/asteriaCalendarModel.mjs';
 import {
- validateWeatherZone,validateWeatherAction,generateWeatherForecast,
- buildWeatherDay,publicWeatherReport,
+ validateWeatherZone,validateWeatherAction,generateDeterministicWeatherForecast,
+ buildWeatherDay,overrideWeatherDay,publicWeatherReport,
  weatherIsValidId,MAX_FORECAST_DAYS
 } from '../src/state/weatherEnvironmentModel.mjs';
 
@@ -9,6 +9,7 @@ const exists=s=>typeof s?.exists==='function'?s.exists():Boolean(s?.exists);
 const bounded=(value,max)=>String(value||'').trim().slice(0,max);
 const MAX_ZONES=40;
 const MAX_REPORTS_PER_ZONE=60;
+const weatherSeed=campaignId=>'campaign:'+campaignId+':weather-v3';
 
 /**
  * Phase 8.2: GM-only server action through the existing asteriaAction
@@ -29,7 +30,11 @@ export function createWeatherEnvironmentCommands(context,{requireCampaignGM}){
      const metaRef=doc(db,'campaigns',campaignId,'weatherConfig','current');
      if(type==='saveZone'||type==='archiveZone'){
       // Read every document used by this transaction before writing.
-      const [snapshot,metaSnapshot]=await Promise.all([tx.get(zoneRef),tx.get(metaRef)]);
+      const mapRef=action.zone?.atlasMapId?
+       doc(db,'campaigns',campaignId,'worldAtlas',action.zone.atlasMapId):null;
+      const [snapshot,metaSnapshot,atlasSnapshot]=await Promise.all([
+       tx.get(zoneRef),tx.get(metaRef),mapRef?tx.get(mapRef):Promise.resolve(null)
+      ]);
       const previous=exists(snapshot)?snapshot.data():null;
       const meta=metaSnapshot?.data()||{};
       if((previous?.revision||0)!==action.expectedRevision)
@@ -47,6 +52,12 @@ export function createWeatherEnvironmentCommands(context,{requireCampaignGM}){
       if(!previous&&(meta.zoneCount||0)>=MAX_ZONES)
        throw Error('The campaign supports at most '+MAX_ZONES+' active weather zones.');
       const clean=validateWeatherZone(action.zone,action.zoneId,previous);
+      if(mapRef){
+       const map=atlasSnapshot?.data();
+       if(!exists(atlasSnapshot)||map?.status==='archived'||
+        !Array.isArray(map?.pins)||!map.pins.some(pin=>pin.id===clean.atlasPinId))
+        throw Error('Select an existing atlas marker on a non-archived campaign map.');
+      }
       tx.set(zoneRef,{...clean,reportCount:previous?.reportCount||0,
        createdBy:previous?.createdBy||currentUser.uid,
        createdAt:previous?.createdAt||serverTimestamp(),
@@ -75,11 +86,14 @@ export function createWeatherEnvironmentCommands(context,{requireCampaignGM}){
       if((zone.reportCount||0)>=MAX_REPORTS_PER_ZONE)
        throw Error('Archive old weather reports before generating more for this zone.');
       // Randomness occurs inside the authenticated server action, not in the browser.
-      const forecast=generateWeatherForecast(zone,calendar,action.days,randomInt);
+      const startDate=effectiveCalendarDate(calendar);
+      const forecast=generateDeterministicWeatherForecast(zone,
+       {...calendar,date:startDate},action.days,weatherSeed(campaignId));
       const report={id:reportId,zoneId:zone.id,zoneName:zone.name,region:zone.region,
-       biome:zone.biome,status:'draft',revision:1,zoneRevision:zone.revision,
+       biome:zone.biome,location:{continent:zone.continent||'',kingdom:zone.kingdom||'',
+        settlement:zone.settlement||''},status:'draft',revision:1,zoneRevision:zone.revision,
        calendarRevision:calendar.revision,
-       generatedFromDate:calendar.date,forecast,
+       generatedFromDate:startDate,forecast,
        gmNotes:zone.gmNotes||'',changes:[],
        createdBy:currentUser.uid,createdAt:serverTimestamp(),
        updatedBy:currentUser.uid,updatedAt:serverTimestamp()};
@@ -122,8 +136,15 @@ export function createWeatherEnvironmentCommands(context,{requireCampaignGM}){
      if(type==='override'){
       if(!Array.isArray(previous.forecast)||action.dayIndex>=previous.forecast.length)
        throw Error('Choose a day included in the weather forecast.');
+      const zoneRef=doc(db,'campaigns',campaignId,'weatherZones',previous.zoneId);
+      const calendarRef=doc(db,'campaigns',campaignId,'calendarState','current');
+      const [zoneSnap,calendarSnap]=await Promise.all([tx.get(zoneRef),tx.get(calendarRef)]);
+      const zone=zoneSnap?.data(),calendar=calendarSnap?.data();
       const days=previous.forecast.map((day,index)=>index===action.dayIndex?
-       buildWeatherDay(day.date,day.season,action.condition,action.severity,index,'gm-override'):day);
+       zone&&calendar?.definition?
+        overrideWeatherDay(day,zone,calendar,action.condition,action.severity,weatherSeed(campaignId)):
+        buildWeatherDay(day.date,day.season,action.condition,action.severity,index,'gm-override'):
+        day);
       const update={...previous,forecast:days,revision:previous.revision+1,
        changes:[{dayIndex:action.dayIndex,condition:action.condition,
         severity:action.severity,reason:bounded(action.reason,180),

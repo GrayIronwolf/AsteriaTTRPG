@@ -60,7 +60,7 @@ export function createSessionRecordingCommands(context,{requireCampaignGM}){
      const member=await readCampaignMember({get:async ref=>{
       const row=await tx.get(ref);return {exists:exists(row),data:()=>data(row)};
      }},db,campaignId,campaign,currentUser.uid);
-     if(!isCampaignMember(campaign,currentUser.uid,member))throw Error('Active campaign membership is required.');
+     if(!isCampaignMember(campaign,currentUser.uid,member,campaignId))throw Error('Active campaign membership is required.');
      const controlSnap=await tx.get(p(campaignId,'recordingControl','current'));
 
      const control=data(controlSnap);

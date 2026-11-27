@@ -1,0 +1,106 @@
+name: Compile React website assets for Website-Build-Test (no deployment)
+
+on:
+  push:
+    branches: [Website-Build-Test]
+    paths:
+      - 'src/dice/**'
+      - 'src/dashboards/AdvancedDiceWorkspace.jsx'
+      - 'src/dashboards/combat/**'
+      - 'scripts/combat-command-centre-replacement.test.mjs'
+      - 'scripts/canvas-resource-card-zoom.test.mjs'
+      - 'scripts/test-react-live-session.mjs'
+      - 'src/dashboards/presentation/**'
+      - 'src/dashboards/PlayerPresentationWorkspace.jsx'
+      - 'src/state/*Presentation*.mjs'
+      - 'src/state/campaignMediaLibraryModel.mjs'
+      - 'src/state/presentationAssetModel.mjs'
+      - 'src/firebase/asteriaFirebaseService.js'
+      - 'js/firebase-auth.js'
+      - 'src/sessions/useCampaignLiveData.js'
+      - 'functions/playerPresentationCommands.mjs'
+      - 'src/dashboards/AsteriaCalendarWorkspace.jsx'
+      - 'src/dashboards/CalendarWeatherQuickPanel.jsx'
+      - 'src/dashboards/WeatherEnvironmentWorkspace.jsx'
+      - 'src/dashboards/WorldAtlasWorkspace.jsx'
+      - 'src/dashboards/PlayerDashboardOverview.jsx'
+      - 'src/state/asteriaCalendarModel.mjs'
+      - 'src/state/calendarGameplayModel.mjs'
+      - 'src/state/dashboardLayoutModel.mjs'
+      - 'src/state/weatherEnvironmentModel.mjs'
+      - 'src/styles/asteria-calendar.css'
+      - 'src/styles/calendar-world-context.css'
+      - 'src/styles/weather-environment.css'
+      - 'src/dashboards/GMDashboard.jsx'
+      - 'src/dashboards/GMPlayerManager.jsx'
+      - 'src/dashboards/GMPlayerOperations.jsx'
+      - 'src/dashboards/GMDashboardQuickPanels.jsx'
+      - 'src/state/gmPlayerOperationsModel.mjs'
+      - 'scripts/gm-player-operations.test.mjs'
+      - 'scripts/gm-player-manager-phase11-12.test.mjs'
+      - 'docs/gm-player-manager-phases11-12-acceptance-2026-11-24.md'
+      - 'src/state/gmPlayerManagerModel.mjs'
+      - 'src/state/gmCampaignRosterModel.mjs'
+      - 'src/styles/gm-player-manager.css'
+      - 'scripts/gm-player-manager.test.mjs'
+      - 'src/dashboards/CharacterDashboard.jsx'
+      - 'src/components/DashboardNavigation.jsx'
+      - 'src/components/DashboardNavigation.module.css'
+      - 'src/components/WorkspaceUI.jsx'
+      - 'src/state/dashboardMenuModel.mjs'
+      - 'src/state/gmToolkitModel.mjs'
+      - 'src/styles/asteria-react.css'
+      - 'src/dashboards/CombatPanel.jsx'
+      - 'src/devFixtures.js'
+      - 'src/styles/combat.css'
+      - 'src/state/combatProgressionCore.mjs'
+      - 'scripts/calendar-weather-milestone4.test.mjs'
+      - '.github/workflows/build-combat-test-assets.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: asteria-combat-test-build
+  cancel-in-progress: true
+
+jobs:
+  compile-and-save:
+    if: github.ref == 'refs/heads/Website-Build-Test' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Validate combat replacement and source imports
+        run: |
+          npm run lint
+          node --test scripts/combat-command-centre-replacement.test.mjs
+          node --test scripts/gm-player-manager.test.mjs
+          node --test scripts/gm-player-operations.test.mjs
+          node --test scripts/gm-player-manager-phase11-12.test.mjs
+      - name: Build current Combat and Share & Present React/Vite assets without publishing
+        run: npm run build
+      - name: Commit only compiled website artifacts on test branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- react-dist data/compendium.js data/compendium-handbook.js data/compendium-index.js data/compendium-parts
+          if git diff --cached --quiet; then
+            echo "Compiled bundle already matches tracked artifacts."
+            exit 0
+          fi
+          SOURCE_SHA="$(git rev-parse HEAD)"
+          git commit -m "build(combat): synchronize compiled React bundle on Website-Build-Test [skip ci]"
+          git fetch --no-tags origin Website-Build-Test
+          if [ "$(git rev-parse FETCH_HEAD)" != "$SOURCE_SHA" ]; then
+            echo "Test branch advanced during compilation. Skip stale bundle; the later push will build its own assets."
+            exit 0
+          fi
+          git push origin HEAD:Website-Build-Test

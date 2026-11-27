@@ -1,0 +1,50 @@
+name: Milestone 4.1 - Synchronize verified frontend assets
+on:
+  push:
+    branches: [milestone-4-1-campaign-player-management]
+    paths:
+      - 'src/**'
+      - 'js/**'
+      - 'index.html'
+      - 'functions/**'
+      - 'scripts/**'
+      - '.github/workflows/rebuild-milestone-4-1-assets.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: milestone-4-1-frontend-assets
+  cancel-in-progress: true
+jobs:
+  rebuild:
+    if: github.ref == 'refs/heads/milestone-4-1-campaign-player-management' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: node --test scripts/milestone-4-1-player-management.test.mjs
+      - run: npm run lint
+      - run: npm run build
+      - name: Commit verified assets to Milestone 4.1 branch only
+        run: |
+          set -euo pipefail
+          git add -A -- react-dist data/compendium.js data/compendium-handbook.js data/compendium-index.js data/compendium-parts
+          if git diff --cached --quiet; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "build: synchronize milestone 4.1 assets"
+          git fetch origin milestone-4-1-campaign-player-management
+          git rebase origin/milestone-4-1-campaign-player-management
+          npm run build
+          git add -A -- react-dist data/compendium.js data/compendium-handbook.js data/compendium-index.js data/compendium-parts
+          if ! git diff --cached --quiet; then
+            git commit -m "build: verify milestone 4.1 assets after branch sync"
+          fi
+          git push origin HEAD:milestone-4-1-campaign-player-management

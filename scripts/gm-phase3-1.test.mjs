@@ -113,10 +113,12 @@ test('NPC library is GM-only; custom cards and generator preserve official read-
   const mount=read('src/app/mountDashboard.jsx');
   const workspace=read('src/state/gmWorkspaceModel.mjs');
   assert.match(dashboard,/AsteriaCharacterAccess\.isGM\(/);
-  assert.match(dashboard,/\{ id: 'bestiary', label: 'NPC & Creature Library'/);
+  assert.ok(read('src/state/dashboardMenuModel.mjs').includes("page('bestiary','NPC & Creature Library'"));
   assert.match(dashboard,/\{tab === 'bestiary' \? <GMNpcCreatureLibrary/);
-  assert.match(dashboard,/campaignCreatures=\{live\.gmWorkspace\?\.world\?\.creatures\|\|\[\]\}/);
-  assert.match(dashboard,/campaignCreatures\.filter\(libraryEncounterReady\)/);
+  const combatModel=read('src/dashboards/combat/combatModel.mjs');
+  const combatService=read('src/dashboards/combat/firebaseCombatService.mjs');
+  assert.match(combatService,/gmEncounterCandidates\(data\.workspace\?\.world\)/);
+  assert.match(combatModel,/from\(world\?\.creatures/);
   assert.match(ui,/official\?'Official Creature Compendium'/);
   assert.match(ui,/row\.official\?<div className="react-gm-library-entry-actions"/);
   assert.match(ui,/onSave=\{cardTarget.kind==='official'\?undefined:saveCard\}/);

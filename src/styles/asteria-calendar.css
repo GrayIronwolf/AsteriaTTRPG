@@ -21,3 +21,49 @@
 .asteria-calendar-error{padding:9px;border:1px solid #bf6b6b;border-radius:7px}
 @media(max-width:800px){.asteria-calendar-months{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){.asteria-calendar-grid,.asteria-calendar-months{grid-template-columns:1fr}.asteria-calendar-card{padding:10px}}
+
+
+/* Calendar Milestone 1: shared responsive editor and calendar browser */
+.asteria-calendar-editor{border:1px solid #48576b;border-radius:9px;padding:12px;background:#192433}
+.asteria-calendar-editor>summary{font-size:1.04rem}
+.asteria-calendar-editor details{border-top:1px solid #48576b;margin-top:12px;padding-top:8px}
+.asteria-calendar-editor-list,.asteria-calendar-row{display:grid;gap:9px}
+.asteria-calendar-row{grid-template-columns:repeat(auto-fit,minmax(130px,1fr));align-items:end;padding:8px;border-bottom:1px solid #354458}
+.asteria-calendar-row-actions{display:flex;gap:4px;align-items:center;justify-content:flex-end}
+.asteria-calendar-row-actions button{min-width:36px;padding:7px;line-height:1.2}
+.asteria-calendar-row-heading{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.asteria-calendar-import{display:inline-flex!important;flex:0 1 170px!important;align-self:center;gap:5px}
+.asteria-calendar-import input{padding:4px!important;font-size:.85rem!important}
+.asteria-calendar-notice,.asteria-calendar-summary{border:1px solid #72829a;border-radius:7px;padding:10px;overflow-wrap:anywhere}
+.asteria-calendar-check{display:flex!important;align-items:center;gap:9px}
+.asteria-calendar-check input{width:auto!important}
+.asteria-calendar-browser-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
+.asteria-calendar-browser-head button[aria-pressed="true"]{background:#425a73;border-color:#c0a66d}
+.asteria-calendar-month-grid{display:grid;grid-template-columns:repeat(var(--calendar-weekdays,8),minmax(0,1fr));gap:3px;overflow-x:auto}
+.asteria-calendar-weekday{font-size:.78rem;text-align:center;overflow-wrap:anywhere;color:#c6d3e0;padding:7px 2px}
+.asteria-calendar-day{display:flex;flex-direction:column;min-height:77px;gap:5px;min-width:0;align-items:flex-start;text-align:left!important;padding:8px!important;background:#233246;border:1px solid #48576b;border-radius:5px;overflow-wrap:anywhere}
+.asteria-calendar-day.is-today{border:2px solid #d8bc75;background:#34455c}
+.asteria-calendar-day[aria-selected="true"]{outline:2px solid #94bfe1;outline-offset:-3px}
+.asteria-calendar-day.is-intercalary{background:#35405a}
+.asteria-calendar-day small{font-size:.72rem;line-height:1.15}
+.asteria-calendar-event-mark{padding:3px;background:#385a5a;border-radius:3px}
+.asteria-calendar-year-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
+.asteria-calendar-year-grid button{display:grid;gap:5px;text-align:left}
+.asteria-calendar-year-grid small{color:#c6d3e0}
+.asteria-calendar-selected{padding:10px;border:1px solid #50637b;border-radius:7px}
+@media(max-width:700px){
+ .asteria-calendar-month-grid{overflow-x:auto;grid-template-columns:repeat(var(--calendar-weekdays,8),minmax(64px,1fr));min-width:max-content}
+ .asteria-calendar-browser{overflow-x:auto}
+ .asteria-calendar-day{min-height:63px;padding:6px!important}
+ .asteria-calendar-row{grid-template-columns:repeat(auto-fit,minmax(105px,1fr))}
+}
+
+
+/* Calendar Milestone 2 - clock, event categories and celestial dates */
+.asteria-calendar-clock-controls{display:grid;gap:10px;padding:12px;border:1px solid #4f6679;border-radius:7px;background:#1c2c3d}
+.asteria-calendar-clock-controls h4{margin:0}
+.asteria-calendar-browser .asteria-calendar-event-mark{font-size:.7rem}
+.asteria-calendar-browser .asteria-calendar-selected{display:grid;gap:6px}
+.asteria-calendar-browser .asteria-calendar-selected p{margin:0;padding:5px 8px;border-left:2px solid #769aba;background:#223044}
+.asteria-calendar-editor-list .asteria-calendar-row input[type="color"]{height:42px;padding:4px}
+@media(max-width:600px){.asteria-calendar-clock-controls{padding:9px}.asteria-calendar-browser .asteria-calendar-selected{min-width:0}}

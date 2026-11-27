@@ -1,0 +1,50 @@
+name: Rebuild player conditions and character sync milestone 6 assets
+on:
+  push:
+    branches: [Website-Build-Test]
+    paths:
+      - 'src/state/effectsEngine.mjs'
+      - 'src/state/conditionModel.mjs'
+      - 'src/state/characterSystemsSyncModel.mjs'
+      - 'src/sessions/useCharacterSystemsSync.js'
+      - 'src/dashboards/CharacterSystemsPanels.jsx'
+      - 'src/dashboards/CharacterDashboard.jsx'
+      - 'src/dashboards/GMDashboard.jsx'
+      - 'src/dashboards/PlayerDashboardOverview.jsx'
+      - 'scripts/player-conditions-sync-m6.test.mjs'
+      - 'package.json'
+      - '.github/workflows/rebuild-player-conditions-sync-m6.yml'
+permissions:
+  contents: write
+concurrency:
+  group: player-conditions-sync-m6-bundle
+  cancel-in-progress: false
+jobs:
+  build:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run test:firebase
+      - run: npm run build
+      - name: Commit verified generated website assets
+        run: |
+          set -euo pipefail
+          git add -A -- react-dist data/compendium.js data/compendium-handbook.js data/compendium-index.js data/compendium-parts
+          if git diff --cached --quiet; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "build: synchronize player conditions milestone 6 assets"
+          git push origin HEAD:Website-Build-Test

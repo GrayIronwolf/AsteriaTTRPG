@@ -12,6 +12,7 @@ const REGEX=/window\.AsteriaFeatureFlags = Object\.freeze\(\{[^}\n]*\}\);/g;
 const keys=[
   'friendNotificationsEnabled','serverCampaignUCN','campaignJoinPreview',
   'campaignJoinRequests','campaignJoinReview','campaignPlayerRoster',
+  'campaignAttendance',
   'campaignMemberControls','campaignRolePermissions','campaignCharacterLinks',
   'campaignCharacterApproval','campaignCharacterLifecycle','secureInvitationManager',
   'secureInvitationAcceptance','emailInvitationControls','campaignNotifications',
@@ -96,13 +97,13 @@ export function expectedAssignment(data=readManifest()){
   const items=[
     'friendAccountLookup:'+(data.friendsAvailability?.mode==='general'?'true':canaries.friendAccountLookup),
     'friendRequestsEnabled:'+(data.friendsAvailability?.mode==='general'?'true':canaries.friendRequestsEnabled),
-    ...keys.slice(0,17).map(key=>key+':'+websiteValue(key)),
+    ...keys.slice(0,18).map(key=>key+':'+websiteValue(key)),
     'accountIdAutoCanary:'+canaries.accountIdAutoCanary,
     'accountIdCanary:'+canaries.accountIdCanary,
     'campaignFriendInvitations:'+websiteValue('campaignFriendInvitations'),
     'campaignInAppCanary:'+websiteValue('campaignInAppCanary')
   ];
-  if(items.length!==23)fail('website flag count changed');
+  if(items.length!==24)fail('website flag count changed');
   return 'window.AsteriaFeatureFlags = Object.freeze({'+items.join(',')+'});';
 }
 export function checkWebsite(source,data=readManifest()){

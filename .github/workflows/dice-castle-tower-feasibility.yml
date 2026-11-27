@@ -1,0 +1,41 @@
+name: Castle Dice Tower Physics Feasibility (test branch only)
+on:
+  push:
+    branches: [Website-Build-Test]
+    paths:
+      - 'src/dice/castleDiceTowerGeometry.mjs'
+      - 'src/dice/castleDiceTowerScene.mjs'
+      - 'src/dice/AsteriaDiceTray.jsx'
+      - 'scripts/dice-engine-phase3-8.test.mjs'
+      - 'scripts/dice-prototype/phase3-8*'
+      - '.github/workflows/dice-castle-tower-feasibility.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: asteria-castle-tower-feasibility
+  cancel-in-progress: true
+jobs:
+  castle-physics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Verify Castle collision and authoritative fixture contract
+        run: node --test scripts/dice-engine-phase3-8.test.mjs
+      - name: Install headless Chromium test driver
+        run: npm install --no-save --package-lock=false --ignore-scripts --no-audit --no-fund playwright@1.56.1
+      - name: Verify physical Castle Tower chute, baffles and exit in Chromium
+        run: node scripts/dice-prototype/phase3-8-runner.mjs
+      - name: Save actual physics trajectory evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asteria-castle-physics-acceptance
+          path: dice-phase3-8-evidence/
+          if-no-files-found: warn

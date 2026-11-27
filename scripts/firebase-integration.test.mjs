@@ -6,6 +6,7 @@ import {ref,uploadBytes,getBytes,deleteObject} from 'firebase/storage';
 import {doc,setDoc,getDoc,updateDoc,getDocs,collection,onSnapshot,writeBatch,Timestamp,deleteDoc,query,where} from 'firebase/firestore';
 import {initializeApp,deleteApp} from 'firebase-admin/app';
 import {getFirestore,FieldValue} from 'firebase-admin/firestore';
+import {synchronizeCombatPresentation,synchronizeBattleMapPresentation} from '../functions/livePresentationProjectionTriggers.mjs';
 import {executeAction} from '../functions/handler.mjs';
 import {merchantStockIdentity} from '../src/state/merchantInventoryModel.mjs';
 import {accessInvite} from '../functions/invitations.mjs';
@@ -124,6 +125,197 @@ test('private GM notes are inaccessible to players',async()=>{
   await assertSucceeds(getDoc(doc(user('gm'),'campaigns/c/systems/gmWorkspace')));
   await assertFails(getDoc(doc(user('alice'),'campaigns/c/systems/gmWorkspace')));
 });
+
+test('canvas content modes and resized geometry persist privately without changing gameplay',async()=>{
+ const {defaultDashboardLayout,normalizeDashboardLayout}=await import('../src/state/dashboardLayoutModel.mjs');
+ for(const role of ['gm','player']){
+  const value=defaultDashboardLayout(role),key=role==='gm'?'gmCanvas':'playerCanvas';
+  const id=role==='gm'?'gmResources':'armour';
+  value[key].defaultContentSizing='fixed';value[key].contentSizing={[id]:'proportional'};
+  value[key].contentScale={[id]:1.3};
+  value[key].freeform.positions[id]={x:-100,y:800,w:350,h:420};
+  const layout=normalizeDashboardLayout(value,role),reference=doc(user('alice'),'users/alice/dashboardLayouts/'+role+'-c');
+  await assertSucceeds(setDoc(reference,{layout}));
+  const reopened=(await assertSucceeds(getDoc(reference))).data().layout;
+  assert.deepEqual(reopened,layout);
+  await assertFails(getDoc(doc(user('bob'),'users/alice/dashboardLayouts/'+role+'-c')));
+  await assertFails(setDoc(doc(user('bob'),'users/alice/dashboardLayouts/'+role+'-c'),{layout}));
+  if(role==='player'){
+   const preferences={dashboardLayout:layout};
+   const client=user('alice'),batch=writeBatch(client);
+   batch.update(doc(client,'campaigns/c/characters/a'),{dashboardPreferences:preferences});
+   batch.update(doc(client,'users/alice/characters/a'),{dashboardPreferences:preferences});
+   await assertSucceeds(batch.commit());
+   const character=(await assertSucceeds(getDoc(doc(user('alice'),'campaigns/c/characters/a')))).data();
+   assert.deepEqual(character.dashboardPreferences.dashboardLayout.playerCanvas,layout.playerCanvas);
+   assert.deepEqual(character.hp,[8,10]);assert.equal(character.ownerUid,'alice');
+  }
+ }
+});
+
+test('encounter and map projections stay in sync when turns, fog and publication change',async()=>{
+  const encounter=db.doc('campaigns/c/systems/encounter');
+  const canonical=db.doc('campaigns/c/battleMaps/forest');
+  const mapPath='campaigns/c/battleMapsPublic/forest';
+  const combatPath='campaigns/c/combatPublic/current';
+  await encounter.set({status:'active',combatId:'forest-fight',battleMapId:'forest',turnIndex:0,round:2,
+    combat:{version:1,revision:3,participants:{}},privateNotes:'Private plan',
+    combatants:[{id:'enemy',name:'Unseen threat'},{id:'hero',name:'Alice',characterId:'a'}]});
+  await canonical.set({id:'forest',combatId:'forest-fight',name:'Forest',visibility:'players',
+    storagePath:'campaigns/c/battleMaps/forest/scene.png',kind:'image',contentType:'image/png',
+    gridColumns:2,gridRows:2,width:800,height:800,fogEnabled:true,fogCells:'1000',
+    tokens:[{id:'hidden-marker',combatantId:'enemy',label:'Unseen threat',kind:'creature',x:80,y:80},
+      {id:'visible-marker',combatantId:'hero',label:'Alice',kind:'character',x:20,y:20}]});
+  await synchronizeCombatPresentation(db,'c');
+  const mine=path=>assertSucceeds(getDoc(doc(user('alice'),path)));
+  assert.equal((await mine(combatPath)).data().turnIndex,-1);
+  assert.equal((await mine(combatPath)).data().battleMapId,'forest');
+  assert.deepEqual((await mine(mapPath)).data().tokens.map(t=>t.id),['visible-marker']);
+  await assertFails(getDoc(doc(user('alice'),'campaigns/c/battleMaps/forest')));
+  await canonical.update({fogCells:'1111'});
+  await synchronizeBattleMapPresentation(db,'c','forest');
+  assert.equal((await mine(mapPath)).data().activeTokenId,'hidden-marker');
+  assert.equal((await mine(combatPath)).data().turnIndex,0);
+  await encounter.update({turnIndex:1});
+  await synchronizeCombatPresentation(db,'c');
+  assert.equal((await mine(mapPath)).data().activeTokenId,'visible-marker');
+  await canonical.update({visibility:'gm'});
+  await synchronizeBattleMapPresentation(db,'c','forest');
+  assert.equal((await mine(mapPath)).exists(),false);
+  assert.equal((await mine(combatPath)).data().battleMapId,undefined);
+  assert.doesNotMatch(JSON.stringify((await mine(combatPath)).data()),/Private plan|Unseen threat/);
+});
+
+test('concurrent player token moves spend AP once and a GM can conceal a live token',async()=>{
+  const encounter=db.doc('campaigns/c/systems/encounter');
+  const map=db.doc('campaigns/c/battleMaps/arena');
+  const snapshot=()=>getDoc(doc(user('alice'),'campaigns/c/battleMapsPublic/arena'));
+  await db.doc('campaigns/c/characters/a').update({movement:9});
+  await encounter.set({status:'active',combatId:'arena-fight',battleMapId:'arena',turnIndex:0,round:1,
+    combatants:[{id:'hero',name:'Alice',kind:'player',characterId:'a'}],
+    combat:{version:1,revision:1,participants:{hero:{ap:3,turns:1}},log:[]}});
+  await map.set({id:'arena',combatId:'arena-fight',name:'Arena',visibility:'players',
+    storagePath:'campaigns/c/battleMaps/arena/scene.png',kind:'image',contentType:'image/png',
+    gridColumns:4,gridRows:4,metresPerCell:3,width:800,height:800,fogEnabled:false,
+    tokens:[{id:'hero-token',combatantId:'hero',label:'Alice',kind:'character',x:12.5,y:12.5}]});
+  const move=(uid,point,requestId)=>action(uid,'combatCommand',['c','hero',{
+    operation:'player-map-move',mapId:'arena',moveKind:'walk',revision:1,point
+  }],requestId);
+  assert.match((await move('bob',{x:37.5,y:12.5},'other-owner')).error,/cannot control/);
+  const destinations=[{x:37.5,y:12.5},{x:12.5,y:37.5}];
+  const results=await Promise.all(destinations.map((point,i)=>move('alice',point,'move-'+i)));
+  const winning=results.findIndex(row=>row.ok);
+  assert.notEqual(winning,-1,JSON.stringify(results));
+  assert.equal(results.filter(row=>row.ok).length,1);
+  assert.match(results[1-winning].error,/Combat changed/);
+  assert.deepEqual(await move('alice',destinations[winning],'move-'+winning),results[winning]);
+  assert.equal((await encounter.get()).data().combat.participants.hero.ap,2);
+  await synchronizeCombatPresentation(db,'c');
+  const visible=(await assertSucceeds(snapshot())).data();
+  assert.deepEqual(visible.tokens[0],{id:'hero-token',kind:'character',label:'Alice',...destinations[winning]});
+  const update={operation:'map-token-appearance',mapId:'arena',tokenId:'hero-token',
+    revision:2,appearance:{portrait:'/images/private-portrait.webp',visibility:'gm'}};
+  assert.match((await action('alice','combatCommand',['c','encounter',update])).error,/campaign GM/);
+  const hidden=await action('gm','combatCommand',['c','encounter',update]);
+  assert.equal(hidden.ok,true,hidden.error);
+  await synchronizeBattleMapPresentation(db,'c','arena');
+  const concealed=(await assertSucceeds(snapshot())).data();
+  assert.deepEqual(concealed.tokens,[]);
+  assert.equal(concealed.activeTokenId,'');
+  await assertFails(getDoc(doc(user('alice'),'campaigns/c/battleMaps/arena')));
+});
+
+test('Combat recovery uses one authoritative transaction across concurrent GM sessions',async()=>{
+  const ref=db.doc('campaigns/c/systems/encounter');
+  const command=(operation,revision,details={},requestId=crypto.randomUUID())=>
+    action('gm','combatCommand',['c','encounter',{operation,revision,...details}],requestId);
+  const combatants=[{id:'player-a',characterId:'a',initiative:20,initiativeSet:true},
+    {id:'player-b',characterId:'b',initiative:10,initiativeSet:true}];
+  assert.equal((await command('save',0,{encounter:{combatants}})).ok,true);
+  assert.equal((await command('start',1)).ok,true);
+  const started=(await ref.get()).data();
+  const results=await Promise.all([command('next',2),command('next',2)]);
+  assert.equal(results.filter(row=>row.ok).length,1);
+  assert.match(results.find(row=>!row.ok).error,/Combat changed/);
+  const advanced=(await ref.get()).data();
+  assert.equal(advanced.round,1);
+  assert.equal(advanced.combatants[advanced.turnIndex].id,'player-b');
+  const capture={name:'Before the next action'};
+  const replay=[await command('save-snapshot',3,capture,'stable-save'),await command('save-snapshot',3,capture,'stable-save')];
+  assert.deepEqual(...replay);
+  const index='campaigns/c/encounterHistory/'+started.combatId+'/recovery/snapshotIndex';
+  const reconnected=await assertSucceeds(getDoc(doc(user('gm'),index)));
+  assert.deepEqual(reconnected.data().entries.map(row=>row.name),[capture.name]);
+  assert.equal((await command('end',3)).ok,true);
+  const reopen={encounterId:started.combatId,expectedHistoryRevision:1,reason:'Resume original fight'};
+  assert.equal((await command('reopen',4,reopen)).ok,true);
+  const restored=(await ref.get()).data();
+  assert.equal(restored.combatId,started.combatId);
+  assert.equal(restored.paused,true);
+  assert.equal(restored.turnIndex,advanced.turnIndex);
+  assert.deepEqual(restored.combat.participants,advanced.combat.participants);
+});
+
+test('Combat Command Centre prepared plans and completed history are GM-only, and revocation takes effect immediately',async()=>{
+  const history='campaigns/c/encounterHistory/combat-1';
+  const workspace='campaigns/c/systems/gmWorkspace';
+  await db.doc(history).set({
+    id:'combat-1',status:'pending-review',revision:1,
+    name:'Fixture encounter',participants:[{characterId:'a',kind:'player'}],
+    notes:'Secret GM encounter outcome',rewards:[],deliveries:{}
+  });
+  await db.doc(workspace).set({
+    preparedEncounters:[{id:'plan-1',name:'Unrevealed enemy reinforcements'}]
+  },{merge:true});
+
+  const gmHistory=doc(user('gm'),history);
+  assert.equal((await assertSucceeds(getDoc(gmHistory))).data().name,'Fixture encounter');
+  await assertSucceeds(getDocs(collection(user('gm'),'campaigns/c/encounterHistory')));
+  const index=history+'/recovery/snapshotIndex',checkpoint=history+'/recovery/private';
+  const edition=history+'/completionRevisions/1';
+  await db.doc(index).set({entries:[{id:'private',name:'Before the fight'}]});
+  await db.doc(checkpoint).set({encounter:{name:'Hidden enemies'}});
+  await db.doc(edition).set({rounds:3});
+  await assertSucceeds(getDoc(doc(user('gm'),index)));
+  await assertSucceeds(getDoc(doc(user('gm'),edition)));
+  await assertFails(getDoc(doc(user('gm'),checkpoint)));
+  await assertFails(setDoc(doc(user('gm'),checkpoint),{encounter:{}}));
+  await assertFails(updateDoc(doc(user('gm'),index),{entries:[]}));
+  await assertFails(deleteDoc(doc(user('gm'),edition)));
+  for(const uid of ['alice','bob','eve']){
+    await assertFails(getDoc(doc(user(uid),index)));
+    await assertFails(getDoc(doc(user(uid),checkpoint)));
+    await assertFails(getDoc(doc(user(uid),edition)));
+  }
+  await assertSucceeds(getDoc(doc(user('gm'),workspace)));
+  for(const uid of ['alice','bob','eve']){
+    await assertFails(getDoc(doc(user(uid),history)));
+    await assertFails(getDocs(collection(user(uid),'campaigns/c/encounterHistory')));
+    await assertFails(getDoc(doc(user(uid),workspace)));
+  }
+  await assertFails(getDoc(doc(env.unauthenticatedContext().firestore(),history)));
+  await assertFails(getDocs(collection(env.unauthenticatedContext().firestore(),'campaigns/c/encounterHistory')));
+  // History is a server-owned receipt: even GMs cannot forge or edit it directly.
+  for(const uid of ['gm','alice']){
+    await assertFails(setDoc(doc(user(uid),'campaigns/c/encounterHistory/forged'),{status:'approved'}));
+  }
+  await assertFails(updateDoc(gmHistory,{status:'approved'}));
+  await assertFails(deleteDoc(gmHistory));
+
+  await db.doc('campaigns/c').update({
+    gmUids:['gm','alice'],roles:{gm:'gm',alice:'gm',bob:'player'}
+  });
+  await assertSucceeds(getDoc(doc(user('alice'),history)));
+  await assertSucceeds(getDoc(doc(user('alice'),workspace)));
+
+  await db.doc('campaigns/c').update({
+    gmUids:['gm'],roles:{gm:'gm',alice:'player',bob:'player'}
+  });
+  await assertFails(getDoc(doc(user('alice'),history)));
+  await assertFails(getDoc(doc(user('alice'),workspace)));
+  assert.equal((await assertSucceeds(getDoc(gmHistory))).data().status,'pending-review');
+});
+
 test('public username email enumeration is denied',async()=>{
   await db.doc('usernames/alice').set({uid:'alice',email:'private@example.test'});
   await assertFails(getDoc(doc(user('bob'),'usernames/alice')));

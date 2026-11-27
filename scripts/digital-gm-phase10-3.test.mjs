@@ -43,33 +43,33 @@ test('Presentation routing is campaign-bound and separate from GM and character 
  assert.match(read('src/app/AsteriaReactRoot.jsx'),/\$\{accountScope\}\/\$\{route\.type\}/);
  assert.match(read('src/app/AsteriaAppContext.jsx'),/asteria:firebase-signed-out/);
 });
-test('GM access gate stays ahead of unified search and presentation controller',()=>{
+test('GM access gate remains ahead of the Player Resources and presentation workspaces',()=>{
  const gate=gm.indexOf('if(!window.AsteriaCharacterAccess.isGM(');
- const searchMount=gm.indexOf('<GMUnifiedSearch');
+ const resourceMount=gm.indexOf('data-testid="gm-player-resources-strip"');
  const presentationMount=gm.indexOf('<GMPlayerPresentationWorkspace');
- assert.ok(gate>=0 && gate<searchMount && gate<presentationMount);
+ assert.ok(gate>=0&&gate<resourceMount&&gate<presentationMount);
+ assert.doesNotMatch(gm,/<GMUnifiedSearch/);
+ assert.doesNotMatch(gm,/<GMToolkitQuickAccess/);
  assert.ok(!player.includes('<GMUnifiedSearch'));
  assert.ok(!player.includes('<GMPlayerPresentationWorkspace'));
  assert.match(service,/subscribePresentationDisplay/);
  assert.match(service,/managePlayerPresentation/);
  assert.match(backend,/managePlayerPresentation/);
 });
-test('GM search uses private, lazy, unsubscribed listeners and no global shared index',()=>{
+test('Retired dashboard search has no mounted subscriptions; the search module remains private',()=>{
  assert.match(search,/if\(!campaignId\|\|!enabled\)return undefined/);
  assert.match(search,/subscriptions\.forEach\(stop=>/);
  assert.match(search,/setSources\(emptySources\(\)\)/);
- assert.match(search,/setOpen\(false\);setQuery\(''\);setCategory\('all'\)/);
  assert.match(search,/useMemo\(\(\)=>open\?buildGMSearchIndex/);
- assert.match(gm,/characters=\{rawLive\.characters\}/);
+ assert.doesNotMatch(gm,/<GMUnifiedSearch/);
  assert.ok(SEARCH_INDEX_LIMIT<=3000&&SEARCH_LIMIT<=50);
  assert.ok(!/setDoc\(|addDoc\(|localStorage\.setItem|fetch\(/.test(search));
 });
-test('Opening a searched character selects the matching live roster before navigation',()=>{
- assert.match(gm,/if\(result\.category==='character'\)/);
- assert.match(gm,/if\(!result\.id\|\|!rawLive\.characters\[result\.id\]\)return/);
- assert.match(gm,/setSelectedId\(result\.id\)/);
+test('GM navigation preserves contextual deep links without a global search panel',()=>{
  assert.match(gm,/setGMSearchTarget\(null\);setGMHubDestination\(null\);setTab\(next\)/);
  assert.match(gm,/setGMHubDestination\(null\);setGMSearchTarget\(null\)/);
+ assert.match(gm,/<GMToolkitHub/);
+ assert.match(gm,/searchTarget=\{gmSearchTarget\}/);
  const index=buildGMSearchIndex(sources);
  const match=searchGMIndex(index,'Lyris')[0];
  assert.deepEqual(searchResultDestination(match),{
@@ -87,24 +87,31 @@ test('Search only exposes allowlisted metadata, not GM notes or stored inventory
  assert.equal(searchGMIndex(index,'oak city')[0]?.section,'settlements');
  assert.match(model,/SEARCH_INDEX_LIMIT/);
 });
-test('Projector never loads private GM battle map subscriptions, encounter metadata or GM map controls',()=>{
- assert.match(presentation,/subscribePresentationDisplay/);
- assert.match(presentation,/subscribeBattleMaps\(campaignId,rows=>setBattleMaps\(rows\),\{gm:false\}\)/);
- assert.match(presentation,/subscribeWorldAtlas\(campaignId,rows=>setWorldMaps\(rows\),'player'\)/);
- assert.match(presentation,/return <PlayerBattleMapView campaignId=\{campaignId\} mapId=\{display\.mapId\} presentation\/>/);
- assert.match(battle,/useBattleMaps\(campaignId,false\)/);
- assert.match(battle,/mapId\?maps\.find\(row=>row\.id===mapId\)\|\|null:/);
- assert.match(atlas,/mapId\?maps\.find\(x=>x\.id===mapId\)\|\|null:/);
- assert.match(atlas,/useEffect\(\(\)=>setPin\(null\),\[map\?\.id\]\)/);
- assert.match(read('firestore.rules'),/match \/presentationControl\/\{documentId\}[\s\S]*?allow get, list: if isCampaignGM/);
- assert.match(read('firestore.rules'),/match \/presentationShared\/\{documentId\}[\s\S]*?allow get, list: if canUseCampaignSystems/);
-});
-test('Title and announcement scene banners are rendered only once; mobile controls remain visible',()=>{
- assert.match(presentation,/!\['title','announcement'\]\.includes\(scene\)\?<header/);
- assert.match(presentation,/scene==='blank'\?' blackout'/);
- assert.match(read('src/styles/player-presentation.css'),/@media \(hover:none\), \(pointer:coarse\)/);
- assert.match(read('src/styles/player-presentation.css'),/@media \(max-width:600px\)/);
- assert.match(presentation,/Toggle Fullscreen/);
+test('Projector uses safe campaign media projections, never raw GM encounter or map readers',()=>{
+  const view=read('src/dashboards/presentation/CampaignPresentationWorkspace.jsx');
+  const media=read('src/dashboards/presentation/firebaseCampaignMediaService.mjs');
+  assert.match(presentation,/CampaignPresentationDisplay/);
+  assert.match(presentation,/RestrictedPresentationDisplay/);
+  assert.match(view,/watchPresentation/);
+  assert.match(media,/combatPublicRef/);
+  assert.match(media,/publicMapCol/);
+  assert.match(media,/watchRestrictedViewer/);
+  assert.match(read('src/state/livePresentationProjectionModel.mjs'),/publicCombatSnapshot/);
+  assert.doesNotMatch(view,/subscribeCampaignEncounter/);
+  const playerBattle=battle.slice(battle.indexOf('export function PlayerBattleMapView'));
+  assert.match(playerBattle,/CampaignMapWorkspace/);
+  assert.doesNotMatch(playerBattle,/useBattleMaps|fetchBattleMapMedia/);
+  assert.match(view,/selectedMapId=\{display.mapId\}/);
+  assert.match(read('firestore.rules'),/match \/combatPublic\/\{documentId\}/);
+  assert.match(read('firestore.rules'),/match \/battleMapsPublic\/\{mapId\}/);
+});test('Title and announcements share one safe projector scene and responsive fullscreen runtime',()=>{
+  const view=read('src/dashboards/presentation/CampaignPresentationWorkspace.jsx');
+  const runtime=read('src/dashboards/presentation/usePresentationDisplayRuntime.js');
+  assert.ok(view.includes("['title','announcement']"));
+  assert.match(view,/sceneTitle/);
+  assert.match(view,/toggleFullscreen/);
+  assert.match(runtime,/visibilitychange/);
+  assert.match(read('src/dashboards/presentation/CampaignPresentationWorkspace.module.css'),/@media\(max-width:660px\)/);
 });
 test('Blackout and strict schema prevent stale GM material reaching the shared screen',()=>{
  const draft={scene:'party',title:'The Heroes',subtitle:'',mapId:'',
@@ -120,7 +127,7 @@ test('Blackout and strict schema prevent stale GM material reaching the shared s
  assert.equal(safeCombatPresentation({status:'active',round:2,turnIndex:0,
   combatants:[{kind:'enemy',name:'SECRET NPC',hp:2000}]},sources.characters).current,'GM turn');
  assert.equal(PRESENTATION_DEFAULT.scene,'blank');
- assert.match(presentation,/type:'blackout'/);
+ assert.match(read('src/dashboards/presentation/CampaignPresentationWorkspace.jsx'),/type:'blackout'/);
 });
 test('Backend and Firestore still restrict read/write control to authenticated campaign members',()=>{
  const rules=read('firestore.rules');

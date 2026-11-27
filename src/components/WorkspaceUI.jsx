@@ -115,7 +115,7 @@ export function Tabs({ tabs, active, onChange, ariaLabel = 'Workspace sections' 
   </nav>;
 }
 
-export const DashboardNavigation = Tabs;
+export {DashboardNavigation} from './DashboardNavigation.jsx';
 
 export const ResourceBar = memo(function ResourceBar({ label, value, maximum, kind, compact = false, reserved = 0, reservedLabel = 'Soul Damage' }) {
   const current = Number(value || 0);

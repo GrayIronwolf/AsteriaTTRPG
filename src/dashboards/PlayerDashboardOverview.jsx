@@ -1,3 +1,4 @@
+import {PlayerBattleMapView} from './BattleMapWorkspace.jsx';
 import { CombatActionButton } from './CombatPanel.jsx';
 import { talentRules } from '../state/talentMechanics.mjs';
 import { useAsyncAction } from '../components/useAsyncAction.js';
@@ -9,13 +10,20 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { DashboardPanel, Modal, ResourceBar, StatusPill, Tooltip } from '../components/WorkspaceUI.jsx';
 import { AsteriaIcon } from '../components/AsteriaIcons.jsx';
 import { CurrencyPanel } from '../components/DashboardInformation.jsx';
-import { DashboardLayoutWorkspace } from '../components/DashboardCustomisation.jsx';
+import {CanvasWorkspace,CombatCommandPanel} from './combat/CombatCommandCentre.jsx';
+import {
+  PLAYER_DASHBOARD_CANVAS_CONFIG,normalizePlayerCanvasLayout
+} from '../state/dashboardLayoutModel.mjs';
+import {ActivityLog} from './CharacterWorkspaceTabs.jsx';
 import { PlayerCombatOverview, PlayerExplorationOverview, PlayerQuestTracker, PlayerInventoryOverview } from './DashboardFocusPanels.jsx';
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
-import { normalizeDashboardPreferences, parseResourceCost } from '../state/liveWorkspaceModel.mjs';
+import {CalendarWeatherQuickPanel} from './CalendarWeatherQuickPanel.jsx';
+import { spellPaymentProblem } from '../state/combatRules.mjs';
+import { normalizeDashboardPreferences } from '../state/liveWorkspaceModel.mjs';
 import { resourcePair, soulDamageValue, soulHealingCap } from '../state/specialDamageModel.mjs';
 import { useArmourClass } from '../systems/armour/useArmourClass.js';
-import { knownSpells, quests as selectQuests, unlockedClassTalents } from './characterWorkspaceData.js';
+import { equipmentSlotIdentity, liveQuickSlots, inventoryRecoveryProblem } from '../state/inventoryQuickActions.mjs';
+import { inventoryItems, knownSpells, quests as selectQuests, unlockedClassTalents } from './characterWorkspaceData.js';
 import { openDashboardQuests } from '../state/gameplayIntegrationView.mjs';
 
 function values(value) {
@@ -42,11 +50,15 @@ function rarityClass(item) {
   return itemRarity(item).toLowerCase().replace(/[^a-z0-9]+/g, '-');
 }
 
-function equipmentItem(equipment = {}, slot) {
-  const compact = slot.toLowerCase().replace(/[^a-z0-9]/g, '');
-  const camel = slot.toLowerCase().replace(/\s+(\w)/g, (_, value) => value.toUpperCase());
-  const key = Object.keys(equipment).find(value => value.toLowerCase().replace(/[^a-z0-9]/g, '') === compact);
-  return equipment[slot] || equipment[slot.toLowerCase()] || equipment[camel] || (key ? equipment[key] : null);
+function equipmentItem(equipment = {}, slot, items=[]) {
+  const key=equipmentSlotIdentity(slot);
+  const live=items.find(item=>item.equipped&&equipmentSlotIdentity(item.equippedSlot)===key&&Number(item.qty)>0);
+  if(live)return live;
+  const entry=Object.entries(equipment).find(([label])=>equipmentSlotIdentity(label)===key)?.[1];
+  if(!entry)return null;
+  const id=entry.instanceId||entry.id;
+  const owned=items.find(item=>item.id===id);
+  return owned?(owned.equipped&&Number(owned.qty)>0&&equipmentSlotIdentity(owned.equippedSlot)===key?owned:null):entry;
 }
 
 function costText(value) {
@@ -90,8 +102,9 @@ function DashboardEmpty({ title, description, actionLabel, onAction }) {
 
 function ArmourPanel({ character, onNavigate, style }) {
   const equipment = character.equipment || {};
-  const left = ['Head', 'Chest', 'Hands', 'Feet'];
-  const right = ['Back', 'Torso', 'Waist', 'Shoulders'];
+  const items=inventoryItems(character);
+  const left = ['Head', 'Torso', 'Hands', 'Feet'];
+  const right = ['Back', 'Neck', 'Waist / Hips', 'Shoulders'];
   const armour = useArmourClass(character);
   const [showBreakdown, setShowBreakdown] = useState(false);
   const [changed, setChanged] = useState(false);
@@ -105,17 +118,26 @@ function ArmourPanel({ character, onNavigate, style }) {
   }, [armour.finalAC]);
   const signed = value => `${Number(value) >= 0 ? '+' : ''}${Number(value)}`;
   const decimal = value => Number(value).toFixed(2).replace(/\.00$/,'');
-  return <DashboardPanel icon="armour" title="Equipment / Armour" variant="equipment" className={`react-overview-armour ${changed ? 'ac-updated' : ''}`} style={style}>
+  return <DashboardPanel icon="armour" title="Equipment, Armour & Weapons" variant="equipment" className={`react-overview-armour ${changed ? 'ac-updated' : ''}`} style={style}>
     <div className="react-armour-layout">
-      <div className="react-armour-slots">{left.map(slot => <LoadoutSlot key={slot} label={slot} item={equipmentItem(equipment, slot)} icon="armour" onOpen={() => onNavigate('inventory')} />)}</div>
+      <div className="react-armour-slots">{left.map(slot => <LoadoutSlot key={slot} label={slot} item={equipmentItem(equipment, slot, items)} icon="armour" onOpen={() => onNavigate('inventory')} />)}</div>
       <button className="react-armour-core" type="button" onClick={() => setShowBreakdown(true)} aria-label={`Open Armour Class breakdown. Armour Class ${armour.finalAC}`}>
         <AsteriaIcon name="armour" size={46} />
         <small>Armour Class</small>
         <strong>{armour.finalAC}</strong>
         <span>View Breakdown</span>
       </button>
-      <div className="react-armour-slots">{right.map(slot => <LoadoutSlot key={slot} label={slot} item={equipmentItem(equipment, slot)} icon="armour" onOpen={() => onNavigate('inventory')} />)}</div>
+      <div className="react-armour-slots">{right.map(slot => <LoadoutSlot key={slot} label={slot} item={equipmentItem(equipment, slot, items)} icon="armour" onOpen={() => onNavigate('inventory')} />)}</div>
     </div>
+    <section className="react-overview-combined-weapons" aria-label="Equipped Weapons">
+      <h3>Equipped Weapons</h3>
+      <div className="react-weapon-slot-grid">
+        {['Main Weapon','Secondary Weapon','Off-Hand','Quiver'].map(slot=>
+          <LoadoutSlot key={slot} label={slot}
+            item={equipmentItem(equipment,slot,items)} icon="weapon"
+            onOpen={()=>onNavigate('inventory')}/>)}
+      </div>
+    </section>
     {showBreakdown ? <Modal title={`Armour Class ${armour.finalAC}`} eyebrow="Live Defence Calculation" onClose={() => setShowBreakdown(false)} footer={<><button type="button" onClick={() => setShowBreakdown(false)}>Close</button><button className="primary" type="button" onClick={() => { setShowBreakdown(false); onNavigate('inventory'); }}>Open Equipment</button></>}>
       <div className="react-ac-summary">
         <div><span>Natural AC</span><strong>{armour.naturalAC}</strong><small>{armour.naturalACSource.replace(/-/g,' ')}</small></div>
@@ -138,30 +160,28 @@ function ArmourPanel({ character, onNavigate, style }) {
   </DashboardPanel>;
 }
 
-function WeaponsPanel({ character, onNavigate, style }) {
-  const equipment = character.equipment || {};
-  const slots = ['Main Weapon', 'Secondary Weapon', 'Off Weapon', 'Quiver', 'Shield'];
-  return <DashboardPanel icon="weapon" title="Equipped Weapons" variant="equipment" className="react-overview-weapons" style={style}>
-    <div className="react-weapon-slot-grid">{slots.map(slot => <LoadoutSlot key={slot} label={slot} item={equipmentItem(equipment, slot)} icon={slot === 'Shield' ? 'armour' : 'weapon'} onOpen={() => onNavigate('inventory')} />)}</div>
-  </DashboardPanel>;
-}
-
-function QuickItemsPanel({ campaignId, character, editable, busy, onNavigate, run, style }) {
-  const quickSlots = values(character.quickSlots).slice(0, 4).map(record);
+function QuickItemsPanel({ campaignId, character, editable, busy, onNavigate, run, style, combat }) {
+  const quickSlots=liveQuickSlots(character,inventoryItems(character));
   const [pendingItem, setPendingItem] = useState(null);
-  const itemStillEquipped = Boolean(pendingItem?.id && quickSlots.some(slot => slot.id === pendingItem.id));
+  const currentItem=quickSlots.find(slot=>slot?.id===pendingItem?.id);
+  const itemStillEquipped=Boolean(currentItem&&!inventoryRecoveryProblem(currentItem));
+  useEffect(()=>setPendingItem(null),[character.id,combat?.active]);
+  const review=item=>{
+    if(combat?.active){const option=combat.options.find(row=>row.itemId===item.id);if(option&&combat.editable&&!combat.busy)combat.select(option);else onNavigate('inventory');return;}
+    if(editable&&!inventoryRecoveryProblem(item))setPendingItem(item);else onNavigate('inventory');
+  };
   const useItem = item => run(() => firebaseService.updateInventory(campaignId, character.id, { type:'use', itemId:item.id, expectedCoreRevision:Number(character.coreRevision || 0) }));
   const confirmUse = async () => {
-    if(!editable || busy || !itemStillEquipped) return;
+    if(!editable || busy || !itemStillEquipped || combat?.active) return;
     const result = await useItem(pendingItem);
     if(result?.ok) setPendingItem(null);
   };
   return <DashboardPanel icon="quick" title="Quick Items" variant="equipment" className="react-overview-quick" style={style} action={<button type="button" onClick={() => onNavigate('inventory')}>Open Inventory</button>}>
-    <div className="react-quick-slot-grid">{[0, 1, 2, 3].map(index => <LoadoutSlot key={index} label={`Quick ${index + 1}`} shortcut={String(index + 1)} item={quickSlots[index]} icon="quick" disabled={busy} onOpen={() => onNavigate('inventory')} onUse={quickSlots[index]?.id ? item => setPendingItem(item) : undefined} />)}</div>
-    {pendingItem ? <Modal title={`Use ${itemName(pendingItem)}?`} eyebrow="Quick Item" busy={busy} onClose={() => setPendingItem(null)} footer={<><button type="button" disabled={busy} onClick={() => setPendingItem(null)}>Cancel</button><button type="button" className="primary" disabled={busy || !editable || !itemStillEquipped} onClick={confirmUse}>Use Item</button></>}>
+    <div className="react-quick-slot-grid">{[0, 1, 2, 3].map(index => <LoadoutSlot key={index} label={`Quick ${index + 1}`} shortcut={String(index + 1)} item={quickSlots[index]} icon="quick" disabled={busy || Boolean(combat?.active&&combat.busy)} onOpen={() => onNavigate('inventory')} onUse={quickSlots[index]?.id ? review : undefined} />)}</div>
+    {pendingItem&&!combat?.active ? <Modal title={`Use ${itemName(currentItem||pendingItem)}?`} eyebrow="Quick Item" busy={busy} onClose={() => setPendingItem(null)} footer={<><button type="button" disabled={busy} onClick={() => setPendingItem(null)}>Cancel</button><button type="button" className="primary" disabled={busy || !editable || !itemStillEquipped} onClick={confirmUse}>Use Item</button></>}>
       <p>Review your selection before using this item. It may be consumed or change your character's resources.</p>
       {!editable ? <p role="status">Start an editable campaign session to use this item. You can still open Inventory to inspect it.</p> : null}
-      {!itemStillEquipped ? <p role="alert">This item is no longer in a quick slot. Close this panel and select an available item.</p> : null}
+      {!itemStillEquipped ? <p role="alert">This item is no longer available or has no usable recovery effect. Close this panel and select an available item.</p> : null}
     </Modal> : null}
   </DashboardPanel>;
 }
@@ -186,33 +206,37 @@ function AbilityCard({ ability, type, disabled = false, onActivate }) {
   </Tooltip>;
 }
 
-function TalentSummary({ talents, onNavigate, style, campaignId, character, editable, combat }) {
+function TalentSummary({ talents, onNavigate, style, campaignId, character, editable, combat, characters, clock }) {
   const [selected,setSelected]=useState(null);
+  useEffect(()=>setSelected(null),[character.id,combat?.active]);
   return <DashboardPanel icon="talents" title="Class Talents" action={<button type="button" onClick={() => onNavigate('talents')}>Open Talent Tree</button>} className={`react-overview-talents ${combat?.selector==='talent'?'combat-selector-open':''}`} style={style}>
     {combat?.selector==='talent'?<SelectorHeading combat={combat}/>:null}
     {combat?.active?<div className="react-ability-grid">{combat.options.filter(option=>option.kind==='talent').map(option=><CombatActionButton className="combat-selection-card" key={option.id} combat={combat} option={option}><b>{option.name}</b><small>{option.ap} AP · {costText(option.costs)}</small></CombatActionButton>)}{!combat.options.some(option=>option.kind==='talent')?<p>No unlocked active talents.</p>:null}</div>:talents.length ? <div className="react-ability-grid">{talents.map((talent, index) => <AbilityCard key={talent.id || talent.name || index} ability={talent} type="talent" onActivate={()=>setSelected(talent)} />)}</div> : <DashboardEmpty title="No Talents Unlocked" description="Spend Talent Points in the Class/Talent Tree to unlock talents." actionLabel="Open Talent Tree" onAction={() => onNavigate('talents')} />}
-    {selected?<TalentDetails campaignId={campaignId} character={character} talent={selected} editable={editable} onClose={()=>setSelected(null)}/>:null}
+    {selected&&!combat?.active?<TalentDetails campaignId={campaignId} character={character} talent={selected} editable={editable} characters={characters} clock={clock} combat={combat} onClose={()=>setSelected(null)}/>:null}
   </DashboardPanel>;
 }
 
 function SpellSummary({ campaignId, character, spells, editable, busy, onNavigate, run, style, combat }) {
   const elements = useMemo(() => [...new Set(spells.map(spell => record(spell).element || record(spell).magicType).filter(Boolean))], [spells]);
   const [filter, setFilter] = useState('All');
-  const [pendingSpell, setPendingSpell] = useState(null);
+  const [pendingKey, setPendingSpell] = useState(null);
+  useEffect(()=>setPendingSpell(null),[character.id,combat?.active]);
+  const pendingSpell=spells.find(row=>row.key===pendingKey),problem=pendingSpell?spellPaymentProblem(character,pendingSpell):'';
   const visible = filter === 'All' ? spells : spells.filter(spell => (record(spell).element || record(spell).magicType) === filter);
-  const cast = spell => combat?.active?combat.select(combat.options.find(row=>row.kind==='spell'&&row.name===spell.name)):run(() => firebaseService.castSpell(campaignId, character.id, {...spell,expectedCoreRevision:Number(character.coreRevision || 0)}, parseResourceCost(spell.costs || spell.cost)));
+  const cast = spell => run(() => firebaseService.castSpell(campaignId, character.id, {name:spell.name,key:spell.key,rank:spell.rank,expectedCoreRevision:Number(character.coreRevision||0)}, spell.costs));
   const confirmCast = async () => {
-    if(!pendingSpell || !editable || busy || combat?.active) return;
+    if(!pendingSpell || !editable || busy || combat?.active || problem) return;
     const result = await cast(pendingSpell);
     if(result?.ok) setPendingSpell(null);
   };
   return <DashboardPanel icon="spells" title="Active Spells" action={<button type="button" onClick={() => onNavigate('spells')}>Open Spell Menu</button>} className={`react-overview-spells ${combat?.selector==='spell'?'combat-selector-open':''}`} style={style}>
     {combat?.selector==='spell'?<SelectorHeading combat={combat}/>:null}
     {elements.length ? <div className="react-ability-filters" aria-label="Spell element filters">{['All', ...elements].map(element => <button className={filter === element ? 'active' : ''} aria-pressed={filter === element} key={element} onClick={() => setFilter(element)} type="button">{element}</button>)}</div> : null}
-    {combat?.active?<div className="react-ability-grid">{combat.options.filter(row=>row.kind==='spell'&&(filter==='All'||row.element===filter)).map(option=><CombatActionButton className="combat-selection-card" key={option.id} combat={combat} option={option} disabled={!editable||busy}><b>{option.name}</b><small>{option.rank} · {option.ap} AP · {costText(option.costs)}</small></CombatActionButton>)}</div>:visible.length ? <div className="react-ability-grid">{visible.slice(0, 8).map((spell, index) => <AbilityCard key={spell.id || spell.name || index} ability={spell} type="spell" disabled={!editable || busy} onActivate={spell => setPendingSpell(spell)} />)}</div> : <DashboardEmpty title="No Active Spells" description="Known spells will appear here after they are added to this character." actionLabel="Open Spell Menu" onAction={() => onNavigate('spells')} />}
-    {pendingSpell && !combat?.active ? <Modal title={`Cast ${pendingSpell.name || pendingSpell.title || 'spell'}?`} eyebrow="Spell Confirmation" busy={busy} onClose={() => setPendingSpell(null)} footer={<><button type="button" disabled={busy} onClick={() => setPendingSpell(null)}>Cancel</button><button type="button" className="primary" disabled={!editable || busy} onClick={confirmCast}>Cast Spell</button></>}>
+    {combat?.active?<div className="react-ability-grid">{combat.options.filter(row=>row.kind==='spell'&&(filter==='All'||row.element===filter)).map(option=><CombatActionButton className="combat-selection-card" key={option.id} combat={combat} option={option} disabled={!editable||busy}><b>{option.name}</b><small>{option.rank} · {option.ap} AP · {costText(option.costs)}</small></CombatActionButton>)}</div>:visible.length ? <div className="react-ability-grid">{visible.slice(0, 8).map((spell, index) => <AbilityCard key={spell.id || spell.name || index} ability={spell} type="spell" disabled={!editable || busy} onActivate={spell => setPendingSpell(spell.key)} />)}</div> : <DashboardEmpty title="No Active Spells" description="Known spells will appear here after they are added to this character." actionLabel="Open Spell Menu" onAction={() => onNavigate('spells')} />}
+    {pendingSpell && !combat?.active ? <Modal title={`Cast ${pendingSpell.name || pendingSpell.title || 'spell'}?`} eyebrow="Spell Confirmation" busy={busy} onClose={() => setPendingSpell(null)} footer={<><button type="button" disabled={busy} onClick={() => setPendingSpell(null)}>Cancel</button><button type="button" className="primary" disabled={!editable || busy || Boolean(problem)} onClick={confirmCast}>Cast Spell</button></>}>
       <p>Confirm this spell before spending its resources.</p>
-      <p><strong>Cost:</strong> {costText(pendingSpell.costs || pendingSpell.cost) || 'Refer to spell rules'}</p>
+      <p><strong>Cost:</strong> {pendingSpell.costProblem||costText(pendingSpell.costs)||'No resource cost'}</p>
+      {problem?<p role="status">{problem}</p>:null}
       {!editable ? <p role="status">Spell casting is unavailable until your campaign session permits edits.</p> : null}
     </Modal> : null}
   </DashboardPanel>;
@@ -283,7 +307,7 @@ function SummaryPanels({ character, characters, partyWorkspace, onNavigate, only
   return <div className="react-dashboard-summary-grid">{panels.quests}{panels.journal}{panels.party}</div>;
 }
 
-export function PlayerDashboardOverview({ campaignId, campaign, character, characters, partyWorkspace, editable, canEditLayout=editable, isGM=false, sessionEditable=editable, clock={}, onNavigate, combat }) {
+export function PlayerDashboardOverview({ campaignId, campaign, character, characters, partyWorkspace, editable, abilityEditable=editable, canEditLayout=editable, isGM=false, sessionEditable=editable, clock={}, onNavigate, combat }) {
   const {message,busy,run}=useAsyncAction();
   const talents = unlockedClassTalents(character);
   const spells = knownSpells(character);
@@ -295,56 +319,75 @@ export function PlayerDashboardOverview({ campaignId, campaign, character, chara
     () => normalizeDashboardPreferences({dashboardPreferences:character.dashboardPreferences}),
     [character.dashboardPreferences]
   );
-  const visible = key => !preferences.hiddenPanels.includes(key);
-  const order = key => Math.max(0, preferences.panelOrder.indexOf(key)) * 10;
+  const saveQueue=useRef(Promise.resolve());
+  const saveCanvas=nextCanvas=>{
+    if(!canEditLayout)return Promise.resolve({ok:false,error:'Only the character owner can edit this canvas.'});
+    const nextLayout={...preferences.dashboardLayout,
+      playerCanvas:normalizePlayerCanvasLayout(nextCanvas)};
+    // Retain the existing owned-character preference write and permission
+    // checks. A serial queue avoids racing edits when moving several windows.
+    const write=saveQueue.current.then(()=>
+      firebaseService.updateDashboardPreferences(campaignId,character.id,{
+        dashboardLayout:nextLayout
+      }));
+    saveQueue.current=write.catch(()=>{});
+    return write;
+  };
   const summary = id => <SummaryPanels character={character} characters={characters} partyWorkspace={partyWorkspace} onNavigate={onNavigate} only={id}/>;
   const shortcut = (title,description,tab) => <DashboardPanel icon="quick" title={title} compact><p className="react-help">{description}</p><button type="button" onClick={()=>onNavigate(tab)}>Open {title}</button></DashboardPanel>;
   const renderPanel=id=>{
     switch(id) {
       case 'armour':return <ArmourPanel character={character} onNavigate={onNavigate}/>;
-      case 'weapons':return <WeaponsPanel character={character} onNavigate={onNavigate}/>;
-      case 'quick':return <QuickItemsPanel campaignId={campaignId} character={character} editable={editable} busy={busy} onNavigate={onNavigate} run={run}/>;
-      case 'talents':return <TalentSummary combat={combat} talents={talents} campaignId={campaignId} character={character} editable={editable} onNavigate={onNavigate}/>;
-      case 'spells':return <SpellSummary combat={combat} campaignId={campaignId} character={character} spells={spells} editable={editable} busy={busy} onNavigate={onNavigate} run={run}/>;
+      case 'quick':return <QuickItemsPanel campaignId={campaignId} character={character} editable={abilityEditable} combat={combat} busy={busy} onNavigate={onNavigate} run={run}/>;
+      case 'talents':return <TalentSummary combat={combat} talents={talents} campaignId={campaignId} character={character} characters={characters} clock={clock} editable={abilityEditable} onNavigate={onNavigate}/>;
+      case 'spells':return <SpellSummary combat={combat} campaignId={campaignId} character={character} spells={spells} editable={abilityEditable} busy={busy} onNavigate={onNavigate} run={run}/>;
       case 'skills':return <SkillsSummary combat={combat} skills={skills} onNavigate={onNavigate}/>;
-      case 'conditions':return <ConditionsPanel campaignId={campaignId} character={character} isGM={isGM} editable={isGM?sessionEditable:editable} clock={clock}/>;
+      case 'conditions':return <ConditionsPanel campaignId={campaignId} character={character} isGM={isGM} editable={abilityEditable} online={abilityEditable} clock={clock}/>;
       case 'effects':return <EffectsSummary character={character} clock={clock}/>;
       case 'specialDamage':return <SpecialDamagePanel character={character}/>;
-      case 'rest':return <RestRecoveryPanel campaignId={campaignId} character={character} editable={editable} busy={busy} run={run}/>;
+      case 'rest':return <RestRecoveryPanel campaignId={campaignId} character={character} editable={abilityEditable} busy={busy} run={run}/>;
       case 'currency':return <CurrencyPanel character={character} campaign={campaign} editable={editable} onCurrencyChange={(currency,amount)=>run(()=>firebaseService.updateCurrency(campaignId,character.id,currency,amount,{source:'Character Dashboard Currency'}))} className="react-overview-currency"/>;
       case 'quests':case 'journal':case 'party':return summary(id);
       case 'combatOverview':return <PlayerCombatOverview character={character} combat={combat} onNavigate={onNavigate}/>;
       case 'explorationOverview':return <PlayerExplorationOverview campaign={campaign} partyWorkspace={partyWorkspace} character={character} onNavigate={onNavigate}/>;
       case 'questTracker':return <PlayerQuestTracker character={character} partyWorkspace={partyWorkspace} onNavigate={onNavigate}/>;
       case 'inventoryOverview':return <PlayerInventoryOverview character={character} onNavigate={onNavigate}/>;
+      case 'battleMap':return campaignId?<PlayerBattleMapView campaignId={campaignId} encounter={clock.encounter} character={character}/>:null;
+      case 'worldContext':return campaignId?<CalendarWeatherQuickPanel campaignId={campaignId}
+        role="player" onNavigate={onNavigate}/>:null;
       case 'shortcutInventory':return shortcut('Inventory','View equipment, storage and consumables.','inventory');
       case 'shortcutQuest':return shortcut('Quest Log','Review active missions and objectives.','quest');
       case 'shortcutCharacter':return shortcut('Character Sheet','Review your character details and progression.','character');
       case 'shortcutSpells':return shortcut('Spellbook','Open known spells and casting details.','spells');
       case 'shortcutGallery':return shortcut('Gallery','Browse your character artwork.','gallery');
-      case 'shortcutSettings':return shortcut('Dashboard Settings','Open full dashboard customisation settings.','settings');
+      case 'shortcutSettings':return shortcut('Dashboard Settings','Open player canvas settings.','settings');
+      case 'activityLog':return <ActivityLog character={character}/>;
       default:return null;
     }
   };
-  const defaultContent=<>
-    <div className="react-player-overview-grid">
-      {visible('weapons') ? <><ArmourPanel character={character} onNavigate={onNavigate} style={{ order:order('weapons') }} /><WeaponsPanel character={character} onNavigate={onNavigate} style={{ order:order('weapons') + 1 }} /><QuickItemsPanel campaignId={campaignId} character={character} editable={editable} busy={busy} onNavigate={onNavigate} run={run} style={{ order:order('weapons') + 2 }} /></> : null}
-      {visible('talents')||combat.selector==='talent' ? <TalentSummary combat={combat} talents={talents} campaignId={campaignId} character={character} editable={editable} onNavigate={onNavigate} style={{ order:order('talents') }} /> : null}
-      {visible('spells')||combat.selector==='spell' ? <SpellSummary combat={combat} campaignId={campaignId} character={character} spells={spells} editable={editable} busy={busy} onNavigate={onNavigate} run={run} style={{ order:order('spells') }} /> : null}
-      {visible('skills')||['skill','technique'].includes(combat.selector) ? <SkillsSummary combat={combat} skills={skills} onNavigate={onNavigate} style={{ order:order('skills') }} /> : null}
-      {visible('conditions') ? <ConditionsPanel campaignId={campaignId} character={character} isGM={isGM} editable={isGM?sessionEditable:editable} clock={clock} style={{ order:order('conditions') }} /> : null}
-      <EffectsSummary character={character} clock={clock} style={{order:order('conditions')+4}}/>
-      <SpecialDamagePanel character={character} style={{ order:order('conditions') + 1 }} />
-      <RestRecoveryPanel campaignId={campaignId} character={character} editable={editable} busy={busy} run={run} style={{ order:order('conditions') + 2 }} />
-      {!preferences.hiddenInformationFields.includes('currency') ? <CurrencyPanel character={character} campaign={campaign} editable={editable} onCurrencyChange={(currency, amount) => run(() => firebaseService.updateCurrency(campaignId, character.id, currency, amount, { source:'Character Dashboard Currency' }))} className="react-overview-currency" style={{ order:order('conditions') + 3 }} /> : null}
-    </div>
-    <SummaryPanels character={character} characters={characters} partyWorkspace={partyWorkspace} onNavigate={onNavigate} />
-  </>;
+  // Combat selectors are visibility overrides only. They do not alter the
+  // player's saved hidden-window preferences or create duplicate panels.
+  const forcedPanels=combat?.active?(
+    combat.selector==='talent'?['talents']:
+    combat.selector==='spell'?['spells']:
+    ['skill','technique'].includes(combat.selector)?['skills']:[]
+  ):[];
   return <>
-    <DashboardLayoutWorkspace key={character.id} role="player" layout={preferences.dashboardLayout} canEdit={canEditLayout}
-      forcedPanels={combat?.active ? (combat.selector==='talent'?['talents']:combat.selector==='spell'?['spells']:['skill','technique'].includes(combat.selector)?['skills']:[]) : []}
-      title="Player Dashboard" onSave={layout=>firebaseService.updateDashboardPreferences(campaignId,character.id,{dashboardLayout:layout})}
-      renderPanel={renderPanel} defaultContent={defaultContent}/>
+    <CanvasWorkspace key={character.id+':player-main-canvas'}
+      uid={firebaseService.currentUser()?.uid||''}
+      campaignId={campaignId||'unassigned'}
+      canvasScopeId={character.id}
+      canvasConfig={PLAYER_DASHBOARD_CANVAS_CONFIG}
+      layoutValue={preferences.dashboardLayout.playerCanvas}
+      onSaveLayout={saveCanvas}
+      canEditCanvas={canEditLayout}
+      forcedPanelIds={forcedPanels}
+      suppressedPanelIds={[...(preferences.hiddenInformationFields.includes('currency')?['currency']:[]),
+        ...(!campaignId?['battleMap']:[])]}>
+      {PLAYER_DASHBOARD_CANVAS_CONFIG.ids.map(id=><CombatCommandPanel id={id} key={id}>
+        {renderPanel(id)}
+      </CombatCommandPanel>)}
+    </CanvasWorkspace>
     <p className="react-action-message" role="status">{message}</p>
   </>;
 }

@@ -9,6 +9,9 @@
   --asteria-surface-raised: #102330;
   --asteria-surface-solid: #152631;
   --asteria-bg-panel: rgba(6, 18, 27, .88);
+  --asteria-panel-background: var(--asteria-surface);
+  --asteria-panel-backdrop: url("../assets/ui/royal-relic-obsidian.svg");
+  --asteria-panel-slate-backdrop: linear-gradient(140deg,#36414b,#151d25);
   --asteria-bg-panel-hover: rgba(10, 28, 40, .92);
   --asteria-surface-overlay: rgba(3, 10, 15, .96);
   --asteria-control-bg: #07131b;

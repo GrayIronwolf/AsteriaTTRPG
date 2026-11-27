@@ -124,7 +124,9 @@
   function gmCampaignIndex(){
     const key = accountKey();
     return (window.campaigns || []).findIndex(campaign =>
-      campaign?.gmId === key ||
+      campaign?.membershipSchemaVersion===2
+        ? ['owner','co-gm'].includes(window.AsteriaFirebase?.getDiscoveredCampaignRole?.(campaign.id,key))
+        : campaign?.gmId === key ||
       campaign?.ownerUid === key ||
       (campaign?.gmUids || []).includes(key) ||
       campaign?.roles?.[key] === 'gm'

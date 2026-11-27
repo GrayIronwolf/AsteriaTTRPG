@@ -1,4 +1,7 @@
 import {
+  defaultCombatWorkspaceLayout,normalizeCombatWorkspace
+} from '../dashboards/combat/combatWorkspaceLayoutModel.mjs';
+import {
   DASHBOARD_GRID_RULES, DASHBOARD_GRID_COLUMNS, DASHBOARD_GRID_START_ROWS,
   dashboardGridRule, dashboardPointerProposal, defaultGridDimensions, clampGridDimensions, legacyGridDimensions,
   normalizeGridPlacements, packGridPlacements, gridPositionIsFree, gridRowCount, validGridPlacement
@@ -15,6 +18,7 @@ export {
 export const DASHBOARD_PANEL_REGISTRY = {
   player: [
     {id:'armour',label:'Equipment & Armour',category:'Character',size:'3x3'},
+    // Legacy grid identifier: kept for saved layout compatibility only.
     {id:'weapons',label:'Equipped Weapons',category:'Equipment',size:'3x3'},
     {id:'quick',label:'Quick Items',category:'Equipment',size:'3x3'},
     {id:'talents',label:'Class Talents',category:'Abilities',size:'3x3'},
@@ -37,7 +41,9 @@ export const DASHBOARD_PANEL_REGISTRY = {
     {id:'combatOverview',label:'Combat Overview',category:'Focus Panels',size:'3x3',optional:true},
     {id:'explorationOverview',label:'Exploration Overview',category:'Focus Panels',size:'3x3',optional:true},
     {id:'questTracker',label:'Quest Tracker',category:'Focus Panels',size:'3x3',optional:true},
-    {id:'inventoryOverview',label:'Inventory Overview',category:'Focus Panels',size:'3x3',optional:true}
+    {id:'inventoryOverview',label:'Inventory Overview',category:'Focus Panels',size:'3x3',optional:true},
+    {id:'worldContext',label:'Calendar & Weather',category:'Adventures',size:'3x3',optional:true},
+    {id:'battleMap',label:'Battle Map',category:'Combat',size:'3x3',optional:true}
   ],
   gm: [
     {id:'restRequests',label:'Rest Requests',category:'Session',size:'3x3'},
@@ -63,7 +69,195 @@ export const DASHBOARD_PANEL_REGISTRY = {
   ]
 };
 
+/** GM and Player Main dashboards use the shared freeform canvas. Each dashboard
+ * retains its own allowlisted panel registry and per-scope saved layout.
+ * Superseded main-dashboard grid renderers/editors are no longer mounted. */
+export const GM_CANVAS_DEFAULT_IDS=Object.freeze([
+  'gmResources','combatOverview','requestsOverview','preparedOverview',
+  'quickNotes','questTracker','calendarWeather','sessionOverview'
+]);
+const GM_CANVAS_NEW_OPTIONALS=Object.freeze([
+  'diceQuick','npcQuick','soundboardQuick','worldQuick','playerDisplayQuick','focusModes','playerManagerQuick','worldContext'
+]);
+const GM_CORE_POSITIONS=Object.freeze({
+  // Four compact desktop columns; the party-resource monitor occupies a double
+  // width, double-height block. Existing saved positions are never overwritten.
+  gmResources:{x:0,y:0,w:490,h:670},
+  combatOverview:{x:510,y:0,w:235,h:320},
+  requestsOverview:{x:765,y:0,w:235,h:320},
+  preparedOverview:{x:510,y:340,w:235,h:330},
+  quickNotes:{x:765,y:340,w:235,h:330},
+  questTracker:{x:0,y:690,w:235,h:330},
+  calendarWeather:{x:255,y:690,w:235,h:330},
+  sessionOverview:{x:510,y:690,w:490,h:330}
+});
+const GM_CANVAS_LABEL_EXTRAS=Object.freeze({
+  gmResources:'GM Player Resources',
+  requestsOverview:'Player Requests & Notifications',
+  preparedOverview:'Prepared Encounters',
+  quickNotes:'GM Quick Notes',
+  calendarWeather:'Asteria Calendar & Weather',
+  sessionOverview:'Session Overview',
+  diceQuick:'Dice Roller',
+  npcQuick:'NPC Quick Reference',
+  soundboardQuick:'Soundboard & Ambience',
+  worldQuick:'World Overview',
+  playerDisplayQuick:'Player Display',
+  focusModes:'GM Focus Modes',
+  playerManagerQuick:'Player Manager Quick Access',
+  worldContext:'Calendar & Weather'
+});
+const gmCanvasIds=[...GM_CANVAS_DEFAULT_IDS,
+  ...DASHBOARD_PANEL_REGISTRY.gm.map(item=>item.id).filter(id=>!GM_CANVAS_DEFAULT_IDS.includes(id)),
+  ...GM_CANVAS_NEW_OPTIONALS];
+const gmOptional=gmCanvasIds.filter(id=>!GM_CANVAS_DEFAULT_IDS.includes(id));
+export const GM_DASHBOARD_CANVAS_CONFIG=Object.freeze({
+  kind:'gm',
+  ids:Object.freeze(gmCanvasIds),
+  labels:Object.freeze({
+    ...Object.fromEntries(DASHBOARD_PANEL_REGISTRY.gm.map(item=>[item.id,item.label])),
+    ...GM_CANVAS_LABEL_EXTRAS
+  }),
+  defaultHidden:Object.freeze(gmOptional),
+  defaultPositions:Object.freeze({
+    ...GM_CORE_POSITIONS,
+    ...Object.fromEntries(gmOptional.map((id,i)=>[id,{
+      x:i%2?510:0,y:1880+Math.floor(i/2)*460,w:490,h:440
+    }]))
+  }),
+  categories:Object.freeze([
+    {id:'core',label:'Core GM Windows',panels:GM_CANVAS_DEFAULT_IDS},
+    {id:'tools',label:'GM Controls & Rewards',panels:[
+      'restRequests','encounter','xp','specialDamage','loot','magicRewards',
+      'acInspector','playerManagement','partySummary','focusModes','playerManagerQuick'
+    ]},
+    {id:'overviews',label:'Quick Reference',panels:[
+      'diceQuick','npcQuick','soundboardQuick','worldQuick','playerDisplayQuick',
+      'explorationOverview','inventoryOverview','worldContext'
+    ]},
+    {id:'shortcuts',label:'Other Page Shortcuts',panels:DASHBOARD_PANEL_REGISTRY.gm
+      .filter(item=>item.category==='Shortcuts').map(item=>item.id)}
+  ])
+});
+export function defaultGMCanvasLayout(){
+  return defaultCombatWorkspaceLayout(GM_DASHBOARD_CANVAS_CONFIG);
+}
+export function normalizeGMCanvasLayout(raw,oldGrid=null){
+  if(raw&&typeof raw==='object'&&!Array.isArray(raw))
+    return normalizeCombatWorkspace(raw,GM_DASHBOARD_CANVAS_CONFIG);
+  const base=defaultGMCanvasLayout();
+  // Preserve legacy optional selections (including named Focus snapshots) on
+  // first conversion, but use the eight approved quick windows for the default.
+  if(!oldGrid||oldGrid.mode!=='custom')return base;
+  const oldHidden=new Set(Array.isArray(oldGrid.hidden)?oldGrid.hidden:[]);
+  const enabled=DASHBOARD_PANEL_REGISTRY.gm.filter(item=>item.optional&&!oldHidden.has(item.id))
+    .map(item=>item.id);
+  if(!enabled.length)return base;
+  const positions={...base.freeform.positions};
+  for(const [index,id] of enabled.entries()){
+    const saved=oldGrid.placements?.[id],position=positions[id];
+    if(saved&&Number.isFinite(saved.x)&&Number.isFinite(saved.y)){
+      positions[id]={
+        ...position,
+        x:Math.round(Math.max(0,saved.x)*1000/12),
+        y:1900+Math.max(0,saved.y)*85,
+        w:Math.round(Math.max(3,saved.w||5)*1000/12),
+        h:Math.max(260,Math.round(Math.max(3,saved.h||4)*85))
+      };
+    }else positions[id]={...position,y:1900+index*400};
+  }
+  return normalizeCombatWorkspace({...base,freeform:{...base.freeform,positions},
+    hidden:base.hidden.filter(id=>!enabled.includes(id))},GM_DASHBOARD_CANVAS_CONFIG);
+}
+
 // Twelve-column dashboard: three horizontal units; height is minimum only.
+/** Player Main uses the same canvas geometry/interaction engine as GM and
+ * Combat. The original registry remains the permission-safe panel allowlist. */
+export const PLAYER_CANVAS_DEFAULT_IDS=Object.freeze([
+  'armour','quick','talents','spells','conditions','quests','party'
+]);
+const PLAYER_CANVAS_DEFAULT_POSITIONS=Object.freeze({
+  armour:{x:0,y:0,w:235,h:360},
+  quick:{x:255,y:0,w:235,h:360},
+  talents:{x:510,y:0,w:235,h:360},
+  spells:{x:765,y:0,w:235,h:360},
+  conditions:{x:0,y:380,w:235,h:360},
+  quests:{x:255,y:380,w:235,h:360},
+  party:{x:510,y:380,w:235,h:360}
+});
+const playerCanvasIds=[...PLAYER_CANVAS_DEFAULT_IDS,
+  ...DASHBOARD_PANEL_REGISTRY.player.map(item=>item.id)
+    .filter(id=>id!=='weapons'&&!PLAYER_CANVAS_DEFAULT_IDS.includes(id)),'activityLog'];
+const playerOptional=playerCanvasIds.filter(id=>!PLAYER_CANVAS_DEFAULT_IDS.includes(id));
+const playerCategories=['Character','Equipment','Abilities','Combat','Adventures',
+  'Social','Focus Panels','Shortcuts'].map(category=>({
+    id:category.toLowerCase().replace(/[^a-z0-9]+/g,'-'),
+    label:category==='Focus Panels'?'Quick Views':category==='Shortcuts'?'Page Shortcuts':category,
+    panels:[
+      ...DASHBOARD_PANEL_REGISTRY.player.filter(item=>item.category===category&&item.id!=='weapons').map(item=>item.id),
+      ...(category==='Social'?['activityLog']:[])
+    ]
+  }));
+export const PLAYER_DASHBOARD_CANVAS_CONFIG=Object.freeze({
+  kind:'player',
+  ids:Object.freeze(playerCanvasIds),
+  labels:Object.freeze({
+    ...Object.fromEntries(DASHBOARD_PANEL_REGISTRY.player.map(item=>[item.id,item.label])),
+    activityLog:'Action / Resource Log'
+  }),
+  defaultHidden:Object.freeze(playerOptional),
+  defaultPositions:Object.freeze({
+    ...PLAYER_CANVAS_DEFAULT_POSITIONS,
+    ...Object.fromEntries(playerOptional.map((id,i)=>[id,{
+      x:i%2?510:0,y:770+Math.floor(i/2)*380,w:490,h:350
+    }]))
+  }),
+  categories:Object.freeze(playerCategories)
+});
+export function defaultPlayerCanvasLayout(){
+  return defaultCombatWorkspaceLayout(PLAYER_DASHBOARD_CANVAS_CONFIG);
+}
+export function normalizePlayerCanvasLayout(raw,oldGrid=null){
+  if(raw&&typeof raw==='object'&&!Array.isArray(raw)){
+    // "weapons" is a retired independent window. Its functionality now
+    // lives in armour; map a visible old Weapons window to the combined one.
+    const legacyWeaponsPresent=Object.hasOwn(raw.freeform?.positions||{},'weapons');
+    const wasWeaponsVisible=legacyWeaponsPresent&&Array.isArray(raw.hidden)&&
+      !raw.hidden.includes('weapons');
+    const wasArmourHidden=Array.isArray(raw.hidden)&&raw.hidden.includes('armour');
+    const next=wasWeaponsVisible&&wasArmourHidden?{...raw,
+      hidden:raw.hidden.filter(id=>id!=='armour')} : raw;
+    if(Array.isArray(next.hidden)&&!next.freeform?.positions?.battleMap)
+      return normalizeCombatWorkspace({...next,hidden:[...next.hidden,'battleMap']},PLAYER_DASHBOARD_CANVAS_CONFIG);
+    return normalizeCombatWorkspace(next,PLAYER_DASHBOARD_CANVAS_CONFIG);
+  }
+  const base=defaultPlayerCanvasLayout();
+  if(!oldGrid||typeof oldGrid!=='object')return base;
+  // One-time conversion keeps explicitly hidden player windows, legacy lock
+  // choices and desktop placements. The old grid is not rendered afterwards.
+  const legacyHidden=Array.isArray(oldGrid.hidden)?oldGrid.hidden:[];
+  const hidden=Array.isArray(oldGrid.hidden)?[...legacyHidden,'battleMap']:base.hidden;
+  const locked=(Array.isArray(oldGrid.lockedPositions)?oldGrid.lockedPositions:[])
+    .filter(id=>PLAYER_DASHBOARD_CANVAS_CONFIG.ids.includes(id));
+  const positions={...base.freeform.positions};
+  if(oldGrid.mode==='custom'&&oldGrid.placements&&typeof oldGrid.placements==='object'){
+    for(const id of PLAYER_DASHBOARD_CANVAS_CONFIG.ids){
+      const rect=oldGrid.placements[id];
+      if(!rect||!Number.isFinite(rect.x)||!Number.isFinite(rect.y))continue;
+      positions[id]={
+        x:Math.round(rect.x*1000/12),
+        y:Math.round(rect.y*115),
+        w:Math.max(140,Math.round((rect.w||4)*1000/12)),
+        h:Math.max(230,Math.round((rect.h||2)*190))
+      };
+    }
+  }
+  return normalizeCombatWorkspace({...base,
+    freeform:{...base.freeform,positions},
+    hidden,locked
+  },PLAYER_DASHBOARD_CANVAS_CONFIG);
+}
+
 export const DASHBOARD_SIZE_COLUMNS = Object.freeze({'3x3':4,'6x3':8,'3x6':4,'9x3':12});
 export const DASHBOARD_SIZE_ROWS = Object.freeze({'3x3':1,'6x3':1,'3x6':2,'9x3':1});
 export const DASHBOARD_BACKGROUND_STYLES = Object.freeze(['obsidian','slate','arcane']);
@@ -106,7 +300,9 @@ export function defaultDashboardLayout(role='player') {
     placements:normalizeGridPlacements(role,panels.map(p=>p.id),panels.filter(p=>p.optional).map(p=>p.id)),
     lockedPositions:[],
     backgroundStyle:'obsidian',
-    panelBackgrounds:{}
+    panelBackgrounds:{},
+    ...(role==='gm'?{gmCanvas:defaultGMCanvasLayout()}:
+      {playerCanvas:defaultPlayerCanvasLayout()})
   };
 }
 export function normalizeDashboardLayout(value,role='player') {
@@ -186,6 +382,8 @@ export function normalizeDashboardLayout(value,role='player') {
     lockedPositions,
     backgroundStyle,
     panelBackgrounds,
+    ...(scope==='gm'?{gmCanvas:normalizeGMCanvasLayout(value.gmCanvas,value)}:
+      {playerCanvas:normalizePlayerCanvasLayout(value.playerCanvas,value)}),
     ...(Object.keys(viewportLayouts).length?{viewportLayouts}:{}),
     ...(scope==='gm'&&focusModes.length?{focusModes}:{}),
     ...(scope==='gm'&&focusHome?{focusHome}:{}),
@@ -217,7 +415,9 @@ export function layoutFromPlayerPreferences(preferences={}) {
   const legacy=safeArray(source.hiddenPanels);
   const mapping={weapons:['armour','weapons','quick'],talents:['talents'],spells:['spells'],skills:['skills'],conditions:['conditions']};
   for(const group of legacy)for(const panel of mapping[group]||[]) layout.hidden.push(panel);
-  return {...layout,hidden:unique(layout.hidden)};
+  const hidden=unique(layout.hidden);
+  return {...layout,hidden,
+    playerCanvas:normalizePlayerCanvasLayout(null,{...layout,hidden})};
 }
 export function visibleDashboardPanels(layout,role='player'){
   const normalized=normalizeDashboardLayout(layout,role);

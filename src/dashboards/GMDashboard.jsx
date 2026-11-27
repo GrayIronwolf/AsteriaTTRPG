@@ -4,19 +4,25 @@ import { ConditionsPanel, RestRequestsPanel, ResourceRulesPanel } from './Charac
 import { useCharacterSystemsSync } from '../sessions/useCharacterSystemsSync.js';
 import { reconcileCharacterSystems } from '../state/characterSystems.mjs';
 import { resolveRosterSelection } from '../state/dashboardNavigation.mjs';
-import { DashboardLayoutEditor, DashboardLayoutWorkspace } from '../components/DashboardCustomisation.jsx';
+import {CanvasWorkspace,CombatCommandPanel} from './combat/CombatCommandCentre.jsx';
+import {DashboardHeaderFold} from '../components/DashboardHeaderFold.jsx';
+import {
+  GMQuickRequests,GMQuickPreparedEncounters,GMQuickNotes,
+  GMQuickCalendarWeather,GMQuickSession,GMQuickReference,GMQuickPlayerManager
+} from './GMDashboardQuickPanels.jsx';
 import { GMCombatOverview, GMExplorationOverview, GMQuestTracker, GMInventoryOverview } from './DashboardFocusPanels.jsx';
-import { GMToolkitHub, GMToolkitQuickAccess } from './GMToolkitHub.jsx';
-import {GMUnifiedSearch} from './GMUnifiedSearch.jsx';
+import { GMToolkitHub } from './GMToolkitHub.jsx';
 import { GMUniversalCheckManager, GMUniversalCheckNotification } from './UniversalCheckWorkspace.jsx';
 import { GMFocusModes } from './GMFocusModes.jsx';
 import { GMPartyControl } from './GMPartyControl.jsx';
+import {GMPlayerManager} from './GMPlayerManager.jsx';
 import { GMNpcCreatureLibrary } from './GMNpcCreatureLibrary.jsx';
 import {GMBattleMapManager} from './BattleMapWorkspace.jsx';
 import {AdvancedDiceWorkspace} from './AdvancedDiceWorkspace.jsx';
 import {GMRandomTableWorkspace} from './GMRandomTableWorkspace.jsx';
 import {GMEncounterRewardWorkspace} from './GMEncounterRewardWorkspace.jsx';
 import {AsteriaCalendarWorkspace} from './AsteriaCalendarWorkspace.jsx';
+import {CalendarWeatherQuickPanel} from './CalendarWeatherQuickPanel.jsx';
 import {GMWeatherEnvironmentWorkspace} from './WeatherEnvironmentWorkspace.jsx';
 import {GMWorldAtlasWorkspace} from './WorldAtlasWorkspace.jsx';
 import {GMSessionLibraryWorkspace} from './SessionLibraryWorkspace.jsx';
@@ -24,23 +30,25 @@ import {GMCampaignSoundboard} from './CampaignSoundboardWorkspace.jsx';
 import {GMSessionRecordingWorkspace,GMRecordingParticipationNotice} from './SessionRecordingWorkspace.jsx';
 import {GMPlayerPresentationWorkspace} from './PlayerPresentationWorkspace.jsx';
 import { GMLayoutBackup } from './GMLayoutBackup.jsx';
-import { defaultDashboardLayout, normalizeDashboardLayout, visibleDashboardPanels } from '../state/dashboardLayoutModel.mjs';
+import {
+  normalizeDashboardLayout,normalizeGMCanvasLayout,GM_DASHBOARD_CANVAS_CONFIG
+} from '../state/dashboardLayoutModel.mjs';
+import {dashboardTabs} from '../state/dashboardMenuModel.mjs';
 import { talentCatalog } from './characterWorkspaceData.js';
 import { resourceDefinitions, storedResource } from '../state/resourceEngine.mjs';
 import { ManualNumberInput } from '../components/ManualNumberInput.jsx';
 import { isManualNumber, manualNumber } from '../state/manualNumber.mjs';
 import { openGMCharacter, restoredGMView } from '../app/gmCharacterNavigation.mjs';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
-import { AsteriaAppShell, DashboardNavigation, EmptyState, LiveSyncStatus, Panel, ResourceBar, StatusPill } from '../components/WorkspaceUI.jsx';
+import { AsteriaAppShell, DashboardNavigation, EmptyState, LiveSyncStatus, Modal, Panel, ResourceBar, StatusPill } from '../components/WorkspaceUI.jsx';
 import { useCampaignLiveData } from '../sessions/useCampaignLiveData.js';
 import { useArmourClass } from '../systems/armour/useArmourClass.js';
 import { validateMarketPricing } from '../systems/items/marketPricing.mjs';
-import { encounterResourcePair, encounterSourceResources, encounterResourceKeys, encounterXP, customEncounterCreature } from '../state/encounterResourceModel.mjs';
-import { libraryEncounterReady } from '../state/gmNpcCreatureLibraryModel.mjs';
-import { GMCombatPanel } from './CombatPanel.jsx';
-import { useAsyncAction } from '../components/useAsyncAction.js';
-import { encounterPlayerRoster } from '../state/campaignCharacterRecords.mjs';
+import {GMCombatWorkspace} from './combat/CombatWorkspace.jsx';
+import {orderedCombatPartyIds} from './combat/combatWorkspaceLayoutModel.mjs';
+import {CharacterDashboard} from './CharacterDashboard.jsx';
+import {createSiteCombatApi,createSiteCombatMediaApi} from './combat/siteCombatApi.js';
 import { migrateLegacyGMWorkspace, normalizeGMWorkspace } from '../state/gmWorkspaceModel.mjs';
 import { resourcePair, soulDamageValue, soulHealingCap } from '../state/specialDamageModel.mjs';
 import { buildSpellbookItem, normalizeSpellCompendiumEntries } from '../state/spellbookModel.mjs';
@@ -50,71 +58,196 @@ import { GMPartyLootPanel } from './PartyLootWorkspace.jsx';
 import { GMInventoryAuditWorkspace } from './GMInventoryAuditWorkspace.jsx';
 import { gmTradeLootOverview } from '../state/gmTradeLootHubModel.mjs';
 
-const GM_TABS = [
-  { id: 'main', label: 'GM Main', icon: '\u25c8' },
-  { id: 'toolkit', label: 'GM Toolkit', icon: 'settings' },
-  { id: 'bestiary', label: 'NPC & Creature Library', icon: 'journal' },
-  { id: 'settings', label: 'Dashboard Settings', icon: 'settings' },
-  { id: 'inventory', label: 'PC Inventory', icon: 'inventory' },
-  { id:'information', label:'News & Events', icon:'journal' },
-  { id: 'quests', label: 'Quests', icon: '\u2691' },
-  { id: 'notes', label: 'GM Notes', icon: '\u270e' },
-  { id: 'session-library', label: 'Session Library', icon: 'journal' },
-  { id: 'soundboard', label: 'Soundboard & Ambience', icon: 'journal' },
-  { id: 'session-recordings', label: 'Session Recordings', icon: 'journal' },
-  { id: 'presentation', label: 'Player Display', icon: 'gallery' },
-  { id: 'economy', label: 'Economy', icon: '\u25ce' },
-  { id: 'crafting', label: 'Crafting', icon: '\u2692' },
-  { id: 'tools', label: 'GM Tools', icon: '\u2699' },
-  { id: 'gameplay', label: 'Gameplay Systems', icon: '\u25a3' },
-  { id: 'world', label: 'World Systems', icon: '\u2318' },
-  { id: 'battle-maps', label: 'Battle Maps', icon: 'journal' },
-  { id: 'advanced-dice', label: 'Advanced Dice', icon: 'settings' },
-  { id: 'random-tables', label: 'Random Tables', icon: 'journal' },
-  { id: 'encounter-rewards', label: 'Encounter Generator', icon: 'journal' },
-  { id: 'asteria-calendar', label: 'Asteria Calendar', icon: 'journal' },
-  { id: 'weather-environment', label: 'Weather Generator', icon: 'journal' },
-  { id: 'world-atlas', label: 'World Atlas', icon: 'journal' }
-];
+const GM_TABS = dashboardTabs('gm');
 
 function progression(character = {}) {
   const fallback = { xp: Number(character.xp || 0), xpMax: Number(character.xpMax || 1000), percent: 0 };
   return window.AsteriaProgression?.progressSummary?.(Object.assign({}, character)) || fallback;
 }
 
-function CharacterRosterCard({ character, selected, presence, onSelect, onOpen }) {
-  const xp = progression(character);
-  const armour = useArmourClass(character);
-  const soulDamage = soulDamageValue(character);
-  const online = Object.values(presence || {}).some(record => record.characterId === character.id && record.state === 'online');
-  return <article className={`react-party-card ${selected ? 'active' : ''}`}>
-    <div className="react-party-name"><div><b>{character.name || 'Unnamed Character'}</b><small>{character.klass || character.class || 'Class'} | Level {Number(character.level || 0)}</small></div><StatusPill tone="info">AC {armour.finalAC}</StatusPill><span className={online ? 'presence online' : 'presence'} title={online ? 'Online' : 'Offline'} /></div>
-    {resourceDefinitions(character).map(row=>{const [value,maximum]=resourcePair(storedResource(character,row.id));return <ResourceBar key={row.id} compact label={row.name} kind={row.id} value={value} maximum={maximum} reserved={row.id==='hp'?soulDamage:0}/>;})}
-    <ResourceBar compact label="XP" kind="xp" value={xp.xp} maximum={xp.xpMax} />
-    <div className="react-party-card-actions">
-      <button type="button" aria-pressed={selected} onClick={onSelect}>{selected ? 'Selected' : 'Select'}</button>
-      <button type="button" onClick={onOpen} aria-label={`Open ${character.name || 'character'} dashboard`}>Open Character</button>
+function CharacterRosterCard({character,selected,presence,onSelect,onOpen,onFocus,
+  reorderable=false,onBeginDrag,onMoveDrag,onEndDrag,onMoveByKey,embedded=false,
+  dragging=false}){
+  const xp=progression(character);
+  const armour=useArmourClass(character);
+  const soulDamage=soulDamageValue(character);
+  const online=Object.values(presence||{}).some(record=>record.characterId===character.id&&record.state==='online');
+  const portrait=character.image||character.portrait||character.characterImage||
+    character.appearance?.image||character.appearance?.portrait;
+  return <article className={'react-party-card'+(selected?' active':'')+(dragging?' is-lifted':'')}
+    data-resource-character={character.id}
+    onDoubleClick={event=>{
+      if(onFocus&&!event.target.closest('button,input,select,textarea,a'))onFocus();
+    }}>
+    <div className="react-party-card-header">
+      <span className="react-party-card-portrait">
+        {portrait?<img src={portrait} alt="" loading="lazy" decoding="async"/>:
+          <span aria-hidden="true">{String(character.name||'?').charAt(0)}</span>}
+      </span>
+      <div className="react-party-card-identity">
+        <div className="react-party-name"><div><b>{character.name||'Unnamed Character'}</b>
+          <small>{character.klass||character.class||'Class'} | Level {Number(character.level||0)}</small></div>
+          <StatusPill tone="info">AC {armour.finalAC}</StatusPill>
+          <span className={online?'presence online':'presence'}
+            title={online?'Online':'Offline'}/>
+        </div>
+      </div>
+      {reorderable?<button type="button" className="react-party-reorder"
+        title="Hold and drag to move this card"
+        aria-label={'Reorder '+(character.name||'character')+'; drag or use Alt + arrow keys'}
+        onPointerDown={event=>onBeginDrag?.(event,character.id)}
+        onPointerMove={onMoveDrag}
+        onPointerUp={onEndDrag}
+        onPointerCancel={onEndDrag}
+        onLostPointerCapture={onEndDrag}
+        onKeyDown={onMoveByKey}>≡</button>:null}
     </div>
+    {resourceDefinitions(character).map(row=>{
+      const [value,maximum]=resourcePair(storedResource(character,row.id));
+      return <ResourceBar key={row.id} compact label={row.name} kind={row.id}
+        value={value} maximum={maximum} reserved={row.id==='hp'?soulDamage:0}/>;
+    })}
+    <ResourceBar compact label="XP" kind="xp" value={xp.xp} maximum={xp.xpMax}/>
+    {!embedded?<div className="react-party-card-actions">
+      <button type="button" aria-pressed={selected} onClick={onSelect}>
+        {selected?'Selected':'Select'}</button>
+      <button type="button" onClick={onOpen}
+        aria-label={'Open '+(character.name||'character')+' dashboard'}>Open Character</button>
+    </div>:null}
   </article>;
 }
 
-function PartySidebar({ campaign, characters, selectedId, setSelectedId, presence, onOpen }) {
-  const partyIds = campaign?.party?.length ? campaign.party : Object.keys(characters);
-  return <Panel title="Player Resources" className="react-party-sidebar">
-    <p>{campaign?.name || 'Campaign'} party</p>
-    <div className="react-party-list">
-      {partyIds.map(id => characters[id]).filter(Boolean).map(character => <CharacterRosterCard
-        key={character.id}
-        character={character}
-        selected={selectedId === character.id}
-        presence={presence}
-        onSelect={() => setSelectedId(character.id)}
-        onOpen={() => onOpen(character)}
-      />)}
-      {!partyIds.some(id => Boolean(characters[id])) ? <EmptyState title="No linked characters">Characters appear here as soon as they join this campaign.</EmptyState> : null}
+function PartySidebar({campaign,characters,selectedId,setSelectedId,presence,onOpen,
+  embedded=false,order=[],onReorder=null,onFocus=null}){
+  const drag=useRef(null),listRef=useRef(null),beforeReorder=useRef(new Map());
+  const animateReorder=useRef(false);
+  const [draggingId,setDraggingId]=useState('');
+  const partyIds=campaign?.party?.length?campaign.party:Object.keys(characters);
+  const present=partyIds.filter(id=>Boolean(characters[id]));
+  const orderedIds=orderedCombatPartyIds(present,order);
+  const orderKey=orderedIds.join('|');
+  const reorder=(from,to)=>{
+    if(!onReorder||!from||!to||from===to)return;
+    const cards=[...listRef.current?.querySelectorAll('[data-resource-character]')||[]];
+    beforeReorder.current=new Map(cards.map(card=>
+      [card.dataset.resourceCharacter,card.getBoundingClientRect()]));
+    animateReorder.current=true;
+    onReorder(from,to,orderedIds);
+  };
+  useLayoutEffect(()=>{
+    if(!animateReorder.current)return;
+    animateReorder.current=false;
+    if(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;
+    const cards=listRef.current?.querySelectorAll('[data-resource-character]')||[];
+    for(const card of cards){
+      const previous=beforeReorder.current.get(card.dataset.resourceCharacter);
+      if(!previous)continue;
+      const next=card.getBoundingClientRect();
+      const dx=previous.left-next.left,dy=previous.top-next.top;
+      if(Math.hypot(dx,dy)<2)continue;
+      card.animate?.([
+        {transform:'translate3d('+dx+'px,'+dy+'px,0)'},
+        {transform:'translate3d(0,0,0)'}
+      ],{duration:250,easing:'cubic-bezier(.22,1,.36,1)'});
+    }
+  },[orderKey]);
+  useEffect(()=>()=>{if(drag.current?.frame)cancelAnimationFrame(drag.current.frame);
+    drag.current?.overlay?.remove();},[]);
+  const beginDrag=(event,id)=>{
+    if(!embedded||!onReorder||drag.current||event.isPrimary===false||
+      event.button!==0)return;
+    const source=event.currentTarget.closest('.react-party-card');
+    if(!source||!listRef.current?.contains(source))return;
+    const rect=source.getBoundingClientRect();
+    const overlay=document.createElement('div');
+    overlay.className='react-gm-dashboard react-party-drag-overlay';
+    overlay.setAttribute('aria-hidden','true');
+    overlay.style.width=source.offsetWidth+'px';
+    const contents=document.createElement('div');
+    contents.className='react-party-sidebar-in-canvas';
+    const card=source.cloneNode(true);
+    card.classList.remove('active','is-lifted','is-drop-target');
+    card.removeAttribute('data-resource-character');
+    card.setAttribute('aria-hidden','true');
+    card.querySelectorAll('button').forEach(button=>{
+      button.tabIndex=-1;button.draggable=false;
+    });
+    contents.appendChild(card);overlay.appendChild(contents);
+    document.body.appendChild(overlay);
+    const scale=rect.width/Math.max(1,source.offsetWidth);
+    overlay.style.transform='translate3d('+rect.left+'px,'+rect.top+'px,0) scale('+scale+')';
+    drag.current={id,pointerId:event.pointerId,source,overlay,scale,
+      left:rect.left,top:rect.top,startX:event.clientX,startY:event.clientY,
+      x:event.clientX,y:event.clientY,target:null,moved:false,frame:0};
+    setDraggingId(id);
+    event.preventDefault();event.stopPropagation();
+    try{event.currentTarget.setPointerCapture(event.pointerId);}catch{/* no capture support */}
+  };
+  const moveDrag=event=>{
+    const gesture=drag.current;
+    if(!gesture||gesture.pointerId!==event.pointerId)return;
+    gesture.x=event.clientX;gesture.y=event.clientY;
+    gesture.moved ||= Math.hypot(gesture.x-gesture.startX,gesture.y-gesture.startY)>6;
+    const candidate=document.elementFromPoint(gesture.x,gesture.y)
+      ?.closest?.('[data-resource-character]');
+    const target=candidate&&candidate!==gesture.source&&
+      listRef.current?.contains(candidate)?candidate:null;
+    if(target!==gesture.target){
+      gesture.target?.classList.remove('is-drop-target');
+      gesture.target=target;
+      target?.classList.add('is-drop-target');
+    }
+    if(!gesture.frame)gesture.frame=requestAnimationFrame(()=>{
+      gesture.frame=0;
+      gesture.overlay.style.transform='translate3d('+
+        (gesture.left+gesture.x-gesture.startX)+'px,'+
+        (gesture.top+gesture.y-gesture.startY)+'px,0) scale('+gesture.scale+')';
+    });
+    event.preventDefault();event.stopPropagation();
+  };
+  const endDrag=event=>{
+    const gesture=drag.current;
+    if(!gesture||gesture.pointerId!==event.pointerId)return;
+    drag.current=null;
+    if(gesture.frame)cancelAnimationFrame(gesture.frame);
+    const to=gesture.target?.dataset.resourceCharacter||'';
+    gesture.target?.classList.remove('is-drop-target');
+    gesture.overlay.remove();
+    setDraggingId('');
+    if(event.type==='pointerup'&&gesture.moved&&to)reorder(gesture.id,to);
+    try{event.currentTarget.releasePointerCapture?.(event.pointerId);}catch{/* already released */}
+    event.stopPropagation();
+  };
+  const list=<>
+    <p>{campaign?.name||'Campaign'} party</p>
+    <div className="react-party-list" ref={listRef}>
+      {orderedIds.map(id=>{
+        const character=characters[id];
+        return <CharacterRosterCard key={id} character={character}
+          selected={selectedId===id} presence={presence} embedded={embedded}
+          dragging={draggingId===id}
+          onSelect={()=>setSelectedId(id)} onOpen={()=>onOpen(character)}
+          onFocus={onFocus?()=>onFocus(character):null}
+          reorderable={Boolean(onReorder)}
+          onBeginDrag={beginDrag} onMoveDrag={moveDrag} onEndDrag={endDrag}
+          onMoveByKey={event=>{
+            if(!event.altKey||!['ArrowUp','ArrowDown'].includes(event.key))return;
+            event.preventDefault();event.stopPropagation();
+            const index=orderedIds.indexOf(id);
+            const target=orderedIds[index+(event.key==='ArrowUp'?-1:1)];
+            if(target)reorder(id,target);
+          }}/>
+      })}
+      {!present.length?<EmptyState title="No linked characters">
+        Characters appear here as soon as they join this campaign.</EmptyState>:null}
     </div>
-    <p className="react-help">Select a character to manage them, or open their Character Dashboard.</p>
-  </Panel>;
+    <p className="react-help">{embedded?
+      'Drag the top-right handle to lift and reorder cards, or use Alt + Up/Down on the handle. Double-click a card to inspect its dashboard.':
+      'Select a character to manage them, or open their Character Dashboard.'}</p>
+  </>;
+  return embedded?<section className="react-party-sidebar react-party-sidebar-in-canvas"
+    aria-label="GM Player Resources" data-testid="gm-combat-party-resources">{list}</section>:
+    <Panel title="Player Resources" className="react-party-sidebar">{list}</Panel>;
 }
 
 function SessionActions({ campaignId, session, busy, run }) {
@@ -128,7 +261,6 @@ function SessionActions({ campaignId, session, busy, run }) {
   </div>;
 }
 
-function slug(value) { return String(value || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''); }
 
 const EMPTY_CUSTOM_REWARD = {
   name:'',
@@ -147,96 +279,6 @@ function spellCompendiumEntries() {
     || window.ASTERIA_UNIVERSAL_COMPENDIUM_INDEX?.entries?.filter(entry => entry.domain === 'spell')
     || [];
   return normalizeSpellCompendiumEntries(source);
-}
-
-function encounterSources(campaignNPCs=[],campaignCreatures=[]) {
-  const codex = window.AsteriaCodexCompendium?.creatureEntries?.() || [];
-  const npcStores = [window.npcs, window.NPCS, window.ASTERIA_NPC_DATA, window.ASTERIA_NPCS].filter(Boolean);
-  const npcs = [...campaignNPCs,...npcStores.flatMap(store => Array.isArray(store) ? store : Object.entries(store).map(([id, value]) => Object.assign({ id }, value)))];
-  const records = [
-    ...codex.map(entry => ({ id:entry.id || entry.slug || slug(entry.title), name:entry.title || entry.name, type:entry.creatureType || entry.type || entry.category || 'Creature', threatTier:entry.threatTier || entry.tier || 'Tier 1', initiative:Number(entry.initiative ?? 10), ...(entry.ac!==undefined?{ac:entry.ac}:{}), ...encounterSourceResources(entry), xpReward:encounterXP(entry), source:'Creature Compendium', compendiumSlug:entry.slug || entry.id })),
-    ...npcs.map(entry => ({ id:`npc-${entry.id || entry.slug || slug(entry.name || entry.title)}`, name:entry.name || entry.title || 'Unnamed NPC', type:entry.type || entry.category || 'NPC', threatTier:entry.threatTier || entry.tier || 'Tier 1', initiative:Number(entry.initiative ?? 10), ...(entry.ac!==undefined?{ac:entry.ac}:{}), ...encounterSourceResources(entry), xpReward:encounterXP(entry), source:'NPC', compendiumSlug:entry.slug || entry.id })),
-    ...campaignCreatures.filter(libraryEncounterReady).map(entry => ({ id:'library-'+entry.id, name:entry.name, type:entry.species || 'Creature', threatTier:entry.threatTier || 'Tier 1', initiative:Number(entry.initiative ?? 10), ...(entry.ac!==undefined?{ac:entry.ac}:{}), ...encounterSourceResources(entry), xpReward:encounterXP(entry), source:'Campaign Creature' }))
-  ].filter(entry => entry.name);
-  const seen = new Set();
-  return records.filter(entry => { const key=slug(entry.name)+':'+entry.source; if(seen.has(key)) return false; seen.add(key); return true; });
-}
-
-function EncounterInitiativeInput({ entry, disabled, onCommit }) {
-  const displayed=entry.initiativeSet===false&&!entry.initiativeRoll?'':entry.initiative===undefined||entry.initiative===null?'':String(Number(entry.initiative));
-  const [value,setValue]=useState(displayed);
-  useEffect(()=>setValue(displayed),[entry.id,displayed]);
-  const commit=()=>{
-    const next=Number(value);
-    if(!isManualNumber(value)) return setValue(displayed);
-    if(next!==Number(entry.initiative ?? 0)||!entry.initiativeSet) onCommit(next);
-  };
-  return <ManualNumberInput aria-label={`${entry.name} initiative`} placeholder="Roll on start" disabled={disabled} value={value} onChange={event=>setValue(event.target.value)} onBlur={commit} onKeyDown={event=>{if(event.key==='Enter')event.currentTarget.blur();if(event.key==='Escape'){setValue(displayed);event.currentTarget.blur();}}}/>;
-}
-
-function EncounterResourceControl({ campaignId, entry, resource, disabled, onMessage }) {
-  const pair=encounterResourcePair(entry,resource);
-  const [current,setCurrent]=useState(pair?String(pair[0]):'');
-  const [maximum,setMaximum]=useState(pair?String(pair[1]):'');
-  const [busy,setBusy]=useState(false);
-  useEffect(()=>{setCurrent(pair?String(pair[0]):'');setMaximum(pair?String(pair[1]):'');},[entry.id,resource,pair?.[0],pair?.[1]]);
-  const save=async()=>{
-    if(!isManualNumber(current,{min:0})||!isManualNumber(maximum,{min:1})||Number(current)>Number(maximum))return onMessage('Enter valid current and maximum resource values.');
-    setBusy(true);
-    onMessage(`Saving ${entry.name} ${resource.toUpperCase()}...`);
-    const result=await firebaseService.updateEncounterResource(campaignId,entry.id,resource,current,maximum);
-    onMessage(result?.ok?`${entry.name} ${resource.toUpperCase()} synchronized.`:result?.error||`${resource.toUpperCase()} could not be saved.`);
-    setBusy(false);
-  };
-  return <div className={`react-encounter-resource ${pair?'':'missing'}`}>
-    <header><b>{resource.toUpperCase()}</b><small>{pair?`${pair[0]} / ${pair[1]}`:'Not recorded'}</small></header>
-    {pair?<ResourceBar compact label="" kind={resource} value={pair[0]} maximum={pair[1]} reserved={resource==='hp'?soulDamageValue(entry):0}/>:null}
-    <div><ManualNumberInput aria-label={`${entry.name} current ${resource.toUpperCase()}`} min="0" placeholder="Current" disabled={disabled||busy} value={current} onChange={event=>setCurrent(event.target.value)}/><ManualNumberInput aria-label={`${entry.name} maximum ${resource.toUpperCase()}`} min="1" placeholder="Maximum" disabled={disabled||busy} value={maximum} onChange={event=>setMaximum(event.target.value)}/><button disabled={disabled||busy||current===''||maximum===''} onClick={save}>{pair?'Apply':'Set'}</button></div>
-  </div>;
-}
-
-function CampaignEncounter({ campaignId, campaign, campaignNPCs, campaignCreatures, characters, encounter, combatState }) {
-  const [search, setSearch] = useState('');
-  const [custom,setCustom]=useState({type:'Creature',name:'',hp:'',sp:'',mp:'',xpReward:'',ac:'',initiative:''});
-  const [quantity, setQuantity] = useState('');
-  const {message,setMessage,busy,run}=useAsyncAction();
-  const sources = useMemo(()=>encounterSources(campaignNPCs,campaignCreatures), [campaignNPCs,campaignCreatures]);
-  const state = Object.assign({ status:'ready', round:1, turnIndex:0, combatants:[], enemies:[] }, encounter || {});
-  const results = search ? sources.filter(entry => `${entry.name} ${entry.type} ${entry.source}`.toLowerCase().includes(search.toLowerCase())).slice(0, 8) : [];
-  const active=state.status==='active'&&state.combat?.version===1;
-  const setup=state.status==='ready'||state.status==='active'&&!active;
-  const save = next => run(()=>firebaseService.saveEncounter(campaignId,next),'Encounter synchronized.');
-  const playerRoster=encounterPlayerRoster(campaignId,campaign,characters,state.combatants,window.AsteriaCharacterAccess);
-  const addLinkedPlayers = async () => {
-    const result=await save({...state,combatants:playerRoster.combatants});
-    if(result?.ok)setMessage(`${result.message||'Encounter synchronized.'} ${playerRoster.added.length} linked player(s) added.${playerRoster.skipped.length?` Not added: ${playerRoster.skipped.map(row=>row.name).join(', ')}. See link details below.`:''}`);
-  };
-  const command=(operation,extra={})=>run(()=>firebaseService.combatCommand(campaignId,'encounter',{operation,revision:Number(state.combat?.revision||0),...extra}),'Combat synchronized.');
-  const start=()=>command('start');
-  const end=()=>{if(window.confirm('End combat for all participants? Pending actions will close. Spent resources remain spent.'))return command('end');};
-  const addEnemy = async source => {
-    if(!isManualNumber(quantity,{min:1,max:20}))return setMessage('Enter a whole creature quantity from 1 to 20.');
-    const resources=encounterSourceResources(source);
-    const added = Array.from({ length:Math.max(1, Math.min(20, Number(quantity || 1))) }, (_, index) => ({ id:`enemy-${crypto.randomUUID()}`, sourceId:source.id, compendiumSlug:source.compendiumSlug || '', name:Number(quantity) > 1 ? `${source.name} ${index + 1}` : source.name, kind:'enemy', type:source.type, threatTier:source.threatTier, initiative:source.initiative, ...(source.ac!==undefined?{ac:source.ac}:{}), xpReward:encounterXP(source), ...resources, defeated:false }));
-    const result=await save({ ...state, enemies:[...(state.enemies || []), ...added], combatants:[...(state.combatants || []), ...added] });
-    if(result?.ok)setSearch('');
-  };
-  const updateCombatant = (id, patch) => save({ ...state, combatants:(state.combatants || []).map(entry => entry.id === id ? { ...entry, ...patch } : entry), enemies:(state.enemies || []).map(entry => entry.id === id ? { ...entry, ...patch } : entry) });
-  const removeCombatant = id => save({ ...state, combatants:(state.combatants || []).filter(entry => entry.id !== id), enemies:(state.enemies || []).filter(entry => entry.id !== id), turnIndex:0 });
-  const nextTurn = () => command('next');
-  return <Panel title="Campaign Encounters" eyebrow="Initiative & Encounter Tracker" className="react-encounter-panel" action={<StatusPill tone={active ? 'success' : ''}>{active?'COMBAT ACTIVE':state.status==='ended'?'ENDED':'SETUP'}</StatusPill>}>
-    <div className="react-encounter-toolbar"><button disabled={busy} onClick={addLinkedPlayers}>Add linked players</button>{state.status==='ended'?<button disabled={busy} onClick={()=>save({...state,status:'ready'})}>Set Up Combat</button>:<button className="primary" disabled={busy||!setup||!state.combatants.length} onClick={start}>{active?'COMBAT ACTIVE':'START COMBAT'}</button>}<button disabled={busy||!active} onClick={nextTurn}>Next Turn</button><button className="danger" disabled={busy||!active} onClick={end}>END COMBAT</button><button disabled={busy||active} onClick={()=>command('clear')}>Clear Setup</button></div>
-    {setup?<p className="react-help">Add participants and enter initiative, or leave it to roll when combat starts.</p>:null}
-    <div className="react-encounter-summary"><StatusPill>Round {Number(state.round || 1)}</StatusPill><StatusPill>{(state.enemies || []).length} enemies</StatusPill><StatusPill>{state.combatants.filter(row=>row.characterId).length} players in encounter</StatusPill><StatusPill>{playerRoster.linkedCount} linked players</StatusPill><span role="status">{message}</span></div>
-    {playerRoster.skipped.length?<div className="react-help" role="status"><b>Character links need attention</b><ul>{playerRoster.skipped.map(row=><li key={row.id}><b>{row.name}:</b> {row.reason}</li>)}</ul><p>The character owner can reconnect their saved character from Character Forge. Existing character sheets and ownership are preserved.</p></div>:null}
-    <GMCombatPanel campaignId={campaignId} encounter={state} characters={characters} combatState={combatState}/>
-    <div className="react-encounter-builder">
-      <section><h3>Add Creature or NPC</h3><div className="react-form-grid"><label>Search<input type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder="Search creature compendium and NPCs..." /></label><label>Number<ManualNumberInput min="1" max="20" value={quantity} onChange={event => setQuantity(event.target.value)} /></label></div>{search ? <div className="react-search-results encounter">{results.map(entry => <button key={entry.id} disabled={busy} onClick={() => addEnemy(entry)}><b>{entry.name}</b><small>{entry.type} | {entry.threatTier}</small></button>)}{!results.length ? <EmptyState title="No matches" /> : null}</div> : null}</section>
-      <section><h3>Initiative Order</h3><div className="react-initiative-list">{(state.combatants || []).map((entry,index) => <article key={entry.id} className={`${index === Number(state.turnIndex || 0) && state.status === 'active' ? 'active' : ''} ${entry.defeated ? 'defeated' : ''}`}><span>{index + 1}</span><div className="react-encounter-combatant"><b>{entry.name}</b><small>{entry.kind === 'player' ? 'Player Character' : entry.type || 'Enemy'}</small></div><EncounterInitiativeInput entry={entry} disabled={busy||active} onCommit={initiative=>updateCombatant(entry.id,{initiative,initiativeSet:true})}/>{entry.kind === 'enemy' ? <button title="Toggle defeated" disabled={busy} onClick={() => updateCombatant(entry.id, { defeated:!entry.defeated })}>{entry.defeated ? 'Restore' : 'Defeat'}</button> : null}<button aria-label={`Remove ${entry.name}`} disabled={busy} onClick={() => removeCombatant(entry.id)}>X</button></article>)}{!(state.combatants || []).length ? <EmptyState title="No initiative entries">Add linked players or creatures, then start combat.</EmptyState> : null}</div></section>
-      <section className="react-creature-resources"><h3>Creature Resources</h3>{(state.enemies || []).map(entry=><article key={entry.id}><header><b>{entry.name}</b><StatusPill>{entry.defeated?'Defeated':'In encounter'}</StatusPill></header><p>XP Reward: {encounterXP(entry)===null?'Not configured':encounterXP(entry).toLocaleString()}</p>{entry.ac!==undefined?<small>AC {entry.ac}</small>:null}<div className="react-encounter-resources">{encounterResourceKeys(entry).map(resource=><EncounterResourceControl key={resource} campaignId={campaignId} entry={entry} resource={resource} disabled={busy} onMessage={setMessage}/>)}</div></article>)}{!(state.enemies || []).length?<EmptyState title="No creatures in this encounter"/>:null}</section>
-      <section><h3>Create Custom Creature or NPC</h3><div className="react-form-grid"><label>Type<select value={custom.type} onChange={e=>setCustom(c=>({...c,type:e.target.value}))}><option>Creature</option><option>NPC</option></select></label>{[['name','Name'],['hp','HP'],['sp','SP (optional)'],['mp','MP (optional)'],['xpReward','XP Reward'],['ac','AC (optional)'],['initiative','Initiative (optional)']].map(([key,label])=><label key={key}>{label}{key==='name'?<input maxLength={120} value={custom[key]} onChange={e=>setCustom(c=>({...c,[key]:e.target.value}))}/>:<ManualNumberInput min="0" value={custom[key]} onChange={e=>setCustom(c=>({...c,[key]:e.target.value}))}/>}</label>)}</div><button disabled={busy} className="primary" onClick={()=>{try{const entry={...customEncounterCreature(custom,`enemy-${crypto.randomUUID()}`),initiativeSet:custom.initiative!==''};save({...state,enemies:[...(state.enemies||[]),entry],combatants:[...(state.combatants||[]),entry]});}catch(error){setMessage(error.message);}}}>Add to Encounter</button><p className="react-help">This creature belongs to this encounter only.</p></section>
-    </div>
-  </Panel>;
 }
 
 function SpecialDamageControl({ campaignId, characters, encounter }) {
@@ -519,36 +561,32 @@ export function GMDashboard({ campaignId }) {
   const characterCatalogs=useMemo(()=>Object.fromEntries(Object.entries(rawLive.characters).map(([id,character])=>[id,talentCatalog(character)])),[rawLive.characters]);
   const derivedCharacters=useMemo(()=>Object.fromEntries(Object.entries(rawLive.characters).map(([id,character])=>[id,reconcileCharacterSystems(character,characterCatalogs[id],{encounter:rawLive.encounter,now:rawLive.clock})])),[rawLive.characters,characterCatalogs,rawLive.encounter,rawLive.clock]);
   const live={...rawLive,characters:derivedCharacters};
-  const coreSyncError=useCharacterSystemsSync(campaignId,rawLive.characters,rawLive.encounter,rawLive.session?.editable);
+  const coreSyncError=useCharacterSystemsSync(campaignId,rawLive.characters,rawLive.encounter,rawLive.session?.editable,rawLive.online&&!rawLive.error);
   const restored = restoredGMView(campaignId, firebaseService.currentUser()?.uid);
   const [tab, setTab] = useState(() => GM_TABS.some(item => item.id === restored.tab) ? restored.tab : 'main');
   const [selectedId, setSelectedId] = useState(restored.selectedId || '');
   const [gmHubDestination,setGMHubDestination]=useState(null);
+  const [canvasCharacterId,setCanvasCharacterId]=useState('');
   const [gmSearchTarget,setGMSearchTarget]=useState(null);
   const [savedDashboardLayout,setSavedDashboardLayout] = useState(null);
   const [dashboardLayoutReady,setDashboardLayoutReady] = useState(false);
-  const [dashboardSettingsDraft,setDashboardSettingsDraft] = useState(()=>defaultDashboardLayout('gm'));
-  const [dashboardSettingsMessage,setDashboardSettingsMessage] = useState('');
   const [savingDashboardSettings,setSavingDashboardSettings] = useState(false);
   const [dashboardLayoutError,setDashboardLayoutError] = useState('');
-  const dashboardDraftDirty=useRef(false);
-  const dashboardDraftRevision=useRef(0);
   const dashboardSaveScope=useRef('');
   const focusSavePending=useRef(false);
+  const canvasSaveChain=useRef(Promise.resolve());
+  const canvasSaveStatus=useRef({pending:0,version:0,confirmed:null});
   const accountUid=firebaseService.currentUser()?.uid || '';
+  const combatApi=useMemo(()=>accountUid?createSiteCombatApi():null,[campaignId,accountUid]);
+  const combatMediaApi=useMemo(()=>accountUid?createSiteCombatMediaApi():null,[campaignId,accountUid]);
   const gmTradeHub=useMemo(()=>gmTradeLootOverview({itemEcosystem:live.itemEcosystem,partyLoot:live.partyLoot}),
     [live.itemEcosystem,live.partyLoot]);
-  const openGMSearchResult=result=>{
-    if(!GM_TABS.some(item=>item.id===result?.tab))return;
-    // Select the requested character before opening its inventory. Reject
-    // stale results from another campaign rather than opening an unrelated PC.
-    if(result.category==='character'){
-      if(!result.id||!rawLive.characters[result.id])return;
-      setSelectedId(result.id);
+  const openCanvasCharacter=character=>{
+    if(!window.AsteriaCharacterAccess?.canGMView(live.campaign,character,accountUid,live.membership)){
+      setActionError('You do not have permission to view this character.');
+      return;
     }
-    setGMSearchTarget({...result});
-    setGMHubDestination(result.targetId?{tab:result.tab,targetId:result.targetId}:null);
-    setTab(result.tab);
+    setCanvasCharacterId(character.id);
   };
   const openGMHubLink=link=>{
     // The toolkit is a directory of existing GM views, not an arbitrary route.
@@ -565,31 +603,28 @@ export function GMDashboard({ campaignId }) {
     target.focus({preventScroll:true});
     setGMHubDestination(null);
   },[tab,gmHubDestination]);
-  useEffect(()=>{setGMHubDestination(null);setGMSearchTarget(null);},[campaignId,accountUid]);
+  useEffect(()=>{setGMHubDestination(null);setGMSearchTarget(null);setCanvasCharacterId('');},[campaignId,accountUid]);
   useEffect(()=>{
-    dashboardDraftDirty.current=false;
-    dashboardDraftRevision.current++;
     dashboardSaveScope.current=campaignId+':'+accountUid;
     focusSavePending.current=false;
+    canvasSaveChain.current=Promise.resolve();
+    canvasSaveStatus.current={pending:0,version:0,confirmed:null};
+    setSavingDashboardSettings(false);
     setDashboardLayoutReady(false);
-    setDashboardSettingsDraft(defaultDashboardLayout('gm'));
     setSavedDashboardLayout(null);
-    setDashboardSettingsMessage('');
     setDashboardLayoutError('');
     if(!campaignId||!accountUid)return;
     const subscriptionScope=campaignId+':'+accountUid;
-    return firebaseService.subscribeUserDashboardLayout(campaignId,'gm',layout=>{
+    const unsubscribe=firebaseService.subscribeUserDashboardLayout(campaignId,'gm',layout=>{
       if(dashboardSaveScope.current!==subscriptionScope)return;
       // A pending optimistic Focus switch must not flicker back to a stale
       // server snapshot while the private layout write is in flight.
       if(!focusSavePending.current)setSavedDashboardLayout(layout);
       setDashboardLayoutReady(true);
-      // Session clocks and background sync can re-emit the same snapshot.
-      // Do not erase unsaved edits while the settings editor is open.
-      if(!dashboardDraftDirty.current)
-        setDashboardSettingsDraft(normalizeDashboardLayout(layout,'gm'));
       setDashboardLayoutError('');
     });
+    return ()=>{unsubscribe?.();
+      if(dashboardSaveScope.current===subscriptionScope)dashboardSaveScope.current='';};
   },[campaignId,accountUid]);
 
   useEffect(() => { if(!live.loading && restored.scrollY) window.scrollTo(0, restored.scrollY); }, [live.loading]);
@@ -672,18 +707,8 @@ export function GMDashboard({ campaignId }) {
   },[campaignId,accountUid,live.campaign,live.gmWorkspaceLoaded,rawLive.characters]);
   const workspace=useMemo(()=>normalizeGMWorkspace(live.gmWorkspace||{},live.campaign||{}),[live.gmWorkspace,live.campaign]);
   const saveSection=(section,value)=>firebaseService.saveGMWorkspace(campaignId,{[section]:value});
-  const saveDashboardLayout=async layout=>{
-    const saveScope=campaignId+':'+accountUid;
-    const result=await firebaseService.saveUserDashboardLayout(campaignId,'gm',layout);
-    // A response for an old account or campaign must never mutate the new view.
-    if(dashboardSaveScope.current!==saveScope)return result;
-    if(result?.ok){setSavedDashboardLayout(layout);setDashboardLayoutError('');}
-    else setDashboardLayoutError(result?.error||'Could not save GM dashboard layout.');
-    return result;
-  };
   const commitGMFocus=async layout=>{
     if(!accountUid||!dashboardLayoutReady)return {ok:false,error:'Connect your GM dashboard before changing Focus.'};
-    if(dashboardDraftDirty.current)return {ok:false,error:'Save or discard pending Dashboard Settings before switching Focus.'};
     if(focusSavePending.current||savingDashboardSettings)return {ok:false,error:'A dashboard save is already in progress.'};
     const scope=campaignId+':'+accountUid;
     const previous=normalizeDashboardLayout(savedDashboardLayout,'gm');
@@ -697,8 +722,6 @@ export function GMDashboard({ campaignId }) {
       if(dashboardSaveScope.current!==scope)return {ok:false,error:'Campaign or account changed during Focus save.'};
       if(result?.ok){
         setSavedDashboardLayout(next);
-        setDashboardSettingsDraft(next);
-        setDashboardSettingsMessage('');
       }else{
         setSavedDashboardLayout(previous);
         setDashboardLayoutError(result?.error||'Could not save GM Focus.');
@@ -715,49 +738,94 @@ export function GMDashboard({ campaignId }) {
       if(dashboardSaveScope.current===scope)focusSavePending.current=false;
     }
   };
-  const updateDashboardSettingsDraft=change=>{
-    dashboardDraftDirty.current=true;
-    dashboardDraftRevision.current++;
-    setDashboardSettingsDraft(change);
-  };
-  const applyGMLayout=async layout=>{
-    if(!accountUid)return {ok:false,error:'Sign in to customise this dashboard.'};
-    const applyScope=campaignId+':'+accountUid;
+  const saveGMCanvas=async canvas=>{
+    if(!accountUid||!dashboardLayoutReady)
+      return {ok:false,error:'GM dashboard layout is not connected.'};
+    const scope=campaignId+':'+accountUid;
+    const previous=normalizeDashboardLayout(savedDashboardLayout,'gm');
+    const batch=canvasSaveStatus.current;
+    if(focusSavePending.current&&!batch.pending)
+      return {ok:false,error:'A dashboard Focus save is in progress.'};
+    if(!batch.pending)batch.confirmed=previous;
+    const version=++batch.version;batch.pending++;
+    const next=normalizeDashboardLayout({
+      ...previous,gmCanvas:normalizeGMCanvasLayout(canvas)
+    },'gm');
+    // Save through the existing GM-owned dashboard document; do not
+    // create a second layout record or store gameplay state here.
+    // The shared canvas already paints its optimistic geometry. Keep this
+    // parent document confirmed rather than applying a second optimistic layer.
+    setDashboardLayoutError('');
     setSavingDashboardSettings(true);
-    setDashboardSettingsMessage('Saving layout...');
+    focusSavePending.current=true;
+    const write=canvasSaveChain.current.then(()=>
+      firebaseService.saveUserDashboardLayout(campaignId,'gm',next));
+    canvasSaveChain.current=write.catch(()=>{});
     try{
-      const result=await saveDashboardLayout(layout);
-      if(dashboardSaveScope.current!==applyScope)return {ok:false,error:'Account or campaign changed while saving.'};
-      if(result?.ok){
-        dashboardDraftDirty.current=false;
-        setDashboardSettingsDraft(layout);
-        setDashboardSettingsMessage('Dashboard layout saved.');
-      }else setDashboardSettingsMessage(result?.error||'Could not save dashboard layout.');
+      const result=await write;
+      if(dashboardSaveScope.current!==scope)return {ok:false,error:'GM context changed while saving.'};
+      if(result?.ok!==false)batch.confirmed=next;
+      if(version===batch.version){
+        setSavedDashboardLayout(batch.confirmed);
+        setDashboardLayoutError(result?.ok===false?(result.error||'Could not save GM canvas.'):'');
+      }
       return result;
     }catch(error){
-      const failure={ok:false,error:error?.message||'Could not save dashboard layout.'};
-      setDashboardSettingsMessage(failure.error);return failure;
-    }finally{setSavingDashboardSettings(false);}
+      const failure={ok:false,error:error?.message||'Could not save GM canvas.'};
+      if(dashboardSaveScope.current===scope&&version===batch.version){
+        setSavedDashboardLayout(batch.confirmed);setDashboardLayoutError(failure.error);
+      }
+      return failure;
+    }finally{
+      batch.pending--;
+      if(dashboardSaveScope.current===scope&&canvasSaveStatus.current===batch){
+        setSavingDashboardSettings(batch.pending>0);focusSavePending.current=batch.pending>0;
+      }
+    }
   };
-  const saveDashboardSettings=async()=>{
-    if(savingDashboardSettings)return;
-    const saveScope=campaignId+':'+accountUid,saveRevision=dashboardDraftRevision.current;
-    setSavingDashboardSettings(true);
-    setDashboardSettingsMessage('Saving panel settings...');
-    try{
-      const result=await saveDashboardLayout(dashboardSettingsDraft);
-      if(dashboardSaveScope.current!==saveScope)return;
-      if(result?.ok&&dashboardDraftRevision.current===saveRevision)dashboardDraftDirty.current=false;
-      setDashboardSettingsMessage(result?.ok===false?result.error||'Could not save panel settings.':dashboardDraftDirty.current?'Earlier settings saved; newer changes still need saving.':'Dashboard panel settings saved.');
-    }catch(error){
-      if(dashboardSaveScope.current===saveScope)setDashboardSettingsMessage(error?.message||'Could not save panel settings.');
-    }finally{setSavingDashboardSettings(false);}
-  };
+  const gmCanvasLayout=useMemo(()=>
+    normalizeDashboardLayout(savedDashboardLayout,'gm').gmCanvas,
+    [savedDashboardLayout]);
   const gmPanel=id=>{
     const shortcut=(title,tab)=> <Panel title={title}><p className="react-help">Open the full {title} workspace.</p><button type="button" onClick={()=>setTab(tab)}>Open {title}</button></Panel>;
     switch(id){
-      case 'restRequests':return <RestRequestsPanel campaignId={campaignId} characters={live.characters} editable={live.session?.editable}/>;
-      case 'encounter':return <CampaignEncounter campaignId={campaignId} campaign={live.campaign} campaignNPCs={live.gmWorkspace?.world?.npcs} campaignCreatures={live.gmWorkspace?.world?.creatures||[]} characters={live.characters} encounter={live.encounter} combatState={live.gmWorkspace?.combatState}/>;
+      case 'gmResources':return ({order,onReorder})=><PartySidebar embedded
+        campaign={live.campaign||{id:campaignId}} characters={live.characters}
+        selectedId={selectedId} setSelectedId={setSelectedId} presence={live.presence}
+        order={order} onReorder={onReorder} onFocus={openCanvasCharacter}
+        onOpen={character=>openGMCharacter(live.campaign,character,{tab,membership:live.membership})}/>;
+      case 'requestsOverview':return <GMQuickRequests campaignId={campaignId}
+        characters={live.characters} editable={live.session?.editable}
+        onNavigate={setTab}/>;
+      case 'preparedOverview':return <GMQuickPreparedEncounters
+        api={combatApi} campaignId={campaignId} onNavigate={setTab}/>;
+      case 'quickNotes':return <GMQuickNotes workspace={workspace}
+        saveSection={saveSection} onNavigate={setTab}/>;
+      case 'calendarWeather':return <GMQuickCalendarWeather campaignId={campaignId}
+        onNavigate={setTab}/>;
+      case 'worldContext':return <CalendarWeatherQuickPanel campaignId={campaignId}
+        role="gm" onNavigate={setTab}/>;
+      case 'sessionOverview':return <GMQuickSession session={live.session}
+        presence={live.presence} events={live.events} characters={live.characters}
+        onNavigate={setTab}/>;
+      case 'focusModes':return <GMFocusModes key={campaignId+':'+accountUid}
+        layout={savedDashboardLayout} onCommit={commitGMFocus}
+        disabled={!accountUid||!dashboardLayoutReady||savingDashboardSettings}/>;
+      case 'diceQuick':return <AdvancedDiceWorkspace role="gm"/>;
+      case 'npcQuick':return <GMQuickReference title="NPC & Creature Library"
+        description={Object.keys(workspace.npcs||{}).length+' campaign NPC entries'}
+        target="bestiary" onNavigate={setTab}/>;
+      case 'soundboardQuick':return <GMCampaignSoundboard campaignId={campaignId}/>;
+      case 'worldQuick':return <GMExplorationOverview workspace={workspace}
+        campaign={live.campaign} onNavigate={setTab}/>;
+      case 'playerDisplayQuick':return <GMQuickReference title="Player Display"
+        description="Manage the existing live presentation screen."
+        target="presentation" onNavigate={setTab}/>;
+      case 'playerManagerQuick':return <GMQuickPlayerManager
+        campaign={live.campaign} characters={live.characters} members={live.members}
+        rosterError={live.memberRosterError} onNavigate={setTab}/>;
+      case 'restRequests':return <RestRequestsPanel campaignId={campaignId} characters={live.characters} editable={live.session?.editable} online={live.online&&!live.error}/>;
+      case 'encounter':return <Panel title="Combat Command Centre"><p className="react-help">Encounters, initiative, turns and prepared combat now live in the dedicated Combat menu.</p><button type="button" onClick={()=>setTab('combat')}>Open Combat Command Centre</button></Panel>;
       case 'xp':return <XPDistribution campaignId={campaignId} characters={live.characters} events={live.events}/>;
       case 'specialDamage':return <SpecialDamageControl campaignId={campaignId} characters={live.characters} encounter={live.encounter}/>;
       case 'loot':return <LootRewards campaignId={campaignId} characters={live.characters} events={live.events} customItems={live.customItems}/>;
@@ -782,22 +850,35 @@ export function GMDashboard({ campaignId }) {
 
   const run = async operation => { setBusy(true); setActionError(''); try { const result=await operation(); if(result?.ok===false) setActionError(result.error || 'The change could not be saved.'); } catch(error) { setActionError(error.message || String(error)); } finally { setBusy(false); } };
   if(live.loading) return <div className="react-route-state">Connecting GM Dashboard...</div>;
-  if(!window.AsteriaCharacterAccess.isGM(live.campaign, firebaseService.currentUser()?.uid)) return <div className="react-route-state" role="alert">You do not have GM access to this campaign.</div>;
+  if(live.membershipLoading) return <div className="react-route-state">Verifying GM campaign membership...</div>;
+  if(!window.AsteriaCharacterAccess.isGM(live.campaign,accountUid,live.membership)) return <div className="react-route-state" role="alert">{live.membershipError||'You do not have GM access to this campaign.'}</div>;
   return <AsteriaAppShell
-    className="react-gm-dashboard"
+    className={['main','combat'].includes(tab)?'react-gm-dashboard asteria-canvas-workspace-mode':'react-gm-dashboard'}
     eyebrow="GM Dashboard"
     title={live.campaign?.name || 'Campaign'}
     subtitle="Live campaign control, party resources, rewards, encounters, and session tools."
-    sidebar={<PartySidebar campaign={live.campaign || { id: campaignId }} characters={live.characters} selectedId={selectedId} setSelectedId={setSelectedId} presence={live.presence} onOpen={character => openGMCharacter(live.campaign, character, { tab })} />}
     actions={<><SessionActions campaignId={campaignId} session={live.session} busy={busy} run={run} /><LiveSyncStatus online={live.online} connectionState={live.connectionState} error={live.error || actionError || coreSyncError} loading={live.loading} session={live.session} /></>}
   >
+    <DashboardHeaderFold scope="gm"/>
+    {tab!=='combat'&&tab!=='main'?<section className="react-gm-party-strip" aria-label="GM Player Resources"
+      data-testid="gm-player-resources-strip">
+      <PartySidebar campaign={live.campaign || { id: campaignId }}
+        characters={live.characters} selectedId={selectedId}
+        setSelectedId={setSelectedId} presence={live.presence}
+        onOpen={character=>openGMCharacter(live.campaign,character,{tab,membership:live.membership})}/>
+    </section>:null}
     <GMRecordingParticipationNotice key={campaignId} campaignId={campaignId}/>
-    <GMUnifiedSearch campaignId={campaignId} workspace={workspace}
-      characters={rawLive.characters} itemEcosystem={live.itemEcosystem} onNavigate={openGMSearchResult}/>
-    <DashboardNavigation tabs={GM_TABS} active={tab} onChange={next=>{setGMSearchTarget(null);setGMHubDestination(null);setTab(next);}} ariaLabel="GM Dashboard menu" />
+    <DashboardNavigation role="gm" storageScope={campaignId+":"+accountUid} tabs={GM_TABS} active={tab} onChange={next=>{setGMSearchTarget(null);setGMHubDestination(null);setTab(next);}} ariaLabel="GM Dashboard menu" />
+    {tab === 'player-manager' ? <GMPlayerManager key={campaignId+':'+accountUid+':player-manager'}
+      campaignId={campaignId} campaign={live.campaign} characters={live.characters}
+      members={live.members} rosterError={live.memberRosterError}
+      membership={live.membership} uid={accountUid} presence={live.presence}
+      events={live.events} session={live.session} clock={{encounter:live.encounter,now:live.clock}}
+      onOpenCharacter={character=>openGMCharacter(live.campaign,character,{tab,membership:live.membership})}
+      onSelectCharacter={setSelectedId} onNavigate={openGMHubLink}/> : null}
     {tab === 'bestiary' ? <GMNpcCreatureLibrary key={campaignId+':'+accountUid+':bestiary'}
       workspace={workspace} saveSection={saveSection} campaignId={campaignId} characters={live.characters} searchTarget={gmSearchTarget}
-      onOpenEncounter={()=>setTab('main')} onOpenWorld={()=>setTab('world')} /> : null}
+      onOpenEncounter={()=>setTab('combat')} onOpenWorld={()=>setTab('world')} /> : null}
     {tab === 'toolkit' ? <>
       <GMToolkitHub key={campaignId+':'+accountUid}
         session={live.session} characters={live.characters} workspace={workspace}
@@ -806,37 +887,40 @@ export function GMDashboard({ campaignId }) {
       <GMPartyControl key={campaignId+':'+accountUid+':party'} campaign={live.campaign}
         characters={live.characters} selectedId={selectedId} onSelect={setSelectedId}
         onNavigate={openGMHubLink}
-        onOpenCharacter={character=>openGMCharacter(live.campaign,character,{tab})}/>
+        onOpenCharacter={character=>openGMCharacter(live.campaign,character,{tab,membership:live.membership})}/>
     </> : null}
-    {tab === 'main' ? <>
-      <GMToolkitQuickAccess onNavigate={openGMHubLink}/>
-      <GMFocusModes key={campaignId+':'+accountUid} layout={savedDashboardLayout}
-        onCommit={commitGMFocus} disabled={!accountUid||!dashboardLayoutReady||savingDashboardSettings}/>
-      <DashboardLayoutWorkspace key={campaignId+':'+accountUid} role="gm" title="GM Main Dashboard"
-      layout={savedDashboardLayout} canEdit={Boolean(accountUid)} onSave={saveDashboardLayout} renderPanel={gmPanel}
-      defaultContent={<div className="react-gm-main-grid">
-        <RestRequestsPanel campaignId={campaignId} characters={live.characters} editable={live.session?.editable}/>
-        <CampaignEncounter campaignId={campaignId} campaign={live.campaign} campaignNPCs={live.gmWorkspace?.world?.npcs} campaignCreatures={live.gmWorkspace?.world?.creatures||[]} characters={live.characters} encounter={live.encounter} combatState={live.gmWorkspace?.combatState}/>
-        <XPDistribution campaignId={campaignId} characters={live.characters} events={live.events}/>
-        <SpecialDamageControl campaignId={campaignId} characters={live.characters} encounter={live.encounter}/>
-      </div>}
-    />
-    </> : null}
+    {tab === 'main' ? <CanvasWorkspace key={campaignId+':'+accountUid+':gm-main'}
+        uid={accountUid} campaignId={campaignId}
+        canvasConfig={GM_DASHBOARD_CANVAS_CONFIG} layoutValue={gmCanvasLayout}
+        onSaveLayout={saveGMCanvas}>
+        {GM_DASHBOARD_CANVAS_CONFIG.ids.map(id=><CombatCommandPanel id={id} key={id}>
+          {gmPanel(id)}
+        </CombatCommandPanel>)}
+      </CanvasWorkspace> : null}
     {tab === 'settings' ? <div className="react-settings-workspace">
-      <Panel title="GM Dashboard Settings" action={<StatusPill>{visibleDashboardPanels(dashboardSettingsDraft,'gm').length} panels</StatusPill>}>
-        <p className="react-help">Manage all GM dashboard panels here. The party/resource sidebar and dashboard navigation remain fixed.</p>
-        <DashboardLayoutEditor role="gm" layout={dashboardSettingsDraft} onChange={updateDashboardSettingsDraft} onApply={applyGMLayout} disabled={!accountUid||savingDashboardSettings}/>
-        <div className="react-settings-save">
-          <button type="button" className="primary" disabled={!accountUid||savingDashboardSettings} onClick={saveDashboardSettings}>{savingDashboardSettings?'Saving...':'Save Dashboard Settings'}</button>
-        </div>
-        <p role="status">{dashboardSettingsMessage}</p>
+      <Panel title="GM Dashboard Settings">
+        <p className="react-help">The GM Main Dashboard now uses the freeform
+          canvas instead of the old grid layout editor. Use the + icon in
+          the top-left of that canvas to add or remove windows. Drag titles
+          to move them, resize from the edges, and use the toolbar to
+          focus, lock, undo, redo or fit your workspace.</p>
+        <button type="button" onClick={()=>setTab('main')}>Open GM Canvas</button>
+        {dashboardLayoutError?<p role="alert">{dashboardLayoutError}</p>:null}
       </Panel>
       <GMLayoutBackup key={campaignId+':'+accountUid+':backup'} layout={savedDashboardLayout}
         onRestore={commitGMFocus}
         disabled={!accountUid||!dashboardLayoutReady||savingDashboardSettings}/>
-
     </div> : null}
     {dashboardLayoutError?<p role="alert">{dashboardLayoutError}</p>:null}
+    {tab === 'combat' ? <GMCombatWorkspace key={campaignId+':'+accountUid+':combat'}
+      api={combatApi} campaignId={campaignId} uid={accountUid} mediaApi={combatMediaApi}
+      onNavigate={setTab} legacyEncounter={live.encounter}
+      legacyCharacters={live.characters} legacyCombatState={live.gmWorkspace?.combatState}
+      renderPartyResources={({order,onReorder})=><PartySidebar embedded
+        campaign={live.campaign||{id:campaignId}} characters={live.characters}
+        selectedId={selectedId} setSelectedId={setSelectedId} presence={live.presence}
+        order={order} onReorder={onReorder} onFocus={openCanvasCharacter}
+        onOpen={character=>openGMCharacter(live.campaign,character,{tab,membership:live.membership})}/>}/> : null}
     {tab === 'inventory' ? <><GMTradeLootHub overview={gmTradeHub} onNavigate={openGMHubLink}/><PCInventory campaignId={campaignId} characters={live.characters} selectedId={selectedId} onSelect={setSelectedId} editable={live.session?.editable} rewards={<><section id="react-gm-inventory-audit" tabIndex={-1}><GMInventoryAuditWorkspace characters={live.characters} events={live.events}/></section><LootRewards campaignId={campaignId} characters={live.characters} events={live.events} customItems={live.customItems}/><GMRewardTools campaignId={campaignId} characters={live.characters} events={live.events} workspace={workspace} saveSection={saveSection} customItems={live.customItems} editable={live.session?.editable}/><section id="react-gm-party-loot" tabIndex={-1}><GMPartyLootPanel campaignId={campaignId} characters={live.characters} partyLoot={live.partyLoot} customItems={live.customItems} editable={live.session?.editable}/></section></>}/></> : null}
     {tab === 'information' ? <CampaignInformationWorkspace campaignId={campaignId} campaign={live.campaign} workspace={workspace} characters={live.characters}/> : null}
     {tab === 'quests' ? <QuestWorkspace campaignId={campaignId} workspace={workspace} characters={live.characters} saveSection={saveSection} searchTarget={gmSearchTarget}/> : null}
@@ -844,19 +928,27 @@ export function GMDashboard({ campaignId }) {
     {tab === 'session-library' ? <GMSessionLibraryWorkspace campaignId={campaignId}/> : null}
     {tab === 'soundboard' ? <GMCampaignSoundboard campaignId={campaignId}/> : null}
     {tab === 'session-recordings' ? <GMSessionRecordingWorkspace campaignId={campaignId} session={live.session}/> : null}
-    {tab === 'presentation' ? <GMPlayerPresentationWorkspace campaignId={campaignId} characters={live.characters}/> : null}
+    {tab === 'presentation' ? <GMPlayerPresentationWorkspace campaignId={campaignId} characters={live.characters} onNavigate={setTab}/> : null}
     {tab === 'economy' ? <><GMTradeLootHub overview={gmTradeHub} onNavigate={openGMHubLink}/><EconomyWorkspace campaignId={campaignId} workspace={workspace} characters={live.characters} itemEcosystem={live.itemEcosystem} customItems={live.customItems} saveSection={saveSection} searchTarget={gmSearchTarget}/></> : null}
     {tab === 'crafting' ? <CraftingWorkspace campaignId={campaignId} workspace={workspace} characters={live.characters} saveSection={saveSection}/> : null}
     <GMUniversalCheckNotification campaignId={campaignId} onOpen={()=>setTab('tools')}/>
-    {tab === 'tools' ? <div className="react-gm-tools-grid"><GMUniversalCheckManager campaignId={campaignId} characters={live.characters}/>{live.characters[selectedId]?<><ConditionsPanel campaignId={campaignId} character={live.characters[selectedId]} isGM editable={live.session?.editable} clock={{encounter:live.encounter,now:live.clock}}/><ResourceRulesPanel key={selectedId} campaignId={campaignId} character={live.characters[selectedId]} editable={live.session?.editable}/></>:null}<CampaignManagerWorkspace campaignId={campaignId} campaign={live.campaign} characters={live.characters} session={live.session} workspace={workspace} saveSection={saveSection}/><ACInspectionPanel campaignId={campaignId} characters={live.characters} selectedId={selectedId} setSelectedId={setSelectedId}/><PlayerManagementTools campaignId={campaignId} characters={live.characters}/><MagicElementRewards campaignId={campaignId} characters={live.characters} events={live.events} /><GMRewardTools campaignId={campaignId} characters={live.characters} events={live.events} workspace={workspace} saveSection={saveSection} customItems={live.customItems} editable={live.session?.editable}/></div> : null}
+    {tab === 'tools' ? <div className="react-gm-tools-grid"><GMUniversalCheckManager campaignId={campaignId} characters={live.characters} online={live.online&&!live.error}/>{live.characters[selectedId]?<><ConditionsPanel campaignId={campaignId} character={live.characters[selectedId]} isGM editable={live.session?.editable} online={live.online&&!live.error} clock={{encounter:live.encounter,now:live.clock}}/><ResourceRulesPanel key={selectedId} campaignId={campaignId} character={live.characters[selectedId]} editable={live.session?.editable} online={live.online&&!live.error}/></>:null}<CampaignManagerWorkspace campaignId={campaignId} campaign={live.campaign} characters={live.characters} members={live.members} rosterError={live.memberRosterError} session={live.session} workspace={workspace} saveSection={saveSection}/><ACInspectionPanel campaignId={campaignId} characters={live.characters} selectedId={selectedId} setSelectedId={setSelectedId}/><PlayerManagementTools campaignId={campaignId} characters={live.characters}/><MagicElementRewards campaignId={campaignId} characters={live.characters} events={live.events} /><GMRewardTools campaignId={campaignId} characters={live.characters} events={live.events} workspace={workspace} saveSection={saveSection} customItems={live.customItems} editable={live.session?.editable}/></div> : null}
     {tab === 'gameplay' ? <GameplayWorkspace campaignId={campaignId} workspace={workspace} partyWorkspace={live.partyWorkspace} characters={live.characters} saveSection={saveSection}/> : null}
     {tab === 'world' ? <WorldWorkspace workspace={workspace} saveSection={saveSection} searchTarget={gmSearchTarget}/> : null}
     {tab === 'battle-maps' ? <GMBattleMapManager campaignId={campaignId} characters={live.characters} encounter={live.encounter} searchTarget={gmSearchTarget}/> : null}
     {tab === 'advanced-dice' ? <AdvancedDiceWorkspace role="gm"/> : null}
     {tab === 'random-tables' ? <GMRandomTableWorkspace key={campaignId} campaignId={campaignId} searchTarget={gmSearchTarget}/> : null}
-    {tab === 'encounter-rewards' ? <GMEncounterRewardWorkspace key={campaignId} campaignId={campaignId} encounter={live.encounter} searchTarget={gmSearchTarget} onOpenEncounter={()=>setTab('main')} onOpenLoot={()=>setTab('inventory')}/> : null}
+    {tab === 'encounter-rewards' ? <GMEncounterRewardWorkspace key={campaignId} campaignId={campaignId} encounter={live.encounter} searchTarget={gmSearchTarget} onOpenEncounter={()=>setTab('combat')} onOpenLoot={()=>setTab('inventory')}/> : null}
     {tab === 'asteria-calendar' ? <AsteriaCalendarWorkspace key={campaignId} campaignId={campaignId} workspace={workspace}/> : null}
     {tab === 'weather-environment' ? <GMWeatherEnvironmentWorkspace key={campaignId} campaignId={campaignId}/> : null}
     {tab === 'world-atlas' ? <GMWorldAtlasWorkspace key={campaignId} campaignId={campaignId} searchTarget={gmSearchTarget}/> : null}
+    {(tab==='combat'||tab==='main')&&canvasCharacterId&&live.characters[canvasCharacterId]&&
+      window.AsteriaCharacterAccess?.canGMView(live.campaign,live.characters[canvasCharacterId],accountUid,live.membership)?
+      <Modal title={(live.characters[canvasCharacterId]?.name||'Character')+' — Player Dashboard'}
+        eyebrow="GM Character Inspection" onClose={()=>setCanvasCharacterId('')}>
+        <div className="react-canvas-character-dashboard" data-testid="gm-canvas-character-dashboard">
+          <CharacterDashboard campaignId={campaignId} characterId={canvasCharacterId} embedded/>
+        </div>
+      </Modal>:null}
   </AsteriaAppShell>;
 }

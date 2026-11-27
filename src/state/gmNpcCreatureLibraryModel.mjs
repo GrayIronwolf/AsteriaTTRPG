@@ -1,3 +1,4 @@
+import {enemyProfileSnapshot} from './enemyProfileModel.mjs';
 /**
  * Digital GM Toolkit Phase 3.1 — NPC & Creature Library.
  * Existing campaign NPCs remain in world.npcs. Custom creatures live in
@@ -15,6 +16,7 @@ const numericFields=Object.freeze(['hp','sp','mp','ac','initiative','xpReward'])
 const safeArray=value=>Array.isArray(value)?value:[];
 const short=(value,max=120)=>String(value??'').trim().replace(/\s+/g,' ').slice(0,max);
 const isRecord=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
+const safeProfile=row=>{try{return enemyProfileSnapshot(row);}catch{return {};}};
 
 export function libraryCollectionKey(kind){
   return kind==='npc'?'npcs':kind==='creature'?'creatures':null;
@@ -27,7 +29,8 @@ export function libraryDraft(kind='npc',entry={}){
     ...Object.fromEntries(Object.keys(optionalText).map(key=>[key,String(row[key]??'')])),
     ...Object.fromEntries(numericFields.map(key=>[
       key,row[key]===undefined||row[key]===null?'':String(Array.isArray(row[key])?(row[key][1]??''):row[key])
-    ]))
+    ])),
+    ...safeProfile(row)
   };
 }
 export function libraryEncounterReady(row={}){
@@ -67,6 +70,8 @@ export function buildGMLibraryRecord(kind,draft,id,existing={}){
       return {ok:false,error:'Enter a valid '+key.toUpperCase()+' value.'};
     record[key]=value;
   }
+  try{Object.assign(record,enemyProfileSnapshot(draft));}
+  catch(error){return {ok:false,error:error.message};}
   // Never store a client-supplied publisher permission or compendium identity
   // in a campaign-created NPC/Creature.
   delete record.published;delete record.gmOnly;delete record.visibility;

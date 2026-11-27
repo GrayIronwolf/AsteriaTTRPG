@@ -1,0 +1,33 @@
+name: Milestone 3.6 - Final gameplay and recovery acceptance
+on:
+  pull_request:
+    branches: [Website-Build-Test]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  acceptance:
+    name: Verify physical dice, live visibility, reconnection and recovery
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Run final Milestone 3.6 acceptance and prior milestone regressions
+        run: |
+          node --test scripts/milestone-3-6-final-acceptance.test.mjs \
+            scripts/milestone-3-6-hybrid-recovery.test.mjs \
+            scripts/milestones-1-2-3-cross-system-audit.test.mjs \
+            scripts/site-phase7-share-present.test.mjs \
+            scripts/site-combat-final-phase6-9.test.mjs \
+            scripts/milestone2-5-integration.test.mjs
+      - run: npm run lint
+      - run: npm run build
+      - name: Verify generated website bundles match the source
+        run: git diff --exit-code -- react-dist data/compendium.js data/compendium-handbook.js data/compendium-index.js data/compendium-parts

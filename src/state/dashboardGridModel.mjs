@@ -31,7 +31,8 @@ export const DASHBOARD_GRID_RULES=Object.freeze({
     shortcutInventory:shortcut,shortcutQuest:shortcut,shortcutCharacter:shortcut,
     shortcutSpells:shortcut,shortcutGallery:shortcut,shortcutSettings:shortcut,
     combatOverview:rule(3,3,4,4,8,7),explorationOverview:rule(3,3,4,4,8,7),
-    questTracker:rule(3,3,4,4,8,8),inventoryOverview:rule(3,3,4,4,8,7)
+    questTracker:rule(3,3,4,4,8,8),inventoryOverview:rule(3,3,4,4,8,7),
+    worldContext:rule(3,3,4,4,8,7),battleMap:rule(3,3,5,5,12,10)
   }),
   gm:Object.freeze({
     restRequests:rule(3,3,4,3,8,6),

@@ -42,8 +42,11 @@ function validateCreate(input){
   ensure(input.type!=='opposed'||input.dc===0,'Opposed checks compare participant totals, not a DC.');
   ensure(!input.rankOverride||typeof input.rankOverride==='string','Invalid rank override.');
   ensure(!input.modifiers||Array.isArray(input.modifiers),'Invalid modifiers.');
-  const requiredSuccesses=input.type==='group'?Number(input.requiredSuccesses||Math.ceil(ids.length/2)):0;
-  ensure(!requiredSuccesses||(Number.isInteger(requiredSuccesses)&&requiredSuccesses>=1&&requiredSuccesses<=ids.length),
+  const requiredSuccesses=input.type==='group'
+    ?(input.requiredSuccesses===undefined||input.requiredSuccesses===null||input.requiredSuccesses===0
+      ?Math.ceil(ids.length/2):input.requiredSuccesses):0;
+  ensure(input.type!=='group'||(Number.isSafeInteger(requiredSuccesses)&&
+    requiredSuccesses>=1&&requiredSuccesses<=ids.length),
     'Invalid group success threshold.');
   return {ids,requiredSuccesses};
 }
@@ -63,8 +66,8 @@ export async function universalCheckAction(db,uid,input,stamp=()=>new Date()){
     ensure(campaignSnap.exists,'Campaign not found.');
     const campaign=campaignSnap.data();
     const membership=await readCampaignMember(tx,db,campaignId,campaign,uid);
-    ensure(isCampaignMember(campaign,uid,membership),'Campaign membership required.');
-    const gm=isCampaignGM(campaign,uid,membership);
+    ensure(isCampaignMember(campaign,uid,membership,campaignId),'Campaign membership required.');
+    const gm=isCampaignGM(campaign,uid,membership,campaignId);
     const previous=await tx.get(receiptRef);
     if(previous.exists){
       ensure(previous.data().signature===digest,'Operation ID was reused for different input.');
@@ -92,7 +95,7 @@ export async function universalCheckAction(db,uid,input,stamp=()=>new Date()){
         ensure(snap.exists&&isLinkedCharacter(campaign,id,snap.data(),campaignId),'Character is not linked.');
         const character=snap.data(),ownerUid=character.ownerUid;
         ensure(identifier(ownerUid),'Linked character has no owner.');
-        ensure(isCampaignMember(campaign,ownerUid,ownerMemberships.get(ownerUid)||null),'Target owner is not an active campaign member.');
+        ensure(isCampaignMember(campaign,ownerUid,ownerMemberships.get(ownerUid)||null,campaignId),'Target owner is not an active campaign member.');
         const modifier=universalAutomaticModifiers(character,{
           type:input.type,skill:safeText(input.skill,100),characteristic:input.characteristic,
           rankOverride:input.rankOverride,modifiers:input.modifiers,

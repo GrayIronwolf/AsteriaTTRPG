@@ -13,6 +13,8 @@ import {issueAccountBoundFriendInvitation,validateAccountBoundInvitation}
   from '../functions/campaignFriendInvitations.mjs';
 import {previewSecureCampaignInvitation,acceptSecureCampaignInvitation}
   from '../functions/campaignInvitationAcceptance.mjs';
+import {reviewCampaignJoinRequest} from '../functions/campaignJoinApproval.mjs';
+import {listCampaignNotifications} from '../functions/campaignNotifications.mjs';
 import {changeSecureCampaignInvitation}
   from '../functions/campaignInvitationManager.mjs';
 
@@ -302,4 +304,30 @@ test('revoked, expired, disabled gate, member, pending review and v1 fail closed
    'account-invite-req-00008'),/unavailable/);
  await assert.rejects(friendIssue('carol','Poppa_J#52816',
    'account-invite-req-00009'),/unavailable/);
+});
+
+
+test('4.2 concurrent account invitations lead to one notification, join request and approved roster member',async()=>{
+ const send=requestId=>friendIssue('alice','Poppa_J#52816',requestId,{notificationsEnabled:true});
+ const [first,second]=await Promise.all([send('owner-invite-tab-one'),send('owner-invite-tab-two')]);
+ assert.equal(first.inviteId,second.inviteId);
+ assert.notEqual(first.alreadyIssued,second.alreadyIssued);
+ const inbox=await listCampaignNotifications(db,'bob');
+ assert.deepEqual(inbox.notifications.map(n=>n.kind),['friend-invitation']);
+ const args={campaignId,inviteId:inbox.notifications[0].inviteId};
+ const opts=inviteOptions({notificationsEnabled:true,notificationOnly:true});
+ assert.equal((await previewSecureCampaignInvitation(db,{uid:'bob'},args,opts)).status,'available');
+ assert.equal((await acceptSecureCampaignInvitation(db,{uid:'bob'},args,opts)).status,'pending');
+ assert.equal((await previewSecureCampaignInvitation(db,{uid:'bob'},args,opts)).status,'pending');
+ assert.equal((await db.doc('campaigns/'+campaignId+'/members/bob').get()).exists,false);
+ assert.deepEqual((await listCampaignNotifications(db,'alice')).notifications.map(n=>n.kind),['join-request']);
+ await reviewCampaignJoinRequest(db,'alice',{
+   campaignId,requestUid:'bob',expectedRevision:1,decision:'approve'
+ },{notificationsEnabled:true,now});
+ assert.equal((await db.doc('campaigns/'+campaignId+'/members/bob').get()).data().role,'player');
+ assert.equal((await db.doc('campaignMemberProjections/bob/campaigns/'+campaignId).get()).data().status,'active');
+ assert.equal((await db.collection('campaigns/'+campaignId+'/characterLinks').get()).size,0);
+ assert.equal((await db.collection('campaigns/'+campaignId+'/characters').get()).size,0);
+ assert.equal((await previewSecureCampaignInvitation(db,{uid:'bob'},args,opts)).status,'approved');
+ assert.ok((await listCampaignNotifications(db,'bob')).notifications.some(n=>n.kind==='join-approved'));
 });

@@ -1,5 +1,6 @@
 import React,{useEffect,useMemo,useState} from 'react';
 import {GMNpcGenerator} from './GMNpcGenerator.jsx';
+import {CreatureProfileEditor} from './CreatureProfileEditor.jsx';
 import {GMContextCheckLauncher} from './GMContextCheckLauncher.jsx';
 import {GMCharacterCardStudio,GMCharacterCardPreview} from './GMCharacterCards.jsx';
 import {updateGMLibraryCard} from '../state/gmCharacterCardModel.mjs';
@@ -189,6 +190,8 @@ export function GMNpcCreatureLibrary({workspace={},saveSection,onOpenEncounter,o
     {editing?<form className="react-gm-library-editor" onSubmit={save}>
       <header><h3>{editing.id?'Edit':'Add'} {editing.kind==='npc'?'Campaign NPC':'Custom Creature'}</h3>
         <button type="button" disabled={busy} onClick={cancel}>Cancel</button></header>
+      <details className="react-gm-library-stats" open>
+        <summary>General Information</summary>
       <div className="react-gm-library-fields">
         <label>Name <input required maxLength={120} value={draft.name} disabled={busy}
           onChange={event=>setField('name',event.target.value)} /></label>
@@ -200,8 +203,9 @@ export function GMNpcCreatureLibrary({workspace={},saveSection,onOpenEncounter,o
               onChange={event=>setField(key,event.target.value)}/>}
         </label>)}
       </div>
-      <fieldset className="react-gm-library-stats">
-        <legend>Optional encounter statistics</legend>
+      </details>
+      <details className="react-gm-library-stats" open>
+        <summary>Statistics</summary>
         <p>HP and XP are required only if you want the record available to the encounter search.</p>
         <div>
           {statFields.map(([key,label])=><label key={key}>{label}
@@ -209,7 +213,8 @@ export function GMNpcCreatureLibrary({workspace={},saveSection,onOpenEncounter,o
               value={draft[key]} disabled={busy} onChange={event=>setField(key,event.target.value)}/>
           </label>)}
         </div>
-      </fieldset>
+      </details>
+      <CreatureProfileEditor draft={draft} setField={setField} disabled={busy}/>
       <div className="react-gm-library-editor-actions">
         <button type="submit" className="primary" disabled={busy||!draft.name.trim()}>
           {busy?'Saving...':'Save to Campaign Library'}</button>
@@ -240,7 +245,7 @@ export function GMNpcCreatureLibrary({workspace={},saveSection,onOpenEncounter,o
             </button>:null}
           {!row.official?<p className="react-gm-library-encounter">
             {libraryEncounterReady(row)?
-              'Encounter ready — searchable on the GM Main encounter board.':
+              'Encounter ready — available in the Combat Command Centre.':
               'Encounter stats incomplete — saved for world and story use.'}
           </p>:<p className="react-gm-library-encounter">Read-only official entry; see the Asteria Compendium for full details.</p>}
         </div>}

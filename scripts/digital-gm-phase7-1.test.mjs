@@ -123,8 +123,8 @@ test('UI, callable, private Firestore rule and dashboard navigation are wired to
   assert.match(gm,/AdvancedDiceWorkspace role="gm"/);
   assert.match(player,/AdvancedDiceWorkspace role="player"/);
   assert.match(toolkit,/id:'advanced-dice'/);
-  assert.match(ui,/Roll digital dice/);
-  assert.match(ui,/Save preset/);
-  assert.match(ui,/Clear roll history/);
+  assert.match(ui,/Roll All/);
+  assert.match(ui,/onClick=\{savePreset\}/);
+  assert.match(ui,/Clear private roll history/);
   assert.doesNotMatch(ui,/Math\.random/);
 });

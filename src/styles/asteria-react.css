@@ -1831,32 +1831,7 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 }
 .react-character-dashboard .react-workspace-main > .react-session-gate span { font-size: .62rem; }
 
-.react-character-dashboard .react-workspace-main > .react-tabs {
-  display: flex;
-  min-height: 43px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scrollbar-width: none;
-}
-.react-character-dashboard .react-workspace-main > .react-tabs::-webkit-scrollbar { display: none; }
-.react-character-dashboard .react-workspace-main > .react-tabs button {
-  flex: 1 0 auto;
-  min-width: 82px;
-  min-height: 42px;
-  padding: 6px 8px;
-  white-space: nowrap;
-  transition: color 180ms ease, background 180ms ease, box-shadow 180ms ease;
-}
-.react-character-dashboard .react-workspace-main > .react-tabs button .asteria-icon { width: 16px; height: 16px; }
-.react-character-dashboard .react-workspace-main > .react-tabs button.active { color: var(--asteria-text-primary); background: color-mix(in srgb, var(--asteria-accent, #1f7dff) 15%, rgba(0, 0, 0, .7)); }
 
-.react-player-overview-grid {
-  display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 9px;
-  align-items: stretch;
-}
-.react-player-overview-grid > .react-dashboard-panel { padding: 11px; }
 .react-overview-armour { grid-column: span 5; min-height: 286px; }
 .react-overview-weapons { grid-column: span 4; min-height: 286px; }
 .react-overview-quick { grid-column: span 3; min-height: 286px; }
@@ -1989,8 +1964,6 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
   .react-player-topbar { grid-template-columns: 1fr; }
   .react-player-topbar > .react-player-topbar-section { grid-column: 1; border-top: 1px solid var(--dashboard-line-soft); border-left: 0 !important; }
   .react-player-topbar > .react-player-identity-level { border-top: 0; }
-  .react-player-overview-grid { grid-template-columns: 1fr; }
-  .react-player-overview-grid > .react-dashboard-panel { grid-column: 1; min-height: 0; }
   .react-armour-layout { min-height: 240px; }
   .react-ability-grid,
   .react-dashboard-skill-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -2208,8 +2181,6 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 .react-segmented-actions button { text-transform:capitalize; }
 .react-world-tabs button.active,
 .react-segmented-actions button.active { border-color:var(--asteria-accent,#1f7dff); background:var(--asteria-button-active-bg,rgba(31,125,255,.18)); }
-.react-gm-dashboard .react-workspace-main > .react-tabs { display:flex; overflow-x:auto; overflow-y:hidden; scrollbar-width:thin; }
-.react-gm-dashboard .react-workspace-main > .react-tabs button { flex:1 0 132px; min-width:132px; }
 
 @media (max-width:1100px) {
   .react-gm-workspace-grid,
@@ -2287,10 +2258,8 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 .react-core-table table { width:100%; border-collapse:collapse; font-size:.85rem; }
 .react-core-table caption { text-align:left; padding:6px 0; }
 .react-core-table th, .react-core-table td { text-align:left; padding:8px; border-bottom:1px solid rgba(255,255,255,.12); }
-.react-player-overview-grid > .react-core-effects { grid-column:span 6; }
 .react-gm-tools-grid > .react-core-conditions { grid-column:auto; }
 .react-core-rest-request { display:grid; gap:10px; }
-@container (max-width:900px) { .react-player-overview-grid > .react-core-effects { grid-column:1 / -1; } }
 @media (max-width:640px) { .react-core-form { grid-template-columns:1fr; } .react-core-effect-row { grid-template-columns:1fr 1fr; } .react-core-condition summary { display:grid; } }
 
 /* Canonical talents presented as connected class / tier / talent / rank bubbles. */
@@ -2401,24 +2370,6 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 .react-unassigned-dashboard p { margin:8px 0; }
 
 
-/* Shared dashboard menu and roster interaction refinements. */
-.react-character-dashboard .react-workspace-main > .react-tabs,
-.react-gm-dashboard .react-workspace-main > .react-tabs {
-  scroll-padding-inline: 12px;
-  overscroll-behavior-inline: contain;
-  -webkit-overflow-scrolling: touch;
-}
-.react-character-dashboard .react-workspace-main > .react-tabs {
-  scrollbar-width: thin;
-  scrollbar-color: var(--asteria-border-active) transparent;
-}
-.react-character-dashboard .react-workspace-main > .react-tabs::-webkit-scrollbar {
-  display: block;
-  height: 5px;
-}
-.react-character-dashboard .react-workspace-main > .react-tabs::-webkit-scrollbar-thumb {
-  background: var(--asteria-border-active);
-}
 .react-gm-dashboard .react-party-card {
   cursor: default;
 }
@@ -2442,10 +2393,6 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
   border-color: var(--asteria-border-active);
 }
 @media (max-width: 560px) {
-  .react-character-dashboard .react-workspace-main > .react-tabs button,
-  .react-gm-dashboard .react-workspace-main > .react-tabs button {
-    min-height: 48px;
-  }
   .react-gm-dashboard .react-party-list {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -4144,4 +4091,628 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
   .react-crafting-request-history summary {
     min-height: 44px;
   }
+}
+
+/* GM party resources now occupy a full-width row below the campaign session header.
+   This replaces the old fixed left sidebar arrangement without changing cards or services. */
+.react-gm-dashboard.react-workspace-shell.no-sidebar{grid-template-columns:minmax(0,1fr)}
+.react-gm-dashboard .react-workspace-main{width:100%;min-width:0}
+.react-gm-dashboard .react-gm-party-strip{width:100%;min-width:0}
+.react-gm-dashboard .react-gm-party-strip .react-party-sidebar{
+  width:100%;max-height:none;align-self:stretch;min-width:0
+}
+.react-gm-dashboard .react-gm-party-strip .react-party-list{
+ display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));
+ width:100%;gap:12px;min-height:0;max-height:none;overflow:visible;
+ padding-right:0;align-items:stretch
+}
+.react-gm-dashboard .react-gm-party-strip .react-party-card{
+ min-width:0;height:100%;min-height:0;padding:14px;gap:10px
+}
+@media(max-width:700px){
+ .react-gm-dashboard .react-gm-party-strip .react-party-list{
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr))}
+}
+@media(max-width:460px){
+ .react-gm-dashboard .react-gm-party-strip .react-party-list{
+  grid-template-columns:minmax(0,1fr)}
+}
+
+
+/* Existing GM party cards become the movable Combat Resources window in Phase 1.
+   The fixed strip continues only on non-combat pages until the main-dashboard migration. */
+.react-party-card-header{display:grid;grid-template-columns:64px minmax(0,1fr) auto;
+ align-items:start;gap:12px;min-width:0}
+.react-party-card-portrait{display:grid;place-items:center;width:64px;height:78px;
+ overflow:hidden;flex:none;border:1px solid #7f909c;border-radius:4px;
+ background:#101c28;color:#d7e4e9;font:700 1.5rem Georgia,serif}
+.react-party-card-portrait img{display:block;width:100%;height:100%;
+ object-fit:cover;object-position:center top}
+.react-party-card-identity{min-width:0}
+.react-party-card-identity .react-party-name{align-items:flex-start;gap:6px}
+.react-party-card-identity .react-party-name b{overflow-wrap:anywhere}
+.react-party-reorder{width:34px;min-width:34px;height:34px;padding:0;
+ display:grid;place-items:center;border:1px solid #8494a1;border-radius:4px;
+ background:linear-gradient(180deg,#3f505d,#121e29 58%,#2b3b47);
+ color:#eff5f6;font:700 1.25rem/1 sans-serif;cursor:grab;touch-action:none}
+.react-party-reorder:active{cursor:grabbing}
+.react-party-reorder:focus-visible{outline:2px solid var(--asteria-accent);
+ outline-offset:2px}
+.react-gm-dashboard .react-party-sidebar-in-canvas{padding:0;min-height:0;
+ background:transparent;border:0;box-shadow:none;width:100%;display:block}
+.react-gm-dashboard .react-party-sidebar-in-canvas>.react-party-list{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;
+ width:100%;min-height:0;overflow:visible;align-items:stretch
+}
+.react-gm-dashboard .react-party-sidebar-in-canvas .react-party-card{
+ min-width:0;width:100%;height:auto;min-height:340px;padding:12px;
+ display:grid;align-content:space-between;gap:12px;cursor:default;
+ box-sizing:border-box;position:relative;
+ background:linear-gradient(150deg,#162333,#08111c 65%);
+ border:1px solid #72808c;box-shadow:inset 0 1px 0 rgb(255 255 255 / .08);
+ transition:border-color 160ms ease,box-shadow 160ms ease,opacity 160ms ease
+}
+.react-gm-dashboard .react-party-sidebar-in-canvas .react-party-card-header{
+ display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+ gap:9px;text-align:center;position:relative;padding-top:4px
+}
+.react-gm-dashboard .react-party-sidebar-in-canvas .react-party-card-identity{
+ width:100%;min-width:0
+}
+.react-gm-dashboard .react-party-sidebar-in-canvas .react-party-name{
+ justify-content:center;align-items:center;flex-wrap:wrap;text-align:center;gap:6px
+}
+.react-gm-dashboard .react-party-sidebar-in-canvas .react-party-name>div{
+ min-width:0;width:100%
+}
+.react-gm-dashboard .react-party-sidebar-in-canvas .react-party-card-header .react-party-reorder{
+ position:absolute;top:0;right:0;width:32px;height:32px;min-width:32px;
+ touch-action:none;cursor:grab
+}
+.react-gm-dashboard .react-party-sidebar-in-canvas .react-party-card:hover{
+ border-color:var(--asteria-border-active)
+}
+.react-gm-dashboard .react-party-sidebar-in-canvas .react-resource-track{
+ height:9px
+}
+.react-gm-dashboard .react-party-sidebar-in-canvas .react-party-card.is-lifted{
+ opacity:.26;border-style:dashed;border-color:var(--asteria-border-active)
+}
+.react-gm-dashboard .react-party-sidebar-in-canvas .react-party-card.is-drop-target{
+ border-color:var(--asteria-accent);box-shadow:0 0 0 2px var(--asteria-accent-soft),
+ inset 0 1px 0 rgb(255 255 255 / .15)
+}
+.react-party-drag-overlay{
+ position:fixed;top:0;left:0;z-index:99999;pointer-events:none;
+ transform-origin:0 0;will-change:transform
+}
+.react-party-drag-overlay .react-party-card{
+ opacity:.98;transform:rotate(-.8deg) scale(1.035);
+ box-shadow:0 16px 45px rgb(0 0 0 / .65),0 0 0 2px var(--asteria-border-active)
+}
+@container combatWindow (min-width:760px){
+ .react-gm-dashboard .react-party-sidebar-in-canvas .react-party-list{
+   grid-template-columns:repeat(4,minmax(0,1fr))
+ }
+}
+@container combatWindow (min-width:1250px){
+ .react-gm-dashboard .react-party-sidebar-in-canvas .react-party-list{
+   grid-template-columns:repeat(6,minmax(0,1fr))
+ }
+}
+@container combatWindow (max-width:420px){
+ .react-gm-dashboard .react-party-sidebar-in-canvas .react-party-list{
+   grid-template-columns:minmax(0,1fr)
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ .react-gm-dashboard .react-party-sidebar-in-canvas .react-party-card{
+   transition:none
+ }
+}
+.react-modal:has(.react-canvas-character-dashboard){
+ width:min(1700px,96vw);max-width:96vw;height:min(94dvh,1100px);
+ max-height:94dvh;display:flex;flex-direction:column;box-sizing:border-box}
+.react-modal:has(.react-canvas-character-dashboard)>.react-modal-body{
+ flex:1;min-height:0;overflow:auto;overscroll-behavior:contain}
+.react-canvas-character-dashboard{min-width:0;width:100%}
+.react-canvas-character-dashboard .react-workspace-shell{min-width:0;width:100%}
+@media(max-width:600px){
+ .react-party-card-header{grid-template-columns:52px minmax(0,1fr) auto;gap:8px}
+ .react-party-card-portrait{width:52px;height:66px}
+ .react-party-reorder{width:32px;min-width:32px;height:32px}
+ .react-modal:has(.react-canvas-character-dashboard){padding:10px}
+}
+
+/* GM Main Dashboard Phase 2: quick content inside the same freeform canvas engine.
+   Legacy GM grid tiles are not mounted; the Player grid retains its existing CSS. */
+.react-gm-quick-panel{display:grid;align-content:start;gap:12px;min-width:0;
+  color:var(--asteria-text);font-size:.95rem}
+.react-gm-quick-panel p{margin:0;line-height:1.5;overflow-wrap:anywhere}
+.react-gm-quick-panel h3{margin:6px 0 0;font-size:1rem}
+.react-gm-quick-panel button{min-height:32px;max-width:100%;white-space:normal}
+.react-gm-quick-panel .react-gm-quick-row{display:flex;align-items:center;
+  justify-content:space-between;gap:8px;min-width:0;
+  border:1px solid var(--asteria-border-subtle);border-radius:5px;
+  background:rgba(15,28,41,.56);padding:8px}
+.react-gm-quick-row>div{display:grid;gap:3px;min-width:0}
+.react-gm-quick-row strong{overflow-wrap:anywhere;font-size:.88rem}
+.react-gm-quick-row small,.react-gm-quick-row span{color:var(--asteria-text-muted);
+  font-size:.77rem;overflow-wrap:anywhere}
+.react-gm-quick-list{display:grid;gap:8px;min-width:0}
+.react-gm-quick-notepad{display:block;width:100%;min-height:190px;
+  resize:vertical;box-sizing:border-box;background:var(--asteria-surface);
+  color:var(--asteria-text);border:1px solid var(--asteria-border);
+  border-radius:4px;padding:12px;line-height:1.5}
+.react-gm-quick-events{display:grid;gap:7px;list-style-position:inside;
+  margin:0;padding:0}
+.react-gm-quick-events li{display:flex;flex-wrap:wrap;justify-content:space-between;
+  align-items:start;gap:8px;padding:6px 0;
+  border-bottom:1px solid var(--asteria-border-subtle);font-size:.82rem}
+.react-gm-quick-events li span{color:var(--asteria-text-muted)}
+.react-gm-quick-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}
+.react-gm-quick-stats>div{display:grid;gap:5px;padding:10px;border:1px solid
+  var(--asteria-border-subtle);background:rgba(15,28,41,.56);border-radius:5px}
+.react-gm-quick-stats>div span{color:var(--asteria-text-muted);font-size:.73rem}
+.react-gm-quick-stats>div strong{font-size:1.04rem}
+.react-gm-dashboard [data-testid='site-gm-main-canvas']{width:100%;min-width:0}
+.react-gm-dashboard [data-testid='site-gm-main-canvas'] .react-gm-quick-panel
+ .asteria-react-panel{background:transparent;box-shadow:none;border:0;padding:0}
+.react-gm-dashboard [data-testid='site-gm-main-canvas'] .react-gm-focus{margin:0;padding:0}
+@media(max-width:720px){
+  .react-gm-quick-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+/* Player Main Dashboard Phase 3: the existing player panels live directly in
+   the shared canvas, without the old 12-column grid layout wrapper. */
+.react-character-dashboard [data-testid='site-player-main-canvas']{
+  width:100%;min-width:0;
+}
+.react-character-dashboard [data-testid='site-player-main-canvas']
+  [data-canvas-window] :where(.asteria-react-panel,.react-dashboard-panel){
+  min-width:0;max-width:100%;box-sizing:border-box;
+}
+.react-character-dashboard [data-testid='site-player-main-canvas']
+  [data-canvas-window] :where(button,input,select,textarea,img){
+  max-width:100%;box-sizing:border-box;
+}
+.react-character-dashboard [data-testid='site-player-main-canvas']
+  [data-canvas-window] :where(.react-ability-card,.react-loadout-slot,.react-dashboard-skill-grid > button){
+  min-width:0;overflow-wrap:anywhere;
+}
+@container combatWindow (max-width:640px){
+  .react-character-dashboard [data-testid='site-player-main-canvas']
+    :where(.react-ability-grid,.react-dashboard-skill-grid){
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+@container combatWindow (max-width:420px){
+  .react-character-dashboard [data-testid='site-player-main-canvas']
+    :where(.react-weapon-slot-grid,.react-quick-slot-grid,.react-dashboard-party-summary){
+    grid-template-columns: minmax(0,1fr);
+  }
+  .react-character-dashboard [data-testid='site-player-main-canvas']
+    :where(.react-ability-grid,.react-dashboard-skill-grid){
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+@container combatWindow (max-width:270px){
+  .react-character-dashboard [data-testid='site-player-main-canvas']
+    :where(.react-ability-grid,.react-dashboard-skill-grid){
+    grid-template-columns:minmax(0,1fr);
+  }
+}
+
+/* Canvas windows own the shared Royal Relic material and bevel. Avoid nested
+   frames on their immediate React panels; standalone panels are unchanged. */
+body #asteriaReactRoot [data-canvas-window] [data-combat-scroll]>div>
+  .asteria-react-panel.asteria-royal-relic{
+  padding:0!important;border:0!important;border-radius:0!important;
+  background:transparent!important;box-shadow:none!important;backdrop-filter:none!important
+}
+body #asteriaReactRoot [data-canvas-window] [data-combat-scroll]>div>
+  .asteria-react-panel.asteria-royal-relic::before,
+body #asteriaReactRoot [data-canvas-window] [data-combat-scroll]>div>
+  .asteria-react-panel.asteria-royal-relic::after{content:none!important}
+
+
+/* Milestone 2.1 - one shared Obsidian-inspired canvas shell.
+   No changes to canvas window coordinates or dimensions. */
+html[data-asteria-dashboard-header='collapsed'] .topbar.core-v2-topbar{
+  display:none!important;
+}
+html[data-asteria-dashboard-header='expanded'] .topbar.core-v2-topbar{
+  position:fixed!important;top:0;left:0;right:0;z-index:4000;
+  margin:0;max-width:none;width:100%;
+  box-shadow:0 15px 36px rgba(0,0,0,.65);
+}
+.asteria-dashboard-header-fold{
+  grid-column:1/-1;display:flex;justify-content:center;align-items:start;
+  height:26px;min-height:26px;position:relative;z-index:300;
+}
+.asteria-dashboard-header-fold button{
+  display:flex;align-items:center;gap:7px;justify-content:center;
+  min-height:26px;padding:3px 13px;cursor:pointer;
+  color:#dcecf5;background:rgba(36,62,81,.74);
+  border:1px solid #7894a5;border-top:0;border-radius:0 0 9px 9px;
+  backdrop-filter:blur(12px);font-size:.73rem;line-height:1;
+}
+.asteria-dashboard-header-fold button:focus-visible{
+  outline:2px solid #b3dcf5;outline-offset:2px;
+}
+.asteria-canvas-workspace-mode .react-workspace-main{
+  grid-template-columns:56px minmax(0,1fr);
+  column-gap:8px;row-gap:8px;align-content:start;
+}
+.asteria-canvas-workspace-mode .react-workspace-main > *{grid-column:1/-1;min-width:0}
+.asteria-canvas-workspace-mode .react-workspace-main >
+  nav[data-testid^='asteria-']{
+  grid-column:1;grid-row:auto;
+  align-self:stretch;position:relative;z-index:170;
+}
+.asteria-canvas-workspace-mode .react-workspace-main >
+  [data-testid='site-gm-main-canvas'],
+.asteria-canvas-workspace-mode .react-workspace-main >
+  :has(> [data-testid='site-gm-combat-command-centre']),
+.asteria-canvas-workspace-mode .react-workspace-main >
+  :has([data-testid='site-player-main-canvas']){
+  grid-column:2;min-width:0;
+}
+/* GM combat uses a wrapper which may be nested in one additional section.
+   Keep the navigation and selected view aligned in one grid row. */
+.asteria-canvas-workspace-mode .react-workspace-main >
+  nav[data-testid^='asteria-'] + *:has([data-testid*='canvas']),
+.asteria-canvas-workspace-mode .react-workspace-main >
+  nav[data-testid^='asteria-'] + *:has([data-testid='site-gm-combat-command-centre']){
+  grid-column:2;
+}
+.asteria-canvas-workspace-mode .react-workspace-header{
+  min-height:52px;padding:8px 12px;gap:12px;
+}
+.asteria-canvas-workspace-mode .react-workspace-header h1{font-size:1.3rem}
+.asteria-canvas-workspace-mode .react-workspace-header p{margin:2px 0 0}
+.asteria-canvas-workspace-mode .react-player-topbar.react-player-cinematic-hud,
+.asteria-canvas-workspace-mode .react-player-cinematic-hud.react-player-hud-no-portrait{
+  width:100%;min-height:185px;height:auto;
+  grid-template-columns:minmax(0,24fr) minmax(0,52fr) minmax(0,24fr);
+}
+.asteria-canvas-workspace-mode .react-player-cinematic-hud > .react-player-hud-art{
+  height:190px;min-height:190px;
+}
+.asteria-canvas-workspace-mode .react-player-portrait-caption,
+.asteria-canvas-workspace-mode .react-player-campaign-caption{
+  padding:9px 12px;
+}
+.asteria-canvas-workspace-mode .react-player-cinematic-hud .react-identity-copy strong,
+.asteria-canvas-workspace-mode .react-player-cinematic-hud .react-player-identity-copy strong,
+.asteria-canvas-workspace-mode .react-player-cinematic-hud .react-player-campaign-title strong{
+  font-size:clamp(1rem,1.25vw,1.45rem);
+}
+.asteria-canvas-workspace-mode .react-player-cinematic-hud .react-player-hud-information{
+  gap:5px 10px;padding:7px 12px;
+}
+.asteria-canvas-workspace-mode .react-player-hud-information .react-player-characteristic-grid{
+  grid-template-columns:repeat(9,minmax(0,1fr));
+  gap:3px;
+}
+.asteria-canvas-workspace-mode .react-player-characteristic-grid article{
+  min-height:27px;padding:2px;
+}
+.asteria-canvas-workspace-mode .react-player-cinematic-hud .react-level-shield{
+  width:44px;height:56px;padding:10px 4px 7px;
+}
+.asteria-canvas-workspace-mode .react-player-cinematic-hud .react-player-xp-content{
+  grid-template-columns:44px minmax(0,1fr);gap:5px;
+}
+.asteria-canvas-workspace-mode .react-player-hud-information .react-player-topbar-section{
+  padding:1px 2px;gap:3px;
+}
+.asteria-canvas-workspace-mode .react-player-hud-information .react-player-topbar-heading{
+  min-height:0;margin:0 0 2px;padding:0 0 2px;
+}
+.asteria-canvas-workspace-mode .react-player-resource-list{gap:1px}
+.asteria-canvas-workspace-mode .react-player-resource-controls input,
+.asteria-canvas-workspace-mode .react-player-resource-controls button{min-height:20px;height:20px}
+.asteria-canvas-workspace-mode .react-player-resources .react-resource.compact .react-resource-track{height:7px}
+/* Keep forms and tables outside the canvas constrained to readable measures. */
+.react-character-dashboard:not(.asteria-canvas-workspace-mode) .react-workspace-main
+  > .asteria-react-panel:not(.react-player-topbar),
+.react-gm-dashboard:not(.asteria-canvas-workspace-mode) .react-workspace-main
+  > .asteria-react-panel:not(.react-player-topbar){
+  min-width:0;max-width:100%;box-sizing:border-box;
+}
+.react-character-dashboard:not(.asteria-canvas-workspace-mode) .react-form-grid,
+.react-gm-dashboard:not(.asteria-canvas-workspace-mode) .react-form-grid{
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));
+}
+.react-overview-combined-weapons{margin-top:10px;padding-top:9px;border-top:1px solid #466073}
+.react-overview-combined-weapons h3{font-size:.85rem;margin:0 0 7px}
+.react-overview-combined-weapons .react-weapon-slot-grid{
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,140px),1fr));gap:6px;
+}
+@container (max-width:1100px){
+  .asteria-canvas-workspace-mode .react-player-topbar.react-player-cinematic-hud,
+  .asteria-canvas-workspace-mode .react-player-cinematic-hud.react-player-hud-no-portrait{
+    grid-template-columns:minmax(0,22fr) minmax(0,56fr) minmax(0,22fr);
+    min-height:185px;
+  }
+  .asteria-canvas-workspace-mode .react-player-cinematic-hud > .react-player-hud-art{
+    grid-row:1;min-height:185px;height:185px;
+  }
+  .asteria-canvas-workspace-mode .react-player-cinematic-hud > .react-player-hud-information{
+    grid-column:2;grid-row:1;
+  }
+}
+@media(max-width:800px){
+ .asteria-canvas-workspace-mode .react-workspace-main{grid-template-columns:1fr}
+ .asteria-canvas-workspace-mode .react-workspace-main > *{grid-column:1/-1!important}
+ .asteria-canvas-workspace-mode .react-workspace-main > nav[data-testid^='asteria-']{
+   grid-column:1/-1!important;
+ }
+ .asteria-canvas-workspace-mode .react-player-topbar.react-player-cinematic-hud{
+   height:auto;min-height:0;grid-template-columns:repeat(2,minmax(0,1fr));
+ }
+ .asteria-canvas-workspace-mode .react-player-cinematic-hud > .react-player-hud-art{
+   grid-row:1;min-height:115px;height:115px;
+ }
+ .asteria-canvas-workspace-mode .react-player-cinematic-hud > .react-player-hud-information{
+   grid-column:1/-1;grid-row:2;padding:10px;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+  .asteria-dashboard-header-fold *{transition:none!important}
+}
+
+
+/* Non-canvas pages: constrain oversized forms/cards independently from the
+   freeform canvas. Detailed maps, tables and media remain allowed to fill. */
+.react-character-dashboard:not(.asteria-canvas-workspace-mode) .react-workspace-main
+  > .react-settings-workspace,
+.react-gm-dashboard:not(.asteria-canvas-workspace-mode) .react-workspace-main
+  > .react-settings-workspace,
+.react-character-dashboard:not(.asteria-canvas-workspace-mode) .react-workspace-main
+  > .react-crafting-workspace,
+.react-gm-dashboard:not(.asteria-canvas-workspace-mode) .react-workspace-main
+  > .react-settings-workspace {
+  width:100%;max-width:1200px;box-sizing:border-box;
+}
+.react-character-dashboard:not(.asteria-canvas-workspace-mode) .react-workspace-main
+  :where(.react-form-grid,.react-settings-grid),
+.react-gm-dashboard:not(.asteria-canvas-workspace-mode) .react-workspace-main
+  :where(.react-form-grid,.react-settings-grid){
+  width:100%;max-width:1120px;
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));
+  gap:clamp(8px,1vw,14px);
+}
+.react-character-dashboard:not(.asteria-canvas-workspace-mode) .react-workspace-main
+  :where(.react-form-grid,.react-settings-grid) > *,
+.react-gm-dashboard:not(.asteria-canvas-workspace-mode) .react-workspace-main
+  :where(.react-form-grid,.react-settings-grid) > *{
+  min-width:0;max-width:100%;box-sizing:border-box;
+}
+@media(max-width:700px){
+  .react-character-dashboard:not(.asteria-canvas-workspace-mode) .react-workspace-main
+    :where(.react-form-grid,.react-settings-grid),
+  .react-gm-dashboard:not(.asteria-canvas-workspace-mode) .react-workspace-main
+    :where(.react-form-grid,.react-settings-grid){grid-template-columns:minmax(0,1fr)}
+}
+
+
+/* The older fixed site shell reserves the entire header height in main.
+   Release that space when the new dashboard fold owns header visibility. */
+html[data-asteria-dashboard-header] body .main,
+html[data-asteria-dashboard-header] body main.main,
+html[data-asteria-dashboard-header] body.workspace-active .main{
+  top:0!important;left:0!important;right:0!important;
+  width:100%!important;padding:0!important;
+  scroll-padding-top:12px;
+}
+html[data-asteria-dashboard-header] #reactDashboard,
+html[data-asteria-dashboard-header] #asteriaReactRoot{
+  width:100%!important;max-width:none!important;
+  margin-inline:0!important;box-sizing:border-box;
+}
+html[data-asteria-dashboard-header] #reactDashboard{
+  padding:clamp(3px,.45vw,8px)!important;
+}
+html[data-asteria-dashboard-header='expanded'] .asteria-dashboard-header-fold button{
+  position:fixed;top:var(--core-header-height,150px);left:50%;
+  transform:translateX(-50%);z-index:4500;
+}
+
+
+/* Milestone 2.1 visual refinement: correct the cropped HUD art and restore
+ * bottom-anchored captions without changing the approved canvas windows. */
+.asteria-canvas-workspace-mode .react-workspace-main{
+  grid-template-columns:196px minmax(0,1fr);
+  column-gap:9px;
+  row-gap:5px;
+}
+.asteria-canvas-workspace-mode .react-player-topbar.react-player-cinematic-hud,
+.asteria-canvas-workspace-mode .react-player-cinematic-hud.react-player-hud-no-portrait{
+  display:grid;
+  grid-template-columns:minmax(0,25fr) minmax(0,50fr) minmax(0,25fr);
+  grid-template-rows:190px;
+  height:190px;min-height:190px;
+  align-items:stretch;
+  overflow:hidden;
+}
+.asteria-canvas-workspace-mode .react-player-cinematic-hud > .react-player-hud-art{
+  position:relative;
+  display:block;
+  grid-row:1;
+  height:190px;min-height:0;min-width:0;
+  overflow:hidden;
+}
+.asteria-canvas-workspace-mode .react-player-cinematic-hud > .react-player-hud-portrait{
+  grid-column:1;grid-row:1;
+}
+.asteria-canvas-workspace-mode .react-player-cinematic-hud > .react-player-hud-information{
+  grid-column:2;grid-row:1;
+  min-height:0;height:190px;box-sizing:border-box;
+  display:flex;flex-direction:column;
+  justify-content:flex-start;align-items:stretch;
+  gap:7px;padding:9px 12px 8px;
+}
+.asteria-canvas-workspace-mode .react-player-cinematic-hud > .react-player-hud-campaign-art{
+  grid-column:3;grid-row:1;
+}
+.asteria-canvas-workspace-mode .react-player-cinematic-hud > .react-player-hud-art > img{
+  display:block;position:absolute;inset:0;z-index:0;
+  width:100%;height:100%;max-width:none;max-height:none;
+  object-fit:cover;
+}
+.asteria-canvas-workspace-mode .react-player-cinematic-hud > .react-player-hud-art::after{
+  z-index:1;
+}
+.asteria-canvas-workspace-mode .react-player-portrait-caption,
+.asteria-canvas-workspace-mode .react-player-campaign-caption{
+  position:absolute;inset:auto 0 0;z-index:2;
+  display:flex;flex-direction:column;justify-content:flex-end;
+  height:auto;min-height:0;max-height:100%;
+  padding:8px 11px 9px;box-sizing:border-box;
+  overflow:hidden;
+}
+.asteria-canvas-workspace-mode .react-player-portrait-caption{
+  align-items:flex-start;text-align:left;gap:3px;
+}
+.asteria-canvas-workspace-mode .react-player-campaign-caption{
+  align-items:flex-end;text-align:right;gap:3px;
+}
+.asteria-canvas-workspace-mode .react-player-portrait-caption .react-player-topbar-section,
+.asteria-canvas-workspace-mode .react-player-campaign-caption .react-player-topbar-section{
+  width:100%;min-width:0;align-content:end;
+}
+.asteria-canvas-workspace-mode .react-player-cinematic-hud .react-player-identity-copy strong,
+.asteria-canvas-workspace-mode .react-player-cinematic-hud .react-player-campaign-title strong{
+  font-size:clamp(.88rem,1.18vw,1.18rem);line-height:1.05;
+}
+.asteria-canvas-workspace-mode .react-player-portrait-caption .react-player-identity-copy > span,
+.asteria-canvas-workspace-mode .react-player-portrait-caption .react-player-identity-copy em,
+.asteria-canvas-workspace-mode .react-player-campaign-caption .react-player-campaign-facts dd,
+.asteria-canvas-workspace-mode .react-player-campaign-caption .react-player-campaign-title span{
+  font-size:clamp(.6rem,.75vw,.74rem);line-height:1.12;
+}
+.asteria-canvas-workspace-mode .react-player-portrait-caption .react-player-xp-content{
+  grid-template-columns:37px minmax(0,1fr);gap:4px;
+}
+.asteria-canvas-workspace-mode .react-player-cinematic-hud .react-level-shield{
+  width:37px;height:47px;padding:9px 4px 5px;
+}
+.asteria-canvas-workspace-mode .react-player-cinematic-hud .react-level-shield b{
+  font-size:1rem;
+}
+.asteria-canvas-workspace-mode .react-player-portrait-caption .react-player-xp{
+  margin:0;min-width:0;
+}
+.asteria-canvas-workspace-mode .react-player-portrait-caption .react-player-xp-copy{
+  gap:2px;
+}
+.asteria-canvas-workspace-mode .react-player-portrait-caption .react-player-xp-copy > :is(small,span){
+  font-size:.59rem;
+}
+.asteria-canvas-workspace-mode .react-player-campaign-caption .react-player-campaign-facts{
+  gap:2px 7px;
+}
+.asteria-canvas-workspace-mode .react-player-campaign-caption .react-connection{
+  min-width:0;gap:3px;
+}
+.asteria-canvas-workspace-mode .react-player-campaign-caption .react-connection :is(b,small){
+  font-size:.59rem;
+}
+/* The overview itself labels these sections to assistive technology.
+ * Removing the visual headings gives resources and parchment tiles room. */
+.asteria-canvas-workspace-mode .react-player-hud-information
+  > :is(.react-player-resources,.react-player-characteristics) > .react-player-topbar-heading{
+  display:none;
+}
+.asteria-canvas-workspace-mode .react-player-hud-information > .react-player-resources{
+  flex:1 1 auto;min-height:0;gap:0;padding:0;
+}
+.asteria-canvas-workspace-mode .react-player-hud-information .react-player-resource-list{
+  gap:2px;
+}
+.asteria-canvas-workspace-mode .react-player-hud-information .react-player-resource-row{
+  gap:1px;
+}
+.asteria-canvas-workspace-mode .react-player-hud-information > .react-player-characteristics{
+  flex:0 0 auto;min-width:0;gap:0;padding:0;
+}
+.asteria-canvas-workspace-mode .react-player-hud-information .react-player-characteristic-grid{
+  grid-template-columns:repeat(9,minmax(0,1fr));
+  gap:4px;
+}
+.asteria-canvas-workspace-mode .react-player-hud-information
+  .react-player-characteristic-grid .react-characteristic-paper--summary{
+  box-sizing:border-box;
+  min-width:0;min-height:48px;height:48px;
+  padding:10px 7% 7px;gap:0 2px;
+  background-size:100% 100%;
+}
+.asteria-canvas-workspace-mode .react-player-hud-information
+  .react-characteristic-paper--summary > span{font-size:.6rem}
+.asteria-canvas-workspace-mode .react-player-hud-information
+  .react-characteristic-paper--summary > strong{font-size:1.08rem}
+.asteria-canvas-workspace-mode .react-player-hud-information
+  .react-characteristic-paper--summary > small{font-size:.48rem}
+.asteria-dashboard-header-fold{
+  height:12px;min-height:12px;z-index:400;
+  align-items:flex-start;
+}
+.asteria-dashboard-header-fold button{
+  position:relative;min-height:22px;
+  background:rgba(28,51,69,.28);
+  border-color:rgba(140,183,207,.4);
+  color:rgba(226,242,250,.88);
+  backdrop-filter:blur(7px);
+  font-size:.68rem;padding:3px 12px;
+}
+.asteria-dashboard-header-fold button:hover,
+.asteria-dashboard-header-fold button:focus-visible{
+  background:rgba(28,51,69,.65);
+  border-color:rgba(169,212,235,.85);
+}
+/* Keep the source artwork in a sensible two-image stack on narrower screens. */
+@media(max-width:1000px){
+ .asteria-canvas-workspace-mode .react-player-topbar.react-player-cinematic-hud,
+ .asteria-canvas-workspace-mode .react-player-cinematic-hud.react-player-hud-no-portrait{
+   grid-template-columns:minmax(0,24fr) minmax(0,52fr) minmax(0,24fr);
+ }
+ .asteria-canvas-workspace-mode .react-player-hud-information .react-player-characteristic-grid{
+   grid-template-columns:repeat(3,minmax(0,1fr));
+ }
+ .asteria-canvas-workspace-mode .react-player-hud-information
+   .react-player-characteristic-grid .react-characteristic-paper--summary{
+   height:30px;min-height:30px;padding:4px 8%;
+ }
+}
+@media(max-width:800px){
+ .asteria-canvas-workspace-mode .react-player-topbar.react-player-cinematic-hud,
+ .asteria-canvas-workspace-mode .react-player-cinematic-hud.react-player-hud-no-portrait{
+   height:auto;min-height:0;
+   grid-template-columns:repeat(2,minmax(0,1fr));
+   grid-template-rows:190px auto;
+ }
+ .asteria-canvas-workspace-mode .react-player-cinematic-hud > .react-player-hud-portrait{
+   grid-column:1;grid-row:1;
+ }
+ .asteria-canvas-workspace-mode .react-player-cinematic-hud > .react-player-hud-campaign-art{
+   grid-column:2;grid-row:1;
+ }
+ .asteria-canvas-workspace-mode .react-player-cinematic-hud > .react-player-hud-information{
+   grid-column:1/-1;grid-row:2;
+   min-height:190px;height:auto;
+ }
+ .asteria-canvas-workspace-mode .react-player-hud-information .react-player-characteristic-grid{
+   grid-template-columns:repeat(9,minmax(0,1fr));
+ }
+}
+@media(max-width:470px){
+ .asteria-canvas-workspace-mode .react-player-hud-information .react-player-characteristic-grid{
+   grid-template-columns:repeat(3,minmax(0,1fr));
+ }
+ .asteria-canvas-workspace-mode .react-player-hud-information
+ .react-player-characteristic-grid .react-characteristic-paper--summary{
+   min-height:42px;height:42px;
+ }
 }

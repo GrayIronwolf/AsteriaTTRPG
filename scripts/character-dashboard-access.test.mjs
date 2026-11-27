@@ -66,18 +66,21 @@ test('combat sidebar is absent in setup and for nonparticipants, restores on ref
   const previous=window.__ownershipTestLive;
   window.__ownershipTestLive={...previous,campaign,character,characters:{b:character},session:{status:'active',editable:true},encounter:{status:'ready',combatants:[{id:'player-b',characterId:'b',initiative:17}],combat:{version:1,participants:{'player-b':{ap:3,bonus:true,turns:1}}}}};
   try {
-    const ready=render();assert.doesNotMatch(ready,/<aside/);assert.doesNotMatch(ready,/class="combat-panel/);
+    const ready=render();assert.doesNotMatch(ready,/<aside[^>]+aria-label="Combat controls"/);
+     assert.doesNotMatch(ready,/class="combat-panel/);
     assert.ok(ready.indexOf('react-campaign-resource-hud')<ready.indexOf('Character Dashboard menu'));
-    assert.ok(ready.indexOf('Character Dashboard menu')<ready.indexOf('react-dashboard-custom-grid'));
+    assert.ok(ready.indexOf('Character Dashboard menu')<ready.indexOf('site-player-main-canvas'));
     window.__ownershipTestLive.encounter.status='active';
     const active=render();assert.match(active,/<aside[^>]+aria-label="Combat controls"/);assert.match(active,/is-combat-mode/);assert.match(active,/END TURN/);
     assert.equal((active.match(/aria-label="HP change amount"/g)||[]).length,1);assert.doesNotMatch(active,/class="combat-resources"/);
     assert.ok(active.indexOf('Character Dashboard menu')<active.indexOf('combat-mode-layout'));
     assert.ok(active.indexOf('combat-mode-layout')<active.indexOf('combat-dashboard-main'));
     assert.ok(active.indexOf('react-campaign-resource-hud')<active.indexOf('Character Dashboard menu'));
-    assert.ok(active.indexOf('Character Dashboard menu')<active.indexOf('react-dashboard-custom-grid'));
-    window.__ownershipTestLive.encounter.combatants=[{id:'other',characterId:'other'}];assert.doesNotMatch(render(),/<aside/);
-    window.__ownershipTestLive.encounter.status='ended';assert.doesNotMatch(render(),/<aside/);
+    assert.ok(active.indexOf('Character Dashboard menu')<active.indexOf('site-player-main-canvas'));
+    window.__ownershipTestLive.encounter.combatants=[{id:'other',characterId:'other'}];
+     assert.doesNotMatch(render(),/<aside[^>]+aria-label="Combat controls"/);
+    window.__ownershipTestLive.encounter.status='ended';
+     assert.doesNotMatch(render(),/<aside[^>]+aria-label="Combat controls"/);
   } finally {window.__ownershipTestLive=previous;}
 });
 

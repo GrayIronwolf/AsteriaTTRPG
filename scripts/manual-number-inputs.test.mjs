@@ -12,11 +12,11 @@ before(async () => {
     name:'expose-input-controls-for-tests',
     transform(code,id) {
       if(id.endsWith('/DashboardInformation.jsx')) return code+'\nexport { ResourceControl, CurrencyControl };';
-      if(id.endsWith('/GMDashboard.jsx')) return code+'\nexport { EncounterInitiativeInput, EncounterResourceControl, XPDistribution, ACInspectionPanel, PlayerManagementTools };';
+      if(id.endsWith('/GMDashboard.jsx')) return code+'\nexport { XPDistribution, ACInspectionPanel, PlayerManagementTools };';
       if(id.endsWith('/GMWorkspacePanels.jsx')) return code+'\nexport { ShopManager };';
     }
   }]});
-  for(const path of ['components/ManualNumberInput','components/DashboardInformation','dashboards/GMWorkspacePanels','dashboards/GMDashboard','dashboards/PlayerItemExchange']) {
+  for(const path of ['components/ManualNumberInput','components/DashboardInformation','dashboards/GMWorkspacePanels','dashboards/GMDashboard','dashboards/PlayerItemExchange','dashboards/combat/CombatInitiativeInput']) {
     Object.assign(modules,await server.ssrLoadModule(`/src/${path}.jsx`));
   }
 });
@@ -102,7 +102,7 @@ test('blank or invalid required numbers are rejected, optional blank is explicit
   assert.equal(isManualNumber('-3'),true);assert.equal(isManualNumber('0.25',{min:0,integer:false}),true);
 });
 test('HP adjustments cannot apply an implicit 1; clearing then entering 20 applies exactly 20',async()=>{
-  const writes=[];const view=mount(modules.ResourceControl,{label:'HP',resource:'hp',value:[50,100],editable:true,onResourceChange:async(...args)=>writes.push(args)});
+  const writes=[];const view=mount(modules.ResourceControl,{label:'HP',resource:'hp',state:{current:50,maximum:100,minimum:0,cap:100,allowOverflow:false},editable:true,onResourceChange:async(...args)=>writes.push(args)});
   let amount=nodes(view.tree).find(n=>n.type===modules.ManualNumberInput);
   assert.equal(amount.props.value,'');assert.equal(button(view,'+').props.disabled,true);
   await button(view,'+').props.onClick();assert.equal(writes.length,0);
@@ -112,15 +112,15 @@ test('HP adjustments cannot apply an implicit 1; clearing then entering 20 appli
   await button(view,'-').props.onClick();assert.equal(writes.length,1);
 });
 test('saved initiative stays visible; clearing does not write zero, negative initiative commits correctly',()=>{
-  const writes=[];const view=mount(modules.EncounterInitiativeInput,{entry:{id:'e',name:'Enemy',initiative:12},onCommit:value=>writes.push(value)});
+  const writes=[];const view=mount(modules.CombatInitiativeInput,{entry:{id:'e',name:'Enemy',initiative:12},onCommit:value=>writes.push(value)});
   assert.equal(view.tree.props.value,'12');view.tree.props.onChange({target:{value:''}});view.render();assert.equal(view.tree.props.value,'');
   view.tree.props.onBlur();view.render();assert.equal(view.tree.props.value,'12');assert.equal(writes.length,0);
   view.tree.props.onChange({target:{value:'-2'}});view.render();view.tree.props.onBlur();assert.deepEqual(writes,[-2]);
 });
 test('saved zero initiative remains visible while an explicitly unrolled participant starts blank',()=>{
   const writes=[];
-  assert.equal(mount(modules.EncounterInitiativeInput,{entry:{id:'old',initiative:0},onCommit:value=>writes.push(value)}).tree.props.value,'0');
-  const view=mount(modules.EncounterInitiativeInput,{entry:{id:'new',initiative:0,initiativeSet:false},onCommit:value=>writes.push(value)});
+  assert.equal(mount(modules.CombatInitiativeInput,{entry:{id:'old',initiative:0},onCommit:value=>writes.push(value)}).tree.props.value,'0');
+  const view=mount(modules.CombatInitiativeInput,{entry:{id:'new',initiative:0,initiativeSet:false},onCommit:value=>writes.push(value)});
   assert.equal(view.tree.props.value,'');view.tree.props.onBlur();assert.equal(writes.length,0);
   view.tree.props.onChange({target:{value:'0'}});view.render();view.tree.props.onBlur();assert.deepEqual(writes,[0]);
 });
@@ -144,4 +144,19 @@ test('campaign player limit keeps saved value and rejects blank before any write
   const view=mount(modules.CampaignManagerWorkspace,{campaignId:'c',campaign:{name:'Campaign',playerLimit:6},workspace:{},characters:{},saveSection:async()=>({ok:true})});
   assert.equal(field(view,'Player Limit').props.value,6);input(view,'Player Limit','');await button(view,'Save Campaign Settings').props.onClick();assert.equal(writes.length,0);
   input(view,'Player Limit','12');await button(view,'Save Campaign Settings').props.onClick();assert.equal(writes[0][1].playerLimit,12);
+});
+
+test('resource HUD enforces caps, minimums, overflow, missing data and server amount limit',()=>{
+  for(const [state,editable,amount,add,remove] of [
+    [{current:80,maximum:100,minimum:0,cap:80},true,'20',false,true],
+    [{current:1,maximum:8,minimum:1,cap:8},true,'2',true,false],
+    [{current:25,maximum:20,minimum:0,cap:20,allowOverflow:true},true,'2',true,true],
+    [null,true,'2',false,false],
+    [{current:50,maximum:100,minimum:0,cap:100},false,'2',false,false],
+    [{current:50,maximum:100,minimum:0,cap:100},true,'1000000001',false,false]
+  ]){
+    const view=mount(modules.ResourceControl,{label:'Resource',resource:'hp',state,editable,onResourceChange:()=>assert.fail('Unexpected write')});
+    nodes(view.tree).find(n=>n.type===modules.ManualNumberInput).props.onChange({target:{value:amount}});view.render();
+    assert.equal(button(view,'+').props.disabled,!add);assert.equal(button(view,'-').props.disabled,!remove);
+  }
 });

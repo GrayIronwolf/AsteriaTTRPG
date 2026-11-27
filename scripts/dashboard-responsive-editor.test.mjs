@@ -91,7 +91,7 @@ test('Unticking a panel retains data-independent layout registration',()=>{
  assert.equal(visibleDashboardPanels(removed,'player').includes('weapons'),false);
  assert.equal(visibleDashboardPanels(toggleDashboardPanel(removed,'player','weapons',true),'player').includes('weapons'),true);
 });
-test('Player/GM apply saves directly and editor provides confirmation controls',()=>{
+test('Archived grid editor remains a legacy migration utility; live Player and GM render the canvas',()=>{
  const editor=read('src/components/DashboardCustomisation.jsx');
  const player=read('src/dashboards/CharacterGallerySettings.jsx');
  const gm=read('src/dashboards/GMDashboard.jsx');
@@ -102,7 +102,9 @@ test('Player/GM apply saves directly and editor provides confirmation controls',
  assert.match(editor,/react-grid-editor-library-item/);
  assert.match(editor,/dashboardPanelSizeChoices/);
  assert.doesNotMatch(editor,/className="react-grid-editor-tile-resize"/);
- assert.match(player,/onApply=\{applyLayout\}/);
- assert.match(gm,/onApply=\{applyGMLayout\}/);
+ assert.match(player,/Open Player Dashboard Canvas/);
+ assert.doesNotMatch(player,/DashboardLayoutEditor|onApply=\{applyLayout\}/);
+ assert.match(gm,/canvasConfig=\{GM_DASHBOARD_CANVAS_CONFIG\}/);
+ assert.doesNotMatch(gm,/onApply=\{applyGMLayout\}|DashboardLayoutWorkspace|DashboardLayoutEditor/);
  assert.match(gm,/saveUserDashboardLayout/);
 });

@@ -16,3 +16,15 @@
 .asteria-weather-days article p{margin:0}
 .asteria-weather-error{padding:9px;border:1px solid #bf6b6b;border-radius:7px}
 @media(max-width:600px){.asteria-weather-grid,.asteria-weather-days{grid-template-columns:1fr}.asteria-weather-box{padding:10px}}
+
+
+/* Milestone 3: location-aware climate editor and deterministic forecast cards */
+.asteria-weather-climate-settings{border:1px solid #536980;border-radius:8px;padding:12px;background:#18293a}
+.asteria-weather-climate-settings>summary{font-weight:650;cursor:pointer}
+.asteria-weather-climate-settings .asteria-weather-grid{margin:12px 0}
+.asteria-weather-metrics{display:grid;gap:5px;background:#203348;border:1px solid #435d72;border-radius:6px;padding:10px}
+.asteria-weather-metrics strong{font-size:1.35rem;line-height:1.2}
+.asteria-weather-metrics small{line-height:1.4}
+.asteria-weather-location{margin:0;color:#d4dce7}
+.asteria-weather-box select{min-width:0}
+@media(max-width:700px){.asteria-weather-climate-settings{padding:9px}.asteria-weather-metrics{padding:8px}}

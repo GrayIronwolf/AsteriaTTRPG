@@ -5,7 +5,8 @@ import { EmptyState, Modal, Panel, SearchField, StatusPill } from '../components
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
 import { TALENT_TIER_LEVELS, talentRankCost, talentTierUnlocked } from '../state/liveWorkspaceModel.mjs';
 import { prerequisiteProblem, rankDefined, talentEffectActive } from '../state/talentModel.mjs';
-import { talentRules } from '../state/talentMechanics.mjs';
+import { activeReactionWindow, combatRestriction, optionProblem } from '../state/combatRules.mjs';
+import { talentRules, talentActivationProblem } from '../state/talentMechanics.mjs';
 import { knownSpells, talentCatalog, talentRank } from './characterWorkspaceData.js';
 
 function Inline({text}) {return String(text).split(/(\*\*[^*]+\*\*)/g).map((part,i)=>part.startsWith('**')?<strong key={i}>{part.slice(2,-2)}</strong>:part.replace(/(?<!\*)\*(?!\*)/g,''));}
@@ -21,15 +22,19 @@ export function TalentText({text=''}) {
 const priceText=costs=>Object.entries(costs || {}).filter(([,n])=>n>0).map(([key,n])=>`${n} ${key.toUpperCase()}`).join(' · ') || 'No resource cost';
 const reference=(talent,rank)=>({id:talent.id,name:talent.name,className:talent.className,expectedRank:rank});
 
-export function TalentDetails({campaignId,character,talent,initialRank,editable,characters={},onClose}) {
+export function TalentDetails({campaignId,character,talent,initialRank,editable,characters={},combat,clock={},onClose}) {
   const learned=talentRank(character,talent),[rank,setRank]=useState(initialRank || Math.max(1,learned));
   const [choice,setChoice]=useState(''),[spell,setSpell]=useState(''),[targetId,setTargetId]=useState(character.id),[trigger,setTrigger]=useState(false);
   const action=useAction(),rules=talentRules(talent,rank),learnedRules=talentRules(talent,Math.max(1,learned));
+  useEffect(()=>{setChoice('');setSpell('');setTargetId(character.id);setTrigger(false);},[character.id,talent.id,learned,combat?.active]);
   const nextCost=talentRankCost(learned+1,talent.tier),maximum=talent.maxRank || 5;
   const prerequisite=prerequisiteProblem(character,talent,talentCatalog(character));
   const buyReason=!editable?'Gameplay actions require an active session and the character owner.':!talentTierUnlocked(character.level,talent.tier)?`Tier ${talent.tier} unlocks at Level ${TALENT_TIER_LEVELS[talent.tier]}.`:prerequisite || (!rankDefined(talent,learned+1)?'The next rank has not been written yet.':Number(character.tp || 0)<nextCost?`You need ${nextCost} TP for the next rank.`:'');
   const chosen=learnedRules.choices.find(row=>row.id===choice),usage=character.talentUsage?.[talent.id];
-  const canUse=editable && learned>0 && !learnedRules.blocked && (!learnedRules.choices.length || chosen) && (!learnedRules.needsSpell || spell) && (!learnedRules.requiresTrigger || trigger);
+  const woven=learnedRules.needsSpell?knownSpells(character).find(row=>row.key===spell):null;
+  const problem=combatRestriction(character,{encounter:clock.encounter})||(woven?.costProblem||'')||talentActivationProblem(character,talent,{choice,triggerConfirmed:trigger},{...clock,catalog:talentCatalog(character),spellCosts:woven?.costs});
+  const canUse=editable&&learned>0&&!problem&&!combat?.active;
+  const combatOptions=(combat?.options||[]).filter(row=>row.kind==='talent'&&row.sourceId===talent.id);
   return <Modal title={talent.name} eyebrow={`${talent.className || 'Class'} · Tier ${talent.tier || 1} · ${talent.type || 'Talent'}`} onClose={onClose} busy={action.busy} footer={<><span role="status" className="react-action-message">{action.message}</span><button type="button" disabled={action.busy} onClick={onClose}>Close</button></>}>
     <div className="react-talent-detail-summary"><StatusPill tone={learned?'success':'info'}>{learned?`Learned Rank ${learned} / ${maximum}`:'Not learned'}</StatusPill><strong>{Number(character.tp || 0)} TP available</strong></div>
     <nav className="react-talent-rank-tabs" aria-label={`${talent.name} ranks`}>{Array.from({length:maximum},(_,i)=>i+1).map(value=><button type="button" key={value} aria-pressed={rank===value} onClick={()=>setRank(value)}>Rank {value}{value<=learned?' ✓':''}</button>)}</nav>
@@ -37,14 +42,16 @@ export function TalentDetails({campaignId,character,talent,initialRank,editable,
     <dl className="react-talent-facts"><div><dt>Resource cost</dt><dd>{rules.choices.length?'Choose an option below':priceText(rules.costs)}{rules.bpGain?` · Gain ${rules.bpGain} BP`:''}{rules.needsSpell?' + the woven spell’s cost':''}</dd></div><div><dt>Cooldown</dt><dd>{rules.cooldown}</dd></div><div><dt>Duration</dt><dd>{rules.duration}</dd></div><div><dt>Prerequisites</dt><dd>{talent.prerequisite || 'None'}</dd></div></dl>
     {learned<maximum?<div className="react-talent-purchase"><button className="primary" type="button" disabled={action.busy || Boolean(buyReason)} onClick={()=>action.run(()=>firebaseService.purchaseTalent(campaignId,character.id,{...reference(talent,learned),expectedCoreRevision:Number(character.coreRevision || 0)}),`Purchased ${talent.name} Rank ${learned+1}.`)}>Buy Rank {learned+1} · {nextCost} TP</button>{buyReason?<p>{buyReason}</p>:null}</div>:<p>All ranks learned.</p>}
     {learned>0?<section className="react-talent-use"><h3>{learnedRules.activation?`Use learned Rank ${learned}`:'Passive benefits'}</h3>{!learnedRules.activation?<p>Sheet bonuses appear in Talent Effects. Apply the remaining passive benefits below when relevant.</p>:<>
+      {combat?.active?<div><p>Use the combat action workflow to review AP, costs and targets.</p>{combatOptions.map(option=>{const reaction=Boolean(activeReactionWindow(combat.encounter,combat.actorId)),reason=optionProblem(option,character,combat.encounter,combat.actorId,{reaction,sessionId:combat.sessionId});return <button type="button" className="primary" key={option.id} disabled={!combat.editable||combat.busy||Boolean(reason)||Boolean(combat.encounter.combat?.pending&&!reaction)} title={reason||undefined} onClick={()=>{combat.select(option);onClose();}}>{option.name} · {option.ap} AP · {priceText(option.costs)}{reason?` — ${reason}`:''}</button>;})}{!combatOptions.length?<p>No available combat action.</p>:null}</div>:<>
       {learnedRules.blocked?<p>{learnedRules.blocked}</p>:null}
       {learnedRules.choices.length?<label>Talent option<select value={choice} onChange={e=>setChoice(e.target.value)}><option value="">Choose an option</option>{learnedRules.choices.map(option=><option key={option.id} value={option.id}>{option.label}</option>)}</select></label>:null}
-      {learnedRules.needsSpell?<label>Spell to weave<select value={spell} onChange={e=>setSpell(e.target.value)}><option value="">Choose a known spell</option>{knownSpells(character).map(row=><option key={row.id} value={row.name}>{row.name}</option>)}</select></label>:null}
+      {learnedRules.needsSpell?<label>Spell to weave<select value={spell} onChange={e=>setSpell(e.target.value)}><option value="">Choose a known spell</option>{knownSpells(character).map(row=><option key={row.key} value={row.key} disabled={Boolean(row.costProblem)}>{row.name}{row.rank?` · ${row.rank}`:''} · {row.costProblem||priceText(row.costs)}</option>)}</select></label>:null}
       {learnedRules.targetChoice?<label>Aegis target<select value={targetId} onChange={e=>setTargetId(e.target.value)}><option value={character.id}>Self · {character.name}</option>{Object.values(characters).filter(row=>row.id!==character.id && row.ownerUid).map(row=><option key={row.id} value={row.id}>{row.name}</option>)}</select></label>:null}
       {learnedRules.requiresTrigger?<label><input type="checkbox" checked={trigger} onChange={e=>setTrigger(e.target.checked)}/> The GM confirmed an eligible trigger.</label>:null}
       <p>{priceText(chosen?.costs || learnedRules.costs)}{(chosen?.bpGain ?? learnedRules.bpGain)?` · Gain ${chosen?.bpGain ?? learnedRules.bpGain} BP`:''}{learnedRules.needsSpell?' + spell cost':''}{learnedRules.uses?` · ${usage?.count || 0}/${learnedRules.uses} uses recorded`:''}</p>
-      <button className="primary" type="button" disabled={action.busy || !canUse} onClick={()=>action.run(()=>firebaseService.useTalent(campaignId,character.id,{...reference(talent,learned),expectedCoreRevision:Number(character.coreRevision || 0)},{choice,spell,targetId,triggerConfirmed:trigger}),`Used ${talent.name}. Resources and effects saved.`)}>Use {talent.name}</button>
-      <p className="react-help">Resource costs and tracked effects are applied on use. Resolve attacks, saves, range and conditional effects with the GM.</p>
+      <button className="primary" type="button" disabled={action.busy || !canUse} onClick={()=>action.run(()=>firebaseService.useTalent(campaignId,character.id,{...reference(talent,learned),expectedCoreRevision:Number(character.coreRevision || 0)},{choice,spellKey:spell,targetId,triggerConfirmed:trigger}),`Used ${talent.name}. Resources and effects saved.`)}>Use {talent.name}</button>
+      {problem?<p role="status">{problem}</p>:null}
+      <p className="react-help">Resource costs and tracked effects are applied on use. Resolve attacks, saves, range and conditional effects with the GM.</p></>}
     </>}</section>:null}
     <TalentText text={rules.body || talent.summary || 'This rank has not been written yet.'}/>
   </Modal>;
@@ -58,7 +65,7 @@ export function TalentEffects({campaignId,character,editable,encounter}) {
     {character.talentRestBonus>0?<p><b>Mystic Recovery</b> +{Math.round(character.talentRestBonus*100)}% natural recovery while resting</p>:null}
     </div>{effects.length?effects.map(effect=><article key={effect.id}><div><b>{effect.name}</b><small>{effect.ac?`+${effect.ac} AC · `:''}{effect.untilRound?`Until round ${effect.untilRound}`:effect.expiresAt?`Ends ${new Date(effect.expiresAt).toLocaleTimeString()}`:'Active until dismissed'}</small></div><details><summary>Effect details</summary><TalentText text={effect.description}/></details><button type="button" disabled={!editable || action.busy} onClick={()=>action.run(()=>firebaseService.endTalentEffect(campaignId,character.id,effect.id),`Ended ${effect.name}.`)}>End effect</button></article>):<p className="react-help">No temporary talent effects are active.</p>}<p role="status">{action.message}</p></Panel>;
 }
-export function TalentsTab({campaignId,character,editable,characters={},encounter}) {
+export function TalentsTab({campaignId,character,editable,characters={},encounter,combat,clock={}}) {
   const catalog=talentCatalog(character);
   const [query,setQuery]=useState(''),[selected,setSelected]=useState(null);
   useEffect(()=>{setSelected(null);setQuery('');},[character.id]);
@@ -67,6 +74,6 @@ export function TalentsTab({campaignId,character,editable,characters={},encounte
     <div className="react-talent-legend"><span>● ✓ Purchased</span><span>◉ Available</span><span>○ Locked rank</span><span>◎ Selected</span><span>Fog · Locked tier</span></div>
     {catalog.length?<TalentGraph key={character.id} catalog={catalog} character={character} query={query} onSelect={setSelected}/>:<EmptyState title="No class talents found">Check the character’s selected classes.</EmptyState>}
     </Panel><TalentEffects campaignId={campaignId} character={character} editable={editable} encounter={encounter}/>
-    {selected && catalog.some(t=>t.id===selected.talent.id) && talentTierUnlocked(character.level,selected.talent.tier)?<TalentDetails key={`${selected.talent.id}-${selected.rank}`} campaignId={campaignId} character={character} characters={characters} talent={selected.talent} initialRank={selected.rank} editable={editable} onClose={()=>setSelected(null)}/>:null}
+    {selected && catalog.some(t=>t.id===selected.talent.id) && talentTierUnlocked(character.level,selected.talent.tier)?<TalentDetails key={`${selected.talent.id}-${selected.rank}`} campaignId={campaignId} character={character} characters={characters} talent={selected.talent} initialRank={selected.rank} editable={editable} combat={combat} clock={clock} onClose={()=>setSelected(null)}/>:null}
   </div>;
 }

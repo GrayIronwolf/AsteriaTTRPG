@@ -21,7 +21,8 @@ export function GMPartyControl({campaign={},characters={},selectedId='',onSelect
           onChange={event=>setQuery(event.target.value)}
           placeholder="Search name or class" autoComplete="off"/>
       </label>
-      <button type="button" onClick={()=>onNavigate({tab:'tools'})}>Campaign Manager &amp; GM Tools</button>
+      <button type="button" onClick={()=>onNavigate({tab:'player-manager'})}>Open Player Manager</button>
+      <button type="button" onClick={()=>onNavigate({tab:'tools'})}>GM Character Tools</button>
       <button type="button" onClick={()=>onNavigate({tab:'quests'})}>Party Quests</button>
     </div>
     <p role="status" aria-live="polite" className="react-gm-party-count">

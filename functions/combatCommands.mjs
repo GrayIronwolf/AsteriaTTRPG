@@ -1,3 +1,4 @@
+import {enemyCombatOptions} from '../src/state/enemyProfileModel.mjs';
 import { isDeepStrictEqual } from 'node:util';
 import { randomInt, randomUUID } from 'node:crypto';
 import { isCampaignGM, isLinkedCharacter, readCampaignMember, isCampaignMember } from './characterPermissions.mjs';
@@ -11,8 +12,26 @@ import { effectTimeMs } from '../src/state/effectsEngine.mjs';
 import { calculateCharacterAC, validateEquipmentChange } from '../src/systems/armour/armourSystem.mjs';
 import { normalizeInventoryItems, slug } from '../src/state/liveWorkspaceModel.mjs';
 import { encounterSourceResources, setEncounterResource } from '../src/state/encounterResourceModel.mjs';
+import {normalizePreparedEncounters,preparedEncounterRoster} from '../src/state/preparedEncounterModel.mjs';
+import {updateStagedEncounter,validatePreparedLoadRequest} from '../src/state/preparedEncounterLoadModel.mjs';
 import {combatMapMovePlan,synchronizeCombatMapTokens,activeMapEncounter} from '../src/state/battleMapCombatModel.mjs';
+import {battleMapTokenAppearance} from '../src/state/battleMapModel.mjs';
+import {preparedMapTokenCapacity} from '../src/state/preparedBattleMapModel.mjs';
+import {applyEncounterRecovery,captureEncounterRecovery,nextCompletionRecord,recoveryOperations} from './encounterRecovery.mjs';
+import {validateHybridPhysicalDice,hybridD20} from '../src/state/hybridCombatDiceModel.mjs';
+import {captureEncounterCompletion} from '../src/state/encounterCompletionModel.mjs';
+import {applyLiveTimerCommand,resetLiveTurnTimer}
+  from '../src/state/liveCombatCommandModel.mjs';
+import {
+  stageEncounterSchedule,releaseEncounterWave,triggerEncounterEvent
+} from '../src/state/encounterWaveModel.mjs';
 import { currentCombatant, initiativeResult, initiativeOrder, combatOptions, combatRestriction, optionProblem, skillCheck, rollD20, checkResult, attackResult, counterspellResult, validateReactionEquipment, payCombatCosts, changeCombatHP, deathSave, feedback, mixedDamage, rows, SPELL_RANKS, SPELL_SKILL_ACCESS } from '../src/state/combatRules.mjs';
+
+import {mapCell,mapCellCenter,mapCellKey,mapReachableRoutes} from '../src/state/battleMapRoutes.mjs';
+import {MAP_MOVE_AP,approvedMapMovementAward,spendMapMovement,validateMapOpportunity,walkingAllowance}
+  from '../src/state/battleMapMovement.mjs';
+import {publicPresentationBattleMap} from '../src/state/livePresentationProjectionModel.mjs';
+import {validatePhysicalDiceRecord} from '../src/state/hybridPhysicalDiceModel.mjs';
 
 const copy=value=>JSON.parse(JSON.stringify(value));
 const text=(value,max=1000)=>String(value||'').trim().slice(0,max);
@@ -20,7 +39,10 @@ const bounded=(value,min=0,max=1e9)=>{const n=Number(value);if(!Number.isFinite(
 const roll=()=>randomInt(1,21);
 const numberDie=()=> (roll()-1)/20;
 const combatCharacterFields=new Set(['hp','sp','mp','bp','zp','resources','resourceDefinitions','resourceState','conditions','downed','activeEffects','effects','talentResourceEffects','talentResourceState','talentStateVersion','talentEffects','talentRestBonus','talentSavingThrows','talentUsage','acModifiers','specialDamage','soulDamage','coreStateVersion','inventory','equipment']);
-const management=new Set(['map-link','map-move','save','start','next','end','clear','approve','reject','window','close-window','resolve','roll','resolve-reaction','correct','condition','ambush','trigger-prepared']);
+const ENCOUNTER_INITIATIVE_MODES=new Set(['automatic','manual','mixed']);
+const initiativeMode=value=>ENCOUNTER_INITIATIVE_MODES.has(value)?value:'automatic';
+const needsManualInitiative=(row,mode)=>mode==='manual'||(mode==='mixed'&&Boolean(row.characterId));
+const management=new Set(['record-physical-roll',...recoveryOperations,'skip-turn','override-turn','release-wave','trigger-event','timer','map-link','map-move','map-delegate','map-token-appearance','save','stage-prepared','unstage-prepared','load-prepared','map-prepare','start','pause','resume','next','end','clear','approve','reject','window','close-window','resolve','roll','resolve-reaction','correct','condition','ambush','trigger-prepared']);
 const publicPending=p=>p?{id:p.id,actorId:p.actorId,actorName:p.actorName,optionId:p.actorKind==='player'?p.optionId:'',name:p.actorKind==='player'?p.name:'Creature action',status:p.status,targetIds:p.targetIds,ap:p.ap,bonus:p.bonus,apPaid:Boolean(p.prepaidAP),costs:p.actorKind==='player'?p.costs:{},reactionWindow:p.status==='reactions',reactorId:p.window?.[p.windowIndex||0]?.actorId||'',reactionChoices:p.window?.[p.windowIndex||0]?.choices||[],reaction:p.reaction?{actorId:p.reaction.actorId,name:p.reaction.name}:null,message:p.publicMessage||''}:null;
 
 // An extension of asteriaAction: one encounter document, existing resource/effect
@@ -35,21 +57,53 @@ export function createCombatCommands(context) {
       const memberRecord=await readCampaignMember({get:async ref=>{
         const snap=await tx.get(ref);return {exists:snap.exists(),data:()=>snap.data()};
       }},db,campaignId,campaign,currentUser.uid);
-      if(!isCampaignMember(campaign,currentUser.uid,memberRecord)) throw new Error('Campaign membership is required.');
-      const gm=isCampaignGM(campaign,currentUser.uid,memberRecord);
+      if(!isCampaignMember(campaign,currentUser.uid,memberRecord,campaignId)) throw new Error('Campaign membership is required.');
+      const gm=isCampaignGM(campaign,currentUser.uid,memberRecord,campaignId);
       if(session.status!=='active'||effectTimeMs(session.expiresAt)<=now)throw new Error('The GM must start the live session first.');
       if(management.has(input.operation)&&!gm)throw new Error('Only the campaign GM can use this combat control.');
       let encounter={status:'ready',round:1,turnIndex:0,combatants:[],enemies:[],...encounterSnap.data()};
+      if(['stage-prepared','unstage-prepared'].includes(input.operation)){
+        const workspace=gmSnap.data()||{};
+        const plan=normalizePreparedEncounters(workspace.preparedEncounters)
+          .find(row=>row.id===input.preparedId);
+        const combatState=workspace.combatState||{};
+        const stagedEncounters=updateStagedEncounter(combatState.stagedEncounters,input,plan,now);
+        tx.set(gmRef,{combatState:{...combatState,stagedEncounters}},{merge:true});
+        return {ok:true,revision:Number(encounter.combat?.revision||0)};
+      }
+      if(encounter.paused===true&&!recoveryOperations.has(input.operation)&&!['resume','end','correct','condition','record-physical-roll'].includes(input.operation))
+        throw new Error('Combat is paused. Resume the encounter before continuing.');
       const oldRevision=Number(encounter.combat?.revision||0);
       if(input.revision!==oldRevision)throw new Error('Combat changed. Wait for live sync and try again.');
       encounter.combat={participants:{},log:[],...encounter.combat};
       const privateState=copy(gmSnap.data()?.combatState||{pending:null});
       privateState.preparations=privateState.preparations||{};
-      const incoming=input.operation==='save'?input.encounter?.combatants||[]:[];
+      if(recoveryOperations.has(input.operation))return applyEncounterRecovery({
+        tx,db,doc,campaignId,encounterRef,gmRef,gmSnap,encounter,privateState,input,now,
+        uid:currentUser.uid,requestId:context.requestId,serverTimestamp,
+        isLinked:(id,character)=>isLinkedCharacter(campaign,id,character,campaignId)
+      });
+      if(input.operation==='clear'&&encounter.reopened===true)
+        throw Error('Complete the reopened encounter before clearing it.');
+      if(encounter.status==='active'&&!encounter.combat.turnsTaken)
+        encounter.combat.turnsTaken=Object.fromEntries(encounter.combatants
+          .slice(0,(encounter.turnIndex??0)+1).map(row=>[row.id,true]));
+      const loading=input.operation==='load-prepared';
+      const prepared=loading?normalizePreparedEncounters(gmSnap.data()?.preparedEncounters)
+        .find(plan=>plan.id===input.preparedId):null;
+      if(loading){
+        if(!gm)throw new Error('Only the campaign GM may load a prepared encounter.');
+        if(encounter.status==='active')throw new Error('End active combat before loading a prepared encounter.');
+        if(privateState.pending)throw new Error('Resolve the pending action before loading an encounter.');
+        validatePreparedLoadRequest(input,prepared,encounter);
+      }
+      const incoming=loading?preparedEncounterRoster(prepared,encounter.combatants,context.requestId):
+        input.operation==='save'?input.encounter?.combatants||[]:[];
       // A GM save must be able to remove a broken old link. Loading the union of
       // both rosters made even removal/clear impossible after a character left.
-      const entries=input.operation==='save'?[...incoming,...(encounter.status==='active'&&currentCombatant(encounter)?[currentCombatant(encounter)]:[])]:encounter.combatants;
-      const recoverRoster=gm&&['save','end','clear'].includes(input.operation);
+      const entries=['save','load-prepared'].includes(input.operation)
+        ?[...incoming,...(encounter.status==='active'&&currentCombatant(encounter)?[currentCombatant(encounter)]:[])]:encounter.combatants;
+      const recoverRoster=gm&&['save','load-prepared','end','clear'].includes(input.operation);
       const unavailable=new Set();
       const characterIds=[...new Set(entries.map(row=>row.characterId).filter(Boolean))];
       if(characterIds.length>60||entries.length>160)throw new Error('This encounter has too many participants.');
@@ -67,7 +121,8 @@ export function createCombatCommands(context) {
       }
       // Fetch the bound map before any transaction writes; map and encounter are
       // committed atomically. Never trust client-supplied turn order or distance.
-      const mapOperation=['map-link','map-move'].includes(input.operation);
+      const mapOperation=['map-link','map-move','map-delegate','map-token-appearance'].includes(input.operation);
+      const preparingMap=input.operation==='map-prepare';
       if(mapOperation&&!gm)throw new Error('Only the campaign GM can control combat maps.');
       const boundMapId=mapOperation?String(input.mapId||''):String(encounter.battleMapId||'');
       if(mapOperation&&!/^[A-Za-z0-9_-]{1,120}$/.test(boundMapId))
@@ -76,6 +131,21 @@ export function createCombatCommands(context) {
       const mapSnap=mapRef?await tx.get(mapRef):null;
       const boundMap=mapSnap?.exists()?mapSnap.data():null;
       if(mapOperation&&!boundMap)throw new Error('This battle map no longer exists.');
+      // A prepared map reference must still exist at execution time.
+      // Read before transaction writes, and do not bind until combat starts.
+      const requestedPreparedMapId=loading?prepared.mapId||'':preparingMap?String(input.mapId||''):
+        input.operation==='start'?String(encounter.preparedMapId||''):'';
+      if(requestedPreparedMapId&&!/^[A-Za-z0-9_-]{1,120}$/.test(requestedPreparedMapId))
+        throw new Error('Prepared map identifier is invalid.');
+      const preparedMapRef=requestedPreparedMapId?
+        doc(db,'campaigns',campaignId,'battleMaps',requestedPreparedMapId):null;
+      const preparedMapSnap=preparedMapRef?await tx.get(preparedMapRef):null;
+      if(preparedMapRef&&!preparedMapSnap.exists())
+        throw new Error('The prepared battle map no longer exists. Refresh the library.');
+      if(preparedMapSnap?.data()?.campaignId&&preparedMapSnap.data().campaignId!==campaignId)
+        throw new Error('The prepared battle map belongs to another campaign.');
+      if(preparedMapSnap?.data()?.combatId)
+        throw new Error('The battle map is linked to another active encounter.');
       const entry=id=>encounter.combatants.find(row=>row.id===id);
       const get=id=>{const row=entry(id);if(!row)throw new Error('Participant is not in this encounter.');return row.characterId?characters.get(row.characterId):{...row,...encounterSourceResources(row),kind:'enemy'};};
       const put=(id,value)=>{
@@ -89,9 +159,89 @@ export function createCombatCommands(context) {
       const state=id=>encounter.combat.participants[id]||{ap:0,bonus:false,turns:0};
       const setState=(id,value)=>{encounter.combat.participants[id]={...state(id),...value};};
       const log=(message,details={})=>{encounter.combat.log=[{id:context.requestId,at:now,message,...details},...encounter.combat.log].slice(0,80);};
-      const controlled=()=>{const actor=entry(actorId);if(!actor||(!gm&&(!actor.characterId||get(actorId).ownerUid!==currentUser.uid)))throw new Error('You cannot control this encounter participant.');return actor;};
+      const mapControlAllowed=actor=>Boolean(actor&&
+        (gm||actor.characterId&&get(actor.id).ownerUid===currentUser.uid||
+          input.operation==='player-map-move'&&
+          state(actor.id).movementDelegateUid===currentUser.uid));
+      const controlled=()=>{const actor=entry(actorId);
+        if(!actor||(!gm&&!(actor.characterId&&get(actorId).ownerUid===currentUser.uid)&&
+          !(input.operation==='player-map-move'&&mapControlAllowed(actor))))
+          throw new Error('You cannot control this encounter participant.');
+        return actor;
+      };
       const requireActive=()=>{if(encounter.status!=='active')throw new Error('Combat is not active.');};
       const noPending=()=>{if(privateState.pending)throw new Error('Resolve the pending action before continuing.');};
+      let queuedMovement=false;
+      const validatePlayerMapMove=(actor,move,apPaid=false)=>{
+        if(move.mapId!==boundMapId||!boundMap||boundMap.combatId!==encounter.combatId||
+          boundMap.visibility!=='players')throw Error('This battle map is not shared for the current encounter.');
+        const id=actor.id,character=get(id),s=state(id);
+        if(move.requesterUid&&character.ownerUid!==move.requesterUid&&
+          s.movementDelegateUid!==move.requesterUid)
+          throw Error('The player no longer controls this participant.');
+        if(actor.defeated||combatRestriction(character,{now,encounter})||s.pendingDeathSave||s.grappledBy)
+          throw Error('This participant cannot move voluntarily.');
+        const offTurn=currentCombatant(encounter)?.id!==id||s.turnComplete;
+        if(offTurn&&move.outOfTurn!==true)throw Error('Confirm use of the out-of-turn movement opportunity.');
+        if(offTurn&&!apPaid)validateMapOpportunity(encounter,id);
+        const original=boundMap.tokens.find(row=>row.combatantId===id);
+        const projection=publicPresentationBattleMap(boundMap,campaignId,boundMapId,encounter,characters);
+        if(!original||!projection.tokens.some(row=>row.id===original.id))
+          throw Error('No visible token is assigned to this participant.');
+        if(move.origin&&(original.x!==move.origin.x||original.y!==move.origin.y))
+          throw Error('The confirmed route no longer starts at the token position.');
+        const dest=mapCell(move.point,boundMap.gridColumns,boundMap.gridRows,boundMap);
+        if(!dest)throw Error('Choose a valid destination.');
+        if(boundMap.fogEnabled&&projection.fogCells[dest.row*boundMap.gridColumns+dest.column]!=='1')
+          throw Error('Choose a revealed destination.');
+        const approved=move.moveKind==='approved'&&s.movement?.remaining>0;
+        const walk=move.moveKind==='walk';
+        if(!approved&&!walk)throw Error('This movement needs a GM-approved allowance.');
+        if(offTurn&&approved)throw Error('Use the remaining approved movement during your turn.');
+        if(walk&&s.movement?.remaining>0&&!offTurn)
+          throw Error('Finish the current approved movement first.');
+        const allowance=approved?s.movement.remaining:walkingAllowance(character,{now,encounter});
+        if(!allowance)throw Error('A movement allowance has not been recorded. Ask the GM to approve the movement.');
+        const ap=approved?0:MAP_MOVE_AP.walk;
+        if(!apPaid&&s.ap<ap)throw Error('Not enough AP.');
+        const movement=approved?s.movement:{actionId:context.requestId,kind:'walk',remaining:allowance};
+        const kind=movement.routeKind||movement.kind;
+        const routes=mapReachableRoutes({...boundMap,fogCells:projection.fogCells},original,allowance,{
+          occupied:boundMap.tokens.filter(row=>row.id!==original.id),
+          diagonalParity:movement.diagonalParity,revealedOnly:true,movementKind:kind
+        });
+        const route=routes.get(mapCellKey(dest));
+        if(!route)throw Error('That destination is unavailable within the current movement allowance.');
+        const point=mapCellCenter(dest,boundMap.gridColumns,boundMap.gridRows,boundMap);
+        return {original,point,route,movement,kind,offTurn,ap,projection};
+      };
+      const applyPlayerMapMove=(actor,plan,playerUid,apPaid=false)=>{
+        const {original,point,route,movement,kind,offTurn,ap}=plan,s=state(actor.id);
+        const tokens=boundMap.tokens.map(row=>row.id===original.id?{...row,...point}:row);
+        tx.update(mapRef,{tokens,updatedAt:serverTimestamp()});
+        setState(actor.id,{ap:apPaid?s.ap:s.ap-ap,
+          movement:offTurn?s.movement??null:spendMapMovement(movement,route.cost,route.parity),
+          ...(offTurn?{outOfTurn:{round:encounter.round,kind:'move'}}:{})});
+        const metres=Math.round(route.cost*100)/100;
+        log(`${actor.name} moved ${metres} m${offTurn?' out of turn':''}.`,{
+          actorUid:playerUid,targetId:actor.id,from:{x:original.x,y:original.y},to:point,
+          metres,ap,movementKind:kind
+        });
+      };
+      const needsMapReactionReview=(actor,plan)=>{
+        if(plan.kind==='teleport'||state(actor.id).disengaged)return false;
+        const visible=new Set(plan.projection.tokens.map(token=>token.id));
+        return boundMap.tokens.some(token=>{
+          if(!visible.has(token.id)||!token.combatantId||token.combatantId===actor.id)return false;
+          const opponent=entry(token.combatantId);
+          if(!opponent||opponent.defeated||state(opponent.id).ap<1||
+            (token.faction?token.faction!=='hostile':opponent.kind!=='enemy'))return false;
+          const character=get(opponent.id);
+          if(combatRestriction(character,{now,encounter}))return false;
+          try{validateReactionEquipment(character,'opportunity');return true;}
+          catch{return false;}
+        });
+      };
       const conditionBoundary=(id,boundary)=>{
         let character=get(id);const turns=state(id).turns||0;
         for(const condition of activeConditions(character,{now,encounter}))if(!condition.pendingGMExpiry&&condition.tick?.boundary===boundary){
@@ -106,6 +256,8 @@ export function createCombatCommands(context) {
       };
       const startTurn=()=>{
         const current=currentCombatant(encounter);if(!current)return;
+        encounter.combat.turnsTaken={...encounter.combat.turnsTaken,[current.id]:true};
+        encounter.turnTimer=resetLiveTurnTimer(encounter.turnTimer||{},now);
         const previous=state(current.id),turns=(previous.turns||0)+1;
         setState(current.id,{ap:3,bonus:true,turns,prepared:null,disengaged:false,movement:null,turnStartedAt:now,pendingDeathSave:false,turnComplete:false,apSpends:[]});
         delete privateState.preparations[current.id];
@@ -118,13 +270,22 @@ export function createCombatCommands(context) {
         log(`${current.name}'s turn · round ${encounter.round}. AP refreshed to 3; bonus available.`);
       };
       const validateTargets=p=>{for(const id of p.targetIds)if(!entry(id))throw new Error('A selected target has left the encounter.');};
-      const findOption=(id,optionId)=>{const option=combatOptions(get(id),context.catalog).find(row=>row.id===optionId);if(!option)throw new Error('Choose an owned action or a defined combat action.');return option;};
+      const findOption=(id,optionId)=>{
+        const actor=get(id),creature=entry(id)?.kind==='enemy';
+        if(String(optionId).startsWith('enemy:')&&(!gm||!creature))
+          throw new Error('Creature-only actions require the campaign GM.');
+        const options=combatOptions(actor,context.catalog);
+        if(gm&&creature)options.push(...enemyCombatOptions(actor));
+        const option=options.find(row=>row.id===optionId);
+        if(!option)throw new Error('Choose an owned action or a defined combat action.');
+        return option;
+      };
       const validateAction=(id,option,p,approval={})=>{
         const character=get(id),s=state(id),restriction=combatRestriction(character,{now,encounter});
         if(restriction)throw new Error(`${restriction}: voluntary actions are unavailable.`);
         if(s.pendingDeathSave)throw new Error('Resolve the turn-start death save first.');
         if(option.blocked&&!approval.sourceReason)throw new Error(option.blocked);
-        const ap=approval.apOverride===undefined?option.ap:bounded(approval.apOverride,0,3);
+        const ap=p.mapMove?.ap??(approval.apOverride===undefined?option.ap:bounded(approval.apOverride,0,3));
         if(approval.apOverride!==undefined&&!approval.sourceReason)throw new Error('An explicit AP override needs its source and reason.');
         if(!Number.isInteger(ap)||(!p.ambush&&s.ap+(p.prepaidAP?.ap||0)<ap))throw new Error('Not enough AP.');
         if(option.bonus&&!s.bonus&&!p.prepaidAP?.bonus)throw new Error('The shared bonus action has already been used.');
@@ -145,6 +306,17 @@ export function createCombatCommands(context) {
           if(get(p.targetIds[0]).downed?.dead)throw new Error('First aid cannot resurrect a dead target.');
           if(encounter.combat.firstAid?.[`${id}:${p.targetIds[0]}`]===encounter.round)throw new Error('This helper already attempted first aid on this target this round.');
           if(!approval.skill||!Number.isFinite(approval.dc))throw new Error('First aid needs an appropriate skill and a numeric GM DC.');
+        }
+        if(option.creatureAction){
+          if(!gm||entry(id)?.kind!=='enemy')
+            throw new Error('Only the GM can use a stored creature action.');
+          if(!approval.feasible)throw new Error('Confirm the creature action, its range and target feasibility.');
+          if(option.requiresTarget&&p.targetIds.length!==1)
+            throw new Error('This creature attack requires one valid target.');
+          if(option.group==='attacks'&&approval.checkType!=='attack')
+            throw new Error('Creature attacks require a named attack skill and AC check.');
+          if(option.group==='spells'&&!option.rank)
+            throw new Error('A creature spell must have a defined spell rank.');
         }
         if(option.key==='attack'){
           const weapon=rows(character.inventory).find(row=>row.id===p.itemId);
@@ -176,7 +348,18 @@ export function createCombatCommands(context) {
       };
       const begin=(p,approval)=>{
         const option=findOption(p.actorId,p.optionId),s=state(p.actorId),ap=validateAction(p.actorId,option,p,approval);
-        if(option.key==='attack'&&approval.checkType!=='attack')throw new Error('Weapon attacks use a named weapon skill against AC.');
+        if(p.mapMove)validatePlayerMapMove(entry(p.actorId),p.mapMove);
+        if(approval.mapTravel){
+          if(!boundMap||boundMap.combatId!==encounter.combatId||p.reaction)
+            throw Error('Source-granted map movement requires a linked encounter map and an ordinary resolved action.');
+          p.mapAward=approvedMapMovementAward(option,approval,s.movement);
+        }
+        if(p.outOfTurn){
+          validateMapOpportunity(encounter,p.actorId);
+          if(p.outOfTurn!==encounter.round)throw Error('This opportunity belongs to another round.');
+          setState(p.actorId,{outOfTurn:{round:encounter.round,kind:p.mapMove?'move':'attack'}});
+        }
+        if(['attack','creature-attack'].includes(option.key)&&approval.checkType!=='attack')throw new Error('Weapon attacks use a named weapon skill against AC.');
         const opposed={grapple:[['grappling'],['grappling','acrobatics']],escape:[['grappling','acrobatics'],['grappling']],shove:[['athletics'],['athletics','acrobatics']],hide:[['stealth','stealth-combat'],['perception']]};
         if(opposed[option.key]){const [acting,defending]=opposed[option.key];if(approval.checkType!=='opposed'||!acting.includes(slug(approval.skill))||!defending.includes(slug(approval.opposedSkill)))throw new Error(`Use ${acting.join(' / ')} vs ${defending.join(' / ')}.`);}
         if(option.key==='disarm'&&approval.checkType!=='opposed')throw new Error('Disarm requires the opposing weapon skill / Athletics contest.');
@@ -197,7 +380,7 @@ export function createCombatCommands(context) {
           if(!p.channelResult.success){const available=resourceSnapshot(character,'mp').current;if(available>=option.baseMP)costs.mp=option.baseMP;else{const fee=Math.ceil(option.baseMP/2);costs.mp=Math.min(available,fee);p.paymentShortfall=Math.max(0,fee-available);p.failedBeforeManifestation=true;if(p.paymentShortfall)p.publicMessage='Failed casting: remaining payment needs GM resolution.';}}
         }
         if(option.kind==='talent'){
-          const used=useLearnedTalent(character,option.talent,{choice:option.choice,triggerConfirmed:approval.triggerConfirmed},{catalog:buildTalentCatalog(character,context.catalog),encounter,now,sessionId:session.id,deferEffects:true});
+          const used=useLearnedTalent(character,option.talent,{choice:option.choice,triggerConfirmed:approval.triggerConfirmed},{catalog:buildTalentCatalog(character,context.catalog),encounter,now,sessionId:session.id,spellCosts:option.spellCosts,deferEffects:true});
           character=used.character;p.costs=used.costs;p.deferred={restore:{...used.restored,...(used.bpGain?{bp:used.bpGain}:{})},effect:used.effect};
         }else{const paid=payCombatCosts(character,costs,approval.hpPayment===true);character=paid.character;p.paid=paid.paid;}
         const consumptions=[...(approval.consume||[])];
@@ -208,20 +391,49 @@ export function createCombatCommands(context) {
         if(!p.ambush)setState(p.actorId,{ap:Math.min(3,s.ap-ap+(p.prepaidAP?.ap||0)),bonus:option.bonus?false:s.bonus,prepared:p.prepared?null:s.prepared});
         if(option.key==='first-aid')encounter.combat.firstAid={...encounter.combat.firstAid,[`${p.actorId}:${p.targetIds[0]}`]:encounter.round};
         put(p.actorId,character);
-        p.status=['attack','spell','scroll'].includes(option.key||option.kind)||approval.voluntaryLeavesReach?'reactions':'awaiting-roll';p.window=[];p.windowIndex=0;
+        p.status=['attack','spell','scroll','creature-attack','creature-spell'].includes(option.key||option.kind)||approval.voluntaryLeavesReach?'reactions':'awaiting-roll';p.window=[];p.windowIndex=0;
         if(p.failedBeforeManifestation){p.status='awaiting-resolution';p.result={success:false,channel:p.channelResult};}
         log(`${p.actorName} begins ${p.actorKind==='player'?p.name:'an action'} · ${p.ap} AP${p.bonus?' · bonus used':''}.`);
       };
       const makePending=(id,option,input)=>({id:context.requestId,actorId:id,actorName:entry(id).name,actorKind:entry(id).kind,optionId:option.id,name:option.name,ap:option.ap,bonus:Boolean(option.bonus),costs:option.costs,status:'awaiting-approval',targetIds:[...new Set(input.targetIds||[])],choice:text(input.choice,100),itemId:text(input.itemId,160),swapItemId:text(input.swapItemId,160),slot:text(input.slot,80),note:text(input.note),declaredAt:now});
 
-      if(input.operation==='save'){
-        noPending();const requested=input.encounter||{};
-        const previousRows=encounter.combatants,oldCurrent=currentCombatant(encounter),oldIds=new Set(previousRows.map(row=>row.id));
-        const nextRows=(requested.combatants||[]).filter(row=>!unavailable.has(row.characterId)).map(row=>{if(!/^[A-Za-z0-9_-]{1,160}$/.test(row.id))throw new Error('Invalid participant ID.');const old=entry(row.id);if(old&&old.characterId!==row.characterId)throw new Error('Remove a participant before changing its character link.');const next=old?{...old,defeated:Boolean(row.defeated)}:row.characterId?{id:row.id,characterId:row.characterId,name:characters.get(row.characterId)?.name||'Character',kind:'player',initiative:0}: {...copy(row),kind:'enemy',...encounterSourceResources(row)};if(encounter.status!=='active'&&row.initiativeSet===true){next.initiative=bounded(row.initiative,-100,1000);next.initiativeSet=true;}return next;});
-        if(new Set(nextRows.map(row=>row.id)).size!==nextRows.length)throw new Error('Duplicate participant.');
+      if(input.operation==='save'||input.operation==='load-prepared'){
+        if(loading){
+          encounter.status='ready';encounter.turnIndex=0;encounter.round=1;
+          encounter.preparedMapId=prepared.mapId||'';
+          encounter.preparedEncounterId=prepared.id;
+          encounter.initiativeMode=prepared.initiativeMode;
+          encounter.name=prepared.name;
+          privateState.preparedDetails={description:prepared.description,notes:prepared.notes,
+            environment:prepared.environment,rewardNotes:prepared.rewardNotes};
+          privateState.encounterSchedule=stageEncounterSchedule(prepared,now);
+          encounter.publicEvent=null;
+          // A previous encounter's turn state must never leak into a newly loaded template.
+          encounter.combat.participants={};
+          privateState.preparations={};
+          privateState.apSpends={};
+        }
+        noPending();const requested=loading?{combatants:incoming}:input.encounter||{};
+        if(requested.initiativeMode!==undefined){
+          if(!ENCOUNTER_INITIATIVE_MODES.has(requested.initiativeMode))
+            throw new Error('Choose automatic, manual, or mixed initiative.');
+          if(encounter.status==='active')
+            throw new Error('Initiative mode cannot change during active combat.');
+          encounter.initiativeMode=requested.initiativeMode;
+        }
+        const oldCurrent=currentCombatant(encounter),oldIds=new Set(encounter.combatants.map(row=>row.id));
+        const nextRows=(requested.combatants||[]).filter(row=>!unavailable.has(row.characterId)).map(row=>{if(!/^[A-Za-z0-9_-]{1,160}$/.test(row.id))throw new Error('Invalid participant ID.');const old=entry(row.id);if(old&&old.characterId!==row.characterId)throw new Error('Remove a participant before changing its character link.');const next=old?{...old,defeated:Boolean(row.defeated)}:row.characterId?{id:row.id,characterId:row.characterId,name:characters.get(row.characterId)?.name||'Character',kind:'player',initiative:0}: {...copy(row),kind:'enemy',...encounterSourceResources(row)};if((encounter.status!=='active'||!old)&&row.initiativeSet===true){next.initiative=bounded(row.initiative,-100,1000);next.initiativeSet=true;}return next;});
+        const linkedIds=nextRows.map(row=>row.characterId).filter(Boolean);
+        if(new Set(nextRows.map(row=>row.id)).size!==nextRows.length||new Set(linkedIds).size!==linkedIds.length)
+          throw new Error('Duplicate participant.');
+        if(loading&&prepared.playerIds.some(id=>unavailable.has(id)))
+          throw Error('A character selected in the template is no longer linked to this campaign.');
         encounter.combatants=nextRows;
         for(const row of nextRows)if(!oldIds.has(row.id)){
-          if(encounter.status==='active'&&!row.initiativeSet){const result=initiativeResult(get(row.id),roll(),roll(),{now,encounter});row.initiative=result.total;row.initiativeRoll=result;}
+          if(encounter.status==='active'&&!row.initiativeSet){
+            if(needsManualInitiative(row,initiativeMode(encounter.initiativeMode)))
+              throw Error('Set manual initiative before adding this participant.');
+            const result=initiativeResult(get(row.id),roll(),roll(),{now,encounter});row.initiative=result.total;row.initiativeRoll=result;}
           if(row.initiativeSet===undefined&&!row.initiativeRoll)row.initiativeSet=false;
           setState(row.id,{ap:0,bonus:false,turns:0});
         }
@@ -230,9 +442,9 @@ export function createCombatCommands(context) {
           if(!nextRows.some(row=>row.id===oldCurrent?.id)){
             if(!unavailable.has(oldCurrent?.characterId))throw new Error('Advance the current turn before removing its participant.');
             if(!nextRows.length)throw new Error('End combat before removing its last participant.');
-            const previousIndex=previousRows.findIndex(row=>row.id===oldCurrent.id);
-            const successor=[...previousRows.slice(previousIndex+1),...previousRows.slice(0,previousIndex)].find(row=>nextRows.some(next=>next.id===row.id))||nextRows[0];
-            if(previousRows.findIndex(row=>row.id===successor.id)<=previousIndex)encounter.round++;
+            const waiting=nextRows.find(row=>!Object.hasOwn(encounter.combat.turnsTaken,row.id));
+            if(!waiting){encounter.round++;encounter.combat.turnsTaken={};}
+            const successor=waiting||nextRows[0];
             encounter.turnIndex=encounter.combatants.findIndex(row=>row.id===successor.id);startTurn();
           }else encounter.turnIndex=encounter.combatants.findIndex(row=>row.id===oldCurrent.id);
         }
@@ -244,7 +456,32 @@ export function createCombatCommands(context) {
           const tokens=synchronizeCombatMapTokens(boundMap,encounter,()=>randomUUID());
           tx.update(mapRef,{tokens,updatedAt:serverTimestamp()});
         }
-        log('GM updated encounter participants.');
+        if(!loading&&privateState.encounterSchedule){
+          // An edited manual roster must never silently edit the private wave template.
+          // The existing schedule remains a snapshot of the last prepared load.
+        }
+        if(loading&&Array.isArray(privateState.stagedEncounters))
+          privateState.stagedEncounters=privateState.stagedEncounters.filter(row=>row.id!==prepared.id);
+        log(loading?'GM loaded prepared encounter: '+prepared.name+'.':'GM updated encounter participants.');
+      }else if(input.operation==='map-prepare'){
+        if(encounter.status==='active'||privateState.pending)
+          throw new Error('End the active encounter and resolve pending actions before preparing a battle map.');
+        if(encounter.battleMapId)
+          throw new Error('Unlink the currently bound combat map before preparing a different map.');
+        const requested=String(input.mapId||'');
+        if(requested&&!preparedMapSnap)throw new Error('Choose an existing campaign battle map.');
+        if(requested&&preparedMapSnap.data().combatId)
+          throw new Error('This map is already in use by an active encounter.');
+        if(requested){
+          const capacity=preparedMapTokenCapacity(preparedMapSnap.data(),
+            encounter.combatants.filter(row=>!row.characterId).length,
+            encounter.combatants.filter(row=>row.characterId).length);
+          if(!capacity.available)
+            throw new Error('The selected map cannot hold all participants and existing markers.');
+        }
+        encounter.preparedMapId=requested;
+        log(requested?'GM prepared battle map for the next encounter.':
+          'GM cleared the prepared encounter battle map.');
       }else if(input.operation==='map-link'){
         requireActive();noPending();
         if(encounter.battleMapId&&encounter.battleMapId!==boundMapId)
@@ -255,63 +492,303 @@ export function createCombatCommands(context) {
         tx.update(mapRef,{combatId:encounter.combatId,tokens,updatedAt:serverTimestamp()});
         encounter.battleMapId=boundMapId;
         log('GM linked combat encounter to a battle map.');
+      }else if(input.operation==='player-map-move'){
+        requireActive();noPending();const actor=controlled();
+        const plan=validatePlayerMapMove(actor,input);
+        if(!gm&&needsMapReactionReview(actor,plan)){
+          const option=findOption(actor.id,'basic:walk');
+          const p=makePending(actor.id,option,{note:'Review the confirmed map route for eligible reactions.'});
+          p.name='Map movement';
+          p.ap=plan.ap;
+          p.mapMove={mapId:boundMapId,point:plan.point,moveKind:input.moveKind,
+            outOfTurn:plan.offTurn,requesterUid:currentUser.uid,ap:plan.ap,
+            origin:{x:plan.original.x,y:plan.original.y},distance:plan.route.cost,
+            kind:plan.kind,diagonalParity:plan.movement.diagonalParity??0};
+          if(plan.offTurn)p.outOfTurn=encounter.round;
+          privateState.pending=p;
+          queuedMovement=true;
+          log(actor.name+' requests map movement for GM reaction review.');
+        }else applyPlayerMapMove(actor,plan,currentUser.uid);
+      }else if(input.operation==='map-delegate'){
+        requireActive();noPending();
+        if(encounter.battleMapId!==boundMapId||boundMap.combatId!==encounter.combatId)
+          throw Error('This map is not linked to the current encounter.');
+        const target=entry(String(input.combatantId||''));
+        if(!target||!boundMap.tokens.some(row=>row.combatantId===target.id))
+          throw Error('Choose a mapped combat participant.');
+        const uid=String(input.delegateUid||'').trim();
+        if(uid&&!/^[A-Za-z0-9_-]{1,160}$/.test(uid))
+          throw Error('Choose a valid campaign member.');
+        if(uid){
+          const delegatedRecord=await readCampaignMember({get:async ref=>{
+            const snapshot=await tx.get(ref);return {exists:snapshot.exists(),data:()=>snapshot.data()};
+          }},db,campaignId,campaign,uid);
+          if(!isCampaignMember(campaign,uid,delegatedRecord,campaignId)||isCampaignGM(campaign,uid,delegatedRecord,campaignId))
+            throw Error('Only a participating campaign player may receive map movement authority.');
+        }
+        setState(target.id,{movementDelegateUid:uid||null});
+        log(uid?'GM delegated map movement for '+target.name+'.':
+          'GM revoked delegated map movement for '+target.name+'.',{
+            actorUid:currentUser.uid,targetId:target.id,
+            reason:uid?'Map movement delegated to campaign member.':'Delegated movement revoked.',
+            ...(uid?{delegateUid:uid}:{})
+          });
+      }else if(input.operation==='map-token-appearance'){
+        requireActive();
+        if(encounter.battleMapId!==boundMapId||boundMap.combatId!==encounter.combatId)
+          throw Error('This map is not linked to the current encounter.');
+        const appearance=battleMapTokenAppearance(input.appearance||{});
+        const token=boundMap.tokens.find(row=>row.id===input.tokenId);
+        if(!token)throw Error('This map token no longer exists.');
+        const {portrait,faction,cells,visibility,...base}=token;
+        const tokens=boundMap.tokens.map(row=>row.id===token.id?{...base,...appearance}:row);
+        tx.update(mapRef,{tokens,updatedAt:serverTimestamp()});
+        log('GM updated the appearance and visibility of '+token.label+'.',{
+          actorUid:currentUser.uid,targetId:token.combatantId||token.id,
+          from:battleMapTokenAppearance({portrait,faction,cells,visibility}),to:appearance
+        });
       }else if(input.operation==='map-move'){
         requireActive();noPending();
         if(encounter.battleMapId!==boundMapId)
           throw new Error('This map is not the encounter-linked battle map.');
         const plan=combatMapMovePlan({...boundMap,id:boundMapId},encounter,
           String(input.combatantId||''),input.point,
-          {mode:input.mode||'movement',reason:input.reason});
+          {mode:input.mode||'movement',reason:input.reason,source:input.source});
         const tokens=boundMap.tokens.map(token=>token.combatantId===plan.actorId?
           {...token,...plan.to}:token);
         tx.update(mapRef,{tokens,updatedAt:serverTimestamp()});
         if(plan.mode==='movement'){
           const existing=encounter.combat.participants[plan.actorId]||{};
           encounter.combat.participants[plan.actorId]={
-            ...existing,movement:{...existing.movement,remaining:plan.remaining}
+            ...existing,movement:plan.nextMovement
           };
         }
         log(plan.mode==='movement'
           ?entry(plan.actorId).name+' moved '+plan.distance.metres+' m on the map.'
-          :'GM repositioned '+entry(plan.actorId).name+': '+plan.reason);
+          :plan.mode==='forced'
+            ?'GM resolved forced movement of '+entry(plan.actorId).name+': '+plan.reason
+            :'GM repositioned '+entry(plan.actorId).name+': '+plan.reason,{
+            actorUid:currentUser.uid,targetId:plan.actorId,from:plan.from,to:plan.to,
+            ...(plan.reason?{reason:plan.reason}:{}),
+            ...(plan.source?{source:plan.source,metres:plan.distance.metres,movementKind:'forced'}:{})
+          });
       }else if(input.operation==='start'){
         noPending();if(encounter.status==='active'&&encounter.combat?.version===1)throw new Error('The encounter is already active.');
         if(!encounter.combatants.length)throw new Error('Add participants first.');
         if(!['ready','ended','active'].includes(encounter.status))throw new Error('Prepare the encounter before starting combat.');
-        encounter.status='active';encounter.round=1;encounter.turnIndex=0;encounter.combatId=context.requestId;encounter.combat.participants={};encounter.combat.firstAid={};encounter.combat.version=1;
+        const mode=initiativeMode(encounter.initiativeMode);
+        const missing=encounter.combatants.filter(row=>needsManualInitiative(row,mode)&&!row.initiativeSet);
+        if(missing.length)
+          throw new Error('Set manual initiative for '+missing.map(row=>row.name||row.id).slice(0,5).join(', ')+
+            (missing.length>5?' and '+(missing.length-5)+' others':'')+' before starting combat.');
+        encounter.initiativeMode=mode;
+        encounter.status='active';encounter.round=1;encounter.turnIndex=0;
+        encounter.publicEvent=null;encounter.combatId=context.requestId;encounter.combat.participants={};encounter.combat.firstAid={};encounter.combat.turnsTaken={};encounter.combat.version=1;
         for(const row of encounter.combatants){if(!row.initiativeSet){const result=initiativeResult(get(row.id),roll(),roll(),{now,encounter});row.initiative=result.total;row.initiativeRoll=result;}setState(row.id,{ap:0,bonus:false,turns:0,turnComplete:false});}
         encounter.combatants.sort(initiativeOrder);startTurn();
+        if(preparedMapRef){
+          const data=preparedMapSnap.data();
+          const capacity=preparedMapTokenCapacity(data,
+            encounter.combatants.filter(row=>!row.characterId).length,
+            encounter.combatants.filter(row=>row.characterId).length);
+          if(!capacity.available)throw new Error('The prepared map cannot hold all combat participants.');
+          const tokens=synchronizeCombatMapTokens(data,encounter,()=>randomUUID());
+          tx.update(preparedMapRef,{
+            combatId:encounter.combatId,tokens,updatedAt:serverTimestamp()
+          });
+          encounter.battleMapId=requestedPreparedMapId;
+          log('Prepared battle map linked with combatant tokens.');
+        }
+      }else if(input.operation==='release-wave'){
+        requireActive();noPending();
+        if(input.confirmation!=='release-wave'||!input.waveId)
+          throw new Error('Review and confirm the exact prepared wave.');
+        const {updated,wave,enemies}=releaseEncounterWave(
+          privateState.encounterSchedule,input.waveId,context.requestId,now,encounter.round
+        );
+        const total=encounter.combatants.length+enemies.length;
+        if(total>160)throw new Error('Wave release would exceed 160 combat participants.');
+        if(enemies.some(row=>encounter.combatants.some(old=>old.id===row.id)))
+          throw new Error('Duplicate wave combatant identifiers.');
+        const acting=currentCombatant(encounter);
+        for(const enemy of enemies){
+          const next={...enemy,...encounterSourceResources(enemy)};
+          if(next.initiativeSet!==true){
+            if(needsManualInitiative(next,initiativeMode(encounter.initiativeMode)))
+              throw Error('Set manual initiative on each planned reinforcement before releasing this wave.');
+            const result=initiativeResult(next,roll(),roll(),{now,encounter});
+            next.initiative=result.total;next.initiativeRoll=result;
+          }
+          encounter.combatants.push(next);
+          encounter.combat.participants[next.id]={
+            ap:0,bonus:false,turns:0,turnComplete:false,apSpends:[]
+          };
+        }
+        encounter.combatants.sort(initiativeOrder);
+        // Never advance/restart the current turn when reinforcements enter.
+        encounter.turnIndex=encounter.combatants.findIndex(row=>row.id===acting.id);
+        encounter.enemies=encounter.combatants.filter(row=>!row.characterId).map(copy);
+        if(boundMap&&boundMap.combatId===encounter.combatId){
+          const tokens=synchronizeCombatMapTokens(boundMap,encounter,()=>randomUUID());
+          tx.update(mapRef,{tokens,updatedAt:serverTimestamp()});
+        }
+        privateState.encounterSchedule=updated;
+        log('GM released reinforcement wave: '+wave.name+
+          ' ('+enemies.length+' enemies).');
+      }else if(input.operation==='trigger-event'){
+        requireActive();noPending();
+        if(input.confirmation!=='trigger-event'||!input.eventId)
+          throw new Error('Review and confirm the prepared encounter event.');
+        const {updated,event}=triggerEncounterEvent(
+          privateState.encounterSchedule,input.eventId,now,encounter.round
+        );
+        privateState.encounterSchedule=updated;
+        encounter.publicEvent=null;
+        if(event.announce){
+          encounter.publicEvent={name:event.name,type:event.type,
+            round:encounter.round,at:now};
+        }
+        // Event text does not directly mutate HP, AP, initiative or conditions.
+        log('GM triggered '+event.type+' event: '+event.name+'.');
+      }else if(input.operation==='pause'||input.operation==='resume'){
+        requireActive();
+        const pausing=input.operation==='pause';
+        if(!pausing&&encounter.paused!==true)throw new Error('Combat is not paused.');
+        if(pausing){
+          const timer=encounter.turnTimer;
+          privateState.resumeTurnTimer=Boolean(timer?.enabled&&timer.endsAt>now);
+          if(timer?.enabled){
+            encounter.turnTimer={...timer,enabled:false,paused:true,endsAt:null,
+              remainingSeconds:Math.max(0,Math.ceil((timer.endsAt-now)/1000))};
+          }
+        }else{
+          const timer=encounter.turnTimer;
+          if(privateState.resumeTurnTimer&&timer?.remainingSeconds>0){
+            encounter.turnTimer={...timer,enabled:true,paused:false,
+              endsAt:now+timer.remainingSeconds*1000};
+          }
+          delete privateState.resumeTurnTimer;
+        }
+        encounter.paused=pausing;
+        log(pausing?'GM paused the encounter.':'GM resumed the encounter.',{actorUid:currentUser.uid});
+      }else if(input.operation==='timer'){
+        if(!gm)throw new Error('Only the GM may configure the combat turn timer.');
+        encounter.turnTimer=applyLiveTimerCommand(encounter.turnTimer||{},input,
+          encounter.status,now);
+        log('GM '+(input.mode==='configure'?'configured':
+          input.mode==='disable'?'disabled':input.mode==='pause'?'paused':'resumed')+
+          ' the combat turn timer.');
       }else if(input.operation==='end-turn'){
         requireActive();controlled();noPending();
         if(currentCombatant(encounter)?.id!==actorId)throw new Error('Only the current participant can end their turn.');
         if(state(actorId).pendingDeathSave)throw new Error('Resolve the pending death save before ending this turn.');
         if(state(actorId).turnComplete)throw new Error('This turn is already complete.');
         setState(actorId,{turnComplete:true});log(`${entry(actorId).name} ends their turn; unused AP held for reactions. Waiting for the GM to advance.`);
-      }else if(input.operation==='next'){
-        requireActive();noPending();const current=currentCombatant(encounter);if(state(current.id).pendingDeathSave)throw new Error('Resolve the pending death save before ending this turn.');conditionBoundary(current.id,'end');
-        encounter.turnIndex=(encounter.turnIndex+1)%encounter.combatants.length;if(encounter.turnIndex===0)encounter.round++;startTurn();
+      }else if(['next','skip-turn','override-turn'].includes(input.operation)){
+        requireActive();noPending();
+        const current=currentCombatant(encounter);
+        if(!current)throw Error('No participant is taking a turn.');
+        if(state(current.id).pendingDeathSave)throw Error('Resolve the pending death save before ending this turn.');
+        const reason=text(input.reason,160);
+        if(input.operation!=='next'&&!reason)throw Error('Record a reason for this turn change.');
+        const waiting=encounter.combatants.filter(row=>!Object.hasOwn(encounter.combat.turnsTaken,row.id));
+        const override=input.operation==='override-turn';
+        const target=override?waiting.find(row=>row.id===input.targetId):waiting[0];
+        if(override&&!target)throw Error('Choose a participant who has not taken a turn this round.');
+        conditionBoundary(current.id,'end');
+        if(!target){encounter.round++;encounter.combat.turnsTaken={};}
+        const successor=target||encounter.combatants[0];
+        encounter.turnIndex=encounter.combatants.findIndex(row=>row.id===successor.id);
+        if(input.operation!=='next'){
+          setState(current.id,{turnComplete:true});
+          log(`GM ${override?'overrode':'skipped'} ${current.name}'s turn: ${reason}`,{
+            actorUid:currentUser.uid,reason,previousActorId:current.id,nextActorId:successor.id
+          });
+        }
+        startTurn();
       }else if(input.operation==='end'||input.operation==='clear'){
-        if(input.operation==='end')requireActive();
+        if(input.operation==='end'){
+          requireActive();
+          // The final roster, HP/SP/MP and private wave/event outcomes are
+          // snapshotted before post-combat conditions or turn state are cleared.
+          // Store outside the reusable prepared library and public encounter doc.
+          log('GM completed combat; final state recorded for reward review.');
+          const history=captureEncounterCompletion(encounter,privateState,characters,{
+            endedAt:now,endedBy:currentUser.uid,sessionId:String(session.id||'')
+          });
+          const historyRef=doc(db,'campaigns',campaignId,'encounterHistory',history.id);
+          const existingHistory=await tx.get(historyRef);
+          const previous=existingHistory.data();
+          const record=nextCompletionRecord(history,previous);
+          const recoveryRef=doc(db,'campaigns',campaignId,'encounterHistory',history.id,'recovery','latest');
+          const revisionRef=doc(db,'campaigns',campaignId,'encounterHistory',history.id,
+            'completionRevisions',String(record.completionNumber));
+          const checkpoint=captureEncounterRecovery(encounter,privateState,boundMap,now);
+          tx.set(recoveryRef,checkpoint);
+          tx.set(revisionRef,{...history,completionNumber:record.completionNumber});
+          tx.set(historyRef,{...record,createdAt:previous?.createdAt??serverTimestamp(),updatedAt:serverTimestamp()});
+        }
         if(privateState.pending)log(`GM closes the pending ${privateState.pending.status} action at combat end; committed costs remain spent.`);
         privateState.pending=null;privateState.preparations={};privateState.apSpends={};
         encounter.combatants=encounter.combatants.filter(row=>!unavailable.has(row.characterId));
         encounter.enemies=encounter.combatants.filter(row=>!row.characterId).map(copy);
         for(const row of encounter.combatants){const character=get(row.id);character.conditions=rows(character.conditions).map(condition=>condition.encounterId||condition.throughOwnTurn!==undefined?{...condition,encounterId:'',untilRound:0,pendingGMExpiry:true}:condition);put(row.id,character);}
-        encounter.status=input.operation==='end'?'ended':'ready';encounter.turnIndex=null;encounter.combat.participants={};encounter.combat.firstAid={};
+        delete privateState.resumeTurnTimer;
+        delete encounter.paused;
+        delete encounter.reopened;
+        encounter.status=input.operation==='end'?'ended':'ready';
+        encounter.publicEvent=null;encounter.turnIndex=null;encounter.combat.participants={};encounter.combat.firstAid={};encounter.combat.turnsTaken={};
         for(const key of ['turnTimer','timer'])if(encounter[key])encounter[key]={...encounter[key],enabled:false,endsAt:null};
         if(boundMap&&boundMap.combatId===encounter.combatId){
           tx.update(mapRef,{combatId:'',tokens:(boundMap.tokens||[]).filter(token=>!token.combatantId),updatedAt:serverTimestamp()});
         }
         encounter.battleMapId='';
-        if(input.operation==='clear'){encounter.combatants=[];encounter.enemies=[];encounter.turnIndex=0;encounter.round=1;}log('Combat ended; remaining resources and conditions retained.');
+        if(input.operation==='clear'){
+          encounter.combatants=[];encounter.enemies=[];encounter.turnIndex=0;encounter.round=1;
+          privateState.encounterSchedule=null;encounter.publicEvent=null;
+          encounter.preparedEncounterId='';encounter.initiativeMode='automatic';encounter.name='';
+          delete privateState.preparedDetails;
+        }
+        log('Combat ended; remaining resources and conditions retained.');
+      }else if(input.operation==='record-physical-roll'){
+        requireActive();
+        const physical=validatePhysicalDiceRecord(input,encounter.combatants);
+        const participant=entry(physical.targetId);
+        log('GM verified physical d'+physical.faces+' roll for '+participant.name+
+          ': '+physical.result+' — '+physical.reason,{
+          actorUid:currentUser.uid,targetId:physical.targetId,
+          rollSource:'physical-gm-verified',dieFaces:physical.faces,
+          faceResult:physical.result,reason:physical.reason
+        });
       }else if(input.operation==='correct'){
         const reason=text(input.reason);if(!reason)throw new Error('A GM correction needs a recorded reason.');
         const id=input.targetId||actorId,character=get(id);
         if(input.resource){let next=input.current!==undefined?setEncounterResource(character,input.resource,bounded(input.current),input.maximum===undefined?undefined:bounded(input.maximum)):changeCombatHP(character,bounded(input.amount),{damage:input.damage===true,nonlethal:input.nonlethal===true,now});if(input.resource==='hp'&&input.current!==undefined){if(resourcePair(next.hp)[0]>0)delete next.downed;else if(!next.downed)next.downed={successes:0,failures:0,dead:false};}put(id,next);}
         if(input.ap!==undefined)setState(id,{ap:bounded(input.ap,0,3)});
         if(input.bonus!==undefined)setState(id,{bonus:input.bonus===true});
-        if(input.initiative!==undefined){if(encounter.status==='active')throw new Error('Initiative positions cannot be delayed or reordered during combat.');entry(id).initiative=bounded(input.initiative,-100,1000);}
-        log(`GM correction for ${entry(id).name}: ${reason}`);
+        const audit={actorUid:currentUser.uid,targetId:id,reason};
+        if(input.restoreOpportunity===true){
+          requireActive();noPending();
+          const previous=state(id).outOfTurn;
+          if(previous?.round!==encounter.round)throw Error('This participant still has their round opportunity.');
+          setState(id,{outOfTurn:null});
+          audit.previousOpportunity=previous;
+          audit.restoredOpportunity=true;
+        }
+        if(input.initiative!==undefined){
+          noPending();
+          const participant=entry(id);
+          const actingId=currentCombatant(encounter)?.id;
+          audit.previousInitiative=participant.initiative??null;
+          participant.initiative=bounded(input.initiative,-100,1000);
+          participant.initiativeSet=true;
+          if(actingId){
+            encounter.combatants.sort(initiativeOrder);
+            encounter.turnIndex=encounter.combatants.findIndex(row=>row.id===actingId);
+          }
+          audit.initiative=participant.initiative;
+        }
+        log(`GM correction for ${entry(id).name}: ${reason}`,audit);
       }else if(input.operation==='condition'){
         const id=input.targetId||actorId;let character=get(id);
         if(input.condition.action==='remove')character=removeCondition(character,input.condition.id,{isGM:true,uid:currentUser.uid,now});
@@ -327,8 +804,8 @@ export function createCombatCommands(context) {
         if(restriction||s.pendingDeathSave)throw new Error(restriction||'Resolve the turn-start death save first.');
         const option=input.optionId?findOption(actorId,input.optionId):null;
         let ap,bonus;
-        if(option){const problem=optionProblem(option,character,encounter,actorId);if(problem)throw new Error(problem);ap=option.ap;bonus=Boolean(option.bonus);}
-        else{ap=bounded(input.ap,0,3);bonus=ap===0;}
+        if(option){const problem=optionProblem(option,character,encounter,actorId,{sessionId:session.id});if(problem)throw new Error(problem);ap=option.ap;bonus=Boolean(option.bonus);}
+        else{ap=input.ap;bonus=ap===0;}
         if(!Number.isInteger(ap)||ap<0||ap>3)throw new Error('Choose a whole AP cost from 0 to 3.');
         if(s.ap<ap)throw new Error('Not enough AP.');
         if(bonus&&!s.bonus)throw new Error('The shared bonus action has already been used.');
@@ -344,9 +821,27 @@ export function createCombatCommands(context) {
         const option=findOption(actorId,input.optionId),s=state(actorId);
         if(input.operation==='ambush'){
           if(encounter.status==='active'||s.ambushUsed||!input.approval?.feasible||!input.approval?.unnoticed||option.key!=='attack')throw new Error('An opening ambush requires GM approval, an unnoticed attacker and one attack before initiative.');
-        }else if(currentCombatant(encounter)?.id!==actorId||s.turnComplete)throw new Error('Ordinary actions and preparation are available only on your own turn before it is completed.');
+        }
+        const offTurn=input.operation!=='ambush'&&(currentCombatant(encounter)?.id!==actorId||s.turnComplete);
+        if(offTurn){
+          if(input.operation!=='declare'||input.outOfTurn!==true||!['attack','creature-attack'].includes(option.key)||
+            input.spendId||s.ap<option.ap)
+            throw new Error('Ordinary actions and preparation are available only on your own turn before it is completed.');
+          validateMapOpportunity(encounter,actorId);
+        }
         if(combatRestriction(get(actorId),{now,encounter}))throw new Error('This participant cannot act.');
         const p=makePending(actorId,option,input);validateTargets(p);
+        if(offTurn){
+          if(!gm&&boundMap&&boundMap.combatId===encounter.combatId){
+            const share=boundMap.visibility==='players'?
+              publicPresentationBattleMap(boundMap,campaignId,boundMapId,encounter,characters):null;
+            const visible=new Set(share?.tokens.map(row=>row.id)||[]);
+            if(p.targetIds.some(target=>!entry(target)?.characterId&&!boundMap.tokens.some(
+              token=>token.combatantId===target&&visible.has(token.id))))
+              throw Error('Choose an authorised visible target.');
+          }
+          p.outOfTurn=encounter.round;
+        }
         if(input.spendId){
           if(input.operation!=='declare')throw new Error('An AP receipt can only be linked to its ordinary action.');
           const receipts=entry(actorId).kind==='player'?s.apSpends:privateState.apSpends?.[actorId];
@@ -370,7 +865,7 @@ export function createCombatCommands(context) {
         }
       }else if(input.operation==='approve'){
         const p=privateState.pending;if(!p||p.status!=='awaiting-approval')throw new Error('No declaration awaits approval.');
-        if(!p.prepared&&!p.ambush&&currentCombatant(encounter)?.id!==p.actorId)throw new Error('The declaring actor is no longer active.');
+        if(!p.prepared&&!p.ambush&&!p.outOfTurn&&currentCombatant(encounter)?.id!==p.actorId)throw new Error('The declaring actor is no longer active.');
         begin(p,input.approval||{});
       }else if(input.operation==='reject'||input.operation==='cancel'){
         const p=privateState.pending;if(!p||p.status!=='awaiting-approval')throw new Error('A begun action cannot be freely cancelled or refunded.');
@@ -442,22 +937,33 @@ export function createCombatCommands(context) {
       }else if(input.operation==='roll'){
         const p=privateState.pending;if(!p||p.status!=='awaiting-roll')throw new Error('Close pre-roll reactions before rolling.');
         const a=p.approval||{},character=get(p.actorId);
+        const manualDice=validateHybridPhysicalDice(input.physicalDice);
+        const consumedDice=new Set();
+        const recordedRoll=(key,check)=>{
+          if(manualDice?.[key])consumedDice.add(key);
+          return hybridD20(check,manualDice?.[key],numberDie);
+        };
+        if(a.checkType==='none'&&manualDice)
+          throw Error('This action has no d20 check to record.');
         if(a.checkType==='none'){p.result={success:true,check:'None / N/A'};}
         else{
           if(!a.skill)throw new Error('A named skill and check type are required.');
-          const check=p.kind==='scroll'?{skill:a.skill,modifier:bounded(p.creatorStatistics?.modifier,-100,1000),advantage:Boolean(a.advantage&&!a.disadvantage),disadvantage:Boolean(a.disadvantage&&!a.advantage)}:skillCheck(character,a.skill,{catalog:context.catalog,characteristic:a.characteristic,secondaryApproved:a.secondaryApproved,modifier:a.modifier,advantage:a.advantage||p.ambush,disadvantage:a.disadvantage,clock:{now,encounter}}),dice=rollD20(check,numberDie),attack={...dice,total:dice.die+check.modifier,...check};
+          const check=p.kind==='scroll'?{skill:a.skill,modifier:bounded(p.creatorStatistics?.modifier,-100,1000),advantage:Boolean(a.advantage&&!a.disadvantage),disadvantage:Boolean(a.disadvantage&&!a.advantage)}:skillCheck(character,a.skill,{catalog:context.catalog,characteristic:a.characteristic,secondaryApproved:a.secondaryApproved,modifier:a.modifier,advantage:a.advantage||p.ambush,disadvantage:a.disadvantage,clock:{now,encounter}}),dice=recordedRoll('primary',check),attack={...dice,total:dice.die+check.modifier,...check};
           if(a.checkType==='attack'){
             const target=get(p.targetIds[0]);if(a.cover==='full'&&!a.bypassCover)throw new Error('Full cover blocks direct delivery.');
             const ac=target.kind==='enemy'?Number(target.ac):calculateCharacterAC(target).finalAC;
             if(!Number.isFinite(ac))throw new Error('The target’s applicable AC is missing.');
             attack.total+=a.flanking===true?2:0;let defence;
-            if(attackResult(attack,ac+(a.cover==='partial'?2:a.cover==='substantial'?4:0)).hit){const reaction=p.defences?.find(row=>row.actorId===p.targetIds[0]);if(reaction){const skill={dodge:'Dodging',block:'Shield Use',parry:'Parrying'}[reaction.key],dc=skillCheck(target,skill,{catalog:context.catalog,clock:{now,encounter}}),d=rollD20(dc,numberDie);defence={...d,total:d.die+dc.modifier,key:reaction.key};}}
+            if(attackResult(attack,ac+(a.cover==='partial'?2:a.cover==='substantial'?4:0)).hit){const reaction=p.defences?.find(row=>row.actorId===p.targetIds[0]);if(reaction){const skill={dodge:'Dodging',block:'Shield Use',parry:'Parrying'}[reaction.key],dc=skillCheck(target,skill,{catalog:context.catalog,clock:{now,encounter}}),d=recordedRoll('defence',dc);defence={...d,total:d.die+dc.modifier,key:reaction.key};}}
             p.result={attack,ac,defence:defence||null,...attackResult(attack,ac+(a.cover==='partial'?2:a.cover==='substantial'?4:0),defence)};p.result.success=p.result.hit;
           }else if(a.checkType==='opposed'){
-            if(!a.opposedSkill)throw new Error('Name the opposing skill.');const check2=skillCheck(get(p.targetIds[0]),a.opposedSkill,{catalog:context.catalog,clock:{now,encounter}}),d=rollD20(check2,numberDie),opponent={...d,total:d.die+check2.modifier,...check2};p.result={roll:attack,opponent,success:checkResult(attack,opponent.total,{opposed:true})};
+            if(!a.opposedSkill)throw new Error('Name the opposing skill.');const check2=skillCheck(get(p.targetIds[0]),a.opposedSkill,{catalog:context.catalog,clock:{now,encounter}}),d=recordedRoll('opposed',check2),opponent={...d,total:d.die+check2.modifier,...check2};p.result={roll:attack,opponent,success:checkResult(attack,opponent.total,{opposed:true})};
           }else{if(!Number.isFinite(a.dc))throw new Error('Set the numeric DC before rolling.');p.result={roll:attack,dc:a.dc,success:checkResult(attack,a.dc)};}
         }
-        p.status='awaiting-resolution';log(`${p.actorName}'s check rolled; awaiting effects.`);
+        if(manualDice&&Object.keys(manualDice).some(key=>!consumedDice.has(key)))
+          throw Error('Physical dice were supplied for a check that did not occur.');
+        p.status='awaiting-resolution';
+        log(`${p.actorName}'s check recorded (${consumedDice.size?'physical/digital hybrid':'digital'}); awaiting effects.`);
       }else if(input.operation==='resolve'){
         const p=privateState.pending;if(!p||!['awaiting-resolution','awaiting-roll'].includes(p.status))throw new Error('Handle reactions and rolls before resolving.');
         const reason=text(input.reason);if(!p.result&&!reason)throw new Error('Record the GM adjudication for an unresolved source effect.');
@@ -469,13 +975,31 @@ export function createCombatCommands(context) {
           put(p.actorId,difference>0?payCombatCosts(get(p.actorId),{mp:difference},p.approval.hpPayment).character:applyResourceChanges(get(p.actorId),{restore:{mp:-difference}}));
         }
         if(input.outcome==='feedback'&&!p.feedbackApplied)put(p.actorId,feedback(get(p.actorId),p.rank,state(p.actorId).turns,now));
-        const manifests=success&&!p.prevented&&!['failed-before-manifestation','feedback','countered'].includes(input.outcome);
+        let manifests=success&&!p.prevented&&!['failed-before-manifestation','feedback','countered'].includes(input.outcome);
+        if(manifests&&p.mapMove){
+          const actor=entry(p.actorId);
+          let plan;
+          try{
+            plan=validatePlayerMapMove(actor,p.mapMove,true);
+          }catch(error){
+            manifests=false;
+            log('Map movement stopped: '+error.message,{actorUid:currentUser.uid,targetId:p.actorId});
+          }
+          if(plan)applyPlayerMapMove(actor,plan,p.mapMove.requesterUid,true);
+        }
         if(new Set((input.results||[]).map(row=>row.targetId)).size!==(input.results||[]).length)throw new Error('Resolve each target once per damage event.');
         if(manifests){
           if(p.deferred){const targetId=p.approval.effectTargetId||p.actorId;if(![p.actorId,...p.targetIds].includes(targetId))throw new Error('Effect target changed.');let target=applyResourceChanges(get(targetId),{restore:p.deferred.restore||{}});if(p.deferred.effect)target.talentEffects=[...(target.talentEffects||[]).filter(row=>row.id!==p.deferred.effect.id),p.deferred.effect];put(targetId,target);}
           if(p.key==='first-aid')put(p.targetIds[0],deathSave(get(p.targetIds[0]),10,{firstAid:true}));
           if(p.key==='disengage')setState(p.actorId,{disengaged:true});
-          if(['walk','swim','fly','climb','dash','climb-dash','mount-move'].includes(p.key))setState(p.actorId,{movement:{actionId:p.id,kind:p.key,remaining:p.approval.distance??null}});
+          if(!p.mapMove&&['walk','swim','fly','climb','dash','climb-dash','mount-move'].includes(p.key))
+            setState(p.actorId,{movement:{actionId:p.id,kind:p.key,remaining:p.approval.distance??null}});
+          if(p.mapAward){
+            setState(p.actorId,{movement:{...p.mapAward,actionId:p.id}});
+            log(`${p.name} grants ${p.mapAward.remaining} m of ${p.mapAward.routeKind} movement.`,{
+              actorUid:currentUser.uid,targetId:p.actorId,source:p.optionId,reason:p.approval.sourceReason
+            });
+          }
           if(p.key==='grapple'){setState(p.actorId,{grappleTarget:p.targetIds[0]});setState(p.targetIds[0],{grappledBy:p.actorId});}
           if(p.key==='escape'){const holder=state(p.actorId).grappledBy;if(holder)setState(holder,{grappleTarget:null});setState(p.actorId,{grappledBy:null});}
           if(p.key==='stand'){const target=get(p.actorId);target.conditions=rows(target.conditions).map(row=>/prone/i.test(row.name)?{...row,active:false}:row);put(p.actorId,target);}
@@ -510,7 +1034,9 @@ export function createCombatCommands(context) {
       // disappear; recursive merge would resurrect their old combat state.
       tx.set(encounterRef,{...encounter,updatedBy:currentUser.uid,updatedAt:serverTimestamp()});
       if(gmSnap.exists())tx.update(gmRef,{combatState:privateState});else tx.set(gmRef,{combatState:privateState});
-      return {ok:true,revision:encounter.combat.revision,...(unavailable.size?{message:`Encounter synchronized. Removed ${unavailable.size} unlinked character(s) from this encounter.`}:{})};
+      return {ok:true,revision:encounter.combat.revision,
+        ...(queuedMovement?{queued:true,message:'Move sent to the GM for reaction review.'}:{}),
+        ...(unavailable.size?{message:`Encounter synchronized. Removed ${unavailable.size} unlinked character(s) from this encounter.`}:{})};
     });}catch(error){return {ok:false,error:error.message||String(error)};}
   }};
 }

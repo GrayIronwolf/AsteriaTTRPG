@@ -16,6 +16,7 @@
   let activeIncludeGM = false;
   let categoryClickTimer = null;
   let activeLimit = 60;
+  let activeIndexCategory = 'Items';
   let readingRoute = false;
   let routeMessage = '';
   let routeChoices = null;
@@ -381,8 +382,40 @@
         <div class="codex-card-art">${entry.imagePath ? `<img src="${escapeHtml(entry.imagePath)}" alt="${escapeHtml(entry.title)}" loading="lazy" decoding="async">` : `<span>${escapeHtml(initials(entry.title))}</span>`}</div>
         <h3><a href="#${escapeHtml(entry.route)}" tabindex="-1">${escapeHtml(entry.title)}</a></h3>
         <span class="universal-card-type">${escapeHtml((entry.domain === 'talent' ? (entry.metadata.className || '')+' / ' : '')+(entry.category || entry.compendium))}</span>
+        ${window.AsteriaIndexCards?.forWebsite?.(entry.id) ? '<small>Asteria ID: '+escapeHtml(window.AsteriaIndexCards.forWebsite(entry.id).asteriaId)+'</small>' : ''}
       </article>
     `;
+  }
+
+
+  // Only approved identity metadata appears here: no vault content is fetched.
+  // Published canonical records automatically supplant their ID-only placeholder.
+  function indexCardPanel(){
+    const api=window.AsteriaIndexCards;
+    if(!api?.all)return '';
+    // The catalogue has its own category dropdown; other Compendium domains stay untouched.
+    if(activeDomain!=='item'||activePath.length||routeChoices)return '';
+    const pending=api.placeholders(allEntries().map(entry=>entry.id));
+    if(!pending.length)return '';
+    const categories=['All',...api.categories];
+    const options=categories.map(name=>'<option value="'+escapeHtml(name)+'"'+(name===activeIndexCategory?' selected':'')+'>'+escapeHtml(name)+'</option>').join('');
+    const filtered=pending.filter(row=>(activeIndexCategory==='All'||row.category===activeIndexCategory)
+      &&(!activeQuery||(row.name+' '+row.asteriaId+' '+row.category).toLowerCase().includes(activeQuery.toLowerCase())));
+    const cards=filtered.slice(0,activeLimit).map(row=>
+      '<article class="codex-card universal-card asteria-index-placeholder" data-asteria-id="'+escapeHtml(row.asteriaId)+'">'+
+        '<div class="codex-card-art"><span>'+escapeHtml(initials(row.name))+'</span></div>'+
+        '<h3>'+escapeHtml(row.name)+'</h3>'+
+        '<span class="universal-card-type">'+escapeHtml(row.category)+'</span>'+
+        '<small>Asteria ID: '+escapeHtml(row.asteriaId)+'</small>'+
+        '<p>Coming Soon — content not yet published.</p>'+
+      '</article>'
+    ).join('');
+    return '<section class="codex-card-grid-panel asteria-index-card-panel" aria-label="Asteria ID placeholder cards">'+
+      '<div class="codex-display-status"><span>Asteria ID placeholder cards</span><b>'+filtered.length+' entries</b></div>'+
+      '<label>Placeholder category <select id="asteriaIndexCategory">'+options+'</select></label>'+
+      '<div class="codex-card-grid">'+(cards||'<p>No approved placeholder IDs in this category.</p>')+'</div>'+
+      (filtered.length>activeLimit?'<button type="button" id="asteriaIndexLoadMore">Show more Asteria ID cards</button>':'')+
+    '</section>';
   }
 
   function grid(){
@@ -400,6 +433,7 @@
         <div class="codex-card-grid">${list.length ? list.slice(0,activeLimit).map(card).join('') : '<div class="codex-empty"><h3>No matching entries</h3><p>Try another search or clear the filters.</p><button type="button" id="universalClearFilters">Clear filters</button></div>'}</div>
         ${list.length > activeLimit ? '<button type="button" id="universalLoadMore">Show more entries</button>' : ''}
       </section>
+      ${indexCardPanel()}
     `;
   }
 
@@ -578,6 +612,8 @@
   }
 
   function bind(){
+    byId('asteriaIndexCategory')?.addEventListener('change',event=>{activeIndexCategory=event.target.value||'Items';activeLimit=60;render();});
+    byId('asteriaIndexLoadMore')?.addEventListener('click',()=>{activeLimit+=60;render();});
     byId('universalLoadMore')?.addEventListener('click', () => { activeLimit+=60; render(); });
     byId('universalClearFilters')?.addEventListener('click', () => openSection(activeDomain));
     byId('universalAllBtn')?.addEventListener('click', () => {

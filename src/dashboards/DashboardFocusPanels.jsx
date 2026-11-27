@@ -60,9 +60,9 @@ export function GMCombatOverview({encounter={},session={},characters={},onNaviga
   const combat=encounter?.combat||encounter||{};
   const combatants=encounterRosterCount(encounter);
   const running=combat.status==='active'||combat.active===true;
-  return <FocusPanel title="Combat Overview" eyebrow="GM Focus" tab="main" button="Encounter Board" onNavigate={onNavigate}>
+  return <FocusPanel title="Combat Overview" eyebrow="GM Focus" tab="combat" button="Combat Command Centre" onNavigate={onNavigate}>
     <div className="react-focus-stats">{stat('Encounter',running?'Active':String(combat.status||'Idle'))}{stat('Combatants',combatants)}{stat('Party',Object.keys(characters||{}).length)}{stat('Session',String(session.status||'Idle'))}</div>
-    <p className="react-help">Use the existing Campaign Encounter panel to manage turns, enemies and rewards.</p>
+    <p className="react-help">Open the Combat Command Centre to manage turns, enemies, prepared encounters and rewards.</p>
   </FocusPanel>;
 }
 export function GMExplorationOverview({workspace={},campaign={},onNavigate}){

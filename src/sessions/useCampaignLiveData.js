@@ -16,6 +16,8 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
   }, []);
   const [campaign, setCampaign] = useState(null);
   const [characters, setCharacters] = useState({});
+  const [memberState,setMemberState]=useState({scope:'',ready:false,value:null,error:''});
+  const [rosterState,setRosterState]=useState({scope:'',ready:false,value:null,error:''});
   const [session, setSession] = useState({ status: 'idle', id: '' });
   const [events, setEvents] = useState([]);
   const [encounter, setEncounter] = useState({ status:'ready', round:1, turnIndex:0, combatants:[], enemies:[] });
@@ -122,7 +124,7 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
       unsubscribers.push(firebaseService.subscribePartyLoot(campaignId,accept('partyLoot',value=>setPartyLoot(value||{stashes:[],loot:[],drafts:[]})),mode));
       unsubscribers.push(firebaseService.subscribeCustomItems(accept('customItems',value=>{setCustomItems(value||[]);publishCustomItems(value||[]);})));
       unsubscribers.push(firebaseService.subscribeEvents(campaignId,accept('events',value=>setEvents(mergeEvents([],value||[]))),{mode,targetOwnerUid:mode==='character'?uid:'',characterId}));
-      unsubscribers.push(firebaseService.subscribeEncounter(campaignId,accept('encounter',setEncounter)));
+      unsubscribers.push(firebaseService.subscribeEncounter(campaignId,accept('encounter',setEncounter),mode));
       if(mode==='gm') {
         unsubscribers.push(firebaseService.subscribeGMWorkspace(campaignId,accept('gmWorkspace',value=>{setGMWorkspace(value);setGMWorkspaceLoaded(true);})));
       }
@@ -140,6 +142,37 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
       unsubscribers.forEach(unsubscribe => { try { unsubscribe?.(); } catch {} });
     };
   }, [campaignId, characterId, mode, online, authUid]);
+
+  // Canonical member access is read-only, scoped to the authenticated account,
+  // and requires a fresh server snapshot rather than stale offline cache.
+  useEffect(()=>{
+    const scope=campaignId+':'+authUid;
+    const v2=campaign?.membershipSchemaVersion===2;
+    setMemberState({scope,ready:!v2,value:null,error:''});
+    setRosterState({scope,ready:!v2||mode!=='gm',value:null,error:''});
+    if(!campaignId||!authUid||!v2)return;
+    let active=true;
+    const authoritative=meta=>!meta?.fromCache&&!meta?.hasPendingWrites;
+    const errorMessage=reason=>reason?.message||'Campaign membership could not be verified.';
+    let stopMember=()=>{},stopRoster=()=>{};
+    try{
+      stopMember=firebaseService.subscribeCampaignMembership(campaignId,(member,meta)=>{
+        if(!active||!authoritative(meta))return;
+        const verified=member?.uid===authUid && member?.campaignId===campaignId ? member : null;
+        setMemberState({scope,ready:true,value:verified,error:''});
+      },reason=>{if(active)setMemberState({scope,ready:true,value:null,error:errorMessage(reason)});});
+      if(mode==='gm')stopRoster=firebaseService.subscribeCampaignMembers(campaignId,(members,meta)=>{
+        if(!active||!authoritative(meta))return;
+        setRosterState({scope,ready:true,value:members,error:''});
+      },reason=>{if(active)setRosterState({scope,ready:true,value:null,error:errorMessage(reason)});});
+    }catch(reason){
+      if(active){
+        setMemberState({scope,ready:true,value:null,error:errorMessage(reason)});
+        setRosterState({scope,ready:true,value:null,error:errorMessage(reason)});
+      }
+    }
+    return ()=>{active=false;stopMember?.();stopRoster?.();};
+  },[campaignId,authUid,campaign?.membershipSchemaVersion,mode]);
 
   useEffect(() => {
     // The clock drives duration labels and expiring effects. Avoid recomputing
@@ -201,5 +234,14 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
     const at=typeof value?.toMillis==='function'?value.toMillis():Number(value?.seconds||0)*1000||new Date(value||0).getTime();
     return at>0 && clock-at<150000;
   })),[presence,clock]);
-  return { clock, campaign, characters, character, session:liveSession, events, encounter, gmWorkspace, gmWorkspaceLoaded, presence:currentPresence, partyWorkspace, partyChat, itemEcosystem, partyLoot, customItems, online, connectionState, loading, error, setEvents, setEncounter };
+  const scope=campaignId+':'+authUid;
+  const v2=campaign?.membershipSchemaVersion===2;
+  const memberReady=memberState.scope===scope&&memberState.ready;
+  const rosterReady=rosterState.scope===scope&&rosterState.ready;
+  return { clock, campaign, characters, character, session:liveSession, events, encounter, gmWorkspace, gmWorkspaceLoaded, presence:currentPresence, partyWorkspace, partyChat, itemEcosystem, partyLoot, customItems, online, connectionState, loading, error, setEvents, setEncounter,
+    membership:v2&&memberReady?memberState.value:null,
+    membershipLoading:v2&&campaign?.ownerUid!==authUid&&!memberReady,
+    membershipError:v2&&memberReady?memberState.error:'',
+    members:v2&&rosterReady?rosterState.value:null,
+    memberRosterError:v2&&rosterReady?rosterState.error:'' };
 }

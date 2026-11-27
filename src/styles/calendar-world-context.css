@@ -1,0 +1,12 @@
+.asteria-world-quick{display:grid;gap:10px;min-width:0;padding:10px}
+.asteria-world-quick p{margin:0;overflow-wrap:anywhere}
+.asteria-world-time{display:grid;gap:5px}
+.asteria-world-time strong{font-size:1.04rem}
+.asteria-world-time small,.asteria-world-moons{color:var(--asteria-text-muted,#c3d0dd)}
+.asteria-world-weather{display:grid;gap:5px;padding:9px;border:1px solid #526981;border-radius:7px}
+.asteria-world-quick ul{margin:0;padding-left:19px;display:grid;gap:4px}
+.asteria-world-moons{display:flex;gap:8px;flex-wrap:wrap}
+.asteria-world-moons span{padding:4px 8px;border:1px solid #455d75;border-radius:6px}
+.asteria-world-shortcuts{display:flex;gap:8px;flex-wrap:wrap}
+.asteria-world-shortcuts button{padding:7px 10px}
+@media(max-width:600px){.asteria-world-quick{padding:7px}.asteria-world-shortcuts button{flex:1 1 100px}}

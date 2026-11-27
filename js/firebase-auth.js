@@ -1,6 +1,7 @@
+import {campaignMembershipRole,isGameMasterRole} from '../src/state/campaignMembershipAccess.mjs';
 import { normalizeInformation, publicInformation } from '../src/state/campaignInformation.mjs';
 import { campaignArtworkFileError } from '../src/state/campaignArtwork.mjs';
-import {battleMapFileError,battleMapFileKind,battleMapAssetPath,battleMapEditableSettings,battleMapDimensions,BATTLE_MAP_MAX_RECORDS} from '../src/state/battleMapModel.mjs';
+import {battleMapFileError,battleMapFileKind,battleMapAssetPath,newBattleMapSettings,battleMapEditableSettings,battleMapDimensions,BATTLE_MAP_MAX_RECORDS} from '../src/state/battleMapModel.mjs';
 import {battleMapPrivatePins} from '../src/state/battleMapFogModel.mjs';
 import {atlasFileError,atlasImagePath,atlasImageDimensions,atlasMapSettings,ATLAS_MAX_MAPS} from '../src/state/worldAtlasModel.mjs';
 import {sessionPdfInput,sessionPdfFileError,sessionPdfPath,SESSION_PDF_LIMIT} from '../src/state/sessionLibraryModel.mjs';
@@ -51,6 +52,7 @@ const firebaseConfig = firebaseMode === 'emulator' ? {
 } : productionFirebaseConfig;
 let app, auth, db, storage, functionsClient, currentUser = null, currentProfile = null;
 let ownershipReadyUid = '';
+let discoveryRoles=null;
 try {
   if(reactDevFixture) throw new Error('React development fixture active.');
   if(!['emulator','production'].includes(firebaseMode) || (!localHost && firebaseMode === 'emulator')) throw new Error('Invalid Firebase environment.');
@@ -176,19 +178,22 @@ function campaignOwner(campaign){
   const clean = campaign || {};
   const uid = currentUser?.uid || '';
   const claimedOwner = clean.ownerUid || clean.gmId || '';
-  const currentUserOwnsCampaign = !claimedOwner || claimedOwner === uid || clean.ownerAccount === uid || (clean.gmUids || []).includes(uid);
-  return currentUserOwnsCampaign ? uid : claimedOwner;
+  return claimedOwner || clean.ownerAccount || uid;
 }
 function campaignDisplayName(){
   return currentProfile?.username || currentProfile?.displayName || currentUser?.displayName || currentUser?.email || 'Asteria Player';
 }
-function currentUserIsCampaignGM(campaign={}){
-  const uid=currentUser?.uid || '';
-  return Boolean(uid && (
-    campaign.ownerUid===uid ||
-    campaign.roles?.[uid]==='gm' ||
-    (Array.isArray(campaign.gmUids) && campaign.gmUids.includes(uid))
-  ));
+async function currentUserIsCampaignGM(snapshot,transaction=null){
+  const uid=currentUser?.uid;
+  if(!uid||!snapshot.exists())return false;
+  const campaign=snapshot.data(),campaignId=snapshot.id;
+  let member=null;
+  if(campaign.membershipSchemaVersion===2&&campaign.ownerUid!==uid){
+    const reference=doc(db,'campaigns',campaignId,'members',uid);
+    const row=transaction?await transaction.get(reference):await getDocFromServer(reference);
+    member=row.exists()?row.data():null;
+  }
+  return currentUser?.uid===uid&&isGameMasterRole(campaignMembershipRole(campaign,uid,member,campaignId));
 }
 
 function uniqueValues(...lists){
@@ -207,6 +212,8 @@ function mergeCampaignPlayers(localPlayers={}, sharedPlayers={}){
 function mergeSharedCampaign(localCampaign={}, sharedCampaign={}){
   const local = localCampaign || {};
   const shared = sharedCampaign || {};
+  // Canonical campaign data cannot inherit stale roster or character links.
+  if(shared.membershipSchemaVersion===2)return {...shared};
   const players = mergeCampaignPlayers(local.players, shared.players);
   const characters = Object.assign({}, local.characters || {}, shared.characters || {});
   const playerCharacterLinks = Object.assign({}, local.playerCharacterLinks || {}, shared.playerCharacterLinks || {});
@@ -255,7 +262,7 @@ function linkedCampaignIdsFromOwnedCharacters(uid){
   });
   return Array.from(ids);
 }
-async function loadSharedCampaignDetails(id, accountCampaign={}, knownShared=null){
+async function loadSharedCampaignDetails(id, accountCampaign={}, knownShared=null, uid=currentUser?.uid){
   let shared = knownShared;
   if(!shared){
     try{
@@ -268,7 +275,11 @@ async function loadSharedCampaignDetails(id, accountCampaign={}, knownShared=nul
       return null;
     }
   }
-  if(!shared) return null;
+  if(!shared||currentUser?.uid!==uid)return null;
+  if(shared.membershipSchemaVersion===2&&shared.ownerUid!==uid){
+    const row=await getDocFromServer(doc(db,'campaigns',id,'members',uid));
+    if(currentUser?.uid!==uid||!campaignMembershipRole(shared,uid,row.exists()?row.data():null,id))return null;
+  }
   let campaign = mergeSharedCampaign(accountCampaign, shared);
   try{
     const ecosystemSnap = await getDoc(doc(db, 'campaigns', id, 'systems', 'itemEcosystem'));
@@ -285,6 +296,7 @@ async function loadSharedCampaignDetails(id, accountCampaign={}, knownShared=nul
   }catch(error){
     reportSyncError('campaign-characters-read', error, { campaignId:id });
   }
+  if(currentUser?.uid!==uid)return null;
   hydrateSharedCampaignCharacters(campaign, sharedCharacters);
   return campaign;
 }
@@ -433,20 +445,10 @@ async function upsertSharedCampaignCharacter(campaignId, characterId, character)
     const [campaignSnap, characterSnap, privateSnap] = await Promise.all([transaction.get(campaignRef), transaction.get(characterRef), transaction.get(privateRef)]);
     if(!campaignSnap.exists()) return null;
     const campaign = Object.assign({}, campaignSnap.data(), { id:campaignId });
-    const roles = Object.assign({}, campaign.roles || {});
     if(campaign.membershipSchemaVersion === 2) {
-      const membership = await transaction.get(doc(db,'campaigns',campaignId,'members',uid));
-      const m = membership.exists() ? membership.data() : null;
-      if(campaign.ownerUid !== uid && !(m?.uid === uid && m?.campaignId === campaignId && m?.status === 'active' && ['player','co-gm'].includes(m.role))) {
-        throw new Error('campaign-membership-required');
-      }
-      // Full v2 character-link approval and capacity checks arrive in Phase 5.
-      // Block legacy roster writes rather than re-create access through old maps.
       throw new Error('Character linking for upgraded campaigns requires GM approval.');
     }
-    if(campaign.membershipSchemaVersion !== undefined && campaign.membershipSchemaVersion !== null && campaign.membershipSchemaVersion !== 1) throw new Error('campaign-membership-required');
-    const isMember = campaign.ownerUid === uid || roles[uid] === 'gm' || roles[uid] === 'player' || (campaign.playerUids || []).includes(uid) || (campaign.gmUids || []).includes(uid);
-    if(!isMember) throw new Error('campaign-membership-required');
+    if(!campaignMembershipRole(campaign,uid)) throw new Error('campaign-membership-required');
 
     if(privateSnap.exists() && privateSnap.data().ownerUid !== uid) throw new Error('The saved character belongs to another account.');
     const source = privateSnap.exists() ? Object.assign({}, privateSnap.data(), safeLinkedCharacterPatch(character)) : character;
@@ -853,11 +855,8 @@ async function requireCampaignGM(transaction,campaignId){
   const campaignRef=doc(db,'campaigns',campaignId);
   const snapshot=await transaction.get(campaignRef);
   if(!snapshot.exists()) throw new Error('Campaign not found.');
-  const campaign=snapshot.data();
-  const uid=currentUser?.uid || '';
-  const allowed=campaign.ownerUid===uid || campaign.roles?.[uid]==='gm' || (campaign.gmUids||[]).includes(uid);
-  if(!allowed) throw new Error('Only a GM for this campaign can make this change.');
-  return campaign;
+  if(!await currentUserIsCampaignGM(snapshot,transaction)) throw new Error('Only a GM for this campaign can make this change.');
+  return snapshot.data();
 }
 function liveCharacterRefs(campaignId,characterId){
   return {
@@ -912,7 +911,34 @@ async function cropProfileAvatar(file){
 const firebasePublicApi = {
   isReady:()=>Boolean(db && currentUser && ownershipReadyUid === currentUser.uid),
   getUser:()=>currentUser,
+  getDiscoveredCampaignRole:(campaignId,uid)=>currentUser?.uid===uid&&discoveryRoles?.uid===uid
+    ? discoveryRoles.roles.get(campaignId)||'' : '',
   getProfile:()=>currentProfile,
+  // Reuse the existing authenticated app for GM React combat; no duplicate Firebase app.
+  getReactCombatRuntime:()=>!auth||!db||!functionsClient?null:({
+    auth,db,functions:functionsClient,
+    firestoreSdk:{doc,collection,getDocFromServer,onSnapshot,query,orderBy,limit,runTransaction,serverTimestamp},
+    functionsSdk:{httpsCallable},
+    readCanonical:async user=>{
+      if(!user?.uid||auth.currentUser?.uid!==user.uid)throw Error('Authentication changed.');
+      const snapshot=await getDocFromServer(doc(db,'users',user.uid));
+      return snapshot.exists()?{uid:user.uid,...snapshot.data()}:null;
+    }
+  }),
+  /** Phase 7 extends the SAME Firebase app used by the existing GM/Player
+   * dashboards. No second Auth, Firestore, Functions or Storage connection. */
+  getReactPresentationRuntime:()=>!auth||!db||!storage||!functionsClient?null:({
+    auth,db,storage,functions:functionsClient,
+    firestoreSdk:{doc,collection,getDocFromServer,onSnapshot,query,orderBy,limit,
+      runTransaction,serverTimestamp},
+    storageSdk:{ref:storageRef,getBlob,uploadBytes,deleteObject},
+    functionsSdk:{httpsCallable},
+    readCanonical:async user=>{
+      if(!user?.uid||auth.currentUser?.uid!==user.uid)throw Error('Account changed.');
+      const snapshot=await getDocFromServer(doc(db,'users',user.uid));
+      return snapshot.exists()?{uid:user.uid,...snapshot.data()}:null;
+    }
+  }),
   // The My Profile view may display only a fresh server-read projection.
   // Never fall back to an offline cache or automatically allocate an ID.
   // Authenticated self-service password reset. Never accept an arbitrary
@@ -1285,12 +1311,17 @@ const firebasePublicApi = {
   },
   subscribeBattleMaps: function(campaignId,onChange,{gm=false}={}){
     if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
-    const ref=collection(db,'campaigns',campaignId,'battleMaps');
-    const q=gm?query(ref,limit(BATTLE_MAP_MAX_RECORDS)):
-      query(ref,where('visibility','==','players'),limit(BATTLE_MAP_MAX_RECORDS));
+    // The GM edits the canonical map; players see only server-produced,
+    // allowlisted public projections, never raw GM token or hazard records.
+    const source=gm?'battleMaps':'battleMapsPublic';
+    const q=query(collection(db,'campaigns',campaignId,source),limit(BATTLE_MAP_MAX_RECORDS));
     return onSnapshot(q,snapshot=>{
-      onChange(snapshot.docs.map(entry=>({id:entry.id,...entry.data()}))
-        .sort((a,b)=>String(a.name).localeCompare(String(b.name))));
+      onChange(snapshot.docs.map(entry=>{
+        const record=entry.data();
+        return {id:entry.id,...record,...(!gm?{
+          storagePath:battleMapAssetPath(campaignId,entry.id,record.contentType)
+        }:{})};
+      }).sort((a,b)=>String(a.name).localeCompare(String(b.name))));
     },error=>{
       onChange([]);reportSyncError('battle-map-listener',error,{campaignId});
     });
@@ -1308,7 +1339,7 @@ const firebasePublicApi = {
       const safePins=battleMapPrivatePins(pins);
       await runTransaction(db,async transaction=>{
         const campaign=await transaction.get(doc(db,'campaigns',campaignId));
-        if(!campaign.exists()||!currentUserIsCampaignGM(campaign.data()))
+        if(!await currentUserIsCampaignGM(campaign,transaction))
           throw Error('Only a campaign GM can edit private map notes.');
         const map=await transaction.get(doc(db,'campaigns',campaignId,'battleMaps',mapId));
         if(!map.exists())throw Error('The map no longer exists.');
@@ -1335,12 +1366,12 @@ const firebasePublicApi = {
     if(!db||!storage||!currentUser||!campaignId)return {ok:false,error:'Sign in to upload battle maps.'};
     const error=battleMapFileError(file);if(error)return {ok:false,error};
     let details,size;
-    try{details=battleMapEditableSettings(settings);size=battleMapDimensions(dimensions.width,dimensions.height);}
+    try{details=newBattleMapSettings(settings);size=battleMapDimensions(dimensions.width,dimensions.height);}
     catch(error){return {ok:false,error:error.message};}
     const campaignRef=doc(db,'campaigns',campaignId);
     try{
       const snapshot=await getDoc(campaignRef);
-      if(!snapshot.exists()||!currentUserIsCampaignGM(snapshot.data()))
+      if(!await currentUserIsCampaignGM(snapshot))
         throw Error('Only an active campaign GM may upload battle maps.');
       const existing=await getDocs(query(collection(db,'campaigns',campaignId,'battleMaps'),limit(BATTLE_MAP_MAX_RECORDS)));
       if(existing.size>=BATTLE_MAP_MAX_RECORDS)throw Error('Campaign battle-map limit of 40 reached.');
@@ -1367,10 +1398,19 @@ const firebasePublicApi = {
       const details=battleMapEditableSettings(settings);
       await runTransaction(db,async tx=>{
         const campaign=await tx.get(doc(db,'campaigns',campaignId));
-        if(!campaign.exists()||!currentUserIsCampaignGM(campaign.data()))
+        if(!await currentUserIsCampaignGM(campaign,tx))
           throw Error('Only the campaign GM can edit battle maps.');
         const ref=doc(db,'campaigns',campaignId,'battleMaps',mapId),snap=await tx.get(ref);
         if(!snap.exists())throw Error('This battle map no longer exists.');
+        const previous=snap.data();
+        if(previous.combatId&&(
+          JSON.stringify(details.tokens)!==JSON.stringify(previous.tokens)||
+          details.gridColumns!==previous.gridColumns||
+          details.gridRows!==previous.gridRows||
+          details.metresPerCell!==previous.metresPerCell||
+          details.gridType!==(previous.gridType||'square')||
+          details.gridOffsetX!==(previous.gridOffsetX||0)||details.gridOffsetY!==(previous.gridOffsetY||0)))
+          throw Error('End the linked encounter before modifying map terrain, grid or combat tokens.');
         tx.update(ref,{...details,updatedAt:serverTimestamp()});
       });
       return {ok:true};
@@ -1382,7 +1422,7 @@ const firebasePublicApi = {
     try{
       await runTransaction(db,async tx=>{
         const campaign=await tx.get(doc(db,'campaigns',campaignId));
-        if(!campaign.exists()||!currentUserIsCampaignGM(campaign.data()))
+        if(!await currentUserIsCampaignGM(campaign,tx))
           throw Error('Only the campaign GM can delete battle maps.');
         const ref=doc(db,'campaigns',campaignId,'battleMaps',mapId),snap=await tx.get(ref);
         if(!snap.exists())throw Error('Battle map already removed.');
@@ -1409,6 +1449,24 @@ const firebasePublicApi = {
     return onSnapshot(doc(db,'users',uid,'diceWorkspace','current'),snapshot=>{
       if(currentUser?.uid===uid)onChange(snapshot.exists()?snapshot.data():{version:1,presets:[],history:[]});
     },error=>reportSyncError('dice-workspace-listener',error,{uid}));
+  },
+  subscribeDiceAppearanceLibrary: function(onChange,onError){
+    if(!db||!currentUser||typeof onChange!=='function')return ()=>{};
+    const uid=currentUser.uid;
+    return onSnapshot(doc(db,'users',uid,'diceAppearances','current'),snapshot=>{
+      if(currentUser?.uid===uid)onChange(snapshot.exists()?snapshot.data():{});
+    },error=>{reportSyncError('dice-appearance-listener',error,{uid});onError?.(error);});
+  },
+  subscribeOwnedDiceCharacters: function(onChange,onError){
+    if(!db||!currentUser||typeof onChange!=='function')return ()=>{};
+    const uid=currentUser.uid;
+    return onSnapshot(query(collection(db,'users',uid,'characters'),where('ownerUid','==',uid)),
+    snapshot=>{
+      if(currentUser?.uid!==uid)return;
+      onChange(snapshot.docs.map(d=>({id:d.id,
+        name:String(d.data()?.name||d.data()?.characterName||d.id).slice(0,100)}))
+        .sort((a,b)=>a.name.localeCompare(b.name)));
+    },error=>{reportSyncError('dice-owned-characters-listener',error,{uid});onError?.(error);});
   },
   universalCheckAction: async data=>{
     if(!functionsClient||!currentUser)return {ok:false,error:'Sign in to continue.'};
@@ -1450,10 +1508,13 @@ const firebasePublicApi = {
     const snapshot=await getDocs(query(collection(db,'campaigns',campaignId,'events'),...constraints,limit(200)));
     return {events:snapshot.docs.map(d=>({id:d.id,...d.data()})).filter(e=>e.targetCharacterId===characterId),cursor:snapshot.docs.at(-1)?.id || '',more:snapshot.size===200};
   },
-  subscribeCampaignEncounter: function(campaignId, onChange){
+  subscribeCampaignEncounter: function(campaignId, onChange, mode='player'){
     if(!db || !currentUser || !campaignId || typeof onChange !== 'function') return ()=>{};
-    return onSnapshot(
-      doc(db, 'campaigns', campaignId, 'systems', 'encounter'),
+    // Combat safety mirrors the canonical React combat adapter.
+    const ref=mode==='gm'
+      ?doc(db,'campaigns',campaignId,'systems','encounter')
+      :doc(db,'campaigns',campaignId,'combatPublic','current');
+    return onSnapshot(ref,
       snapshot=>onChange(snapshot.exists() ? Object.assign({ status:'ready', round:1, turnIndex:0, combatants:[], enemies:[] }, snapshot.data()) : { status:'ready', round:1, turnIndex:0, combatants:[], enemies:[] }),
       error=>reportSyncError('campaign-encounter-listener', error, { campaignId })
     );
@@ -1473,7 +1534,7 @@ const firebasePublicApi = {
       const workspaceRef=doc(db,'campaigns',campaignId,'systems','gmWorkspace');
       await runTransaction(db,async transaction=>{
         const campaignSnapshot=await transaction.get(campaignRef);
-        if(!campaignSnapshot.exists() || !currentUserIsCampaignGM(campaignSnapshot.data())) throw new Error('Only a campaign GM can update GM systems.');
+        if(!await currentUserIsCampaignGM(campaignSnapshot,transaction)) throw new Error('Only a campaign GM can update GM systems.');
         transaction.set(workspaceRef,Object.assign({},cleanData(patch),{
           version:'asteria-react-gm-workspace-v1',
           updatedBy:currentUser.uid,
@@ -1520,7 +1581,7 @@ const firebasePublicApi = {
       const eventRefs=ids.map(id=>doc(collection(db,'campaigns',campaignId,'events')));
       await runTransaction(db,async transaction=>{
         const campaignSnapshot=await transaction.get(campaignRef);
-        if(!campaignSnapshot.exists() || !currentUserIsCampaignGM(campaignSnapshot.data())) throw new Error('Only a campaign GM can assign quests.');
+        if(!await currentUserIsCampaignGM(campaignSnapshot,transaction)) throw new Error('Only a campaign GM can assign quests.');
         const characterSnapshots=[];
         for(const characterRef of characterRefs) characterSnapshots.push(await transaction.get(characterRef));
         characterSnapshots.forEach((snapshot,index)=>{
@@ -1549,7 +1610,7 @@ const firebasePublicApi = {
     const campaignRef=doc(db,'campaigns',campaignId);
     try {
       const snapshot=await getDoc(campaignRef);
-      if(!snapshot.exists() || !currentUserIsCampaignGM(snapshot.data())) return {ok:false,error:'Only a campaign GM can change campaign artwork.'};
+      if(!await currentUserIsCampaignGM(snapshot)) return {ok:false,error:'Only a campaign GM can change campaign artwork.'};
     }catch(error) {
       return {ok:false,error:error?.message||String(error)};
     }
@@ -1565,7 +1626,7 @@ const firebasePublicApi = {
       let previousPath='';
       await runTransaction(db,async transaction=>{
         const snapshot=await transaction.get(campaignRef);
-        if(!snapshot.exists() || !currentUserIsCampaignGM(snapshot.data())) throw new Error('Only a campaign GM can change campaign artwork.');
+        if(!await currentUserIsCampaignGM(snapshot,transaction)) throw new Error('Only a campaign GM can change campaign artwork.');
         previousPath=String(snapshot.data().imagePath||'');
         transaction.update(campaignRef,{image,imagePath:path,updatedAt:serverTimestamp()});
       });
@@ -1589,7 +1650,7 @@ const firebasePublicApi = {
       let oldPath='';
       await runTransaction(db,async transaction=>{
         const snapshot=await transaction.get(campaignRef);
-        if(!snapshot.exists() || !currentUserIsCampaignGM(snapshot.data())) throw new Error('Only a campaign GM can change campaign artwork.');
+        if(!await currentUserIsCampaignGM(snapshot,transaction)) throw new Error('Only a campaign GM can change campaign artwork.');
         oldPath=String(snapshot.data().imagePath||'');
         transaction.update(campaignRef,{image:'',imagePath:'',art:'',banner:'',coverImage:'',cover:'',updatedAt:serverTimestamp()});
       });
@@ -1608,7 +1669,7 @@ const firebasePublicApi = {
       const campaignRef=doc(db,'campaigns',campaignId);
       await runTransaction(db,async transaction=>{
         const snapshot=await transaction.get(campaignRef);
-        if(!snapshot.exists() || !currentUserIsCampaignGM(snapshot.data())) throw new Error('Only a campaign GM can update campaign details.');
+        if(!await currentUserIsCampaignGM(snapshot,transaction)) throw new Error('Only a campaign GM can update campaign details.');
         const clean={};
         if(patch.name!==undefined) clean.name=String(patch.name||'').trim().slice(0,160);
         if(patch.description!==undefined) clean.description=String(patch.description||'').slice(0,20000);
@@ -1735,7 +1796,7 @@ const firebasePublicApi = {
       if(role==='gm'){
         const snapshot=await getDoc(doc(db,'campaigns',campaignId));
         if(currentUser?.uid!==ownerUid)return {ok:false,error:'Account changed before dashboard settings were saved.'};
-        if(!snapshot.exists()||!currentUserIsCampaignGM(snapshot.data()))return {ok:false,error:'Only campaign GMs can customise the GM dashboard.'};
+        if(!await currentUserIsCampaignGM(snapshot))return {ok:false,error:'Only campaign GMs can customise the GM dashboard.'};
       }
       const {normalizeDashboardLayout}=await import('../src/state/dashboardLayoutModel.mjs');
       if(currentUser?.uid!==ownerUid)return {ok:false,error:'Account changed before dashboard settings were saved.'};
@@ -2436,12 +2497,14 @@ const firebasePublicApi = {
           const campaignRef = doc(db, 'campaigns', id);
           const campaignSnap = await transaction.get(campaignRef);
           const shared = campaignSnap.exists() ? Object.assign({}, campaignSnap.data(), { id }) : {};
+          if(shared.membershipSchemaVersion===2)return shared;
+          if(clean.membershipSchemaVersion===2)throw Error('Campaign membership version requires review.');
           const merged = mergeSharedCampaign(savedCampaign, shared);
           transaction.set(campaignRef, Object.assign({}, merged, { updatedAt:serverTimestamp() }), { merge:true });
           return merged;
         });
         const ucn = campaignCode(savedCampaign.ucn || savedCampaign.uniqueCampaignCode || savedCampaign.inviteCode);
-        if(ucn.length === 12){
+        if(savedCampaign.membershipSchemaVersion!==2&&ucn.length === 12){
           await setDoc(doc(db, 'campaignInvites', ucn), {
             ucn,
             campaignId:id,
@@ -2492,6 +2555,22 @@ const firebasePublicApi = {
     if(window.AsteriaFeatureFlags?.campaignJoinRequests!==true) throw new Error('Join requests are not enabled.');
     return (await httpsCallable(functionsClient,'asteriaCampaignJoinRequest')({
       action:'submit',campaignId,ucn:campaignCode(codeValue),characterId:characterId || null
+    })).data;
+  },
+  listCampaignAttendance: async function(campaignId){
+    if(!functionsClient||!currentUser)throw new Error('Sign in as a campaign GM.');
+    if(window.AsteriaFeatureFlags?.campaignAttendance!==true)
+      throw new Error('Attendance is not activated.');
+    return (await httpsCallable(functionsClient,'asteriaCampaignJoinReview')({
+      action:'attendance-list',campaignId
+    })).data;
+  },
+  setCampaignAttendance: async function(campaignId,memberUid,mode,expectedRevision){
+    if(!functionsClient||!currentUser)throw new Error('Sign in as a campaign GM.');
+    if(window.AsteriaFeatureFlags?.campaignAttendance!==true)
+      throw new Error('Attendance is not activated.');
+    return (await httpsCallable(functionsClient,'asteriaCampaignJoinReview')({
+      action:'attendance-set',campaignId,memberUid,mode,expectedRevision
     })).data;
   },
   listCampaignPlayerRoster: async function(campaignId){
@@ -2807,12 +2886,10 @@ const firebasePublicApi = {
        invite.requiresGMApproval!==true||invite.maxUses!==1||
        ![0,1].includes(invite.usedCount)||
        typeof invite.alreadyIssued!=='boolean'||
-       !(invite.alreadyIssued===true&&invite.token===null||
-         invite.alreadyIssued===false&&typeof invite.token==='string'&&
-         /^[A-Za-z0-9_-]{43}$/.test(invite.token)))
+       Object.hasOwn(invite,'token'))
       throw new Error('Invalid campaign friend invitation response.');
     return {campaignId,inviteId:invite.inviteId,
-      token:invite.token,alreadyIssued:invite.alreadyIssued,
+      alreadyIssued:invite.alreadyIssued,
       requiresGMApproval:true};
   },
   // Phase 3.2: relationship management has independent version checking.
@@ -3094,7 +3171,7 @@ const firebasePublicApi = {
         const campaign=await loadSharedCampaignDetails(
           id,
           accountCampaigns.get(id) || {},
-          sharedCampaigns.get(id) || null
+          sharedCampaigns.get(id) || null, uid
         );
         if(campaign) campaigns.push(campaign);
       }
@@ -3109,6 +3186,7 @@ const firebasePublicApi = {
     const uid = currentUser.uid;
     const sources = new Map();
     const linked = new Map(), linkSubscriptions = new Map();
+    const members=new Map(),memberSubscriptions=new Map(),deniedLinks=new Set();
     let active=true;
     const emit = ()=>{
       if(!active || currentUser?.uid!==uid) return;
@@ -3116,13 +3194,34 @@ const firebasePublicApi = {
       const shared = new Map(linked);
       ['owner','gm','player'].forEach(key=>{
         (sources.get(key) || new Map()).forEach((campaign,id)=>{
-          shared.set(id, Object.assign({}, shared.get(id) || {}, campaign));
+          shared.set(id,campaign);
         });
       });
-      onChange(Array.from(shared.keys()).map(id=>mergeSharedCampaign(
-        account.get(id) || { id },
-        shared.get(id)
-      )));
+      const campaigns=[],roles=new Map();
+      for(const [id,subscription] of memberSubscriptions){
+        const campaign=shared.get(id);
+        if(campaign?.membershipSchemaVersion===2&&campaign.ownerUid!==uid)continue;
+        memberSubscriptions.delete(id);subscription.stop?.();members.delete(id);
+      }
+      for(const [id,campaign] of shared){
+        if(campaign.membershipSchemaVersion===2&&campaign.ownerUid!==uid&&!memberSubscriptions.has(id)){
+          const subscription={};
+          memberSubscriptions.set(id,subscription);
+          const update=member=>{
+            if(!active||currentUser?.uid!==uid||memberSubscriptions.get(id)!==subscription)return;
+            members.set(id,member);emit();
+          };
+          subscription.stop=onSnapshot(doc(db,'campaigns',id,'members',uid),{includeMetadataChanges:true},snap=>{
+            update(snap.exists()&&!snap.metadata?.fromCache&&!snap.metadata?.hasPendingWrites?snap.data():null);
+          },()=>update(null));
+        }
+        const role=campaignMembershipRole(campaign,uid,members.get(id),id);
+        if(!role)continue;
+        roles.set(id,role);
+        campaigns.push(mergeSharedCampaign(account.get(id)||{id},campaign));
+      }
+      discoveryRoles={uid,roles};
+      onChange(campaigns);
     };
     const watchLinkedCampaigns=()=>{
       const projections=sources.get('projections') || new Map();
@@ -3133,18 +3232,21 @@ const firebasePublicApi = {
       ]);
       linkSubscriptions.forEach((unsubscribe,id)=>{
         if(candidates.has(id)) return;
-        unsubscribe();linkSubscriptions.delete(id);linked.delete(id);
+        unsubscribe();linkSubscriptions.delete(id);deniedLinks.delete(id);linked.delete(id);
       });
       candidates.forEach(id=>{
+        if(deniedLinks.has(id)&&projections.get(id)?.status==='active'){
+          linkSubscriptions.get(id)?.();linkSubscriptions.delete(id);deniedLinks.delete(id);
+        }
         if(linkSubscriptions.has(id)) return;
         const unsubscribe=onSnapshot(doc(db,'campaigns',id),{includeMetadataChanges:true},snapshot=>{
-          if(!active || currentUser?.uid!==uid || snapshot.metadata?.fromCache) return;
+          if(!active || currentUser?.uid!==uid || snapshot.metadata?.fromCache || snapshot.metadata?.hasPendingWrites) return;
           if(snapshot.exists()) linked.set(id,Object.assign({},snapshot.data(),{id}));
           else linked.delete(id);
           emit();
         },error=>{
           if(!active || currentUser?.uid!==uid) return;
-          linked.delete(id);emit();
+          linked.delete(id);deniedLinks.add(id);emit();
           if(!String(error?.code || '').includes('permission-denied')) reportSyncError('campaign-discovery-link',error,{uid,campaignId:id});
         });
         linkSubscriptions.set(id,unsubscribe);
@@ -3152,7 +3254,7 @@ const firebasePublicApi = {
     };
     const watch = (key, reference)=>{
       return onSnapshot(reference, {includeMetadataChanges:true}, snapshot=>{
-        if(!active || currentUser?.uid!==uid || (key!=='account' && snapshot.metadata?.fromCache)) return;
+        if(!active || currentUser?.uid!==uid || (key!=='account' && (snapshot.metadata?.fromCache || snapshot.metadata?.hasPendingWrites))) return;
         const records = new Map();
         snapshot.forEach(item=>{
           records.set(item.id, Object.assign({}, item.data(), { id:item.id }));
@@ -3175,7 +3277,8 @@ const firebasePublicApi = {
     watchLinkedCampaigns();
     return ()=>{
       active=false;
-      [...unsubscribers,...linkSubscriptions.values()].forEach(unsubscribe=>{try{unsubscribe?.();}catch(error){}});
+      if(discoveryRoles?.uid===uid)discoveryRoles=null;
+      [...unsubscribers,...linkSubscriptions.values(),...Array.from(memberSubscriptions.values(),sub=>sub.stop)].forEach(unsubscribe=>{try{unsubscribe?.();}catch(error){}});
     };
   },
   subscribeCampaign: function(campaignId, onChange){
@@ -3188,6 +3291,27 @@ const firebasePublicApi = {
       },
       err=>reportSyncError('campaign-listener', err, { campaignId })
     );
+  },
+  // Read-only membership streams. Canonical roles remain server-managed.
+  subscribeCampaignMembership: function(campaignId,onChange,onError){
+    const uid=currentUser?.uid;
+    if(!db || !uid || !campaignId || typeof onChange!=='function')return ()=>{};
+    return onSnapshot(doc(db,'campaigns',campaignId,'members',uid),
+      {includeMetadataChanges:true},snapshot=>{
+        if(currentUser?.uid!==uid)return;
+        onChange(snapshot.exists()?Object.assign({},snapshot.data(),{id:snapshot.id}):null,snapshot.metadata);
+      },error=>{if(currentUser?.uid===uid)onError?.(error);});
+  },
+  subscribeCampaignMembers: function(campaignId,onChange,onError){
+    const uid=currentUser?.uid;
+    if(!db || !uid || !campaignId || typeof onChange!=='function')return ()=>{};
+    return onSnapshot(collection(db,'campaigns',campaignId,'members'),
+      {includeMetadataChanges:true},snapshot=>{
+        if(currentUser?.uid!==uid)return;
+        const members=[];
+        snapshot.forEach(item=>members.push(Object.assign({},item.data(),{id:item.id})));
+        onChange(members,snapshot.metadata);
+      },error=>{if(currentUser?.uid===uid)onError?.(error);});
   },
   saveCampaignItemEcosystem: async function(campaignId, ecosystem){
     // Live campaign economy, shops, trades and rewards are server-owned.
@@ -3337,7 +3461,7 @@ const firebasePublicApi = {
       const path=recordingPath(campaignId,archive.id,archive.contentType);
       if(archive.storagePath!==path)throw Error('Invalid recording reference.');
       const campaign=await getDoc(doc(db,'campaigns',campaignId));
-      if(!campaign.exists()||!currentUserIsCampaignGM(campaign.data()))
+      if(!await currentUserIsCampaignGM(campaign))
         throw Error('Only campaign GMs may delete recording files.');
       await deleteObject(storageRef(storage,path));
       return {ok:true};
@@ -3351,7 +3475,7 @@ const firebasePublicApi = {
       if(!recordingMagicMatches(file.type,head))throw Error('Recording format signature does not match.');
       const clean=recordingMetadata({...details,size:file.size,contentType:file.type});
       const campaign=await getDoc(doc(db,'campaigns',campaignId));
-      if(!campaign.exists()||!currentUserIsCampaignGM(campaign.data()))
+      if(!await currentUserIsCampaignGM(campaign))
         throw Error('Only GMs can save recordings.');
       const archives=await getDocs(query(collection(db,'campaigns',campaignId,'recordingArchives'),
         limit(RECORDING_ARCHIVE_LIMIT+1)));
@@ -3397,7 +3521,7 @@ const firebasePublicApi = {
       const path=audioTrackPath(campaignId,track.id,track.contentType);
       if(track.storagePath!==path)throw Error('Invalid audio reference.');
       const campaign=await getDoc(doc(db,'campaigns',campaignId));
-      if(!campaign.exists()||!currentUserIsCampaignGM(campaign.data()))
+      if(!await currentUserIsCampaignGM(campaign))
         throw Error('Only campaign GMs can remove audio.');
       await deleteObject(storageRef(storage,path));
       return {ok:true};
@@ -3412,7 +3536,7 @@ const firebasePublicApi = {
       const details=audioUploadDetails({...settings,fileName:file.name,
         size:file.size,contentType:file.type});
       const campaign=await getDoc(doc(db,'campaigns',campaignId));
-      if(!campaign.exists()||!currentUserIsCampaignGM(campaign.data()))
+      if(!await currentUserIsCampaignGM(campaign))
         throw Error('Only campaign GMs can upload audio.');
       const tracks=await getDocs(query(collection(db,'campaigns',campaignId,'audioTracks'),
         limit(AUDIO_TRACK_LIMIT+1)));
@@ -3458,7 +3582,7 @@ const firebasePublicApi = {
       const path=sessionPdfPath(campaignId,record.id);
       if(record.storagePath!==path)throw Error('Invalid PDF reference.');
       const campaign=await getDoc(doc(db,'campaigns',campaignId));
-      if(!campaign.exists()||!currentUserIsCampaignGM(campaign.data()))
+      if(!await currentUserIsCampaignGM(campaign))
         throw Error('Only a campaign GM can delete PDF files.');
       await deleteObject(storageRef(storage,path));
       return {ok:true};
@@ -3472,7 +3596,7 @@ const firebasePublicApi = {
       if(header.length!==5||String.fromCharCode(...header)!=='%PDF-')throw Error('This file is not a valid PDF header.');
       const clean=sessionPdfInput({...details,fileName:file.name,size:file.size});
       const campaign=await getDoc(doc(db,'campaigns',campaignId));
-      if(!campaign.exists()||!currentUserIsCampaignGM(campaign.data()))
+      if(!await currentUserIsCampaignGM(campaign))
         throw Error('Only a campaign GM can upload documents.');
       const list=await getDocs(query(collection(db,'campaigns',campaignId,'sessionPdfs'),limit(SESSION_PDF_LIMIT+1)));
       if(list.docs.filter(row=>row.data().status!=='archived').length>=SESSION_PDF_LIMIT)
@@ -3513,7 +3637,7 @@ const firebasePublicApi = {
       clean=atlasMapSettings({...settings,visibility:'gm'});
       dims=atlasImageDimensions(dimensions.width,dimensions.height);
       const campaign=await getDoc(doc(db,'campaigns',campaignId));
-      if(!campaign.exists()||!currentUserIsCampaignGM(campaign.data()))
+      if(!await currentUserIsCampaignGM(campaign))
         throw Error('Only a campaign GM can upload world maps.');
       const maps=await getDocs(query(collection(db,'campaigns',campaignId,'worldAtlas'),limit(ATLAS_MAX_MAPS+1)));
       if(maps.docs.filter(row=>row.data().status!=='archived').length>=ATLAS_MAX_MAPS)
@@ -3837,6 +3961,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
 if(auth && !reactDevFixture){
   onAuthStateChanged(auth, async user=>{
+    if(user?.uid!==currentUser?.uid)discoveryRoles=null;
     if(!user){
       const hadSession = Boolean(currentUser || window.AsteriaAuthBridge?.isLoggedIn?.());
       currentUser = null; ownershipReadyUid = '';

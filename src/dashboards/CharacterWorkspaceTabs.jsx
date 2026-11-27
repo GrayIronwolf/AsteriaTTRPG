@@ -1,5 +1,7 @@
+import { spellPaymentProblem } from '../state/combatRules.mjs';
+import { CombatActionButton } from './CombatPanel.jsx';
 import { questType } from '../state/questWorkflowModel.mjs';
-import { characterCheck } from '../state/effectsEngine.mjs';
+import { universalSkillPreview } from '../state/universalCheckModel.mjs';
 import { useAsyncAction as useAction } from '../components/useAsyncAction.js';
 import { QuestDetails, QuestObjectives } from '../components/QuestDetails.jsx';
 import { QUEST_STATUSES, questIsClosed, questProgress } from '../state/questWorkflowModel.mjs';
@@ -7,7 +9,7 @@ import React, { useEffect, useState } from 'react';
 import { EmptyState, FilterControl, Modal, Panel, ResourceBar, SearchField, StatusPill, Tabs } from '../components/WorkspaceUI.jsx';
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
 import { questRewardClaimed, questRewardSummary } from '../state/questRewardModel.mjs';
-import { CHARACTERISTICS, characteristicCap, characteristicTier, characteristicValue, parseResourceCost, sessionRemainingMs } from '../state/liveWorkspaceModel.mjs';
+import { CHARACTERISTICS, characteristicCap, characteristicTier, characteristicValue, sessionRemainingMs } from '../state/liveWorkspaceModel.mjs';
 import { characterClasses, knownMagic, knownSpells, quests, raceTraits, selectedSkills } from './characterWorkspaceData.js';
 
 function formatDuration(milliseconds) {
@@ -160,27 +162,77 @@ export function CharacterTab({ campaignId, character, editable }) {
 
 export { TalentsTab } from './ClassTalentTree.jsx';
 
-export function SkillsTab({ campaignId, character, editable, clock={} }) {
+export function SkillsTab({ campaignId, character, editable, online=true, clock={} }) {
   const skills=selectedSkills(character);
   const [details,setDetails]=useState(null);
   const [query,setQuery]=useState('');
   const [category,setCategory]=useState('All');
+  const [pending,setPending]=useState(null);
   const action=useAction();
+  useEffect(()=>{setPending(null);setDetails(null);},[campaignId,character.id]);
   const categories=['All',...new Set(skills.map(skill=>skill.category).filter(Boolean))];
-  const visible=skills.filter(skill=>(category==='All'||skill.category===category)&&`${skill.name} ${skill.rankName} ${skill.category} ${skill.description||''}`.toLowerCase().includes(query.toLowerCase()));
-  return <Panel title="Character Skills" action={<StatusPill>{visible.length} of {skills.length}</StatusPill>}><div className="react-content-toolbar"><SearchField value={query} onChange={setQuery} placeholder="Search selected skills..."/><FilterControl label="Category" value={category} onChange={setCategory}>{categories.map(value=><option key={value}>{value}</option>)}</FilterControl></div><div className="react-card-gallery">{visible.map(skill=><article key={skill.id} className="react-skill-card" onDoubleClick={()=>setDetails(skill)}><b>{skill.name}</b><strong>{skill.rankName}</strong><small>Check modifier {characterCheck(character,`skills.${skill.id}`,0,clock).value}{characterCheck(character,`skills.${skill.id}`,0,clock).advantage?' · Advantage':characterCheck(character,`skills.${skill.id}`,0,clock).disadvantage?' · Disadvantage':''}</small><small>{skill.category}</small><div className="react-skill-meter"><i style={{width:`${skill.target?Math.min(100,skill.successes/skill.target*100):100}%`}}/></div><small>{skill.target?`${skill.successes}/${skill.target} successful checks`:'Maximum rank'}</small><button disabled={!editable||action.busy||!skill.target} onClick={()=>action.run(()=>firebaseService.recordSkillSuccess(campaignId,character.id,skill),`${skill.name} success recorded.`)}>Successful Check</button><button onClick={()=>setDetails(skill)}>Techniques</button></article>)}{!visible.length?<EmptyState title={skills.length?'No matching skills':'No selected skills'}/>:null}</div><p>{action.message}</p><InfoModal record={details} eyebrow={`${details?.rankName||''} Skill Techniques`} onClose={()=>setDetails(null)}/></Panel>;
+  const visible=skills.filter(skill=>(category==='All'||skill.category===category)&&
+    `${skill.name} ${skill.rankName} ${skill.category} ${skill.description||''}`.toLowerCase().includes(query.toLowerCase()));
+  const selected=skills.find(skill=>skill.id===pending);
+  const recordTraining=async()=>{
+    if(!selected||!editable||!online||action.busy||!selected.target)return;
+    const result=await action.run(()=>firebaseService.recordSkillSuccess(campaignId,character.id,selected),
+      `${selected.name} training success recorded.`);
+    if(result?.ok)setPending(null);
+  };
+  return <Panel title="Character Skills" action={<StatusPill>{visible.length} of {skills.length}</StatusPill>}>
+    <div className="react-content-toolbar">
+      <SearchField value={query} onChange={setQuery} placeholder="Search selected skills..."/>
+      <FilterControl label="Category" value={category} onChange={setCategory}>
+        {categories.map(value=><option key={value}>{value}</option>)}
+      </FilterControl>
+    </div>
+    <p className="react-help">GM-requested checks use the Universal Check popup and approved eight-rank modifiers.
+      Recording a training success is separate from submitting a GM check.</p>
+    <div className="react-card-gallery">{visible.map(skill=>{
+      const preview=universalSkillPreview(character,skill,clock);
+      return <article key={skill.id} className="react-skill-card" onDoubleClick={()=>setDetails(skill)}>
+        <b>{skill.name}</b><strong>{skill.rankName}</strong>
+        <small>{preview.available?
+          `GM check modifier ${preview.total>=0?'+':''}${preview.total}${preview.advantage?' · Advantage':preview.disadvantage?' · Disadvantage':''}`:
+          `GM check modifier unavailable: ${preview.reason}`}</small>
+        <small>{skill.category}</small>
+        <div className="react-skill-meter"><i style={{width:`${skill.target?Math.min(100,skill.successes/skill.target*100):100}%`}}/></div>
+        <small>{skill.target?`${skill.successes}/${skill.target} training successes`:'Maximum rank'}</small>
+        <button disabled={!editable||!online||action.busy||!skill.target} onClick={()=>setPending(skill.id)}>Record training success</button>
+        <button onClick={()=>setDetails(skill)}>Techniques</button>
+      </article>;
+    })}{!visible.length?<EmptyState title={skills.length?'No matching skills':'No selected skills'}/>:null}</div>
+    <p role="status">{action.message}</p>
+    <InfoModal record={details} eyebrow={`${details?.rankName||''} Skill Techniques`} onClose={()=>setDetails(null)}/>
+    {selected?<Modal title={`Record ${selected.name} training success?`} eyebrow="Training Progress"
+      busy={action.busy} onClose={()=>setPending(null)}
+      footer={<><button type="button" onClick={()=>setPending(null)} disabled={action.busy}>Cancel</button>
+      <button className="primary" type="button" disabled={!editable||!online||action.busy||!selected.target}
+        onClick={recordTraining}>Confirm training success</button></>}>
+      <p>This records training progress. It does not roll dice or submit a GM check result.</p>
+    </Modal>:null}
+  </Panel>;
 }
 
-export function SpellsTab({ campaignId, character, editable }) {
-  const spells=knownSpells(character);
-  const elements=knownMagic(character);
-  const [filter,setFilter]=useState('All');
-  const [query,setQuery]=useState('');
-  const [details,setDetails]=useState(null);
+export function SpellsTab({ campaignId, character, editable, combat }) {
+  const spells=knownSpells(character),elements=knownMagic(character);
+  const [filter,setFilter]=useState('All'),[query,setQuery]=useState(''),[details,setDetails]=useState(null),[pending,setPending]=useState(null);
   const action=useAction();
-  const visible=spells.filter(spell=>(filter==='All'||spell.element.toLowerCase().includes(filter.toLowerCase()))&&`${spell.name} ${spell.element} ${spell.rank} ${spell.description||''}`.toLowerCase().includes(query.toLowerCase()));
-  const cast=spell=>action.run(()=>firebaseService.castSpell(campaignId,character.id,{...spell,expectedCoreRevision:Number(character.coreRevision || 0)},parseResourceCost(spell.costs||spell.cost)),`${spell.name} cast once.`);
-  return <Panel title="Spells" action={<StatusPill>{visible.length} of {spells.length}</StatusPill>}><div className="react-content-toolbar"><SearchField value={query} onChange={setQuery} placeholder="Search known spells..."/></div><div className="react-filter-tabs"><button className={filter==='All'?'active':''} onClick={()=>setFilter('All')}>All</button>{elements.map(element=><button key={element} className={filter===element?'active':''} onClick={()=>setFilter(element)}>{element}</button>)}</div><div className="react-card-gallery">{visible.map(spell=><article className="react-spell-card" key={spell.id} onDoubleClick={()=>editable&&cast(spell)}><b>{spell.name}</b><div className="react-small-card-image">{spell.image?<img src={spell.image} alt="" loading="lazy"/>:<span>{spell.name.charAt(0)}</span>}</div><small>{spell.element} | {spell.rank}</small><small>{Object.entries(parseResourceCost(spell.costs||spell.cost)).map(([key,value])=>`${value} ${key.toUpperCase()}`).join(' | ')||'No resource cost'}</small><div><button onClick={()=>setDetails(spell)}>Details</button><button className="primary" disabled={!editable||action.busy} onClick={()=>cast(spell)}>Cast</button></div></article>)}{!visible.length?<EmptyState title={spells.length?'No matching spells':'No known spells'}/>:null}</div><p>{action.message}</p><InfoModal record={details} eyebrow={`${details?.element||''} Spell`} onClose={()=>setDetails(null)}/></Panel>;
+  useEffect(()=>{setPending(null);setDetails(null);},[character.id,combat?.active]);
+  const visible=spells.filter(spell=>(filter==='All'||spell.element.toLowerCase().includes(filter.toLowerCase()))&&`${spell.name} ${spell.element} ${spell.rank} ${spell.summary||''}`.toLowerCase().includes(query.toLowerCase()));
+  const selected=spells.find(row=>row.key===pending);
+  const problem=selected?spellPaymentProblem(character,selected):'';
+  const cast=async()=>{
+    if(!selected||!editable||combat?.active||action.busy||problem)return;
+    const result=await action.run(()=>firebaseService.castSpell(campaignId,character.id,{name:selected.name,key:selected.key,rank:selected.rank,expectedCoreRevision:Number(character.coreRevision||0)},selected.costs),`${selected.name} cast once.`);
+    if(result?.ok)setPending(null);
+  };
+  const costLabel=spell=>spell.costProblem||Object.entries(spell.costs).map(([key,value])=>`${value} ${key.toUpperCase()}`).join(' | ')||'No resource cost';
+  return <Panel title="Spells" action={<StatusPill>{visible.length} of {spells.length}</StatusPill>}><div className="react-content-toolbar"><SearchField value={query} onChange={setQuery} placeholder="Search known spells..."/></div><div className="react-filter-tabs"><button className={filter==='All'?'active':''} onClick={()=>setFilter('All')}>All</button>{elements.map(element=><button key={element} className={filter===element?'active':''} onClick={()=>setFilter(element)}>{element}</button>)}</div><div className="react-card-gallery">{visible.map(spell=>{
+    const option=combat?.options?.find(row=>row.id===spell.key),reason=spellPaymentProblem(character,spell);
+    return <article className="react-spell-card" key={spell.key}><b>{spell.name}</b><div className="react-small-card-image">{spell.image?<img src={spell.image} alt="" loading="lazy"/>:<span>{spell.name.charAt(0)}</span>}</div><small>{spell.element} | {spell.rank}</small><small>{combat?.active&&option?costLabel({...spell,costs:option.costs,costProblem:option.blocked}):costLabel(spell)}</small><div><button onClick={()=>setDetails(spell)}>Details</button>{combat?.active?(option?<CombatActionButton combat={combat} option={option} className="primary">Review combat cast</CombatActionButton>:<button disabled>Unavailable in combat</button>):<button className="primary" disabled={!editable||action.busy||Boolean(reason)} title={reason||undefined} onClick={()=>setPending(spell.key)}>Cast</button>}</div></article>;
+  })}{!visible.length?<EmptyState title={spells.length?'No matching spells':'No known spells'}/>:null}</div><p role="status">{action.message}</p><InfoModal record={details} eyebrow={`${details?.element||''} Spell`} onClose={()=>setDetails(null)}/>{selected&&!combat?.active?<Modal title={`Cast ${selected.name}?`} eyebrow="Spell Confirmation" busy={action.busy} onClose={()=>setPending(null)} footer={<><button disabled={action.busy} onClick={()=>setPending(null)}>Cancel</button><button className="primary" disabled={!editable||action.busy||Boolean(problem)} onClick={cast}>Confirm cast</button></>}><p>{costLabel(selected)}</p>{problem?<p role="status">{problem}</p>:null}</Modal>:null}</Panel>;
 }
 
 export function QuestTab({ campaignId, character, partyWorkspace, editable }) {

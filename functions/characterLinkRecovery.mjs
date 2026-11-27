@@ -12,7 +12,7 @@ export async function repairCharacterLink(db, uid, data, serverTimestamp) {
     const campaignSnapshot = await transaction.get(campaignRef);
     if (!campaignSnapshot.exists) throw new Error('Campaign membership is required.');
     const memberRecord=await readCampaignMember(transaction,db,campaignId,campaignSnapshot.data(),uid);
-    if (!isCampaignMember(campaignSnapshot.data(), uid, memberRecord)) throw new Error('Campaign membership is required.');
+    if (!isCampaignMember(campaignSnapshot.data(),uid,memberRecord,campaignId)) throw new Error('Campaign membership is required.');
     const [characterSnapshot,receipt]=await Promise.all([transaction.get(characterRef),transaction.get(receiptRef)]);
     if (!characterSnapshot.exists) throw new Error('The campaign character no longer exists. No sheet was recreated.');
     const campaign = campaignSnapshot.data(), character = characterSnapshot.data();

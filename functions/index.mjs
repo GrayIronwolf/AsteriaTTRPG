@@ -5,6 +5,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { defineSecret } from 'firebase-functions/params';
 import { executeAction } from './handler.mjs';
 
+export {asteriaCombatProjection,asteriaBattleMapProjection,asteriaCharacterVisionProjection} from './livePresentationProjectionTriggers.mjs';
 if(!getApps().length) initializeApp();
 export const asteriaAdvancedDice=onCall({region:'us-central1',maxInstances:3,timeoutSeconds:30},async request=>{
   if(!request.auth?.uid)throw new HttpsError('unauthenticated','Sign in to roll dice.');
@@ -304,6 +305,18 @@ export const asteriaCampaignJoinReview=onCall({region:'us-central1',maxInstances
         throw new Error('Campaign member controls are not enabled yet.');
       const {moderateCampaignMember}=await import('./campaignMemberControls.mjs');
       return await moderateCampaignMember(db,uid,{...data,action:data.memberAction});
+    }
+    if(data.action==='attendance-list'||data.action==='attendance-set'){
+      if(process.env.ASTERIA_CAMPAIGN_ATTENDANCE_ENABLED!=='1')
+        throw new Error('Campaign attendance is not activated.');
+      const {listCampaignAttendance,updateCampaignAttendance}=
+        await import('./campaignAttendance.mjs');
+      if(data.action==='attendance-list')
+        return await listCampaignAttendance(db,uid,data.campaignId);
+      return await updateCampaignAttendance(db,uid,{
+        campaignId:data.campaignId,memberUid:data.memberUid,
+        mode:data.mode,expectedRevision:data.expectedRevision
+      });
     }
     if(data.action==='roster'){
       if(process.env.ASTERIA_PLAYER_ROSTER_ENABLED!=='1')

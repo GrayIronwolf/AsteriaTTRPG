@@ -1,7 +1,9 @@
+import {projectCombat} from './dashboards/combat/combatModel.mjs';
 import { SESSION_LIMIT_MS, applyCharacteristicAllocations, applyCharacteristicPoints, characterKnowsIdentify, firstFreeStorageSlot, nextSkillProgress, normalizeCharacterStorages, normalizeDashboardPreferences, parseResourceCost, slug, stackableStorageItem, talentRankCost, unidentifiedItemName } from './state/liveWorkspaceModel.mjs';
 import { applyRest, applySoulDamage, clampHpForSoulDamage, recoverSoulDamage } from './state/specialDamageModel.mjs';
 import { createAsteriaItem, normalizeMarketPricing } from './systems/items/marketPricing.mjs';
 import { merchantPriceCopper, shopStockCompatible, shopVariantKey } from './state/shopTransactionModel.mjs';
+import {diceResult} from './state/diceRollModel.mjs';
 
 const DEMO_CAMPAIGN_ID = 'demo-campaign';
 
@@ -96,6 +98,19 @@ export function installDevFixtures() {
   let session = { id: 'session-001', status: 'active', number: 7, startedAt: Date.now(), expiresAt:Date.now()+SESSION_LIMIT_MS, maxDurationHours:10 };
   let events = [];
   let encounter = { status:'ready', round:1, turnIndex:0, combatants:[], enemies:[] };
+  const unifiedMapFixture=new URLSearchParams(window.location.search).get('unifiedMap')==='1';
+  const sharedMap={id:'fixture-arena',name:'Western Gate Arena',visibility:'players',
+    storagePath:'campaigns/demo-campaign/battleMaps/fixture-arena/scene.png',
+    kind:'image',contentType:'image/png',width:800,height:600,gridVisible:true,gridOpacity:40,
+    gridColumns:8,gridRows:6,metresPerCell:3,fogEnabled:true,fogCells:'1'.repeat(24)+'0'.repeat(24),
+    combatId:'fixture-canvas-combat',activeTokenId:'visible-kael',
+    tokens:[{id:'visible-kael',label:'Kael',kind:'character',x:38,y:25}]};
+  if(unifiedMapFixture)encounter={status:'active',round:2,turnIndex:0,
+    combatId:sharedMap.combatId,battleMapId:sharedMap.id,
+    combatants:[{id:'actor-kael',characterId:'kael',kind:'player',name:'Kael'}],
+    combat:{version:1,revision:3,participants:{'actor-kael':{ap:3,bonus:true,mapTokenId:'visible-kael'}}}};
+  if(unifiedMapFixture)characters.kael.movement=9;
+  const battleMapListeners=new Set();
   let gmWorkspace=null;
   let partyWorkspace={ sharedNotes:'Meet at the western gate before the next expedition.', questLog:[] };
   let partyChat=[{ id:'chat-1', characterId:'lyra', ownerUid:'player-lyra', characterName:'Lyra', text:'I will bring the healing supplies.', createdAt:new Date().toISOString() }];
@@ -105,7 +120,15 @@ export function installDevFixtures() {
   };
   let partyLoot={stashes:[],loot:[],drafts:[]};
   let customItems=[];
-  const listeners = { campaign: [], characters: [], session: [], presence: [], events: [], encounter: [], gmWorkspace:[], partyWorkspace:[], partyChat:[], itemEcosystem:[], partyLoot:[], customItems:[] };
+  const diceWorkspace={presets:[],history:[]};
+  let diceRollRequests=0;
+  const staticStreams=new Set();
+  const staticSubscription=(kind,value,callback)=>{
+    const stream={kind};staticStreams.add(stream);
+    queueMicrotask(()=>{if(staticStreams.has(stream))callback(clone(value));});
+    return ()=>staticStreams.delete(stream);
+  };
+  const listeners = { campaign: [], characters: [], session: [], presence: [], events: [], encounter: [], gmWorkspace:[], partyWorkspace:[], partyChat:[], itemEcosystem:[], partyLoot:[], customItems:[],diceWorkspace:[] };
   const presence = {
     'gm-demo': { uid: 'gm-demo', state: 'online', mode: 'gm' },
     'player-demo': { uid: 'player-demo', state: 'online', mode: 'character', characterId: 'kael' }
@@ -124,6 +147,7 @@ export function installDevFixtures() {
     if(key === 'itemEcosystem') callback(clone(itemEcosystem));
     if(key === 'partyLoot') callback(clone(partyLoot));
     if(key === 'customItems') callback(clone(customItems));
+    if(key === 'diceWorkspace') callback(clone(diceWorkspace));
   });
   const subscribe = (key, callback) => {
     document.documentElement.dataset.asteriaFixtureSubscription = key;
@@ -175,12 +199,157 @@ export function installDevFixtures() {
   };
   const itemRequestById=requestId=>(itemEcosystem.playerItemRequests||[]).find(value=>String(value.id)===String(requestId));
 
+
+  // Local-only combat provider uses the SAME fixture encounter state. It is
+  // never installed outside ?reactFixture=1 on a loopback host.
+  const combatListeners=new Set(),combatHistory=[],fixtureSnapshots=new Map(),fixtureCheckpoints=new Map();
+  const publishCombat=()=>{
+    const projected=projectCombat(encounter,session,{role:'gm',party:Object.values(characters)});
+    const state={combat:projected,session:{id:session.id,status:session.status,editable:session.status==='active'},
+      candidates:[],library:[],pending:null,combatLog:[],encounterSchedule:[],
+      preparedEncounters:gmWorkspace?.preparedEncounters||[],
+      maps:[],party:Object.values(characters)};
+    for(const callback of combatListeners)callback(clone(state));
+  };
+  const fixtureCombatService={
+    availability:()=>({enabled:true}),
+    watchGM:(_campaignId,onUpdate)=>{
+      combatListeners.add(onUpdate);
+      queueMicrotask(()=>{if(combatListeners.has(onUpdate))publishCombat();});
+      return()=>combatListeners.delete(onUpdate);
+    },
+    watchGMHistory:(_campaignId,onUpdate)=>{
+      const listener=()=>onUpdate(clone(combatHistory));
+      combatListeners.add(listener);
+      queueMicrotask(()=>{if(combatListeners.has(listener))listener();});
+      return()=>combatListeners.delete(listener);
+    },
+    watchEncounterSnapshots:(_campaignId,combatId,onUpdate)=>{
+      const listener=()=>onUpdate(clone(fixtureSnapshots.get(combatId)||[]));
+      combatListeners.add(listener);
+      queueMicrotask(()=>{if(combatListeners.has(listener))listener();});
+      return()=>combatListeners.delete(listener);
+    },
+    commandPlayer:async(_campaignId,_characterId,_actorId,input)=>{
+      if(!unifiedMapFixture||input.operation!=='player-map-move')throw Error('Unsupported fixture action.');
+      sharedMap.tokens[0]={...sharedMap.tokens[0],...input.point};
+      encounter={...encounter,combat:{...encounter.combat,revision:encounter.combat.revision+1}};
+      notify('encounter');
+      for(const callback of battleMapListeners)callback([clone(sharedMap)]);
+      return {ok:true};
+    },
+    commandGM:async(_campaignId,actorId,input)=>{
+      const nextRev=Number(encounter.combat?.revision||0)+1;
+      const previous={...encounter};
+      switch(input.operation){
+      case 'start':
+        encounter={...encounter,status:'active',combatId:eventId('combat'),round:1,turnIndex:0,
+          combat:{version:1,revision:nextRev,participants:Object.fromEntries(
+            (encounter.combatants||[]).map(x=>[x.id,{ap:3,bonus:true,turnComplete:false}]))}};
+        break;
+      case 'next':
+        encounter={...encounter,turnIndex:(Number(encounter.turnIndex||0)+1)%
+          Math.max(1,(encounter.combatants||[]).length),
+          round:Number(encounter.round||1)+(Number(encounter.turnIndex||0)+1>=
+            (encounter.combatants||[]).length?1:0),combat:{...(encounter.combat||{}),revision:nextRev}};
+        break;
+      case 'pause':
+      case 'resume':
+        encounter={...encounter,paused:input.operation==='pause',combat:{...encounter.combat,revision:nextRev}};
+        break;
+      case 'save-snapshot':{
+        const entries=fixtureSnapshots.get(encounter.combatId)||[];
+        fixtureSnapshots.set(encounter.combatId,[...entries,{id:eventId('snapshot'),name:input.name,at:Date.now()}]);
+        break;
+      }
+      case 'restore-snapshot':
+        encounter={...encounter,combat:{...encounter.combat,revision:nextRev}};
+        break;
+      case 'end':{
+        fixtureCheckpoints.set(encounter.combatId,clone(encounter));
+        combatHistory.unshift({id:encounter.combatId,name:'Fixture encounter',recoveryAvailable:true,
+          endedAt:Date.now(),status:'pending-review',rounds:encounter.round,revision:1,
+          participants:[],rewards:[],deliveries:{}});
+        encounter={...encounter,status:'ended',paused:false,combat:{...encounter.combat,revision:nextRev}};
+        break;
+      }
+      case 'reopen':{
+        const checkpoint=fixtureCheckpoints.get(input.encounterId);
+        if(!checkpoint)throw Error('No fixture checkpoint.');
+        const entry=combatHistory.find(row=>row.id===input.encounterId);
+        entry.reopened=true;entry.revision++;
+        encounter={...checkpoint,paused:true,combat:{...checkpoint.combat,revision:nextRev}};
+        break;
+      }
+      case 'clear':encounter={status:'ready',round:1,turnIndex:0,combatants:[],enemies:[],combat:{revision:nextRev}};break;
+      case 'save':encounter={...encounter,...(input.encounter||{}),combat:{...(encounter.combat||{}),revision:nextRev}};break;
+      case 'map-prepare':encounter={...encounter,preparedMapId:input.mapId||'',combat:{...(encounter.combat||{}),revision:nextRev}};break;
+      case 'map-link':encounter={...encounter,battleMapId:input.mapId||'',combat:{...(encounter.combat||{}),revision:nextRev}};break;
+      case 'load-prepared':{
+        const plan=(gmWorkspace?.preparedEncounters||[]).find(row=>row.id===input.preparedId);
+        if(!plan)throw Error('Prepared encounter does not exist.');
+        const enemies=(plan.enemies||[]).map((row,i)=>({...row,id:'enemy-fixture-'+i}));
+        encounter={...encounter,status:'ready',round:1,turnIndex:0,
+          enemies,combatants:enemies,preparedMapId:plan.mapId||'',
+          combat:{...(encounter.combat||{}),revision:nextRev}};
+        break;
+      }
+      default:encounter={...encounter,combat:{...(encounter.combat||{}),revision:nextRev}};
+      }
+      notify('encounter');publishCombat();
+      return {ok:true,message:'Fixture combat state updated',previous:clone(previous)};
+    },
+    savePrepared:async(_id,plan,expectedRevision=0)=>{
+      const all=[...(gmWorkspace?.preparedEncounters||[])];
+      const index=all.findIndex(row=>row.id===plan.id);
+      const updated={...clone(plan),revision:Number(expectedRevision)+1};
+      if(index>=0)all[index]=updated;else all.push(updated);
+      gmWorkspace={...(gmWorkspace||{}),preparedEncounters:all};
+      notify('gmWorkspace');publishCombat();
+      return {ok:true,id:plan.id,revision:updated.revision};
+    },
+    deletePrepared:async(_id,plan)=>{
+      gmWorkspace={...(gmWorkspace||{}),
+        preparedEncounters:(gmWorkspace?.preparedEncounters||[]).filter(row=>row.id!==plan.id)};
+      notify('gmWorkspace');publishCombat();return {ok:true};
+    },
+    loadPrepared:async(campaignId,preparedId,revision,expectedPreparedRevision)=>
+      fixtureCombatService.commandGM(campaignId,'encounter',{
+        operation:'load-prepared',preparedId,revision,expectedPreparedRevision
+      }),
+    reviewCompletion:async()=>({ok:true,status:'approved'}),
+    deliverCompletion:async()=>({ok:true})
+  };
   const fixtureApi = {
     isReady: () => true,
+    getReactCombatFixtureService:()=>fixtureCombatService,
     // The fixture already publishes clock/system snapshots through its subscriptions.
     refreshCharacterSystems: async () => ({ok:true}),
     getUser: () => ({ uid: 'player-demo', email: 'preview@asteria.local' }),
     getProfile: () => ({ uid: 'player-demo', displayName: 'Preview Player' }),
+    // Local browser acceptance uses the real panel APIs without cloud traffic.
+    getCanvasFixtureMetrics:()=>({diceRollRequests,diceListeners:listeners.diceWorkspace.length,
+      streams:[...staticStreams].map(stream=>stream.kind)}),
+    subscribeDiceWorkspace:callback=>subscribe('diceWorkspace',callback),
+    subscribeDiceAppearanceLibrary:callback=>staticSubscription('dice-appearance',{},callback),
+    subscribeOwnedDiceCharacters:callback=>staticSubscription('dice-characters',
+      Object.values(ownedCharacters).filter(row=>row.ownerUid==='player-demo'),callback),
+    advancedDiceAction:async request=>{
+      if(request.action!=='roll')return {ok:false,error:'This fixture accepts dice rolls only.'};
+      const previous=diceWorkspace.history.find(row=>row.id===request.requestId);
+      if(previous)return {ok:true,roll:clone(previous)};
+      const roll=diceResult({pool:request.pool,modifier:request.modifier,label:request.label},
+        sides=>Math.min(17,sides),Date.now(),request.requestId);
+      diceRollRequests++;diceWorkspace.history.unshift(roll);notify('diceWorkspace');
+      return {ok:true,roll:clone(roll)};
+    },
+    subscribeCampaignAudio:(_campaignId,callback)=>staticSubscription('audio-library',[],callback),
+    subscribeCampaignAudioLive:(_campaignId,callback)=>staticSubscription('audio-live',
+      {version:1,revision:0,ambient:null,effect:null},callback),
+    subscribeAsteriaCalendar:(_campaignId,callback)=>staticSubscription('calendar',null,callback),
+    subscribeAsteriaCalendarEntries:(_campaignId,callback)=>staticSubscription('calendar-entries',[],callback),
+    subscribeWeatherReports:(_campaignId,callback)=>staticSubscription('weather-reports',[],callback),
+    subscribeWeatherZones:(_campaignId,callback)=>staticSubscription('weather-zones',[],callback),
     saveOwnedCharacterSnapshot: async (characterId,character) => {
       if(!characterId || !character) return false;
       ownedCharacters[characterId] = { ...(ownedCharacters[characterId] || {}), ...clone(character), id:characterId };
@@ -227,12 +396,59 @@ export function installDevFixtures() {
     subscribeSessionPresence: (_campaignId, _sessionId, callback) => subscribe('presence', callback),
     subscribeCampaignEvents: (_campaignId, callback) => subscribe('events', callback),
     subscribeCampaignEncounter: (_campaignId, callback) => subscribe('encounter', callback),
+    subscribeBattleMaps: (_campaignId, callback) => {
+      battleMapListeners.add(callback);
+      queueMicrotask(()=>{if(battleMapListeners.has(callback))callback(unifiedMapFixture?[clone(sharedMap)]:[]);});
+      return ()=>battleMapListeners.delete(callback);
+    },
+    fetchBattleMapMedia: async () => ({ok:true,blob:new Blob([
+      Uint8Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9ZQmcAAAAASUVORK5CYII='),byte=>byte.charCodeAt(0))
+    ],{type:'image/png'})}),
+
     subscribeGMWorkspace: (_campaignId, callback) => subscribe('gmWorkspace', callback),
     subscribePartyWorkspace: (_campaignId, callback) => subscribe('partyWorkspace', callback),
     subscribePartyChat: (_campaignId, callback) => subscribe('partyChat', callback),
     subscribeCampaignItemEcosystem: (_campaignId, callback) => subscribe('itemEcosystem', callback),
     subscribePartyLoot: (_campaignId,callback) => subscribe('partyLoot',callback),
+    // The isolated player Inventory and Lore tabs subscribe to these collections.
+    // Return empty read-only snapshots: no production Firebase connection or writes.
+    subscribeMerchantRelationships: (_campaignId,callback) => {
+      queueMicrotask(()=>callback([]));
+      return ()=>{};
+    },
+    subscribeItemDiscoveries: (_campaignId,callback) => {
+      queueMicrotask(()=>callback([]));
+      return ()=>{};
+    },
+    // Read-only defaults for dashboard notifications in isolated browser tests.
+    // These mock subscriptions never contact Firebase or change production data.
+    subscribeUniversalChecks: (_campaignId,callback) => {
+      queueMicrotask(()=>callback([]));
+      return ()=>{};
+    },
+    subscribeRecordingNotice: (_campaignId,callback) => {
+      queueMicrotask(()=>callback({status:'idle',revision:0,requestId:'',sessionId:'',participants:[]}));
+      return ()=>{};
+    },
+    subscribeRecordingArchives: (_campaignId,callback) => {
+      queueMicrotask(()=>callback([]));
+      return ()=>{};
+    },
+    subscribeRecordingControl: (_campaignId,callback) => {
+      queueMicrotask(()=>callback({status:'idle',revision:0,requestId:'',sessionId:'',participants:[]}));
+      return ()=>{};
+    },
+    subscribeRecordingConsents: (_campaignId,callback) => {
+      queueMicrotask(()=>callback([]));
+      return ()=>{};
+    },
+    subscribeOwnRecordingConsent: (_campaignId,callback) => {
+      queueMicrotask(()=>callback(null));
+      return ()=>{};
+    },
     syncCampaignItemPrivacy: async () => ({ok:true,migrated:0,remaining:0}),
+    syncCampaignShopStores: async () => ({ok:true,migrated:0,remaining:0}),
+    syncGMRewardBundles: async () => ({ok:true,migrated:0,remaining:0}),
     subscribeCustomItems: callback => subscribe('customItems', callback),
     saveCampaignEncounter: async (_campaignId, next) => { encounter = { ...encounter, ...clone(next) }; notify('encounter'); return { ok:true }; },
     saveGMWorkspace: async (_campaignId,patch) => { gmWorkspace={...(gmWorkspace||{}),...clone(patch),version:'asteria-react-gm-workspace-v1'};notify('gmWorkspace');return {ok:true}; },

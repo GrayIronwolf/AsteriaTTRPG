@@ -135,7 +135,8 @@ test('14. React owns encounter and additional-magic workflows without raw Firest
   const gm = read('src/dashboards/GMDashboard.jsx');
   const character = read('src/dashboards/CharacterDashboard.jsx');
   const service = read('src/firebase/asteriaFirebaseService.js');
-  assert.match(gm, /CampaignEncounter/);
+  assert.match(gm, /GMCombatWorkspace/);
+  assert.doesNotMatch(gm, /function CampaignEncounter\(/);
   assert.match(gm, /MagicElementRewards/);
   assert.match(character, /MagicRewardModal/);
   ['subscribeEncounter','saveEncounter','createMagicReward','respondMagicReward'].forEach(name => assert.match(service, new RegExp(name)));
@@ -268,7 +269,10 @@ test('28. The dashboard uses modular armour, weapon, and quick-item summaries', 
   const dashboard = read('src/dashboards/CharacterDashboard.jsx');
   const overview = read('src/dashboards/PlayerDashboardOverview.jsx');
   assert.match(dashboard, /PlayerDashboardOverview/);
-  ['ArmourPanel','WeaponsPanel','QuickItemsPanel'].forEach(name => assert.match(overview, new RegExp(name)));
+  ['ArmourPanel','QuickItemsPanel'].forEach(name => assert.match(overview, new RegExp(name)));
+  assert.match(overview, /Equipment, Armour & Weapons/);
+  assert.match(overview, /react-overview-combined-weapons/);
+  assert.match(overview, /'Main Weapon','Secondary Weapon','Off-Hand','Quiver'/);
   assert.match(overview, /firebaseService\.updateInventory/);
   assert.doesNotMatch(read('src/dashboards/InventoryWorkspace.jsx'), /ariaLabel="Inventory menu"/);
 });
@@ -480,7 +484,9 @@ test('40. Player navigation uses one SVG icon system and preserves every dashboa
   const dashboard = read('src/dashboards/CharacterDashboard.jsx');
   const icons = read('src/components/AsteriaIcons.jsx');
   const ui = read('src/components/WorkspaceUI.jsx');
-  ['dashboard','character','talents','skills','spells','inventory','quest','journal','party','gallery','settings'].forEach(route => assert.match(dashboard, new RegExp(`id: '${route}'`)));
+  const menu = read('src/state/dashboardMenuModel.mjs');
+  ['dashboard','character','talents','skills','spells','inventory','quest','journal','party','gallery','settings'].forEach(route => assert.match(menu, new RegExp(`page\\('${route}'`)));
+  assert.ok(dashboard.includes("dashboardTabs('player')"));
   assert.match(icons, /viewBox="0 0 24 24"/);
   assert.match(ui, /<AsteriaIcon name=\{tab\.icon/);
   assert.doesNotMatch(dashboard, /icon: '\\u/);
@@ -584,17 +590,28 @@ test('50. The player HUD is connected, modular, and backed by existing state act
   assert.doesNotMatch(overview, /Kaelen|Lyra|Thorne|Isera|Borin|12,845|Elden Reach|Western Cliffs/);
 });
 
-test('51. The redesigned player dashboard responds by reflowing panels and scrolling navigation', () => {
+test('51. The player HUD remains responsive and main windows use the freeform canvas', () => {
   const styles = read('src/styles/asteria-react.css');
   assert.match(styles, /react-player-topbar[\s\S]*repeat\(24, minmax\(0, 1fr\)\)/);
   assert.match(styles, /react-player-resources \{ grid-column: span 8/);
   assert.match(styles, /react-player-topbar-heading[\s\S]*border-bottom/);
-  assert.match(styles, /react-player-overview-grid/);
+  const canvasCss = read('src/dashboards/combat/CombatCommandCentre.module.css');
+  const player = read('src/dashboards/PlayerDashboardOverview.jsx');
+  assert.doesNotMatch(styles, /react-player-overview-grid/,
+    'Retired Player overview grid styles must not return');
+  assert.match(player, /<CanvasWorkspace/);
+  assert.match(canvasCss, /@container combatCanvas \(max-width:699px\)/,
+    'The shared canvas must stack windows on narrow screens');
+  assert.match(canvasCss, /\.stage\{position:relative/,
+    'Responsive canvas windows must return to document flow');
   assert.match(styles, /react-armour-layout/);
   assert.match(styles, /react-ability-grid/);
   assert.match(styles, /@container \(max-width: 900px\)/);
   assert.match(styles, /@container \(max-width: 620px\)/);
-  assert.match(styles, /react-character-dashboard \.react-workspace-main > \.react-tabs[\s\S]*overflow-x: auto/);
+  const menuStyles = read('src/components/DashboardNavigation.module.css');
+  assert.ok(menuStyles.includes('.bar{display:grid'));
+  assert.ok(menuStyles.includes('@media(max-width:540px)'));
+  assert.doesNotMatch(styles, /react-character-dashboard \\.react-workspace-main > \\.react-tabs/);
 });
 
 test('52. Production chunks share one React entry URL', () => {

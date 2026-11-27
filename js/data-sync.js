@@ -128,7 +128,7 @@
       .map(campaign=>[campaign.id,campaign]));
     campaigns.forEach(campaign=>{
       if(!campaign?.id) return;
-      merged.set(campaign.id, Object.assign({}, merged.get(campaign.id) || {}, campaign));
+      merged.set(campaign.id, campaign.membershipSchemaVersion===2 ? campaign : Object.assign({}, merged.get(campaign.id) || {}, campaign));
     });
     window.campaigns = Array.from(merged.values());
     if(activeId){
@@ -172,7 +172,7 @@
     if(!campaign?.id) return;
     const index=(window.campaigns||[]).findIndex(item=>item?.id===campaign.id);
     if(index < 0) window.campaigns=[...(window.campaigns||[]),campaign];
-    else window.campaigns[index]=Object.assign({},window.campaigns[index]||{},campaign);
+    else window.campaigns[index]=campaign.membershipSchemaVersion===2 ? campaign : Object.assign({},window.campaigns[index]||{},campaign);
     if(campaign.characters && Object.keys(campaign.characters).length){
       mergeRealtimeCharacters(campaign.id,campaign.characters,{ source:'campaign-summary' });
     }
@@ -434,6 +434,7 @@
     return Array.from(targets.values()).filter(campaign=>{
       if(!campaign?.id) return false;
       if(discoveredCampaignIds && !discoveredCampaignIds.has(String(campaign.id))) return false;
+      if(campaign.membershipSchemaVersion===2)return Boolean(discoveredCampaignIds?.has(String(campaign.id)));
       if(!campaign.ownerUid && !campaign.gmUids && !campaign.playerUids && !campaign.players) return true;
       return campaign.ownerUid===user.uid
         || campaign.gmId===user.uid
@@ -566,6 +567,7 @@
         }
         const user = window.AsteriaFirebase?.getUser?.();
         for(const campaign of (window.campaigns || [])){
+          if(campaign?.membershipSchemaVersion===2)continue;
           if(!campaign?.id || !user || (campaign.ownerUid !== user.uid && campaign.gmId !== user.uid && !(campaign.gmUids || []).includes(user.uid))) continue;
           if(!stillCurrent()) return false;
           if(!await window.AsteriaFirebase.saveCampaign(campaign.id, campaign)) throw new Error('A campaign save was not confirmed.');

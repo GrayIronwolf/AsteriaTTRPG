@@ -1,7 +1,11 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {executeAction} from '../functions/handler.mjs';
-import {tierBonus,spellAP,rollD20,checkResult,attackResult,counterspellResult,feedback,deathSave,changeCombatHP,mixedDamage,combatOptions,skillCheck,combatActive,currentCombatant} from '../src/state/combatRules.mjs';
+import {mapReachableRoutes} from '../src/state/battleMapRoutes.mjs';
+import {walkingAllowance} from '../src/state/battleMapMovement.mjs';
+import {assertApprovedEncounterDelivery} from '../src/state/encounterCompletionModel.mjs';
+import {prepareQuickEncounterTemplate} from '../src/state/preparedEncounterModel.mjs';
+import {tierBonus,spellAP,rollD20,checkResult,attackResult,counterspellResult,feedback,deathSave,changeCombatHP,mixedDamage,combatOptions,skillCheck,combatActive,currentCombatant,activeReactionWindow,basicReactionProblem,combatActionScope,manualAPProblem,optionProblem} from '../src/state/combatRules.mjs';
 import compendium from '../data/compendium.js';
 
 const sheet=(id,ownerUid,patch={})=>({id,ownerUid,sourceCharacterId:id,sharedCampaignId:'c',name:id,klass:'Warrior',hp:[100,100],sp:[100,100],mp:[100,100],characteristics:{agility:20,strength:40,wisdom:20},skills:[{name:'Athletics',rank:3},{name:'Dodging',rank:3}],inventory:[],...patch});
@@ -16,7 +20,7 @@ function database(){
   const ref=path=>({path,id:path.split('/').at(-1)});
   const db={doc:ref,collection:path=>({...ref(path),doc:()=>ref(`${path}/random`)}),runTransaction:async fn=>{
     const next=new Map([...store].map(([k,v])=>[k,structuredClone(v)]));let writing=false;
-    const tx={get:async r=>{assert.equal(writing,false,'Firestore reads must precede writes');return {exists:next.has(r.path),data:()=>structuredClone(next.get(r.path)),id:r.id};},set:(r,value,options)=>{writing=true;next.set(r.path,options?.merge?{...next.get(r.path),...structuredClone(value)}:structuredClone(value));},update:(r,value)=>{writing=true;assert.ok(next.has(r.path));next.set(r.path,{...next.get(r.path),...structuredClone(value)});}};
+    const tx={get:async r=>{assert.equal(writing,false,'Firestore reads must precede writes');return {exists:next.has(r.path),data:()=>structuredClone(next.get(r.path)),id:r.id};},set:(r,value,options)=>{writing=true;next.set(r.path,options?.merge?{...next.get(r.path),...structuredClone(value)}:structuredClone(value));},update:(r,value)=>{writing=true;assert.ok(next.has(r.path));next.set(r.path,{...next.get(r.path),...structuredClone(value)});},delete:r=>{writing=true;next.delete(r.path);}};
     const result=await fn(tx);store.clear();for(const row of next)store.set(...row);return result;
   }};
   const encounter=()=>store.get('campaigns/c/systems/encounter');
@@ -204,7 +208,7 @@ test('direct AP spending enforces ownership, turn, whole costs, shared bonus and
   const h=database();await h.setup();const actor=currentCombatant(h.encounter()),waiting=h.encounter().combatants.find(row=>row.id!==actor.id),uid=actor.characterId==='a'?'alice':'bob',other=uid==='alice'?'bob':'alice';
   assert.match((await h.command(other,actor.id,'spend-ap',{ap:1})).error,/control/);
   assert.match((await h.command(other,waiting.id,'spend-ap',{ap:1})).error,/own turn/);
-  for(const ap of [-1,.5,4])assert.equal((await h.command(uid,actor.id,'spend-ap',{ap})).ok,false);
+  for(const ap of [-1,.5,4,null,'1',false,''])assert.equal((await h.command(uid,actor.id,'spend-ap',{ap})).ok,false);
   assert.equal((await h.command(uid,actor.id,'spend-ap',{ap:0})).ok,true);assert.equal(h.encounter().combat.participants[actor.id].bonus,false);
   assert.match((await h.command(uid,actor.id,'spend-ap',{optionId:'basic:command'})).error,/bonus/i);
   await h.command(uid,actor.id,'end-turn');assert.match((await h.command(uid,actor.id,'spend-ap',{ap:1})).error,/completed/);
@@ -248,4 +252,716 @@ test('creature AP receipts keep source identities in the private GM workspace',a
   const privateReceipt=h.store.get('campaigns/c/systems/gmWorkspace').combatState.apSpends.creature[0];assert.equal(privateReceipt.optionId,'basic:dash');
   assert.equal((await h.command('gm','creature','declare',{optionId:'basic:dash',spendId:privateReceipt.id})).ok,true);
   assert.equal((await h.command('gm','creature','approve',{approval:{checkType:'none',feasible:true}})).ok,true);assert.equal(h.encounter().combat.participants.creature.ap,1);
+});
+
+test('dashboard AP controls follow turn state, shared bonus, restrictions and pending actions',()=>{
+  const character=sheet('a','alice');
+  const encounter={status:'active',combatId:'fight',turnIndex:0,combatants:[{id:'a'},{id:'b'}],combat:{participants:{a:{ap:1,bonus:false,turns:1},b:{ap:3,bonus:true,turns:1}}}};
+  assert.equal(manualAPProblem(character,encounter,'a',1),'');
+  assert.match(manualAPProblem(character,encounter,'a',2),/Not enough AP/);
+  assert.match(manualAPProblem(character,encounter,'a',0),/bonus/);
+  assert.match(manualAPProblem(character,encounter,'b',1),/own turn/);
+  assert.match(manualAPProblem(character,encounter,'a',null),/whole AP/);
+  assert.match(manualAPProblem({...character,hp:[0,100]},encounter,'a',1),/Downed/);
+  const before=combatActionScope(encounter,'a');
+  encounter.combat.participants.a.turnComplete=true;
+  assert.notEqual(combatActionScope(encounter,'a'),before);
+  assert.match(manualAPProblem(character,encounter,'a',1),/own turn/);
+});
+test('reaction controls require the assigned open window and sufficient held resources',()=>{
+  const character=sheet('a','alice');
+  const encounter={status:'active',turnIndex:0,combatants:[{id:'b'},{id:'a'}],combat:{participants:{a:{ap:1,bonus:true,turns:1}},pending:{id:'p',reactionWindow:true,reactorId:'a',reactionChoices:['dodge','block','prepared']}}};
+  assert.equal(basicReactionProblem(character,encounter,'a','dodge'),'');
+  assert.match(basicReactionProblem({...character,sp:[5,100]},encounter,'a','dodge'),/Not enough SP/);
+  assert.match(basicReactionProblem(character,encounter,'a','block'),/shield/);
+  assert.match(basicReactionProblem(character,encounter,'b','dodge'),/window/);
+  assert.match(basicReactionProblem(character,encounter,'a','prepared'),/prepared/);
+  const option={id:'talent:test',ap:2,costs:{},reaction:true};
+  assert.equal(optionProblem(option,character,encounter,'a',{reaction:true}),'');
+  encounter.combat.pending.reaction={actorId:'a'};
+  assert.equal(activeReactionWindow(encounter,'a'),null);
+  assert.match(optionProblem(option,character,encounter,'a',{reaction:true}),/window/);
+});
+
+test('learned spell rank selection rejects ambiguity and resolves only owned costs',async()=>{
+  const {resolveOwnedSpell,ownedSpellCosts,describeOwnedSpell,spellPaymentProblem}=await import('../src/state/combatRules.mjs');
+  const spells=[{name:'Flare',rank:'Weak',cost:'3 MP'},{name:'Flare',rank:'Minor',cost:'9 MP'},{name:'Unknown cost',rank:'Weak'}];
+  const c={spells,mp:[5,10],hp:[10,10]};
+  assert.throws(()=>resolveOwnedSpell(c,{name:'Flare'}),/exact learned spell rank/);
+  const weak=resolveOwnedSpell(c,{key:describeOwnedSpell(spells[0]).key});
+  const minor=resolveOwnedSpell(c,{name:'Flare',rank:'Minor'});
+  assert.deepEqual(ownedSpellCosts(weak),{mp:3});
+  assert.deepEqual(ownedSpellCosts(minor),{mp:9});
+  assert.match(spellPaymentProblem(c,{costs:ownedSpellCosts(minor)}),/MP/);
+  assert.throws(()=>ownedSpellCosts(resolveOwnedSpell(c,{name:'Unknown cost'})),/missing/);
+  assert.throws(()=>resolveOwnedSpell(c,{name:'Other'}),/not on the character sheet/);
+});
+
+
+test('Milestone 3.1 initiative modes are GM-only, validated and applied when combat starts',async()=>{
+  const h=database();
+  const players=[
+    {id:'player-a',characterId:'a'},
+    {id:'player-b',characterId:'b'}
+  ];
+  const roster=()=>h.encounter().combatants.map(row=>({
+    id:row.id,characterId:row.characterId,name:row.name,kind:row.kind,
+    defeated:row.defeated,initiative:row.initiative,initiativeSet:row.initiativeSet
+  }));
+  assert.equal((await h.command('alice','encounter','save',{
+    encounter:{combatants:players,initiativeMode:'manual'}
+  })).ok,false);
+  assert.equal((await h.command('gm','encounter','save',{
+    encounter:{combatants:players,initiativeMode:'not-a-mode'}
+  })).ok,false);
+  assert.equal((await h.command('gm','encounter','save',{
+    encounter:{combatants:players,initiativeMode:'manual'}
+  })).ok,true);
+  assert.equal(h.encounter().initiativeMode,'manual');
+  const first=await h.command('gm','encounter','start');
+  assert.equal(first.ok,false);
+  assert.match(first.error,/Set manual initiative/);
+  assert.equal(h.encounter().status,'ready');
+  assert.equal((await h.command('gm','encounter','save',{
+    encounter:{combatants:roster().map((row,i)=>({...row,initiative:20-i*10,initiativeSet:true}))}
+  })).ok,true);
+  assert.equal((await h.command('gm','encounter','start')).ok,true);
+  assert.equal(h.encounter().initiativeMode,'manual');
+  assert.deepEqual(h.encounter().combatants.map(row=>row.initiative),[20,10]);
+  assert.equal((await h.command('gm','encounter','save',{
+    encounter:{combatants:roster(),initiativeMode:'automatic'}
+  })).ok,false);
+  assert.equal((await h.command('gm','encounter','end')).ok,true);
+  assert.equal((await h.command('gm','encounter','clear')).ok,true);
+  assert.equal(h.encounter().initiativeMode,'automatic');
+});
+test('Milestone 3.1 mixed initiative requires players only and automatically rolls unset enemies',async()=>{
+  const h=database();
+  const rows=[
+    {id:'player-a',characterId:'a'},
+    {id:'player-b',characterId:'b'},
+    {id:'enemy-one',name:'Raider',hp:[20,20],initiativeSet:false}
+  ];
+  assert.equal((await h.command('gm','encounter','save',{
+    encounter:{combatants:rows,initiativeMode:'mixed'}
+  })).ok,true);
+  const missing=await h.command('gm','encounter','start');
+  assert.equal(missing.ok,false);
+  assert.match(missing.error,/Set manual initiative/);
+  const current=h.encounter().combatants.map(row=>
+    row.characterId?{...row,initiative:row.characterId==='a'?25:15,initiativeSet:true}:row
+  );
+  assert.equal((await h.command('gm','encounter','save',{
+    encounter:{combatants:current}
+  })).ok,true);
+  const started=await h.command('gm','encounter','start');
+  assert.equal(started.ok,true,started.error);
+  assert.equal(h.encounter().initiativeMode,'mixed');
+  assert.deepEqual(h.encounter().combatants.filter(row=>row.characterId)
+    .map(row=>row.initiative).sort((a,b)=>b-a),[25,15]);
+  const enemy=h.encounter().combatants.find(row=>row.id==='enemy-one');
+  assert.equal(Number.isFinite(enemy.initiative),true);
+  assert.ok(enemy.initiativeRoll);
+});
+
+test('pausing combat preserves the encounter and pending action across resume',async()=>{
+  const h=database();
+  await h.setup();
+  const actor=currentCombatant(h.encounter());
+  const uid=actor.characterId==='a'?'alice':'bob';
+  assert.equal((await h.command('gm','encounter','timer',{mode:'configure',seconds:60})).ok,true);
+  assert.equal((await h.command(uid,actor.id,'declare',{optionId:'basic:dash'})).ok,true);
+  const before=structuredClone(h.encounter());
+  assert.match((await h.command(uid,actor.id,'pause')).error,/Only the campaign GM/);
+  assert.equal((await h.command('gm','encounter','pause')).ok,true);
+  assert.equal(h.encounter().status,'active');
+  assert.equal(h.encounter().paused,true);
+  assert.equal(h.encounter().turnTimer.enabled,false);
+  assert.match((await h.command('gm',actor.id,'approve',{approval:{checkType:'none'}})).error,/paused/);
+  assert.match((await h.command('gm','encounter','next')).error,/paused/);
+  assert.equal((await h.command('gm','encounter','resume')).ok,true);
+  const after=h.encounter();
+  assert.equal(after.paused,false);
+  assert.equal(after.turnTimer.enabled,true);
+  assert.equal(after.combatId,before.combatId);
+  assert.equal(after.round,before.round);
+  assert.equal(after.turnIndex,before.turnIndex);
+  assert.deepEqual(after.combat.participants,before.combat.participants);
+  assert.deepEqual(after.combat.pending,before.combat.pending);
+  assert.equal(h.store.has('campaigns/c/encounterHistory/'+before.combatId),false);
+});
+
+test('active initiative correction preserves the current actor and AP and records the change',async()=>{
+  const h=database();
+  await h.setup();
+  const before=structuredClone(h.encounter());
+  const actor=currentCombatant(before);
+  const other=before.combatants.find(row=>row.id!==actor.id);
+  const change={initiative:1000,reason:'Corrected reported initiative'};
+  assert.equal((await h.command('gm',other.id,'correct',change)).ok,true);
+  const after=h.encounter();
+  assert.equal(after.combatants[0].id,other.id);
+  assert.equal(currentCombatant(after).id,actor.id);
+  assert.equal(after.round,before.round);
+  assert.deepEqual(after.combat.participants,before.combat.participants);
+  const [audit]=after.combat.log;
+  assert.equal(audit.actorUid,'gm');
+  assert.equal(audit.targetId,other.id);
+  assert.equal(audit.previousInitiative,other.initiative);
+  assert.equal(audit.initiative,1000);
+  assert.equal(audit.reason,change.reason);
+});
+
+test('the GM can stage multiple prepared templates without writing any live combat data',async()=>{
+  const h=database();
+  await h.setup();
+  const workspacePath='campaigns/c/systems/gmWorkspace';
+  const plan={id:'prepared-first',revision:1,name:'Future ambush',notes:'GM only',
+    enemies:[{name:'Raider',hp:[20,20],preparedEnemyId:'raider'}]};
+  h.store.get(workspacePath).preparedEncounters=[plan,{...plan,id:'prepared-second'}];
+  const live=structuredClone(h.encounter());
+  const stage=(uid,id,revision=1)=>h.command(uid,'encounter','stage-prepared',{
+    preparedId:id,expectedPreparedRevision:revision
+  });
+  assert.match((await stage('alice','prepared-first')).error,/Only the campaign GM/);
+  assert.match((await stage('gm','prepared-first',2)).error,/current revision/);
+  const first=await stage('gm','prepared-first');
+  assert.equal(first.ok,true,first.error);
+  assert.equal((await stage('gm','prepared-second')).ok,true);
+  assert.equal((await stage('gm','prepared-first')).ok,true);
+  assert.deepEqual(h.store.get(workspacePath).combatState.stagedEncounters.map(row=>row.id),
+    ['prepared-first','prepared-second']);
+  assert.deepEqual(h.encounter(),live);
+  assert.equal((await h.command('gm','encounter','unstage-prepared',{preparedId:'prepared-second'})).ok,true);
+  assert.deepEqual(h.store.get(workspacePath).combatState.stagedEncounters.map(row=>row.id),['prepared-first']);
+  assert.deepEqual(h.encounter(),live);
+  assert.equal((await h.command('gm','encounter','end')).ok,true);
+  const load=await h.command('gm','encounter','load-prepared',{
+    preparedId:'prepared-first',expectedPreparedRevision:1,confirmation:'replace-staged-enemies',replace:true
+  });
+  assert.equal(load.ok,true,load.error);
+  assert.equal(h.encounter().status,'ready');
+  assert.deepEqual(h.store.get(workspacePath).combatState.stagedEncounters,[]);
+});
+
+test('saving a quick encounter resets copied creature resources and excludes live IDs and players',()=>{
+  const plan=prepareQuickEncounterTemplate('Roadside ambush',{
+    combatId:'live-battle',battleMapId:'forest-map',combatants:[
+      {id:'player-a',kind:'player',characterId:'a',name:'Alice',hp:[80,100]},
+      {id:'live-token',kind:'enemy',name:'Raider',hp:[1,20],sp:[0,10],defeated:true,
+        initiative:35,initiativeSet:false,rewardReceipt:{delivered:true}}
+    ]
+  });
+  assert.equal(plan.mapId,'forest-map');
+  assert.equal(plan.enemies.length,1);
+  assert.deepEqual(plan.enemies[0].hp,[20,20]);
+  assert.deepEqual(plan.enemies[0].sp,[10,10]);
+  assert.equal(plan.enemies[0].defeated,false);
+  assert.equal(plan.enemies[0].initiative,undefined);
+  assert.equal(plan.enemies[0].id,undefined);
+  assert.equal(plan.enemies[0].rewardReceipt,undefined);
+});
+
+test('reopening preserves original identity, completion revisions and approved reward receipts',async()=>{
+  const h=database();
+  await h.setup();
+  await h.command('gm','encounter','timer',{mode:'configure',seconds:60});
+  const combat=structuredClone(h.encounter());
+  const historyPath='campaigns/c/encounterHistory/'+combat.combatId;
+  assert.equal((await h.command('gm','encounter','end')).ok,true);
+  const manage=(uid,action)=>executeAction(h.db,uid,{action:'manageEncounterCompletion',
+    args:['c','encounter',{encounterId:combat.combatId,...action}],requestId:crypto.randomUUID()},()=>Date.now());
+  const first=h.store.get(historyPath);
+  const rewards=first.rewards.map(row=>row.characterId==='a'?{...row,xp:5,
+    currency:{key:'copper',amount:10},items:[{name:'Iron key',qty:1}]}:row);
+  const review={type:'review',expectedRevision:1,outcome:'victory',notes:'Reviewed',rewards};
+  assert.match((await manage('alice',review)).error,/Only a GM/);
+  assert.equal((await manage('gm',review)).ok,true);
+  assert.equal((await manage('gm',{type:'approve',expectedRevision:2,confirmation:'approve-rewards'})).ok,true);
+  assert.equal(first.completionNumber,1);
+  assert.equal(first.recoveryAvailable,true);
+  const grant=(action,args,requestId=crypto.randomUUID())=>
+    executeAction(h.db,'gm',{action,args:['c','a',...args],requestId},()=>Date.now());
+  const grantXP=()=>grant('grantCharacterXP',[5,'Approved encounter reward',combat.combatId]);
+  const grantBundle=()=>grant('grantGMRewardBundle',[{...rewards.find(row=>row.characterId==='a'),
+    encounterHistoryId:combat.combatId}]);
+  for(const deliver of [grantXP,grantBundle]){
+    const result=await deliver();
+    assert.equal(result.ok,true,result.error);
+  }
+  const approved=structuredClone(h.store.get(historyPath));
+  assert.ok(approved.deliveries.a.xp);
+  assert.ok(approved.deliveries.a.bundle);
+  const options={encounterId:combat.combatId,expectedHistoryRevision:approved.revision,reason:'Continue the original encounter'};
+  h.character('a').hp=[53,100];
+  const current=structuredClone(h.character('a'));
+  assert.match((await h.command('alice','encounter','reopen',options)).error,/Only the campaign GM/);
+  assert.match((await h.command('gm','encounter','reopen',{...options,expectedHistoryRevision:3})).error,/completion changed/);
+  const reopen=await h.command('gm','encounter','reopen',options);
+  assert.equal(reopen.ok,true,reopen.error);
+  assert.equal(h.encounter().paused,true);
+  assert.equal(h.encounter().combatId,combat.combatId);
+  assert.equal(h.encounter().round,combat.round);
+  assert.equal(h.encounter().turnIndex,combat.turnIndex);
+  assert.deepEqual(h.encounter().combat.participants,combat.combat.participants);
+  assert.deepEqual(h.character('a'),current);
+  assert.throws(()=>assertApprovedEncounterDelivery(h.store.get(historyPath),'a','xp',5),/reopened/);
+  assert.match((await h.command('gm','encounter','clear')).error,/paused/);
+  assert.equal((await h.command('gm','encounter','resume')).ok,true);
+  assert.equal(h.encounter().turnTimer.enabled,true);
+  assert.equal((await h.command('gm','encounter','end')).ok,true);
+  const revised=h.store.get(historyPath);
+  assert.equal(revised.completionNumber,2);
+  assert.equal(revised.status,'approved');
+  assert.equal(revised.reopened,false);
+  assert.deepEqual(revised.deliveries,approved.deliveries);
+  assert.match((await grantXP()).error,/already been delivered/);
+  assert.match((await grantBundle()).error,/already been delivered/);
+  assert.deepEqual(h.character('a').coins,current.coins);
+  assert.deepEqual(h.character('a').pendingItemRewards,current.pendingItemRewards);
+  assert.equal(h.character('a').xp,current.xp);
+  assert.throws(()=>assertApprovedEncounterDelivery(revised,'a','xp',5),/already been delivered/);
+  assert.throws(()=>assertApprovedEncounterDelivery(revised,'a','bundle',{}),/already been delivered/);
+  assert.equal(h.store.get(historyPath+'/completionRevisions/1').rounds,combat.round);
+  assert.equal(h.store.get(historyPath+'/completionRevisions/2').rounds,revised.rounds);
+});
+
+test('manual recovery restores mapped positions, fog and initiative without replaying combat',async()=>{
+  const h=database();
+  await h.setup();
+  const id=h.encounter().combatId;
+  const mapPath='campaigns/c/battleMaps/forest';
+  const baseMap={id:'forest',combatId:'',gridColumns:2,gridRows:2,metresPerCell:3,fogEnabled:true,fogCells:'1000',tokens:[]};
+  h.store.set(mapPath,baseMap);
+  assert.equal((await h.command('gm','encounter','map-link',{mapId:'forest'})).ok,true);
+  const map=structuredClone(h.store.get(mapPath));
+  const actor=currentCombatant(h.encounter());
+  const uid=actor.characterId==='a'?'alice':'bob';
+  const oldRevision=h.encounter().combat.revision;
+  assert.match((await h.command(uid,actor.id,'save-snapshot',{name:'Private'})).error,/Only the campaign GM/);
+  assert.equal((await h.command('gm','encounter','save-snapshot',{name:'Before the raid'},'checkpoint-one')).ok,true);
+  assert.equal(h.encounter().combat.revision,oldRevision);
+  assert.equal((await h.command(uid,actor.id,'spend-ap',{ap:1})).ok,true);
+  const state=structuredClone(h.encounter().combat.participants);
+  h.store.get(mapPath).tokens[0].x=50;
+  h.store.get(mapPath).fogCells='1111';
+  assert.equal((await h.command('gm',actor.id,'correct',{initiative:99,reason:'Try revised order'})).ok,true);
+  const input={snapshotId:'checkpoint-one',reason:'Restore recorded positions'};
+  assert.match((await h.command('gm','encounter','restore-snapshot',{...input,revision:oldRevision})).error,/Combat changed/);
+  const restore=await h.command('gm','encounter','restore-snapshot',input);
+  assert.equal(restore.ok,true,restore.error);
+  assert.deepEqual(h.store.get(mapPath).tokens,map.tokens);
+  assert.equal(h.store.get(mapPath).fogCells,'1000');
+  assert.deepEqual(h.encounter().combat.participants,state);
+  assert.equal(currentCombatant(h.encounter()).id,actor.id);
+  assert.equal(currentCombatant(h.encounter()).initiative,actor.initiative);
+  const root='campaigns/c/encounterHistory/'+id+'/recovery/';
+  assert.equal(h.store.get(root+'snapshotIndex').entries[0].name,'Before the raid');
+  assert.equal((await h.command('gm','encounter','delete-snapshot',input)).ok,true);
+  assert.equal(h.store.has(root+'checkpoint-one'),false);
+  assert.deepEqual(h.store.get(root+'snapshotIndex').entries,[]);
+});
+
+test('an audited override and skip keep each participant to one turn per round',async()=>{
+  const h=database();
+  const combatants=[{id:'player-a',characterId:'a',initiative:30,initiativeSet:true},
+    {id:'player-b',characterId:'b',initiative:20,initiativeSet:true},
+    {id:'guard',name:'Guard',hp:[20,20],initiative:10,initiativeSet:true}];
+  assert.equal((await h.command('gm','encounter','save',{encounter:{combatants}})).ok,true);
+  assert.equal((await h.command('gm','encounter','start')).ok,true);
+  const old=h.encounter().combat.revision;
+  assert.match((await h.command('alice','encounter','override-turn',{targetId:'guard',reason:'Override'})).error,/Only the campaign GM/);
+  assert.equal((await h.command('gm','encounter','override-turn',{targetId:'guard',reason:'Guard acts before Bob'})).ok,true);
+  assert.equal(currentCombatant(h.encounter()).id,'guard');
+  assert.match((await h.command('gm','encounter','next',{revision:old})).error,/Combat changed/);
+  assert.match((await h.command('gm','encounter','override-turn',{targetId:'player-a',reason:'No double turn'})).error,/not taken a turn/);
+  assert.equal((await h.command('gm','encounter','skip-turn',{reason:'Guard yields the turn'})).ok,true);
+  assert.equal(currentCombatant(h.encounter()).id,'player-b');
+  assert.equal(h.encounter().round,1);
+  assert.equal((await h.command('gm','encounter','next')).ok,true);
+  assert.equal(currentCombatant(h.encounter()).id,'player-a');
+  assert.equal(h.encounter().round,2);
+  assert.equal(h.encounter().combat.participants.guard.turns,1);
+});
+
+test('loading a prepared encounter applies the chosen roster and initiative policy privately',async()=>{
+  const h=database();
+  await h.setup();
+  await h.command('gm','encounter','end');
+  const workspace='campaigns/c/systems/gmWorkspace';
+  h.store.get(workspace).preparedEncounters=[{id:'prepared-tower',revision:1,name:'Tower',
+    notes:'GM secret',description:'A watchtower',environment:'Heavy rain',rewardNotes:'Review 5 XP',
+    initiativeMode:'mixed',playerIds:['b'],enemies:[{name:'Scout',hp:[10,10]}]}];
+  const load=await h.command('gm','encounter','load-prepared',{
+    preparedId:'prepared-tower',expectedPreparedRevision:1,confirmation:'replace-staged-enemies',replace:true
+  });
+  assert.equal(load.ok,true,load.error);
+  assert.equal(h.encounter().status,'ready');
+  assert.equal(h.encounter().initiativeMode,'mixed');
+  assert.deepEqual(h.encounter().combatants.filter(row=>row.characterId).map(row=>row.characterId),['b']);
+  assert.equal(h.store.get(workspace).combatState.preparedDetails.environment,'Heavy rain');
+  assert.equal(JSON.stringify(h.encounter()).includes('GM secret'),false);
+});
+
+test('battle map routes honour occupied cells and alternating diagonal costs',()=>{
+  const map={gridColumns:4,gridRows:4,metresPerCell:3};
+  const start={x:12.5,y:12.5};
+  assert.equal(mapReachableRoutes(map,start,8).has('2:2'),false);
+  assert.equal(mapReachableRoutes(map,start,9).get('2:2').cost,9);
+  assert.equal(mapReachableRoutes(map,start,3,{diagonalParity:1}).has('1:1'),false);
+  assert.equal(mapReachableRoutes(map,start,3,{occupied:[{x:37.5,y:12.5}]}).has('1:1'),false);
+  assert.equal(mapReachableRoutes(map,{...start,cells:2},3,{occupied:[{x:62.5,y:37.5}]}).has('1:0'),false);
+  assert.equal(mapReachableRoutes(map,{x:87.5,y:62.5},3,{occupied:[{x:62.5,y:37.5,cells:2}]}).has('3:1'),false);
+  const occupied=[{x:37.5,y:12.5}];
+  const flight=mapReachableRoutes(map,start,6,{occupied,movementKind:'fly'});
+  assert.equal(flight.has('1:0'),false,'Flight cannot end in an occupied cell');
+  assert.equal(flight.get('2:0').cost,6,'Flight can cross a ground occupant');
+  assert.equal(flight.get('2:0').previous.column,0);
+  assert.equal(mapReachableRoutes(map,start,6,{occupied}).has('2:0'),false);
+  assert.equal(walkingAllowance({movement:'6m (Walking) - 18m (Flying)'},{}),6);
+  assert.equal(walkingAllowance({movement:null},{}),null);
+});
+
+test('only the GM can update a linked token and its private presentation settings',async()=>{
+  const h=database();await h.setup();
+  const path='campaigns/c/battleMaps/arena';
+  h.store.set(path,{id:'arena',visibility:'players',gridColumns:4,gridRows:4,tokens:[]});
+  assert.equal((await h.command('gm','encounter','map-link',{mapId:'arena'})).ok,true);
+  const tokenId=h.store.get(path).tokens[0].id;
+  const command={mapId:'arena',tokenId,appearance:{
+    portrait:'/images/scout.webp',faction:'ally',cells:2,visibility:'gm'
+  }};
+  assert.match((await h.command('alice','encounter','map-token-appearance',command)).error,/campaign GM/);
+  assert.match((await h.command('gm','encounter','map-token-appearance',{
+    ...command,appearance:{...command.appearance,portrait:'//example.com/scout.png'}
+  })).error,/portrait URL/);
+  assert.equal((await h.command('gm','encounter','map-token-appearance',command)).ok,true);
+  const saved=h.store.get(path).tokens[0];
+  assert.equal(saved.visibility,'gm');
+  assert.equal(saved.cells,2);
+  assert.equal(saved.portrait,'/images/scout.webp');
+  assert.deepEqual(h.encounter().combat.log[0].to,command.appearance);
+});
+
+test('a successful reviewed jump uses paid movement and its source SP exactly once',async()=>{
+  const h=database();await h.setup();
+  const actor=currentCombatant(h.encounter()),uid=actor.characterId==='a'?'alice':'bob';
+  const encounter=h.encounter(),participants=encounter.combat.participants;
+  participants[actor.id].movement={actionId:'paid-move',kind:'walk',remaining:9,diagonalParity:1};
+  encounter.battleMapId='arena';
+  const path='campaigns/c/battleMaps/arena';
+  h.store.set(path,{id:'arena',kind:'image',contentType:'image/png',
+    storagePath:path+'/scene.png',name:'Arena',combatId:encounter.combatId,
+    visibility:'players',gridColumns:4,gridRows:4,metresPerCell:3,tokens:[
+      {id:'hero',label:actor.name,kind:'character',combatantId:actor.id,x:12.5,y:12.5},
+      {id:'obstacle',label:'Obstacle',kind:'marker',x:37.5,y:12.5}
+    ]});
+  const startSP=h.character(actor.characterId).sp[0],startAP=participants[actor.id].ap;
+  assert.equal((await h.command(uid,actor.id,'declare',{optionId:'basic:jump'})).ok,true);
+  const approval={mapTravel:'jump',distance:9,feasible:true,checkType:'none',
+    sourceReason:'Athletics jump over a single obstacle'};
+  assert.match((await h.command('gm',actor.id,'approve',{approval:{...approval,distance:10}})).error,/already paid/);
+  assert.equal((await h.command('gm',actor.id,'approve',{approval})).ok,true);
+  assert.equal((await h.command('gm',actor.id,'roll')).ok,true);
+  assert.equal((await h.command('gm',actor.id,'resolve',{success:true})).ok,true);
+  const details={mapId:'arena',point:{x:62.5,y:12.5},moveKind:'approved',
+    revision:h.encounter().combat.revision};
+  const result=await h.command(uid,actor.id,'player-map-move',details,'jump-landing');
+  assert.equal(result.ok,true,result.error);
+  assert.deepEqual(await h.command(uid,actor.id,'player-map-move',details,'jump-landing'),result);
+  assert.deepEqual(h.encounter().combat.participants[actor.id].movement,
+    {actionId:'paid-move',kind:'walk',remaining:3,diagonalParity:1});
+  assert.equal(h.encounter().combat.participants[actor.id].ap,startAP);
+  assert.equal(h.character(actor.characterId).sp[0],startSP-10);
+  assert.equal(h.store.get(path).tokens[0].x,62.5);
+});
+
+test('a confirmed movement uses the existing reaction review when a visible opponent can react',async()=>{
+  const h=database();await h.setup();
+  const encounter=h.encounter(),actor=currentCombatant(encounter);
+  const opponent=encounter.combatants.find(row=>row.id!==actor.id);
+  const uid=actor.characterId==='a'?'alice':'bob',other=uid==='alice'?'bob':'alice';
+  const initialAP=encounter.combat.participants[actor.id].ap;
+  encounter.combat.participants[opponent.id].ap=2;
+  encounter.battleMapId='arena';
+  h.character(actor.characterId).movement=9;
+  h.character(opponent.characterId).inventory=[{id:'sword',name:'Sword',type:'Weapon',equipped:true}];
+  const path='campaigns/c/battleMaps/arena';
+  h.store.set(path,{id:'arena',kind:'image',contentType:'image/png',
+    storagePath:path+'/scene.png',name:'Arena',combatId:encounter.combatId,
+    visibility:'players',gridColumns:4,gridRows:4,metresPerCell:3,tokens:[
+      {id:'hero',label:actor.name,kind:'character',combatantId:actor.id,x:12.5,y:12.5},
+      {id:'opponent',label:opponent.name,kind:'character',combatantId:opponent.id,faction:'hostile',x:12.5,y:37.5}
+    ]});
+  const review=await h.command(uid,actor.id,'player-map-move',{
+    mapId:'arena',point:{x:37.5,y:12.5},moveKind:'walk'
+  });
+  assert.equal(review.queued,true,review.error);
+  assert.equal(h.encounter().combat.participants[actor.id].ap,initialAP);
+  assert.equal(h.store.get(path).tokens[0].x,12.5);
+  assert.equal((await h.command('gm',actor.id,'approve',{
+    approval:{checkType:'none',voluntaryLeavesReach:true}
+  })).ok,true);
+  assert.equal((await h.command('gm',actor.id,'window',{
+    reactors:[{actorId:opponent.id,choices:['opportunity'],reason:'Confirmed the move leaves melee reach'}]
+  })).ok,true);
+  assert.equal((await h.command(other,opponent.id,'react',{reaction:'opportunity'})).ok,true);
+  assert.equal((await h.command('gm',actor.id,'resolve-reaction',{reason:'The reaction attack missed.'})).ok,true);
+  assert.equal((await h.command('gm',actor.id,'close-window')).ok,true);
+  assert.equal((await h.command('gm',actor.id,'roll')).ok,true);
+  assert.equal((await h.command('gm',actor.id,'resolve',{success:true})).ok,true);
+  assert.equal(h.store.get(path).tokens[0].x,37.5);
+  const participants=h.encounter().combat.participants;
+  assert.equal(participants[actor.id].ap,initialAP-1);
+  assert.equal(participants[opponent.id].ap,1);
+  assert.equal(participants[opponent.id].outOfTurn,undefined);
+});
+
+test('Dash requires its defined AP before approval and moving spends the paid allowance',async()=>{
+  const h=database();await h.setup();
+  const encounter=h.encounter(),actor=currentCombatant(encounter);
+  const uid=actor.characterId==='a'?'alice':'bob';
+  encounter.battleMapId='arena';
+  encounter.combat.participants[actor.id].ap=1;
+  const path='campaigns/c/battleMaps/arena';
+  h.store.set(path,{id:'arena',kind:'image',contentType:'image/png',
+    storagePath:path+'/scene.png',name:'Arena',combatId:encounter.combatId,
+    visibility:'players',gridColumns:4,gridRows:4,metresPerCell:3,tokens:[
+      {id:'hero',label:actor.name,kind:'character',combatantId:actor.id,x:12.5,y:12.5}
+    ]});
+  assert.equal((await h.command(uid,actor.id,'declare',{optionId:'basic:dash'})).ok,true);
+  const approval={checkType:'none',distance:9};
+  assert.match((await h.command('gm',actor.id,'approve',{approval})).error,/Not enough AP/);
+  assert.equal((await h.command('gm',actor.id,'correct',{ap:2,reason:'Restore the recorded held AP'})).ok,true);
+  assert.equal((await h.command('gm',actor.id,'approve',{approval})).ok,true);
+  assert.equal((await h.command('gm',actor.id,'roll')).ok,true);
+  assert.equal((await h.command('gm',actor.id,'resolve',{success:true})).ok,true);
+  assert.equal(h.encounter().combat.participants[actor.id].movement.kind,'dash');
+  const move=await h.command(uid,actor.id,'player-map-move',{
+    mapId:'arena',point:{x:62.5,y:12.5},moveKind:'approved'
+  });
+  assert.equal(move.ok,true,move.error);
+  assert.equal(h.encounter().combat.participants[actor.id].ap,0);
+  assert.equal(h.encounter().combat.participants[actor.id].movement.remaining,3);
+});
+
+test('a player moves only their own token and recorded AP is charged once',async()=>{
+  const h=database();await h.setup();
+  for(const id of ['a','b'])h.character(id).movement=9;
+  h.store.set('campaigns/c/battleMaps/arena',{
+    id:'arena',kind:'image',contentType:'image/png',
+    storagePath:'campaigns/c/battleMaps/arena/scene.png',name:'Arena',
+    combatId:'',gridColumns:4,gridRows:4,metresPerCell:3,
+    visibility:'players',fogEnabled:false,tokens:[]
+  });
+  assert.equal((await h.command('gm','encounter','map-link',{mapId:'arena'})).ok,true);
+  const actor=currentCombatant(h.encounter()),uid=actor.characterId==='a'?'alice':'bob';
+  const other=uid==='alice'?'bob':'alice',details={
+    mapId:'arena',moveKind:'walk',point:{x:37.5,y:12.5},revision:h.encounter().combat.revision
+  };
+  assert.match((await h.command(other,actor.id,'player-map-move',details)).error,/cannot control/);
+  const move=await h.command(uid,actor.id,'player-map-move',details,'move-once');
+  assert.equal(move.ok,true,move.error);
+  assert.deepEqual(await h.command(uid,actor.id,'player-map-move',details,'move-once'),move);
+  assert.equal(h.encounter().combat.participants[actor.id].ap,2);
+  assert.equal((await h.command(uid,actor.id,'player-map-move',{
+    mapId:'arena',moveKind:'approved',point:{x:62.5,y:12.5}
+  })).ok,true);
+  assert.equal(h.encounter().combat.participants[actor.id].ap,2);
+  assert.equal((await h.command('gm','encounter','next')).ok,true);
+  assert.equal((await h.command(uid,actor.id,'player-map-move',{
+    mapId:'arena',moveKind:'walk',outOfTurn:true,point:{x:62.5,y:37.5}
+  })).ok,true);
+  assert.equal(h.encounter().combat.participants[actor.id].ap,1);
+  assert.match((await h.command(uid,actor.id,'player-map-move',{
+    mapId:'arena',moveKind:'walk',outOfTurn:true,point:{x:87.5,y:37.5}
+  })).error,/already used/);
+  assert.match((await h.command(uid,actor.id,'declare',{
+    optionId:'basic:attack',outOfTurn:true,targetIds:[currentCombatant(h.encounter()).id]
+  })).error,/already used/);
+  const correction={restoreOpportunity:true,reason:'Allow another opportunity after correcting the earlier move'};
+  assert.equal((await h.command(uid,actor.id,'correct',correction)).ok,false);
+  assert.equal((await h.command('gm',actor.id,'correct',correction)).ok,true);
+  const restored=h.encounter().combat.participants[actor.id];
+  assert.equal(restored.outOfTurn,null);
+  assert.equal(restored.ap,1);
+  assert.equal(h.encounter().combat.log[0].previousOpportunity.kind,'move');
+});
+
+test('GM approval of an out-of-turn attack spends AP without changing the active turn',async()=>{
+  const h=database();await h.setup();
+  const actor=currentCombatant(h.encounter()),uid=actor.characterId==='a'?'alice':'bob';
+  h.character(actor.characterId).inventory=[{id:'sword',name:'Sword',type:'Weapon',equipped:true,qty:1}];
+  assert.equal((await h.command('gm','encounter','next')).ok,true);
+  const target=currentCombatant(h.encounter());
+  const attack={outOfTurn:true,optionId:'basic:attack',targetIds:[target.id],itemId:'sword'};
+  const declared=await h.command(uid,actor.id,'declare',attack);
+  assert.equal(declared.ok,true,declared.error);
+  assert.equal(h.encounter().combat.participants[actor.id].ap,3);
+  assert.equal(h.encounter().combat.participants[actor.id].outOfTurn,undefined);
+  const approval=await h.command('gm',actor.id,'approve',{approval:{
+    checkType:'attack',skill:'Athletics',feasible:true
+  }});
+  assert.equal(approval.ok,true,approval.error);
+  assert.equal(h.encounter().combat.participants[actor.id].ap,2);
+  assert.deepEqual(h.encounter().combat.participants[actor.id].outOfTurn,{round:1,kind:'attack'});
+  assert.equal(currentCombatant(h.encounter()).id,target.id);
+});
+
+test('GM forced movement requires a resolved source and records no AP spend',async()=>{
+  const h=database();await h.setup();
+  const actor=h.encounter().combatants[0];
+  const path='campaigns/c/battleMaps/arena';
+  h.store.set(path,{id:'arena',kind:'image',contentType:'image/png',
+    storagePath:path+'/scene.png',name:'Arena',combatId:h.encounter().combatId,
+    visibility:'players',gridColumns:4,gridRows:4,metresPerCell:3,tokens:[
+      {id:'hero',label:actor.name,kind:'character',combatantId:actor.id,x:12.5,y:12.5},
+      {id:'blocker',label:'Blocker',kind:'creature',x:62.5,y:12.5}
+    ]});
+  h.encounter().battleMapId='arena';
+  const before=h.encounter().combat.participants[actor.id].ap;
+  const command={mapId:'arena',combatantId:actor.id,mode:'forced',
+    reason:'Resolved enemy knockback from the struck location',
+    point:{x:37.5,y:12.5},source:{
+      id:'enemy-knockback',kind:'creature',routeKind:'ground',distance:3,resolved:true
+    }};
+  assert.match((await h.command('alice',actor.id,'map-move',command)).error,/Only the campaign GM/);
+  assert.match((await h.command('gm',actor.id,'map-move',{
+    ...command,source:{...command.source,resolved:false}
+  })).error,/resolved source/);
+  assert.match((await h.command('gm',actor.id,'map-move',{
+    ...command,point:{x:87.5,y:12.5}
+  })).error,/range|blocked/);
+  const moved=await h.command('gm',actor.id,'map-move',command);
+  assert.equal(moved.ok,true,moved.error);
+  assert.equal(h.store.get(path).tokens[0].x,37.5);
+  assert.equal(h.encounter().combat.participants[actor.id].ap,before);
+  assert.equal(h.encounter().combat.log[0].source.id,'enemy-knockback');
+  assert.equal(h.encounter().combat.log[0].movementKind,'forced');
+});
+
+test('GM can delegate and revoke one mapped token without granting combat actions',async()=>{
+  const h=database();await h.setup();
+  const actor=h.encounter().combatants[0];
+  const owner=actor.characterId==='a'?'alice':'bob',delegate=owner==='alice'?'bob':'alice';
+  const path='campaigns/c/battleMaps/arena';
+  h.store.set(path,{id:'arena',kind:'image',contentType:'image/png',
+    storagePath:path+'/scene.png',name:'Arena',combatId:h.encounter().combatId,
+    visibility:'players',gridColumns:4,gridRows:4,metresPerCell:3,
+    tokens:[{id:'hero',label:actor.name,kind:'character',combatantId:actor.id,x:12.5,y:12.5}]});
+  h.encounter().battleMapId='arena';
+  h.encounter().combat.participants[actor.id].movement={
+    actionId:'approved-movement',kind:'dash',remaining:9
+  };
+  const delegated={mapId:'arena',combatantId:actor.id,delegateUid:delegate};
+  assert.match((await h.command(delegate,actor.id,'map-delegate',delegated)).error,/Only the campaign GM/);
+  assert.equal((await h.command('gm',actor.id,'map-delegate',delegated)).ok,true);
+  assert.equal(h.encounter().combat.participants[actor.id].movementDelegateUid,delegate);
+  assert.match((await h.command(delegate,actor.id,'declare',{
+    optionId:'basic:command'
+  })).error,/cannot control/);
+  const moved=await h.command(delegate,actor.id,'player-map-move',{
+    mapId:'arena',moveKind:'approved',point:{x:37.5,y:12.5}
+  });
+  assert.equal(moved.ok,true,moved.error);
+  assert.equal(h.store.get(path).tokens[0].x,37.5);
+  assert.equal((await h.command('gm',actor.id,'map-delegate',{
+    ...delegated,delegateUid:''
+  })).ok,true);
+  assert.match((await h.command(delegate,actor.id,'player-map-move',{
+    mapId:'arena',moveKind:'approved',point:{x:62.5,y:12.5}
+  })).error,/cannot control/);
+});
+
+test('player combat projection reveals delegated tokens, but never the delegate UID',async()=>{
+  const {publicCombatSnapshot}=await import('../src/state/livePresentationProjectionModel.mjs');
+  const raw={status:'active',combatId:'combat',battleMapId:'arena',
+    combatants:[{id:'npc',name:'Scout',kind:'enemy',revealed:true}],
+    combat:{version:1,revision:1,participants:{npc:{
+      ap:3,movementDelegateUid:'alice',movement:{
+        kind:'dash',remaining:6,routeKind:'ground'
+      }}}}};
+  const map={id:'arena',combatId:'combat',visibleCombatants:['npc'],
+    markers:{npc:'scout-token'}};
+  const publicView=publicCombatSnapshot(raw,map);
+  assert.equal(publicView.combat.participants.npc.movementDelegated,true);
+  assert.equal(publicView.combat.participants.npc.mapTokenId,'scout-token');
+  assert.equal(publicView.combat.participants.npc.mapMovement.remaining,6);
+  assert.equal(JSON.stringify(publicView).includes('alice'),false);
+  assert.equal(publicView.combat.participants.npc.ap,undefined);
+  assert.equal(publicCombatSnapshot(raw,null).combatants.length,0);
+});
+
+test('Milestone 3.4 validates sparse terrain and preserves legacy square defaults',async()=>{
+  const {battleMapEditableSettings}=await import('../src/state/battleMapModel.mjs');
+  const {validateTerrainCells,resizeTerrainCells,paintTerrainCell,publicTerrainCells}
+    =await import('../src/state/battleMapTerrainModel.mjs');
+  const basic=battleMapEditableSettings({name:'Plains',gridColumns:4,gridRows:4});
+  assert.equal(basic.gridType,'square');
+  assert.deepEqual(basic.terrainCells,[]);
+  assert.deepEqual(validateTerrainCells([{column:1,row:1,kind:'wall',elevation:0}],4,4),
+    [{column:1,row:1,kind:'wall',elevation:0}]);
+  assert.throws(()=>validateTerrainCells([{column:0,row:0,kind:'wall'},
+    {column:0,row:0,kind:'water'}],4,4),/Duplicate/);
+  assert.throws(()=>validateTerrainCells([{column:4,row:0,kind:'wall'}],4,4),/column/);
+  assert.throws(()=>validateTerrainCells([{column:0,row:0,kind:'unknown'}],4,4),/Unknown/);
+  assert.throws(()=>validateTerrainCells([{column:0,row:0,kind:'wall',elevation:Infinity}],4,4),/elevation/);
+  const cells=paintTerrainCell([],4,4,{column:1,row:1},'difficult',1.25);
+  assert.equal(cells[0].elevation,1.25);
+  assert.deepEqual(paintTerrainCell(cells,4,4,{column:1,row:1},'plain',0),[]);
+  assert.equal(resizeTerrainCells(cells,4,4,2,2).length,1);
+  const map={gridColumns:4,gridRows:4,fogEnabled:true,terrainCells:[
+    {column:0,row:0,kind:'wall',elevation:0},{column:3,row:3,kind:'water',elevation:0}
+  ]};
+  assert.deepEqual(publicTerrainCells(map,'1'+'0'.repeat(15)),
+    [{column:0,row:0,kind:'wall',elevation:0}]);
+});
+test('Milestone 3.4 terrain routes enforce difficult costs, walls, water and elevation',()=>{
+  const start={x:12.5,y:12.5},map={gridColumns:4,gridRows:4,metresPerCell:3,
+    terrainCells:[{column:1,row:0,kind:'difficult',elevation:0},
+      {column:0,row:1,kind:'wall',elevation:0},{column:2,row:0,kind:'water',elevation:0},
+      {column:1,row:1,kind:'plain',elevation:5}]};
+  assert.equal(mapReachableRoutes(map,start,3).has('1:0'),false);
+  assert.equal(mapReachableRoutes(map,start,6).get('1:0').cost,6);
+  assert.equal(mapReachableRoutes(map,start,12).has('0:1'),false);
+  assert.equal(mapReachableRoutes(map,start,20).has('1:1'),false);
+  assert.equal(mapReachableRoutes(map,start,30).has('2:0'),false);
+  assert.equal(mapReachableRoutes(map,start,6,{movementKind:'fly'}).has('2:0'),true);
+  assert.equal(mapReachableRoutes(map,start,6,{movementKind:'teleport'}).has('0:1'),false);
+  const stairMap={...map,terrainCells:[{column:1,row:0,kind:'stairs',elevation:4}]};
+  assert.ok(mapReachableRoutes(stairMap,start,7).has('1:0'));
+});
+test('Milestone 3.4 odd-row hex routes and distance use six neighbours',async()=>{
+  const {hexCellDistance}=await import('../src/state/battleMapRoutes.mjs');
+  const map={gridColumns:5,gridRows:5,metresPerCell:3,gridType:'hex'};
+  const start={x:30,y:30}; // column 1, row 1 (odd-row geometry)
+  const routes=mapReachableRoutes(map,start,3);
+  assert.equal(routes.size,6);
+  assert.equal(routes.get('2:0').cost,3);
+  assert.equal(routes.get('2:2').cost,3);
+  assert.equal(routes.has('0:0'),false);
+  assert.equal(hexCellDistance({column:1,row:1},{column:2,row:2}),1);
+  assert.equal(hexCellDistance({column:1,row:1},{column:4,row:4}),4);
+});
+
+test('Milestone 3.4 ruler counts hex steps and keeps legacy square Euclidean distance',async()=>{
+  const {measureGridDistance}=await import('../src/state/battleMapFogModel.mjs');
+  const a={x:30,y:30},b={x:50,y:50};
+  assert.equal(measureGridDistance(a,b,5,5,3,'hex').metres,3);
+  assert.equal(measureGridDistance(a,b,5,5,3,'square').metres,4.24);
+});
+
+test('Milestone 3.4 pointer picking and snapping round-trip real staggered hex centres',async()=>{
+  const {mapCell,mapCellCenter,hexCellPoints}=await import('../src/state/battleMapRoutes.mjs');
+  const {battleMapPoint}=await import('../src/state/battleMapModel.mjs');
+  for(let row=0;row<5;row++)for(let column=0;column<5;column++){
+    const center=mapCellCenter({column,row},5,5,'hex');
+    assert.deepEqual(mapCell(center,5,5,'hex'),{column,row});
+    assert.deepEqual(mapCell(battleMapPoint(center.x,center.y,{
+      columns:5,rows:5,snap:true,gridType:'hex'
+    }),5,5,'hex'),{column,row});
+    assert.equal(hexCellPoints({column,row},5,5).length,6);
+  }
+  assert.deepEqual(mapCell(mapCellCenter({column:2,row:3},5,5),5,5),
+    {column:2,row:3});
 });

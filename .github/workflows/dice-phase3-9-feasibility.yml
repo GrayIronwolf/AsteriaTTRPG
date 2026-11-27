@@ -1,0 +1,41 @@
+name: Five Dice Towers Phase 3.9 Feasibility (test only)
+on:
+  push:
+    branches: [Website-Build-Test]
+    paths:
+      - 'src/dice/diceTower**'
+      - 'src/dice/DiceTowerStudio.jsx'
+      - 'src/dice/AsteriaDiceTray.jsx'
+      - 'scripts/dice-engine-phase3-9.test.mjs'
+      - 'scripts/dice-prototype/phase3-9*'
+      - '.github/workflows/dice-phase3-9-feasibility.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: asteria-phase3-9-five-towers
+  cancel-in-progress: true
+jobs:
+  tower-physics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Validate all 18 physical layouts and appearance settings
+        run: node --test scripts/dice-engine-phase3-8.test.mjs scripts/dice-engine-phase3-9.test.mjs
+      - name: Install browser driver
+        run: npm install --no-save --package-lock=false --ignore-scripts --no-audit --no-fund playwright@1.56.1
+      - name: Verify five towers and fifteen physics variations in Chromium
+        run: node scripts/dice-prototype/phase3-9-runner.mjs
+      - name: Store tower screenshot and physical evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asteria-five-tower-physical-evidence
+          path: dice-phase3-9-evidence/
+          if-no-files-found: warn

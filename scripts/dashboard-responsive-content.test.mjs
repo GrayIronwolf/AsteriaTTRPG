@@ -40,7 +40,9 @@ test('Equipment and Quick Items remain functional and reflow for narrow widths',
   assert.match(css,/\.react-weapon-slot-grid/);
   assert.match(css,/\.react-quick-slot-grid/);
   assert.match(panels,/function ArmourPanel\(/);
-  assert.match(panels,/function WeaponsPanel\(/);
+  assert.match(panels,/react-overview-combined-weapons/);
+  assert.match(panels,/'Main Weapon','Secondary Weapon','Off-Hand','Quiver'/);
+  assert.doesNotMatch(panels,/function WeaponsPanel\(/);
   assert.match(panels,/function QuickItemsPanel\(/);
   assert.match(panels,/onClick=\{\(\) => setShowBreakdown\(true\)\}/);
 });

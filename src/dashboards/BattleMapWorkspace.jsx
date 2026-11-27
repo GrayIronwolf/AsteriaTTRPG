@@ -1,27 +1,37 @@
+import {createSiteCombatApi,createSiteCombatMediaApi} from './combat/siteCombatApi.js';
+import {MAP_MOVE_AP,walkingAllowance} from '../state/battleMapMovement.mjs';
+import {resizeTerrainCells,publicTerrainCells} from '../state/battleMapTerrainModel.mjs';
+import {mapCell,measureMapRoute} from '../state/battleMapRoutes.mjs';
+import {partyVisibility} from '../state/battleMapVision.mjs';
+import {BattleMapVisionControls} from './presentation/BattleMapVisionControls.jsx';
+import {GridLayer,CellFog,GeometryControls,TerrainControls,terrainAtPoint,firstTerrainBrush,RouteReading,AreaControls,AreaOverlay} from './presentation/BattleMapLayers.jsx';
+import {BattleMapToken,CampaignMapWorkspace} from './presentation/CampaignMapWorkspace.jsx';
 import React,{useCallback,useEffect,useMemo,useRef,useState} from 'react';
 import {firebaseService} from '../firebase/asteriaFirebaseService.js';
 import {Panel} from '../components/WorkspaceUI.jsx';
 import {
-  battleMapFileError,battleMapEditableSettings,battleMapPoint,battleMapCanPreview,
+  battleMapFileError,battleMapEditableSettings,battleMapPoint,battleMapCanPreview,battleMapTokenAppearance,
   BATTLE_MAP_MAX_TOKENS
 } from '../state/battleMapModel.mjs';
 import {
-  createFogCells,resizeFogCells,paintFogStroke,hiddenFogRuns,fogRevealFraction,
-  measureGridDistance,battleMapPrivatePins
+  createFogCells,resizeFogCells,mapFogStroke,hiddenFogRuns,fogRevealFraction,
+  battleMapPrivatePins
 } from '../state/battleMapFogModel.mjs';
 import {activeMapEncounter,combatMapLinked,combatMapRoster,derivedCombatMapTokens,combatMapMovementAllowance} from '../state/battleMapCombatModel.mjs';
+import {hudImageSource} from '../state/playerHudMedia.mjs';
 
 const defaults=()=>({
   name:'',description:'',visibility:'gm',gridColumns:20,gridRows:15,
   gridOpacity:40,gridVisible:true,tokens:[],
-  fogEnabled:false,fogCells:'',metresPerCell:1
+  fogEnabled:false,fogCells:'',metresPerCell:3,gridType:'hex',terrainCells:[]
 });
 const currentSettings=map=>({
   name:map.name,description:map.description||'',visibility:map.visibility,
   gridColumns:map.gridColumns,gridRows:map.gridRows,
   gridOpacity:map.gridOpacity,gridVisible:map.gridVisible,
   tokens:map.tokens||[],fogEnabled:map.fogEnabled===true,
-  fogCells:map.fogCells||'',metresPerCell:map.metresPerCell??1
+  fogCells:map.fogCells||'',metresPerCell:map.metresPerCell??1,
+  gridType:map.gridType||'square',terrainCells:map.terrainCells||[],gridOffsetX:map.gridOffsetX||0,gridOffsetY:map.gridOffsetY||0,...(map.vision?{vision:map.vision}:{})
 });
 async function mediaDimensions(file){
   const url=URL.createObjectURL(file),isVideo=String(file.type).startsWith('video/');
@@ -77,7 +87,7 @@ function useMapMedia(campaignId,selected){
 }
 function MapCanvas({campaignId,map,gm=false,onPlaceToken,selectedTokenId='',fogTool='token',
   onFogStroke,onFogBegin,onPrivatePin,privatePins=[],previewPlayerFog=false,onMeasure,measurePoints=[],
-  encounter=null,selectedCombatantId='',onCombatMove,combatBusy=false}) {
+  encounter=null,selectedCombatantId='',onCombatMove,combatBusy=false,onTerrain,onSource,area={}}) {
   const media=useMapMedia(campaignId,map),canvas=useRef(null);
   const [playing,setPlaying]=useState(true),[showGrid,setShowGrid]=useState(true);
   const pointerLast=useRef(null);
@@ -85,7 +95,7 @@ function MapCanvas({campaignId,map,gm=false,onPlaceToken,selectedTokenId='',fogT
   const playerFog=Boolean(map?.fogEnabled)&&(!gm||previewPlayerFog);
   const cols=Number(map?.gridColumns||20),rows=Number(map?.gridRows||15);
   const fogRectangles=playerFog?hiddenFogRuns(map?.fogCells,cols,rows):[];
-  const isBrush=gm&&map&&['reveal','hide'].includes(fogTool)&&map.fogEnabled;
+  const isBrush=gm&&map&&['reveal','hide','auto'].includes(fogTool)&&map.fogEnabled;
   const isPlacing=gm&&fogTool==='token'&&Boolean(selectedTokenId);
   const isCombatMove=gm&&fogTool==='combat'&&combatMapLinked(map,encounter)&&
     Boolean(selectedCombatantId)&&Boolean(onCombatMove)&&!combatBusy;
@@ -95,11 +105,6 @@ function MapCanvas({campaignId,map,gm=false,onPlaceToken,selectedTokenId='',fogT
   const combatants=combatMapRoster(encounter);
   const activeActor=combatants.find(row=>row.isCurrent)?.id||'';
   const grid=map?.gridVisible&&showGrid;
-  const background=grid?{
-    backgroundImage:'linear-gradient(to right,rgba(255,255,255,.6) 1px, transparent 1px),linear-gradient(to bottom,rgba(255,255,255,.6) 1px, transparent 1px)',
-    backgroundSize:(100/map.gridColumns)+'% '+(100/map.gridRows)+'%',
-    opacity:Math.max(0,Math.min(100,Number(map.gridOpacity)))/100
-  }:null;
   const pointFromEvent=event=>{
     const bounds=canvas.current?.getBoundingClientRect();
     if(!bounds?.width||!bounds?.height)return null;
@@ -131,11 +136,13 @@ function MapCanvas({campaignId,map,gm=false,onPlaceToken,selectedTokenId='',fogT
   };
   const pointerUp=()=>{pointerLast.current=null;};
   const move=event=>{
+    if(gm&&fogTool==='source'){const point=pointFromEvent(event);if(point)onSource?.(point);return;}
+    if(gm&&fogTool==='terrain'){const point=pointFromEvent(event);if(point)onTerrain?.(point);return;}
     if(isCombatMove){const point=pointFromEvent(event);if(point)onCombatMove(selectedCombatantId,point);return;}
     if(!isPlacing||!onPlaceToken)return;
     const point=pointFromEvent(event);
     if(!point)return;
-    const snapped=battleMapPoint(point.x,point.y,{columns:map.gridColumns,rows:map.gridRows,snap:grid});
+    const snapped=battleMapPoint(point.x,point.y,{...map,columns:map.gridColumns,rows:map.gridRows,snap:grid});
     onPlaceToken(selectedTokenId,snapped);
   };
   if(!map)return <p>Select a battle map.</p>;
@@ -158,22 +165,17 @@ function MapCanvas({campaignId,map,gm=false,onPlaceToken,selectedTokenId='',fogT
         ref={element=>{if(!element)return;if(playing)element.play().catch(()=>{});else element.pause();}}
         onError={()=>{}} aria-label={'Looping animated map: '+map.name}/>:
         <img src={media.url} alt={map.name} className="asteria-battle-media"/>):null}
-      {grid?<div aria-hidden="true" className="asteria-battle-grid" style={background}/>:null}
+      <GridLayer map={previewPlayerFog?{...map,terrainCells:publicTerrainCells(map,map.fogCells)}:map} visible={grid}/>
       {tokens.filter(token=>{
+        if((!gm||previewPlayerFog)&&token.visibility==='gm')return false;
         if(!playerFog)return true;
-        const x=Math.min(cols-1,Math.floor(Math.min(99.999,token.x)*cols/100));
-        const y=Math.min(rows-1,Math.floor(Math.min(99.999,token.y)*rows/100));
-        const cells=map.fogCells||createFogCells(cols,rows);
-        return cells[y*cols+x]==='1';
-      }).map(token=><span key={token.id}
-        className={'asteria-battle-token'+(token.id===selectedTokenId?' selected':'')+
-          (token.combatantId===activeActor&&combatMapLinked(map,encounter)?' combat-active':'')+
-          (token.combatantId&&combatants.find(row=>row.id===token.combatantId)?.defeated?' combat-defeated':'')}
-        style={{left:token.x+'%',top:token.y+'%'}}
-        title={token.label+(token.combatantId===activeActor?' · Current turn':'')} aria-label={token.label}>
-        {token.kind==='character'?'P':token.kind==='creature'?'C':'•'}
-      </span>)}
-      {playerFog?<svg className="asteria-battle-fog" viewBox="0 0 100 100" preserveAspectRatio="none"
+        const cell=mapCell(token,cols,rows,map);
+        return cell&&(map.tokenCells||map.fogCells)?.[cell.row*cols+cell.column]==='1';
+      }).map(token=><BattleMapToken key={token.id} token={token} columns={cols} rows={rows}
+        className="asteria-battle-token" selected={token.id===selectedTokenId}
+        current={Boolean(token.combatantId&&token.combatantId===activeActor&&combatMapLinked(map,encounter))}
+        defeated={Boolean(token.combatantId&&combatants.find(row=>row.id===token.combatantId)?.defeated)}/>)}
+      {playerFog&&(map.exploredCells||map.gridType==='hex'||map.gridOffsetX||map.gridOffsetY)?<CellFog map={map} cells={map.fogCells} className="asteria-battle-fog"/>:playerFog?<svg className="asteria-battle-fog" viewBox="0 0 100 100" preserveAspectRatio="none"
         aria-label="Fog of war hidden regions">
         {fogRectangles.map((rect,index)=><rect key={index}
           x={rect.x} y={rect.y} width={rect.width} height={rect.height}/>)}
@@ -183,6 +185,7 @@ function MapCanvas({campaignId,map,gm=false,onPlaceToken,selectedTokenId='',fogT
         title={pin.label+' — '+pin.note} aria-label={'GM-only '+pin.kind+': '+pin.label}>
         {pin.kind==='hazard'?'!':pin.kind==='encounter'?'E':'N'}
       </span>)}
+      {gm&&fogTool==='measure'?<AreaOverlay map={map} points={measurePoints} area={area}/>:null}
       {gm&&measurePoints.length>0?<svg className="asteria-battle-ruler" viewBox="0 0 100 100"
         preserveAspectRatio="none" aria-hidden="true">
         {measurePoints.length===2?<line x1={measurePoints[0].x} y1={measurePoints[0].y}
@@ -197,15 +200,45 @@ function MapCanvas({campaignId,map,gm=false,onPlaceToken,selectedTokenId='',fogT
     {map.kind==='video'?<small>Video loops silently. Playback begins automatically where the browser permits; use Play animation if autoplay is blocked.</small>:null}
   </section>;
 }
+function TokenAppearanceFields({value,onChange}){
+  return <div className="asteria-battle-form-row">
+    <label>Portrait URL<input maxLength={600} value={value.portrait||''}
+      placeholder="HTTPS or site-relative URL" onChange={event=>onChange({portrait:event.target.value})}/></label>
+    <label>Faction<select value={value.faction||''} onChange={event=>onChange({faction:event.target.value})}>
+      <option value="">Default</option><option value="party">Party</option>
+      <option value="ally">Ally</option><option value="neutral">Neutral</option>
+      <option value="hostile">Hostile</option>
+    </select></label>
+    <label>Footprint (cells per side)<input type="number" min="1" max="80" value={value.cells??1}
+      onChange={event=>onChange({cells:event.target.value===''?'':Number(event.target.value)})}/></label>
+    <label>Token visibility<select value={value.visibility||'players'}
+      onChange={event=>onChange({visibility:event.target.value})}>
+      <option value="players">Visible when revealed</option><option value="gm">GM only</option>
+    </select></label>
+  </div>;
+}
+function LiveTokenAppearance({token,busy,onSave}){
+  const [appearance,setAppearance]=useState(token);
+  return <details>
+    <summary>Token appearance and visibility</summary>
+    <TokenAppearanceFields value={appearance} onChange={change=>setAppearance(previous=>({...previous,...change}))}/>
+    <button type="button" disabled={busy} onClick={()=>onSave(token.id,appearance)}>Save token appearance</button>
+  </details>;
+}
 function TokenEditor({tokens,onChange,characters={},selectedTokenId,onSelect}){
   const [label,setLabel]=useState(''),[kind,setKind]=useState('marker'),[refId,setRefId]=useState('');
   const roster=Object.values(characters).filter(record=>record?.id);
+  const selected=tokens.find(row=>row.id===selectedTokenId);
   const add=()=>{
     if(tokens.length>=BATTLE_MAP_MAX_TOKENS)return;
-    const final=kind==='character'&&refId?roster.find(row=>row.id===refId)?.name||label:label;
+    const linked=kind==='character'&&refId?roster.find(row=>row.id===refId):null;
+    const final=linked?.name||label;
     if(!final?.trim())return;
+    const portrait=hudImageSource(linked?.image,linked?.portrait,linked?.characterImage,linked?.appearance?.image);
     const token={id:crypto.randomUUID(),label:final.trim().slice(0,48),kind,
       refId:kind==='character'?refId:'',x:50,y:50};
+    try{Object.assign(token,battleMapTokenAppearance({portrait}));}
+    catch{ /* Legacy character artwork may not have a shareable URL. */ }
     onChange([...tokens,token]);onSelect(token.id);setLabel('');
   };
   return <section aria-label="Battle map tokens" className="asteria-battle-token-editor">
@@ -232,6 +265,12 @@ function TokenEditor({tokens,onChange,characters={},selectedTokenId,onSelect}){
         <button type="button" onClick={()=>onChange(tokens.filter(row=>row.id!==token.id))}>Remove</button>
       </div>)}
     </div>
+    {selected?<details open>
+      <summary>{selected.label} appearance and visibility</summary>
+      <TokenAppearanceFields value={selected} onChange={change=>onChange(
+        tokens.map(row=>row.id===selected.id?{...row,...change}:row)
+      )}/>
+    </details>:null}
   </section>;
 }
 export function GMBattleMapManager({campaignId,characters={},encounter={},searchTarget=null}){
@@ -240,6 +279,8 @@ export function GMBattleMapManager({campaignId,characters={},encounter={},search
   const [file,setFile]=useState(null),[busy,setBusy]=useState(false),[message,setMessage]=useState('');
   const [selectedTokenId,setSelectedTokenId]=useState('');
   const [fogTool,setFogTool]=useState('token'),[fogBrush,setFogBrush]=useState(1);
+  const [brush,setBrush]=useState(firstTerrainBrush),[area,setArea]=useState({shape:''});
+  const [calibration,setCalibration]=useState(''),[source,setSource]=useState(null);
   const [previewPlayerFog,setPreviewPlayerFog]=useState(false);
   const [measurePoints,setMeasurePoints]=useState([]);
   const [privatePins,setPrivatePins]=useState([]),[privateNoteName,setPrivateNoteName]=useState('');
@@ -247,6 +288,10 @@ export function GMBattleMapManager({campaignId,characters={},encounter={},search
   const [privateDirty,setPrivateDirty]=useState(false);
   const [selectedCombatantId,setSelectedCombatantId]=useState('');
   const [movementMode,setMovementMode]=useState('movement'),[repositionReason,setRepositionReason]=useState('');
+  const [forcedSource,setForcedSource]=useState(''),[forcedKind,setForcedKind]=useState('spell');
+  const [forcedRoute,setForcedRoute]=useState('ground'),[forcedDistance,setForcedDistance]=useState('');
+  const [forcedResolved,setForcedResolved]=useState(false);
+  const [delegateUid,setDelegateUid]=useState('');
   const undoFog=useRef([]);
   const selected=maps.find(row=>row.id===selectedId)||null;
   useEffect(()=>{if(searchTarget?.category==='battle-map'&&maps.some(x=>x.id===searchTarget.id))
@@ -255,6 +300,7 @@ export function GMBattleMapManager({campaignId,characters={},encounter={},search
   const combatants=combatMapRoster(encounter);
   const combatCurrent=combatants.find(row=>row.isCurrent);
   const combatMoveRemaining=selectedCombatantId?combatMapMovementAllowance(encounter,selectedCombatantId):null;
+  const selectedCombatToken=selectedCombatantId?selected?.tokens.find(row=>row.combatantId===selectedCombatantId):null;
   useEffect(()=>{
     if(selectedId&&!maps.some(row=>row.id===selectedId))setSelectedId('');
   },[maps,selectedId]);
@@ -262,7 +308,7 @@ export function GMBattleMapManager({campaignId,characters={},encounter={},search
     if(selected)setDraft(currentSettings(selected));
     else setDraft(defaults());
     setPreviewPlayerFog(selected?.fogEnabled===true);
-    setSelectedTokenId('');setSelectedCombatantId('');setFogTool('token');
+    setSelectedTokenId('');setSelectedCombatantId('');setFogTool('token');setSource(null);
     setMeasurePoints([]);undoFog.current=[];setPrivateDirty(false);
   },[selectedId]);
   useEffect(()=>{
@@ -281,24 +327,22 @@ export function GMBattleMapManager({campaignId,characters={},encounter={},search
       nextCols<1||nextCols>80||nextRows<1||nextRows>80)return previous;
     try{
       return {...previous,...values,fogCells:resizeFogCells(previous.fogCells,
-        previous.gridColumns,previous.gridRows,nextCols,nextRows)};
+        previous.gridColumns,previous.gridRows,nextCols,nextRows),
+        terrainCells:resizeTerrainCells(previous.terrainCells||[],previous.gridColumns,
+          previous.gridRows,nextCols,nextRows)};
     }catch{return {...previous,...values};}
   });
-  const rememberFog=()=>{undoFog.current=[...undoFog.current.slice(-19),draft.fogCells||
-    createFogCells(draft.gridColumns,draft.gridRows)];};
-  const fogStroke=(start,end,tool)=>setDraft(previous=>({
-    ...previous,fogCells:paintFogStroke(previous.fogCells,previous.gridColumns,
-      previous.gridRows,start,end,tool,fogBrush)
-  }));
+  const rememberFog=()=>{undoFog.current=[...undoFog.current.slice(-19),{
+    fogCells:draft.fogCells||createFogCells(draft.gridColumns,draft.gridRows),
+    ...(draft.vision?{vision:draft.vision}:{})
+  }];};
+  const fogStroke=(start,end,tool)=>setDraft(previous=>({...previous,...mapFogStroke(previous,start,end,tool,fogBrush)}));
   const setAllFog=revealed=>{
     rememberFog();
-    patch({fogCells:createFogCells(draft.gridColumns,draft.gridRows,revealed)});
+    const cells=createFogCells(draft.gridColumns,draft.gridRows,revealed);
+    patch(draft.vision?.automatic?{vision:{...draft.vision,overrides:cells}}:{fogCells:cells});
   };
-  const undoFogStroke=()=>{
-    if(!undoFog.current.length)return;
-    const last=undoFog.current.pop();
-    patch({fogCells:last});
-  };
+  const undoFogStroke=()=>{if(undoFog.current.length)patch(undoFog.current.pop());};
   const addPrivatePin=point=>{
     if(!privateNoteName.trim()){setMessage('Enter a GM-only pin name before placing it.');return;}
     try{
@@ -312,8 +356,7 @@ export function GMBattleMapManager({campaignId,characters={},encounter={},search
   const placeMeasurePoint=point=>setMeasurePoints(previous=>previous.length===2?[point]:[...previous,point]);
   let measurement=null;
   if(measurePoints.length===2){
-    try{measurement=measureGridDistance(measurePoints[0],measurePoints[1],
-      draft.gridColumns,draft.gridRows,draft.metresPerCell);}catch{measurement=null;}
+    try{measurement=measureMapRoute(draft,measurePoints[0],measurePoints[1]);}catch{measurement=null;}
   }
   const act=async callback=>{
     setBusy(true);setMessage('');
@@ -345,12 +388,30 @@ export function GMBattleMapManager({campaignId,characters={},encounter={},search
   };
   const moveCombatToken=async(combatantId,point)=>{
     if(!combatLinked||busy)return;
+    if(movementMode==='forced'&&(!forcedResolved||forcedSource.trim().length<2||
+      !(Number(forcedDistance)>0&&Number(forcedDistance)<=1000)||repositionReason.trim().length<5)){
+      setMessage('Confirm the resolved source, approved range and reason before moving.');
+      return;
+    }
     await act(()=>firebaseService.combatCommand(campaignId,'encounter',{
       operation:'map-move',mapId:selected.id,combatantId,point,mode:movementMode,
-      reason:movementMode==='reposition'?repositionReason:'',
+      reason:movementMode==='movement'?'':repositionReason,
+      ...(movementMode==='forced'?{source:{id:forcedSource.trim(),kind:forcedKind,
+        routeKind:forcedRoute,distance:Number(forcedDistance),resolved:forcedResolved}}:{}),
       revision:Number(encounter.combat?.revision||0)
     }));
   };
+  const saveMapDelegate=async()=>{
+    if(!selectedCombatantId||!combatLinked)return;
+    await act(()=>firebaseService.combatCommand(campaignId,'encounter',{
+      operation:'map-delegate',mapId:selected.id,combatantId:selectedCombatantId,
+      delegateUid:delegateUid.trim(),revision:Number(encounter.combat?.revision||0)
+    }));
+  };
+  const saveCombatToken=(tokenId,appearance)=>act(()=>firebaseService.combatCommand(campaignId,'encounter',{
+    operation:'map-token-appearance',mapId:selected.id,tokenId,appearance,
+    revision:Number(encounter.combat?.revision||0)
+  }));
   const savePrivate=async()=>{
     if(!selected)return;
     const result=await act(()=>firebaseService.saveBattleMapPrivatePins(campaignId,selected.id,privatePins));
@@ -362,8 +423,18 @@ export function GMBattleMapManager({campaignId,characters={},encounter={},search
     if(result.ok)setSelectedId('');
   };
   const moveToken=useCallback((id,point)=>setDraft(previous=>({...previous,tokens:previous.tokens.map(t=>t.id===id?{...t,...point}:t)})),[]);
-  const viewMap=selected?{...selected,...draft,
+  const rawView=selected?{...selected,...draft,
     tokens:combatLinked?selected.tokens:draft.tokens}:null;
+  const visibility=useMemo(()=>{
+    if(!previewPlayerFog||!rawView?.fogEnabled||!rawView.vision?.automatic)return null;
+    try{return partyVisibility(rawView,encounter,characters);}catch{return {fogCells:'0'.repeat(rawView.gridColumns*rawView.gridRows)};}
+  },[previewPlayerFog,selected,draft,encounter,characters]);
+  const viewMap=visibility?{...rawView,...visibility}:rawView;
+  const placeSource=point=>{
+    if(!source)return;
+    patch({vision:{...draft.vision,sources:[...(draft.vision?.sources||[]),{...source,...point}]}});
+    setSource(null);setFogTool('token');
+  };
   return <Panel title="Battle Maps & Animated Scenes" eyebrow="Digital GM Toolkit · Phase 6.2">
     <p className="react-help">Upload a static image or a looping MP4/WebM video. Maps start GM-only. Publish a map when players should see its scene and markers. Phase 6.2 adds a visual fog overlay, scene ruler, and separate private GM annotations. Combat turn movement remains Phase 6.3.</p>
     {listenerError?<p role="alert">{listenerError}</p>:null}
@@ -389,7 +460,8 @@ export function GMBattleMapManager({campaignId,characters={},encounter={},search
       <label>Grid rows<input type="number" min="1" max="80" disabled={combatLinked} value={draft.gridRows} onChange={event=>patch({gridRows:Number(event.target.value)})}/></label>
       <label>Grid opacity %<input type="number" min="0" max="100" value={draft.gridOpacity} onChange={event=>patch({gridOpacity:Number(event.target.value)})}/></label>
       <label><input type="checkbox" checked={draft.gridVisible} onChange={event=>patch({gridVisible:event.target.checked})}/> Show grid</label>
-      <label>Metres per square<input type="number" min="0.1" max="100" step="0.1" disabled={combatLinked} value={draft.metresPerCell}
+      <GeometryControls map={draft} patch={patch} locked={combatLinked}/>
+      <label>Metres per cell<input type="number" min="0.1" max="100" step="0.1" disabled={combatLinked} value={draft.metresPerCell}
         onChange={event=>patch({metresPerCell:Number(event.target.value)})}/></label>
       <label><input type="checkbox" checked={draft.fogEnabled} onChange={event=>{
         patch({fogEnabled:event.target.checked});setFogTool(event.target.checked?'reveal':'token');
@@ -407,6 +479,9 @@ export function GMBattleMapManager({campaignId,characters={},encounter={},search
           <option value="reveal" disabled={!draft.fogEnabled}>Reveal fog brush</option>
           <option value="hide" disabled={!draft.fogEnabled}>Hide fog brush</option>
           <option value="measure">Distance ruler</option>
+          <option value="terrain">Paint terrain</option>
+          {draft.vision?.automatic?<option value="auto">Restore automatic vision brush</option>:null}
+          {source?<option value="source">Place light or effect</option>:null}
           <option value="pin">Place GM-only pin</option>
         </select></label>
         <label>Fog brush radius (squares)<input type="number" min="0" max="8" value={fogBrush}
@@ -418,9 +493,19 @@ export function GMBattleMapManager({campaignId,characters={},encounter={},search
         <button type="button" onClick={()=>setAllFog(true)}>Reveal all</button>
         <button type="button" onClick={()=>setAllFog(false)}>Hide all</button>
         <button type="button" disabled={!undoFog.current.length} onClick={undoFogStroke}>Undo fog change</button>
-        <span>Revealed: {Math.round(fogRevealFraction(draft.fogCells,draft.gridColumns,draft.gridRows)*100)}%</span>
+        <span>Revealed: {Math.round(fogRevealFraction(viewMap?.fogCells||draft.fogCells,draft.gridColumns,draft.gridRows)*100)}%</span>
       </div>:<p className="react-help">Enable fog to reveal or hide areas. Existing maps remain unobscured until fog is enabled.</p>}
-      {measurement?<p role="status">Ruler: {measurement.squares} squares · {measurement.metres} metres
+      <BattleMapVisionControls map={{...draft,tokens:rawView?.tokens||draft.tokens}} patch={patch} placing={source} onPlace={item=>{
+        setSource(item);setFogTool(item?'source':'token');
+      }}/>
+      {fogTool==='terrain'?<TerrainControls brush={brush} onChange={setBrush}/>:null}
+      {fogTool==='measure'?<AreaControls value={area} onChange={setArea}/>:null}
+      {measurement&&!combatLinked&&fogTool==='measure'?<label>Known distance between ruler points (m)
+        <input type="number" min=".01" step="any" value={calibration} onChange={e=>setCalibration(e.target.value)}/>
+        <button type="button" disabled={!(Number(calibration)>0&&measurement.squares>0&&Number(calibration)/measurement.squares>=.1&&Number(calibration)/measurement.squares<=100)}
+          onClick={()=>patch({metresPerCell:Math.round(Number(calibration)/measurement.squares*100)/100})}>Calibrate grid scale</button>
+      </label>:null}
+      {measurement?<p role="status"><RouteReading result={measurement}/>
         <button type="button" onClick={()=>setMeasurePoints([])}>Clear ruler</button></p>:
         <p className="react-help">Use Distance ruler and click two points to measure. A third click starts a new measurement.</p>}
       <p className="react-help">Fog hides content visually, but cannot prevent inspection of a map image/video already delivered to a player. Do not embed unrevealed secrets in published media.</p>
@@ -468,13 +553,49 @@ export function GMBattleMapManager({campaignId,characters={},encounter={},search
             <label>Movement method<select value={movementMode} onChange={event=>setMovementMode(event.target.value)}>
               <option value="movement">Approved movement action</option>
               <option value="reposition">GM correction / reposition</option>
+              <option value="forced">Resolved forced movement</option>
             </select></label>
           </div>
-          {movementMode==='reposition'?<label>GM correction reason<input maxLength={160}
-            value={repositionReason} onChange={event=>setRepositionReason(event.target.value)}
-            placeholder="Document the correction or forced movement"/></label>:
-            <p>Remaining approved movement: {combatMoveRemaining===null?'No movement action approved':combatMoveRemaining+' m'}.
+          {movementMode!=='movement'?<>
+            <label>GM adjudication reason<input maxLength={160}
+              value={repositionReason} onChange={event=>setRepositionReason(event.target.value)}
+              placeholder="Document the source, effect and movement"/></label>
+            {movementMode==='forced'?<div className="asteria-battle-form-row">
+              <label>Effect source ID<input maxLength={160} value={forcedSource}
+                onChange={event=>setForcedSource(event.target.value)}/></label>
+              <label>Source type<select value={forcedKind} onChange={event=>setForcedKind(event.target.value)}>
+                {['spell','talent','shove','creature','environment','ability','other'].map(kind=>
+                  <option key={kind} value={kind}>{kind}</option>)}
+              </select></label>
+              <label>Travel mode<select value={forcedRoute} onChange={event=>setForcedRoute(event.target.value)}>
+                <option value="ground">Ground</option>
+                <option value="fly">Airborne</option>
+                <option value="teleport">Teleportation</option>
+              </select></label>
+              <label>Approved range (m)<input type="number" min="0.1" max="1000" step="0.1"
+                value={forcedDistance} onChange={event=>setForcedDistance(event.target.value)}/></label>
+              <label><input type="checkbox" checked={forcedResolved}
+                onChange={event=>setForcedResolved(event.target.checked)}/>
+                GM confirms source and saving throw resolved</label>
+            </div>:null}
+          </>:<p>Remaining approved movement: {combatMoveRemaining===null?'No movement action approved':combatMoveRemaining+' m'}.
               A player must declare a movement action; the GM approves its distance through the existing combat panel.</p>}
+          {selectedCombatantId?<div className="asteria-battle-form-row">
+            <label>Delegate map movement to a linked campaign player
+              <select value={delegateUid} onChange={event=>setDelegateUid(event.target.value)}>
+                <option value="">No delegate / revoke delegation</option>
+                {[...new Map(Object.values(characters).filter(row=>row?.ownerUid).map(row=>
+                  [row.ownerUid,{uid:row.ownerUid,label:row.name||row.ownerUid}])).values()]
+                  .map(row=><option key={row.uid} value={row.uid}>{row.label}</option>)}
+              </select>
+            </label>
+            <button type="button" disabled={busy} onClick={saveMapDelegate}>
+              {delegateUid.trim()?'Assign map-only control':'Revoke map delegation'}
+            </button>
+            <small>Only the verified campaign member may use delegated movement. Combat actions remain owner- or GM-controlled. Clear the field to revoke.</small>
+          </div>:null}
+          {selectedCombatToken?<LiveTokenAppearance key={selectedCombatToken.id} token={selectedCombatToken}
+            busy={busy} onSave={saveCombatToken}/>:null}
           <ol className="asteria-battle-combat-roster">
             {combatants.map(row=><li key={row.id} className={row.isCurrent?'current':''}>
               <b>{row.name}</b> · Initiative {row.initiative??'—'}
@@ -482,15 +603,16 @@ export function GMBattleMapManager({campaignId,characters={},encounter={},search
               {row.defeated?' · Defeated':''}
             </li>)}
           </ol>
-          <p className="react-help">The existing combat engine remains authoritative for turns, AP, actions and movement allowance. Only the GM moves map tokens; movement and corrections are validated and recorded by the backend.</p>
+          <p className="react-help">Players can move their assigned tokens when combat allows it. GM corrections record the original position, destination and reason.</p>
         </>}
     </section>:null}
     {selected?<MapCanvas campaignId={campaignId} map={viewMap} gm encounter={encounter}
       selectedCombatantId={selectedCombatantId} onCombatMove={moveCombatToken} combatBusy={busy}
       selectedTokenId={selectedTokenId} onPlaceToken={moveToken}
-      fogTool={fogTool} onFogBegin={rememberFog} onFogStroke={fogStroke}
+      fogTool={fogTool} onSource={placeSource} area={area} onTerrain={point=>setDraft(previous=>({...previous,terrainCells:terrainAtPoint(previous,point,brush)}))} onFogBegin={rememberFog} onFogStroke={fogStroke}
       onPrivatePin={addPrivatePin} privatePins={privatePins}
       previewPlayerFog={previewPlayerFog} onMeasure={placeMeasurePoint}
+
       measurePoints={measurePoints}/>:null}
     <div className="react-action-row">
       {!selected?<button type="button" className="primary" disabled={busy||!file||!settings||maps.length>=40}
@@ -505,22 +627,83 @@ export function GMBattleMapManager({campaignId,characters={},encounter={},search
     {message?<p role={message==='Map saved successfully.'?'status':'alert'}>{message}</p>:null}
   </Panel>;
 }
-export function PlayerBattleMapView({campaignId,encounter={},mapId='',presentation=false}){
-  const {maps,error}=useBattleMaps(campaignId,false);
-  const [selectedId,setSelectedId]=useState('');
-  const selected=mapId?maps.find(row=>row.id===mapId)||null:maps.find(row=>row.id===selectedId)||maps[0]||null;
+function PlayerMapOpportunity({actor,targets,character,submit}){
+  const [target,setTarget]=useState(''),[item,setItem]=useState(''),[message,setMessage]=useState('');
+  const [busy,setBusy]=useState(false);
+  const weapons=(Array.isArray(character.inventory)?character.inventory:[]).filter(row=>row.equipped&&!row.destroyed&&/weapon/i.test(row.type||''));
+  if(!weapons.length||!targets.length)return null;
+  return <details>
+    <summary>Out-of-turn attack</summary>
+    <p>Uses this round's opportunity. The GM resolves the attack through combat.</p>
+    <label>Visible target<select value={target} onChange={event=>setTarget(event.target.value)}>
+      <option value="">Choose a target</option>
+      {targets.map(row=><option key={row.id} value={row.id}>{row.name}</option>)}
+    </select></label>
+    <label>Wielded weapon<select value={item} onChange={event=>setItem(event.target.value)}>
+      <option value="">Choose a weapon</option>
+      {weapons.map(row=><option key={row.id} value={row.id}>{row.name}</option>)}
+    </select></label>
+    <button type="button" disabled={busy||!targets.some(row=>row.id===target)||!weapons.some(row=>row.id===item)}
+      onClick={async()=>{
+        setBusy(true);setMessage('');
+        try{await submit(actor.id,{operation:'declare',optionId:'basic:attack',outOfTurn:true,
+          targetIds:[target],itemId:item});setMessage('Attack sent to the GM for resolution.');}
+        catch(error){setMessage(error?.message||'The attack was rejected.');}
+        finally{setBusy(false);}
+      }}>Declare Attack</button>
+    {message?<p role="status">{message}</p>:null}
+  </details>;
+}
+export function PlayerBattleMapView({campaignId,encounter={},character=null,mapId='',presentation=false}){
+  const uid=firebaseService.currentUser()?.uid||'';
+  const api=useMemo(()=>uid?createSiteCombatMediaApi():null,[uid]);
+  const combatApi=useMemo(()=>uid&&character?createSiteCombatApi():null,[uid,Boolean(character)]);
+  const ownedActor=(encounter.combatants||[]).find(row=>row.characterId===character?.id);
+  const [selectedActorId,setSelectedActorId]=useState('');
+  const delegatedActors=(encounter.combatants||[]).filter(row=>row.id!==ownedActor?.id&&
+    encounter.combat?.participants?.[row.id]?.movementDelegated===true&&
+    encounter.combat?.participants?.[row.id]?.mapTokenId);
+  const actor=delegatedActors.find(row=>row.id===selectedActorId)||ownedActor;
+  const delegated=Boolean(actor&&actor.id!==ownedActor?.id);
+  const state=encounter.combat?.participants?.[actor?.id]||{};
+  const offTurn=encounter.combatants?.[encounter.turnIndex]?.id!==actor?.id||state.turnComplete===true;
+  const approved=!offTurn&&state.mapMovement?.remaining>0;
+  const allowance=approved?state.mapMovement.remaining:delegated?null:
+    character?walkingAllowance(character,{encounter}):null;
+  const movement=!presentation&&actor&&state.mapTokenId&&encounter.battleMapId&&combatApi&&
+    (!delegated||approved)?{
+    tokenId:state.mapTokenId,distance:allowance,revision:encounter.combat.revision,
+    disabled:encounter.paused||Boolean(encounter.combat.pending)||offTurn&&state.opportunityUsed||(!approved&&state.ap<MAP_MOVE_AP.walk),
+    diagonalParity:approved?state.mapMovement.diagonalParity:0,
+    kind:approved?'approved':'walk',approvedKind:approved?state.mapMovement.kind:'',
+    routeKind:approved?state.mapMovement.routeKind:'',
+    outOfTurn:offTurn,onMove:point=>combatApi.commandPlayer(campaignId,character.id,actor.id,{
+      operation:'player-map-move',revision:encounter.combat.revision,mapId:encounter.battleMapId,
+      moveKind:approved?'approved':'walk',point,outOfTurn:offTurn
+    })
+  }:null;
   if(!campaignId)return null;
-  const content=<div className={presentation?"asteria-presentation-map":""}>
-    {error?<p role="alert">{error}</p>:null}
-    {!maps.length?<p>No battle maps have been shared with players.</p>:<>
-      {!presentation?<label>Shared map<select value={selected?.id||''} onChange={event=>setSelectedId(event.target.value)}>
-        {maps.map(row=><option key={row.id} value={row.id}>{row.name}{row.kind==='video'?' · Animated':''}</option>)}
-      </select></label>:null}
-      {selected&&combatMapLinked(selected,encounter)?<div className="asteria-battle-combat-status" role="status">
-        <b>Combat active · Round {encounter.round||1}</b>
-        <span>Current turn: {combatMapRoster(encounter).find(row=>row.isCurrent)?.name||'—'}</span>
-      </div>:null}
-      {selected?<MapCanvas key={selected.id} campaignId={campaignId} map={selected} encounter={encounter}/>:<p role="status">This published map is no longer available.</p>}
-    </>}</div>;
+  if(!api)return <p role="status">Sign in to view shared battle maps.</p>;
+  const attackAvailable=movement&&offTurn&&!encounter.paused&&!state.opportunityUsed&&!encounter.combat?.pending&&state.ap>=1;
+  const content=<><CampaignMapWorkspace key={uid+':'+campaignId} api={api}
+    campaignId={campaignId} selectedMapId={mapId} encounter={encounter}
+    interactive={!presentation} movement={movement}/>
+    {!presentation&&delegatedActors.length?<label>Map token control<select
+      value={delegated?actor.id:ownedActor?.id||''}
+      onChange={event=>setSelectedActorId(event.target.value===ownedActor?.id?'':event.target.value)}>
+      {ownedActor?<option value={ownedActor.id}>{ownedActor.name||'Your character'}</option>:null}
+      {delegatedActors.map(row=><option key={row.id} value={row.id}>
+        {row.name||'Combatant'} · GM-delegated map movement
+      </option>)}
+    </select></label>:null}
+    {delegated&&!approved?<small>The GM must approve movement for this token before you can move it.</small>:null}
+    {attackAvailable&&!delegated?<PlayerMapOpportunity actor={actor}
+      targets={encounter.combatants.filter(row=>row.kind==='enemy'&&!row.defeated)}
+      character={character}
+      submit={(id,input)=>combatApi.commandPlayer(campaignId,character.id,id,{
+        ...input,revision:encounter.combat.revision
+      })}/>:null}
+    {movement&&!approved&&!delegated?<small>Dash costs {MAP_MOVE_AP.dash} AP and uses the distance approved by your GM.</small>:null}
+  </>;
   return presentation?content:<Panel title="Battle Maps" eyebrow="Shared Campaign Scenes">{content}</Panel>;
 }

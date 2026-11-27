@@ -1,0 +1,43 @@
+name: Advanced Dice Phase 3.10 Effects Acceptance (test only)
+on:
+  push:
+    branches: [Website-Build-Test]
+    paths:
+      - 'src/dice/dicePresentationModel.mjs'
+      - 'src/dice/DiceEffectsControls.jsx'
+      - 'src/dice/DiceOutcomeEffects.jsx'
+      - 'src/dice/AsteriaDiceTray.jsx'
+      - 'src/styles/advanced-dice.css'
+      - 'scripts/dice-engine-phase3-10.test.mjs'
+      - 'scripts/dice-prototype/phase3-10*'
+      - '.github/workflows/dice-phase3-10-acceptance.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: asteria-phase3-10-effects-acceptance
+  cancel-in-progress: true
+jobs:
+  effects:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Verify settings, criticals, audio, accessibility policy and 112 unchanged results
+        run: node --test scripts/dice-engine-phase3-10.test.mjs
+      - name: Install browser driver
+        run: npm install --no-save --package-lock=false --ignore-scripts --no-audit --no-fund playwright@1.56.1
+      - name: Verify actual 3D effects, critical outcomes, mute, reduced motion and mobile
+        run: node scripts/dice-prototype/phase3-10-runner.mjs
+      - name: Save Chromium effects evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asteria-dice-phase3-10-effects
+          path: dice-phase3-10-evidence/
+          if-no-files-found: warn

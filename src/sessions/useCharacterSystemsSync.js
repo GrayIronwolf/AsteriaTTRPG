@@ -1,28 +1,50 @@
-import { useEffect, useRef, useState } from 'react';
-import { firebaseService } from '../firebase/asteriaFirebaseService.js';
-import { resourceDefinitions } from '../state/resourceEngine.mjs';
-import { resourcePair } from '../state/resourceValues.mjs';
+import {useEffect,useRef,useState} from 'react';
+import {firebaseService} from '../firebase/asteriaFirebaseService.js';
+import {characterSystemsRefreshDecision,nextCharacterSystemsDeadline} from '../state/characterSystemsSyncModel.mjs';
 
-// Refresh only at initialization or meaningful encounter changes. Pure render
-// calculations can tick without installing another listener or writing each tick.
-export function useCharacterSystemsSync(campaignId,characters,encounter,editable) {
-  const attempts=useRef(new Set()),[error,setError]=useState('');
-  useEffect(()=>{attempts.current.clear();setError('');},[campaignId]);
+// Persist canonical transitions only when due, never on every UI clock tick.
+export function useCharacterSystemsSync(campaignId,characters,encounter,editable,online=true) {
+  const attempted=useRef(new Set()),inflight=useRef(new Set()),retryTimer=useRef(null);
+  const mounted=useRef(false),[retryTick,setRetryTick]=useState(0),[error,setError]=useState('');
   useEffect(()=>{
-    if(!editable || !campaignId) return;
-    let active=true;
-    const combat=encounter?.status==='active'?(encounter.combatId || 'legacy-combat'):'';
-    for(const character of Object.values(characters || {})) {
-      if(!character?.id) continue;
-      const reset=resourceDefinitions(character).some(row=>row.reset && (character.resourceState?.[row.id]?.combatId!==combat || row.reset.unconscious!==undefined && resourcePair(character.hp)[0]<=0 && resourcePair(character[row.id] || character.resources?.[row.id])[0]!==row.reset.unconscious));
-      const roundExpiry=(character.conditions || []).some?.(row=>row.encounterId && !row.expired && (row.encounterId!==combat || row.untilRound && Number(encounter?.round)>=row.untilRound));
-      if(character.coreStateVersion===1 && !reset && !roundExpiry) continue;
-      const key=`${character.id}:${character.coreStateVersion || 0}:${combat}:${encounter?.round || 0}:${resourcePair(character.hp)[0]<=0}`;
-      if(attempts.current.has(key)) continue;
-      attempts.current.add(key);
-      firebaseService.refreshSystems(campaignId,character.id).then(result=>{if(active && result?.ok===false)setError(result.error);}).catch(reason=>{if(active)setError(reason.message);});
+    mounted.current=true;
+    return()=>{
+      mounted.current=false;
+      if(retryTimer.current){clearTimeout(retryTimer.current);retryTimer.current=null;}
+    };
+  },[]);
+  useEffect(()=>{
+    attempted.current.clear();inflight.current.clear();setError('');
+    if(retryTimer.current){clearTimeout(retryTimer.current);retryTimer.current=null;}
+  },[campaignId]);
+  useEffect(()=>{
+    if(!editable||!online||!campaignId)return undefined;
+    const now=Date.now();
+    const scheduleRetry=()=>{
+      if(retryTimer.current||!mounted.current)return;
+      retryTimer.current=setTimeout(()=>{
+        retryTimer.current=null;
+        if(mounted.current)setRetryTick(value=>value+1);
+      },15000);
+    };
+    for(const character of Object.values(characters||{})){
+      const decision=characterSystemsRefreshDecision(character,encounter,now);
+      if(!decision||attempted.current.has(decision.key)||inflight.current.has(character.id))continue;
+      attempted.current.add(decision.key);
+      inflight.current.add(character.id);
+      Promise.resolve().then(()=>firebaseService.refreshSystems(campaignId,character.id))
+        .then(result=>{
+          if(result?.ok===false)throw new Error(result.error||'Character system synchronization failed.');
+          if(mounted.current)setError('');
+        }).catch(reason=>{
+          attempted.current.delete(decision.key);
+          if(mounted.current){setError(reason?.message||'Character system synchronization failed.');scheduleRetry();}
+        }).finally(()=>{inflight.current.delete(character.id);});
     }
-    return()=>{active=false;};
-  },[campaignId,characters,encounter,editable]);
+    const next=nextCharacterSystemsDeadline(characters,encounter,now);
+    if(next===null)return undefined;
+    const timeout=setTimeout(()=>setRetryTick(value=>value+1),Math.max(20,Math.min(2147483647,next-now+20)));
+    return()=>clearTimeout(timeout);
+  },[campaignId,characters,encounter,editable,online,retryTick]);
   return error;
 }

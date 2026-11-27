@@ -52,9 +52,9 @@ test('Player and GM saves do not mutate a replacement account or campaign',()=>{
  assert.match(player,/if\(scopeRef\.current===scope&&!dirty\.current\)setPreferences\(saved\)/);
  const gm=read('src/dashboards/GMDashboard.jsx');
  assert.match(gm,/if\(dashboardSaveScope\.current!==subscriptionScope\)return/);
- assert.match(gm,/if\(dashboardSaveScope\.current!==saveScope\)return result/);
- assert.match(gm,/if\(dashboardSaveScope\.current!==saveScope\)return;/);
- assert.match(gm,/setDashboardSettingsMessage\(''\)/);
+ assert.match(gm,/if\(dashboardSaveScope\.current!==scope\)return \{ok:false/);
+ assert.match(gm,/if\(dashboardSaveScope\.current===scope\)/);
+ assert.match(gm,/canvasSaveChain\.current=write\.catch/);
 });
 
 test('GM navigation restore remains scoped to authenticated campaign user',()=>{

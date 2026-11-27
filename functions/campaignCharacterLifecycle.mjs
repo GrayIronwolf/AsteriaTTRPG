@@ -1,5 +1,5 @@
 import {createHash} from 'node:crypto';
-import {characterCapacityLimits,assertCharacterLinkCapacity,
+import {ensureActiveMember,characterCapacityLimits,assertCharacterLinkCapacity,
   ensureOwnedCampaignSheet} from './campaignCharacterLinks.mjs';
 import {ownedGameplayMirrorPatch,incomingSnapshotIsStale} from '../src/state/characterIntegrityModel.mjs';
 
@@ -36,13 +36,6 @@ function checkLinkKey(key,link){
     key.ownerUid!==link.ownerUid||key.sourceCharacterId!==link.sourceCharacterId||
     key.campaignCharacterId!==link.campaignCharacterId)
     throw Error('Character link reservation needs reconciliation.');
-}
-function memberActive(c,cid,uid,m,p){
-  const role=uid===c.ownerUid?'owner':m?.role;
-  if(!object(m)||m.uid!==uid||m.campaignId!==cid||m.status!=='active'||
-    m.role!==role||!revision(m.revision)||!object(p)||
-    p.campaignId!==cid||p.role!==role||p.status!=='active')
-    throw Error('Restoring requires active membership and a matching projection.');
 }
 function rootIndexes(c,link,shouldExist){
   const id=link.campaignCharacterId,uid=link.ownerUid;
@@ -308,9 +301,9 @@ export async function changeCampaignCharacterLifecycle(db,actorUid,
           throw Error('Inactive archived gameplay requires reconciliation.');
       }
       if(action==='restore'){
-        memberActive(campaign,campaignId,link.ownerUid,
+        ensureActiveMember(campaign,
           memberSnap.exists?memberSnap.data():null,
-          projectionSnap.exists?projectionSnap.data():null);
+          projectionSnap.exists?projectionSnap.data():null,link.ownerUid,campaignId,'Restoring requires active membership and a matching projection.');
         if(campaign.settings?.allowPlayerLinkCharacter===false||
           (link.sourceKind==='forge'&&campaign.settings?.allowPlayerCreateCharacter===false))
           throw Error('The GM has disabled restoring this character.');

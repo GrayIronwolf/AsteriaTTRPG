@@ -273,6 +273,11 @@
 
   function campaignRole(campaign) {
     const uid = accountKey();
+    if(campaign.membershipSchemaVersion===2){
+      const role=window.AsteriaFirebase?.getDiscoveredCampaignRole?.(campaign.id,uid);
+      return role==='owner'||role==='co-gm'?'GM':role==='player'?'Player':'';
+    }
+    if(![1,undefined,null].includes(campaign.membershipSchemaVersion))return '';
     const roles = campaign.roles || {};
     if (campaign.ownerUid === uid || roles[uid] === 'gm' || arrayValue(campaign.gmUids).includes(uid)) return 'GM';
     if (roles[uid] === 'player' || arrayValue(campaign.playerUids).includes(uid)) return 'Player';
@@ -566,6 +571,15 @@
         const info=await api.previewSecureCampaignInvitation(
           invitation.campaignId,invitation.inviteId,invitation.token);
         if(!valid())return;
+        if(info.campaignId!==invitation.campaignId||info.requiresGMApproval!==true)
+          throw Error('This invitation is unavailable.');
+        if(['pending','approved','declined'].includes(info.status)){
+          status.textContent=info.status==='pending'?'Your request is pending GM approval.':
+            'The GM '+info.status+' your request.';
+          review.remove();
+          return;
+        }
+        if(info.status!=='available')throw Error('This invitation is unavailable.');
         status.textContent='Invitation verified. No membership has been granted.';
         const display=document.createElement('p');
         display.textContent='Campaign: '+String(info.campaignName||'Campaign')+

@@ -12,6 +12,7 @@
     "campaignJoinRequests": false,
     "campaignJoinReview": false,
     "campaignPlayerRoster": false,
+    "campaignAttendance": false,
     "campaignMemberControls": false,
     "campaignRolePermissions": false,
     "campaignCharacterLinks": false,

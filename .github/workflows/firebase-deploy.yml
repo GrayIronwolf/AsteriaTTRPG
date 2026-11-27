@@ -11,6 +11,7 @@ on:
           - auth-check
           - backup-audit
           - campaign-backend-inventory
+          - universal-check-deploy
           - campaign-backend-deploy
           - account-id-inventory
           - account-id-activation-audit
@@ -184,6 +185,150 @@ jobs:
           set -euo pipefail
           node "$RUNNER_TEMP/asteria-production-cli/node_modules/firebase-tools/lib/bin/firebase.js" deploy \
             --project asteria-ttrpg --only functions,firestore,storage --non-interactive
+
+
+  asteria_action_test_branch_deploy:
+    name: Approved asteriaAction-only deploy from Website-Build-Test
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.ref == 'refs/heads/Website-Build-Test' &&
+      inputs.operation == 'deploy' &&
+      inputs.production_confirmation == 'DEPLOY-ASTERIA-ACTION-TEST-BRANCH'
+    environment: firebase-production
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Verify exact release branch and target
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = 'refs/heads/Website-Build-Test'
+          test -f firebase.json
+          node -e "const f=require('./firebase.json');if(!f.functions?.some?.(x=>x.codebase==='asteria'&&x.source==='.') )throw Error('Unexpected Firebase functions codebase');"
+          git status --short
+      - run: npm ci
+      - run: npm run audit:production
+      - run: npm run lint
+      - run: npm test
+      - run: npm run test:firebase
+      - run: npm run build
+      - name: Verify compiled website assets match the reviewed source
+        run: git diff --exit-code -- react-dist data/compendium.js data/compendium-handbook.js data/compendium-index.js data/compendium-parts
+      - name: Authenticate to the existing Asteria Firebase project
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: asteria-ttrpg
+          workload_identity_provider: ${{ vars.FIREBASE_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.FIREBASE_DEPLOY_SERVICE_ACCOUNT }}
+          create_credentials_file: true
+      - name: Install isolated pinned Firebase CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/asteria-action-cli"
+          npm install --prefix "$RUNNER_TEMP/asteria-action-cli" --no-save --no-audit --no-fund firebase-tools@15.35.0
+          node - "$RUNNER_TEMP/asteria-action-cli" <<'NODE'
+          const {createRequire}=require('node:module');
+          const {join}=require('node:path');
+          const cli=createRequire(join(process.argv[2],'node_modules/firebase-tools/package.json'));
+          const minimatch=cli('minimatch');
+          const version=cli('minimatch/package.json').version;
+          if(typeof minimatch!=='function'||!/^3\./.test(version)||!minimatch('functions/index.mjs','**/*.mjs'))
+            throw Error('Isolated Firebase CLI minimatch API mismatch.');
+          NODE
+      - name: Deploy only asteriaAction to the existing Firebase project
+        shell: bash
+        run: |
+          set -euo pipefail
+          node "$RUNNER_TEMP/asteria-action-cli/node_modules/firebase-tools/lib/bin/firebase.js" deploy \
+            --project asteria-ttrpg --only functions:asteria:asteriaAction --non-interactive
+      - name: Record targeted deployment provenance
+        run: |
+          echo "Deployed only asteriaAction from Website-Build-Test at $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+          echo "Firestore and Storage rules not deployed." >> "$GITHUB_STEP_SUMMARY"
+
+
+  universal_check_test_branch_deploy:
+    name: Approved Universal Check callable-only deploy from Website-Build-Test
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.ref == 'refs/heads/Website-Build-Test' &&
+      inputs.operation == 'universal-check-deploy' &&
+      inputs.production_confirmation == 'DEPLOY-ASTERIA-UNIVERSAL-CHECK-TEST-BRANCH'
+    environment: firebase-production
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Verify exact branch and existing Firebase target
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = 'refs/heads/Website-Build-Test'
+          node -e "const f=require('./firebase.json');if(!f.functions?.some?.(x=>x.codebase==='asteria'&&x.source==='.') )throw Error('Unexpected Firebase functions codebase');"
+      - run: npm ci
+      - run: npm run audit:production
+      - run: npm run lint
+      - run: npm test
+      - run: npm run test:firebase
+      - run: npm run build
+      - name: Verify generated website bundle
+        run: git diff --exit-code -- react-dist data/compendium.js data/compendium-handbook.js data/compendium-index.js data/compendium-parts
+      - name: Authenticate to the existing Firebase project
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: asteria-ttrpg
+          workload_identity_provider: ${{ vars.FIREBASE_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.FIREBASE_DEPLOY_SERVICE_ACCOUNT }}
+          create_credentials_file: true
+      - name: Install isolated verified Firebase CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/asteria-check-cli"
+          npm install --prefix "$RUNNER_TEMP/asteria-check-cli" --no-save --no-audit --no-fund firebase-tools@15.35.0
+          node - "$RUNNER_TEMP/asteria-check-cli" <<'NODE'
+          const {createRequire}=require('node:module');
+          const {join}=require('node:path');
+          const cli=createRequire(join(process.argv[2],'node_modules/firebase-tools/package.json'));
+          const minimatch=cli('minimatch');
+          const version=cli('minimatch/package.json').version;
+          if(typeof minimatch!=='function'||!/^3\./.test(version)||!minimatch('functions/index.mjs','**/*.mjs'))
+            throw Error('Firebase CLI dependency mismatch.');
+          NODE
+      - name: Deploy only asteriaUniversalCheck to existing Firebase
+        shell: bash
+        run: |
+          set -euo pipefail
+          node "$RUNNER_TEMP/asteria-check-cli/node_modules/firebase-tools/lib/bin/firebase.js" deploy \
+            --project asteria-ttrpg --only functions:asteria:asteriaUniversalCheck --non-interactive
+      - name: Record deployment provenance
+        run: |
+          echo "Deployed asteriaUniversalCheck from Website-Build-Test at $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+          echo "No Firestore rules, Storage rules or other functions deployed." >> "$GITHUB_STEP_SUMMARY"
 
   campaign_backend_inventory:
     name: Campaign backend callable inventory (read-only)

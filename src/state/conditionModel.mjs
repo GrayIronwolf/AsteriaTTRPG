@@ -13,7 +13,8 @@ export function activeConditions(character,clock={}) {return normalizeConditions
 export function expireConditions(character,clock={},rest='') {
   return normalizeConditions(character).map(row=>{
     const unit=row.duration?.unit;
-    const restExpired=rest && (unit==='short-rest' || rest==='long'&&unit==='long-rest');
+    const restExpired=(rest==='short'||rest==='long')&&
+      (unit==='short-rest'||rest==='long'&&unit==='long-rest');
     return !effectIsActive(row,clock)||restExpired?{...row,expired:true}:row;
   });
 }

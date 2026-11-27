@@ -1,0 +1,39 @@
+/* Local forged-metal materials, linked to the existing Asteria colour palette. */
+.badge{
+  --combat-badge-metal-light:#c8d1d8;--combat-badge-metal-mid:#7b8c9b;
+  --combat-badge-metal-dark:#304153;--combat-badge-face-raised:#203b51;
+  --combat-badge-face-deep:#07131b;--combat-badge-face-low:#102330;
+  --combat-badge-accent-neutral:var(--asteria-accent,#249ee8);
+  --combat-badge-accent-level:var(--asteria-gold,#d2aa56);
+  --combat-badge-accent-initiative:var(--asteria-accent,#249ee8);
+  --combat-badge-accent-ap:var(--asteria-success,#35d982);
+  --combat-badge-accent-timer:var(--asteria-info,#56b9e8);
+  --combat-badge-accent-warning:var(--asteria-danger,#c9475b);
+  --combat-badge-shadow:rgba(0,0,0,.6);
+  --combat-badge-warning-text:#ffccd2;
+}
+/* One scoped, reversible material treatment for the original five badges.
+ * Colours stay in frontend/src/styles/tokens.css, not individual dashboards. */
+.badge{--badge-accent:var(--combat-badge-accent-neutral);display:flex;position:relative;flex:none;flex-direction:column;align-items:center;gap:5px;width:100px;min-width:0;color:var(--asteria-text);text-align:center}
+.badge[data-kind='level']{--badge-accent:var(--combat-badge-accent-level);width:78px}
+.badge[data-kind='initiative']{--badge-accent:var(--combat-badge-accent-initiative)}
+.badge[data-kind='ap']{--badge-accent:var(--combat-badge-accent-ap)}
+.badge[data-kind='timer']{--badge-accent:var(--combat-badge-accent-timer)}
+.label{font:750 .63rem/1.2 var(--asteria-font-body);text-transform:uppercase;letter-spacing:.065em;white-space:nowrap;color:var(--asteria-text-muted);text-shadow:0 1px 2px var(--combat-badge-shadow)}
+.emblem{position:relative;width:100%;aspect-ratio:90/76;isolation:isolate}
+.badge[data-kind='level'] .emblem{aspect-ratio:90/100}
+.emblem svg{display:block;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 3px 3px var(--combat-badge-shadow))}
+.value{position:absolute;inset:0;display:grid;place-items:center;z-index:1;padding-top:1%;color:var(--asteria-text);font:800 clamp(1.3rem,2vw,1.8rem)/1 var(--asteria-font-body);font-variant-numeric:tabular-nums;text-shadow:0 2px 3px var(--combat-badge-shadow)}
+.badge[data-kind='timer'] .value{font-size:1.15rem}
+.badge[data-kind='level'] .label{position:absolute;top:27%;z-index:2;color:var(--asteria-text);font-size:.6rem;letter-spacing:.045em}
+.badge[data-kind='level'] .value{padding-top:23%;font-size:1.75rem}
+.badge[data-active='true'] .emblem svg{filter:drop-shadow(0 2px 4px var(--combat-badge-shadow)) drop-shadow(0 0 4px var(--badge-accent))}
+.badge[data-warning='true']{--badge-accent:var(--combat-badge-accent-warning)}
+.badge[data-warning='true'] .value{color:var(--combat-badge-warning-text)}
+.badge[data-size='compact']{width:53px;gap:2px}
+.badge[data-size='compact'] .label{font-size:.48rem}
+.badge[data-size='compact'] .value{font-size:1.05rem}
+.badge[data-kind='level'][data-size='compact'] .label{top:26%;font-size:.43rem}
+.badge[data-kind='level'][data-size='compact'] .value{font-size:1.18rem;padding-top:24%}
+@media(max-width:480px){.badge:not([data-size='compact']){width:clamp(62px,19vw,92px)}.badge:not([data-size='compact']) .label{font-size:.53rem}.badge[data-kind='level']:not([data-size='compact']) .value{font-size:1.45rem}}
+@media(prefers-reduced-motion:reduce){.badge,.emblem svg{animation:none;transition:none}}

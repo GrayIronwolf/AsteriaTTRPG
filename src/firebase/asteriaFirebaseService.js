@@ -25,9 +25,12 @@ function requireMethod(name) {
 }
 
 export const firebaseService = {
+  presentationRuntime:()=>api()?.getReactPresentationRuntime?.()||null,
   currentUser: () => api()?.getUser?.() || null,
   advancedDiceAction: data=>requireMethod('advancedDiceAction')(data),
   subscribeDiceWorkspace: onChange=>requireMethod('subscribeDiceWorkspace')(onChange),
+  subscribeDiceAppearanceLibrary: (onChange,onError)=>requireMethod('subscribeDiceAppearanceLibrary')(onChange,onError),
+  subscribeOwnedDiceCharacters: (onChange,onError)=>requireMethod('subscribeOwnedDiceCharacters')(onChange,onError),
   universalCheckAction: data=>requireMethod('universalCheckAction')(data),
   subscribeUniversalChecks: (campaignId,onChange,options)=>requireMethod('subscribeUniversalChecks')(campaignId,onChange,options),
   subscribeBattleMaps: (campaignId,onChange,options)=>requireMethod('subscribeBattleMaps')(campaignId,onChange,options),
@@ -42,12 +45,50 @@ export const firebaseService = {
   loadCampaigns: () => requireMethod('loadCampaigns')(),
   subscribeOwnedCharacter: (...args) => requireMethod('subscribeOwnedCharacter')(...args),
   subscribeCampaign: (campaignId, onChange) => requireMethod('subscribeCampaign')(campaignId, onChange),
+  subscribeCampaignMembership: (campaignId,onChange,onError) => requireMethod('subscribeCampaignMembership')(campaignId,onChange,onError),
+  subscribeCampaignMembers: (campaignId,onChange,onError) => requireMethod('subscribeCampaignMembers')(campaignId,onChange,onError),
+  // Existing authenticated, flag-gated campaign administration callables.
+  listCampaignPlayerRoster: campaignId => requireMethod('listCampaignPlayerRoster')(campaignId),
+  listCampaignAttendance: campaignId => requireMethod('listCampaignAttendance')(campaignId),
+  setCampaignAttendance: (campaignId,memberUid,mode,expectedRevision) =>
+    requireMethod('setCampaignAttendance')(campaignId,memberUid,mode,expectedRevision),
+  listCampaignJoinRequests: campaignId => requireMethod('listCampaignJoinRequests')(campaignId),
+  reviewCampaignJoinRequest: (campaignId,uid,decision,revision) =>
+    requireMethod('reviewCampaignJoinRequest')(campaignId,uid,decision,revision),
+  setCampaignJoinApprovalMode: (campaignId,mode) =>
+    requireMethod('setCampaignJoinApprovalMode')(campaignId,mode),
+  listPendingCampaignCharacterLinks: campaignId =>
+    requireMethod('listPendingCampaignCharacterLinks')(campaignId),
+  reviewCampaignCharacterLink: (campaignId,linkId,decision,revision) =>
+    requireMethod('reviewCampaignCharacterLink')(campaignId,linkId,decision,revision),
+  listCampaignCharacterLifecycle: campaignId =>
+    requireMethod('listCampaignCharacterLifecycle')(campaignId),
+  changeCampaignCharacterLifecycle: (campaignId,details) =>
+    requireMethod('changeCampaignCharacterLifecycle')(campaignId,details),
+  changeCampaignMemberRole: (campaignId,uid,role,revision,expectedRole,status) =>
+    requireMethod('changeCampaignMemberRole')(campaignId,uid,role,revision,expectedRole,status),
+  setCampaignCoGmPermission: (campaignId,uid,capability,enabled,revision,role,status) =>
+    requireMethod('setCampaignCoGmPermission')(campaignId,uid,capability,enabled,revision,role,status),
+  moderateCampaignMember: (campaignId,uid,action,revision,status,reason) =>
+    requireMethod('moderateCampaignMember')(campaignId,uid,action,revision,status,reason),
+  listCampaignMembershipActivity: campaignId =>
+    requireMethod('listCampaignMembershipActivity')(campaignId),
+  selectCampaignFriendRecipients: (campaignId,selection) =>
+    requireMethod('selectCampaignFriendRecipients')(campaignId,selection),
+  issueCampaignFriendInvitation: (campaignId,accountId,requestId,expiresInHours) =>
+    requireMethod('issueCampaignFriendInvitation')(campaignId,accountId,requestId,expiresInHours),
+  issueSecureCampaignInvitation: request =>
+    requireMethod('issueSecureCampaignInvitation')(request),
+  listSecureCampaignInvitations: (campaignId,cursor) =>
+    requireMethod('listSecureCampaignInvitations')(campaignId,cursor),
+  changeSecureCampaignInvitation: (campaignId,id,action,revision) =>
+    requireMethod('changeSecureCampaignInvitation')(campaignId,id,action,revision),
   subscribeCharacters: (campaignId, onChange) => requireMethod('subscribeCampaignCharacters')(campaignId, onChange),
   subscribeSession: (campaignId, onChange) => requireMethod('subscribeLiveSession')(campaignId, onChange),
   subscribePresence: (campaignId, sessionId, onChange) => requireMethod('subscribeSessionPresence')(campaignId, sessionId, onChange),
   fetchEventHistory: (...args) => requireMethod('fetchCampaignEventHistory')(...args),
   subscribeEvents: (campaignId, onChange, options) => requireMethod('subscribeCampaignEvents')(campaignId, onChange, options),
-  subscribeEncounter: (campaignId, onChange) => requireMethod('subscribeCampaignEncounter')(campaignId, onChange),
+  subscribeEncounter: (campaignId,onChange,mode='player') => requireMethod('subscribeCampaignEncounter')(campaignId,onChange,mode),
   subscribeGMWorkspace: (campaignId, onChange) => requireMethod('subscribeGMWorkspace')(campaignId, onChange),
   subscribePartyWorkspace: (campaignId, onChange) => requireMethod('subscribePartyWorkspace')(campaignId, onChange),
   subscribePartyChat: (campaignId, onChange) => requireMethod('subscribePartyChat')(campaignId, onChange),

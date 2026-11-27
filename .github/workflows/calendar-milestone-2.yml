@@ -1,0 +1,38 @@
+name: Verify Calendar Milestones 1 and 2 (test branch only)
+on:
+  push:
+    branches: [Website-Build-Test]
+    paths:
+      - 'src/state/asteriaCalendarModel.mjs'
+      - 'src/dashboards/AsteriaCalendarWorkspace.jsx'
+      - 'src/dashboards/CalendarDefinitionEditor.jsx'
+      - 'src/styles/asteria-calendar.css'
+      - 'functions/asteriaCalendarCommands.mjs'
+      - 'scripts/calendar-milestone1.test.mjs'
+      - 'scripts/calendar-milestone2.test.mjs'
+      - 'scripts/digital-gm-phase8-1.test.mjs'
+      - '.github/workflows/calendar-milestone-2.yml'
+      - 'package.json'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  calendar:
+    name: Calendar and celestial regression tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Calendar milestones 1 and 2
+        run: npm run test:asteria-calendar
+      - name: Calendar JavaScript module parse
+        run: |
+          node --check src/state/asteriaCalendarModel.mjs
+          node --check functions/asteriaCalendarCommands.mjs
+      - name: React lint
+        run: npm run lint

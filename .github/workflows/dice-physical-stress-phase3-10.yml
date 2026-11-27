@@ -1,0 +1,37 @@
+name: 112-Throw Dice Tower Real-Physics Stress (test branch only)
+on:
+  push:
+    branches: [Website-Build-Test]
+    paths:
+      - 'src/dice/diceTowerScene.mjs'
+      - 'src/dice/diceTowerLayout.mjs'
+      - 'scripts/dice-prototype/phase3-10-stress*'
+      - '.github/workflows/dice-physical-stress-phase3-10.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: asteria-dice-real-physics-stress
+  cancel-in-progress: true
+jobs:
+  stress:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Install headless browser
+        run: npm install --no-save --package-lock=false --ignore-scripts --no-audit --no-fund playwright@1.56.1
+      - name: Simulate 112 actual Cannon predictions on all 18 tower configurations
+        run: node scripts/dice-prototype/phase3-10-stress-runner.mjs
+      - name: Archive physics trajectory and resource evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asteria-dice-112-physics-stress
+          path: dice-phase3-10-stress-evidence/
+          if-no-files-found: warn

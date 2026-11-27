@@ -1,0 +1,35 @@
+name: Milestone 3.6 - Hybrid gameplay, second-screen and recovery
+on:
+  pull_request:
+    branches:
+      - Website-Build-Test
+    paths:
+      - 'functions/playerPresentationCommands.mjs'
+      - 'functions/hybridPresentationSessionCommands.mjs'
+      - 'functions/encounterRecovery.mjs'
+      - 'functions/livePresentationProjectionTriggers.mjs'
+      - 'src/dashboards/presentation/CampaignPresentationWorkspace.jsx'
+      - 'src/state/hybridPresentationSessionModel.mjs'
+      - 'scripts/milestone-3-6-hybrid-recovery.test.mjs'
+      - '.github/workflows/milestone-3-6-verify.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Milestone 3.6 - Verify hybrid session and recovery safeguards
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Run hybrid, blackout and recovery regression tests
+        run: node --test scripts/milestone-3-6-hybrid-recovery.test.mjs
+      - name: Verify production React bundle
+        run: npm run build

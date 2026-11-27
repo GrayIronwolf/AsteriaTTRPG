@@ -1,6 +1,6 @@
 import { characterClasses } from '../state/talentModel.mjs';
 import { useAsyncAction } from './useAsyncAction.js';
-import { resourceDefinitions, storedResource } from '../state/resourceEngine.mjs';
+import { resourceDefinitions, resourceSnapshot } from '../state/resourceEngine.mjs';
 import { effectiveCharacteristicValue } from '../state/effectsEngine.mjs';
 import { ManualNumberInput } from '../components/ManualNumberInput.jsx';
 import { isManualNumber, manualNumber } from '../state/manualNumber.mjs';
@@ -93,26 +93,24 @@ function selectedTitle(character = {}, preferences = normalizeDashboardPreferenc
   return titles.find(title => title.id === selectedId)?.text || titles[0]?.text || '';
 }
 
-function resourcePair(value) {
-  if(Array.isArray(value)) return [Number(value[0] || 0), Number(value[1] || 0)];
-  if(value && typeof value === 'object') return [Number(value.current ?? value.value ?? 0), Number(value.maximum ?? value.max ?? 0)];
-  return [Number(value || 0), Number(value || 0)];
-}
-
-function ResourceControl({ label, resource, value, editable, onResourceChange, reserved = 0 }) {
+function ResourceControl({ label, resource, state, editable, onResourceChange, reserved = 0 }) {
   const [amount, setAmount] = useState('');
   const {busy,message,run}=useAsyncAction();
-  const pair = resourcePair(value);
+  const valid = isManualNumber(amount,{min:1,max:1e9});
+  const canAdjust = Boolean(editable && onResourceChange && state && !busy && valid);
+  const canRemove = canAdjust && state.current > state.minimum;
+  const canAdd = canAdjust && (state.allowOverflow || state.current < state.cap);
   const update = direction => {
-    if(!onResourceChange || !isManualNumber(amount,{min:1})) return;
+    if(direction < 0 ? !canRemove : !canAdd) return;
     return run(()=>onResourceChange(resource,direction*manualNumber(amount)));
   };
   return <div className="react-player-resource-row">
-    <ResourceBar label={label} kind={resource} value={pair[0]} maximum={pair[1]} compact reserved={reserved} />
+    <ResourceBar label={label} kind={resource} value={state?.current ?? 0} maximum={state?.maximum ?? 0} compact reserved={reserved} />
+    {!state?<small role="status">Resource unavailable. Wait for live sync.</small>:null}
     <div className="react-player-resource-controls" aria-label={`${label} manual adjustment`}>
-      <ManualNumberInput aria-label={`${label} change amount`} disabled={!editable || busy} min="1" value={amount} onChange={event => setAmount(event.target.value)} />
-      <button aria-label={`Remove ${amount || 'amount from'} ${label}`} disabled={!editable || busy || !isManualNumber(amount,{min:1})} onClick={() => update(-1)} type="button">-</button>
-      <button aria-label={`Add ${amount || 'amount to'} ${label}`} disabled={!editable || busy || !isManualNumber(amount,{min:1})} onClick={() => update(1)} type="button">+</button>
+      <ManualNumberInput aria-label={`${label} change amount`} disabled={!editable || busy || !state || !onResourceChange} min="1" max="1000000000" value={amount} onChange={event => setAmount(event.target.value)} />
+      <button aria-label={`Remove ${amount || 'amount from'} ${label}`} disabled={!canRemove} onClick={() => update(-1)} type="button">-</button>
+      <button aria-label={`Add ${amount || 'amount to'} ${label}`} disabled={!canAdd} onClick={() => update(1)} type="button">+</button>
     </div>
     {message?<small role="status">{message}</small>:null}
   </div>;
@@ -163,10 +161,14 @@ export function ExperienceBar({ character = {}, cinematic = false }) {
 
 export function ResourceBarGroup({ character = {}, editable, onResourceChange }) {
   const soulDamage = soulDamageValue(character);
-  const resources=resourceDefinitions(character).map(row=>[row.name,row.id,storedResource(character,row.id),row.id==='hp'?soulDamage:0]);
+  const resources=resourceDefinitions(character).map(row=>{
+    let state=null;
+    try { state=resourceSnapshot(character,row.id); } catch { /* Invalid records remain read-only. */ }
+    return [row.name,row.id,state,row.id==='hp'?soulDamage:0];
+  });
   return <section className="react-player-topbar-section react-player-resources" aria-label="Character resources">
     <div className="react-player-section-label react-player-topbar-heading"><AsteriaIcon name="use" /><span>Core Resources</span></div>
-    <div className="react-player-resource-list">{resources.map(([label, resource, value, reserved]) => <ResourceControl key={resource} label={label} resource={resource} value={value} reserved={reserved} editable={editable} onResourceChange={onResourceChange} />)}</div>
+    <div className="react-player-resource-list">{resources.map(([label, resource, state, reserved]) => <ResourceControl key={`${character.id || ''}:${resource}`} label={label} resource={resource} state={state} reserved={reserved} editable={editable} onResourceChange={onResourceChange} />)}</div>
   </section>;
 }
 

@@ -55,14 +55,14 @@ test('Visual editor handles pointer cancel/lost capture, locks and keyboard resi
  assert.match(editor,/onApply\(combined\)/);
 });
 
-test('GM unsaved layout draft survives background subscriptions and resets on account changes',()=>{
+test('GM freeform canvas persists through the existing account and campaign settings',()=>{
  const gm=read('src/dashboards/GMDashboard.jsx');
- assert.match(gm,/const dashboardDraftDirty=useRef\(false\)/);
- assert.match(gm,/dashboardDraftDirty\.current=false;[\s\S]*?setDashboardSettingsDraft\(defaultDashboardLayout\('gm'\)\)/);
- assert.match(gm,/if\(!dashboardDraftDirty\.current\)\s*setDashboardSettingsDraft\(normalizeDashboardLayout\(layout,'gm'\)\)/);
- assert.match(gm,/dashboardDraftDirty\.current=true;\s*dashboardDraftRevision\.current\+\+;\s*setDashboardSettingsDraft\(change\)/);
- assert.match(gm,/if\(result\?\.ok&&dashboardDraftRevision\.current===saveRevision\)dashboardDraftDirty\.current=false/);
- assert.match(gm,/onChange=\{updateDashboardSettingsDraft\}/);
+ const canvas=read('src/dashboards/combat/CombatCommandCentre.jsx');
+ assert.match(gm,/const canvasSaveChain=useRef\(Promise.resolve\(\)\)/);
+ assert.match(gm,/saveGMCanvas=async canvas=>/);
+ assert.match(gm,/canvasConfig=\{GM_DASHBOARD_CANVAS_CONFIG\}/);
+ assert.doesNotMatch(gm,/DashboardLayoutEditor|DashboardLayoutWorkspace|dashboardDraftDirty/);
+ assert.match(canvas,/onSaveLayout=|onSaveLayout\(normalized\)/);
  const player=read('src/dashboards/CharacterGallerySettings.jsx');
  assert.match(player,/const savedPreferencesKey=JSON\.stringify\(character\.dashboardPreferences\|\|\{\}\)/);
 });
