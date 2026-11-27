@@ -566,6 +566,15 @@
         const info=await api.previewSecureCampaignInvitation(
           invitation.campaignId,invitation.inviteId,invitation.token);
         if(!valid())return;
+        if(info.campaignId!==invitation.campaignId||info.requiresGMApproval!==true)
+          throw Error('This invitation is unavailable.');
+        if(['pending','approved','declined'].includes(info.status)){
+          status.textContent=info.status==='pending'?'Your request is pending GM approval.':
+            'The GM '+info.status+' your request.';
+          review.remove();
+          return;
+        }
+        if(info.status!=='available')throw Error('This invitation is unavailable.');
         status.textContent='Invitation verified. No membership has been granted.';
         const display=document.createElement('p');
         display.textContent='Campaign: '+String(info.campaignName||'Campaign')+

@@ -73,6 +73,10 @@ export const firebaseService = {
     requireMethod('moderateCampaignMember')(campaignId,uid,action,revision,status,reason),
   listCampaignMembershipActivity: campaignId =>
     requireMethod('listCampaignMembershipActivity')(campaignId),
+  selectCampaignFriendRecipients: (campaignId,selection) =>
+    requireMethod('selectCampaignFriendRecipients')(campaignId,selection),
+  issueCampaignFriendInvitation: (campaignId,accountId,requestId,expiresInHours) =>
+    requireMethod('issueCampaignFriendInvitation')(campaignId,accountId,requestId,expiresInHours),
   issueSecureCampaignInvitation: request =>
     requireMethod('issueSecureCampaignInvitation')(request),
   listSecureCampaignInvitations: (campaignId,cursor) =>

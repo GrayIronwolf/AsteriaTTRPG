@@ -137,6 +137,11 @@ export async function notifyVerifiedEmailRecipient(db,recipientUid,{
  * campaign/invite IDs; no bearer token or email is stored in the inbox.
  * Recheck in the acceptance transaction, not only in a preview.
  */
+export function friendInvitationNoticeRef(db,recipientUid,campaignId,inviteId){
+  const id=notificationId(recipientUid,'friend-invitation:'+campaignId+':'+inviteId);
+  return db.doc(path(recipientUid)+'/'+id);
+}
+
 export async function assertFriendInvitationNotice(db,recipientUid,{
   campaignId,inviteId
 },tx=null){
