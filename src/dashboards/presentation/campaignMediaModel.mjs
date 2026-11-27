@@ -1,5 +1,5 @@
 import {
-  battleMapAssetPath,battleMapCanPreview,battleMapEditableSettings,
+  battleMapAssetPath,battleMapCanPreview,newBattleMapSettings,battleMapEditableSettings,
   battleMapDimensions,battleMapFileError,battleMapFileKind,battleMapTokens,
   BATTLE_MAP_MAX_RECORDS
 } from '../../state/battleMapModel.mjs';
@@ -8,7 +8,7 @@ import {publicTerrainCells} from '../../state/battleMapTerrainModel.mjs';
 import {atlasMapCanPreview,atlasPublicProjection} from '../../state/worldAtlasModel.mjs';
 import {PRESENTATION_DEFAULT,presentationDraft,presentationId,safePartyPresentation} from '../../state/playerPresentationModel.mjs';
 
-export {battleMapAssetPath,battleMapEditableSettings,battleMapDimensions,
+export {battleMapAssetPath,newBattleMapSettings,battleMapEditableSettings,battleMapDimensions,
   battleMapFileError,battleMapFileKind,BATTLE_MAP_MAX_RECORDS,atlasMapCanPreview,presentationDraft};
 export const mapId=presentationId;
 const number=(value,fallback)=>Number.isFinite(Number(value))?Number(value):fallback;
