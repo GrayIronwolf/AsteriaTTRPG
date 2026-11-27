@@ -2554,6 +2554,22 @@ const firebasePublicApi = {
       action:'submit',campaignId,ucn:campaignCode(codeValue),characterId:characterId || null
     })).data;
   },
+  listCampaignAttendance: async function(campaignId){
+    if(!functionsClient||!currentUser)throw new Error('Sign in as a campaign GM.');
+    if(window.AsteriaFeatureFlags?.campaignAttendance!==true)
+      throw new Error('Attendance is not activated.');
+    return (await httpsCallable(functionsClient,'asteriaCampaignJoinReview')({
+      action:'attendance-list',campaignId
+    })).data;
+  },
+  setCampaignAttendance: async function(campaignId,memberUid,mode,expectedRevision){
+    if(!functionsClient||!currentUser)throw new Error('Sign in as a campaign GM.');
+    if(window.AsteriaFeatureFlags?.campaignAttendance!==true)
+      throw new Error('Attendance is not activated.');
+    return (await httpsCallable(functionsClient,'asteriaCampaignJoinReview')({
+      action:'attendance-set',campaignId,memberUid,mode,expectedRevision
+    })).data;
+  },
   listCampaignPlayerRoster: async function(campaignId){
     if(!functionsClient || !currentUser) throw new Error('Sign in as a campaign GM.');
     if(window.AsteriaFeatureFlags?.campaignPlayerRoster!==true) throw new Error('Campaign roster is not activated.');
