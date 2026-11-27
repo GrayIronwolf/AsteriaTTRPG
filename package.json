@@ -32,7 +32,7 @@
     "test:inventory-phase-7-2": "node --test scripts/inventory-phase-7-2.test.mjs",
     "test:inventory-phase-7-3": "node --test scripts/inventory-phase-7-3.test.mjs",
     "test:inventory-phase-8-1": "node --test scripts/inventory-phase-8-1.test.mjs",
-    "test:ownership": "node --test scripts/character-ownership.test.mjs scripts/character-dashboard-access.test.mjs scripts/data-sync-regression.test.mjs scripts/new-character-flow.test.mjs",
+    "test:ownership": "node --test scripts/character-ownership.test.mjs scripts/character-dashboard-access.test.mjs scripts/data-sync-regression.test.mjs scripts/new-character-flow.test.mjs scripts/character-forge-save.test.mjs",
     "test:campaign-connections": "node --test scripts/campaign-connection-phase1-3.test.mjs",
     "test:campaign-ucn": "node --test scripts/campaign-ucn.test.mjs",
     "test:campaign-membership": "node --test scripts/campaign-membership.test.mjs",
