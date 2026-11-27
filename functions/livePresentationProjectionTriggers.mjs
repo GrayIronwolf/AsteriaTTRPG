@@ -70,8 +70,13 @@ async function synchronize(db,campaignId,changedMapId=''){
     const safe=publicCombatSnapshot(encounter,scope);
     const shared=hybrid.data();
     const hybridOpen=shared?.status==='open'&&shared.expiresAt?.toMillis?.()>Date.now();
-    const summary={...publicCombatPresentation(encounter,scope),epoch:hybridOpen?shared.epoch:'',
-      visible:Boolean(hybridOpen&&presentation.data()?.scene==='combat')};
+    const showCombat=Boolean(hybridOpen&&presentation.data()?.scene==='combat');
+    const summary=showCombat?{
+      ...publicCombatPresentation(encounter,scope),epoch:shared.epoch,visible:true
+    }:{
+      active:false,round:0,current:'',endsAt:0,
+      epoch:hybridOpen?shared.epoch:'',visible:false
+    };
     for(const row of maps){
       saveExploration(tx,ref('battleMaps',row.mapId),row.raw,row.value);
       writeProjection(tx,row.output,row.current,row.value);
