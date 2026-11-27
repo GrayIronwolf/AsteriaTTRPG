@@ -2445,22 +2445,26 @@ const firebasePublicApi = {
       return {ok:false,error:error.message||String(error)};
     }
   },
-  saveCharacter: async function(id, character){
-    if(!db || !currentUser || !id || !character || character.ownerUid !== currentUser.uid) return false;
+  saveCharacter: async function(id, character, options={}){
+    const fail=(message)=>{ if(options.throwOnError) throw new Error(message); return false; };
+    if(!db) return fail('Firebase storage is unavailable.');
+    if(!currentUser) return fail('Sign in before saving your character.');
+    if(!id || !character) return fail('Character data is missing.');
+    if(character.ownerUid !== currentUser.uid) return fail('Character ownership does not match the signed-in account.');
     const uid=currentUser.uid;
     try{
       const clean = JSON.parse(JSON.stringify(character));
       await setDoc(doc(db, 'users', uid, 'characters', id), Object.assign({}, clean, { id, ownerUid: uid, updatedAt: serverTimestamp() }), { merge:true });
-      if(currentUser?.uid!==uid) return false;
+      if(currentUser?.uid!==uid) return fail('Account changed during character save.');
       const profileRef = doc(db, 'users', uid);
       const chars = Array.from(new Set([...(currentProfile?.characters || []), id]));
       currentProfile = Object.assign({}, currentProfile || {}, { characters: chars });
       await setDoc(profileRef, { characters: chars, updatedAt: serverTimestamp() }, { merge:true });
       saveLocalProfile(uid, Object.assign({}, currentProfile, { characters: chars }));
-      if(currentUser?.uid!==uid) return false;
+      if(currentUser?.uid!==uid) return fail('Account changed during character save.');
       await syncCharacterToCampaigns(id, clean);
       return true;
-    }catch(err){ console.warn('Could not save character to Firestore.', err); return false; }
+    }catch(err){ console.warn('Could not save character to Firestore.', err); if(options.throwOnError) throw err; return false; }
   },
   saveCharacters: async function(characterMap){
     if(!db || !currentUser || !characterMap) return false;
