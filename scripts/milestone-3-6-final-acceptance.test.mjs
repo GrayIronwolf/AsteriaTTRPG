@@ -87,6 +87,15 @@ test('3.6 acceptance: reconnection rejects expired or revoked viewer grants',()=
   for(const event of ['visibilitychange','online','offline','pageshow'])
     assert.ok(reconnect.includes(event));
 });
+test('3.6 acceptance: GM and player reconnect discard stale listener state',()=>{
+  const workspace=source('src/dashboards/combat/CombatWorkspace.jsx');
+  assert.match(workspace,/data-testid="site-gm-combat-reconnect"/);
+  assert.match(workspace,/data-testid="site-player-combat-reconnect"/);
+  assert.match(workspace,/setGeneration\(value=>value\+1\)/);
+  assert.match(workspace,/\[api,method,\.\.\.args,generation\]/);
+  assert.match(workspace,/setState\(\{loading:true,data:null,error:''\}\)/);
+  assert.match(workspace,/stop\?\.\(\)/);
+});
 test('3.6 acceptance: recovery checkpoint retains fog and combat logs without private pending actions',()=>{
   const now=Date.now();
   const checkpoint=captureEncounterRecovery({
