@@ -1,11 +1,15 @@
+import {resizeTerrainCells,publicTerrainCells} from '../../state/battleMapTerrainModel.mjs';
+import {BattleMapVisionControls} from './BattleMapVisionControls.jsx';
+import {cellOutline} from '../../state/battleMapGrid.mjs';
+import {GridLayer,CellFog,GeometryControls,TerrainControls,terrainAtPoint,firstTerrainBrush,RouteReading,AreaControls,AreaOverlay} from './BattleMapLayers.jsx';
 import React,{useEffect,useMemo,useRef,useState} from 'react';
 import {
   battleMapEditableSettings,battleMapFileError,BATTLE_MAP_MAX_RECORDS,
   timestampRevision
 } from './campaignMediaModel.mjs';
-import {paintFogStroke,createFogCells,hiddenFogRuns,measureGridDistance} from '../../state/battleMapFogModel.mjs';
+import {mapFogStroke,resizeFogCells,createFogCells,hiddenFogRuns} from '../../state/battleMapFogModel.mjs';
 import {battleMapCameraView,DEFAULT_BATTLE_MAP_CAMERA,encounterMapLink} from '../../state/battleMapCamera.mjs';
-import {mapCell,mapCellCenter,mapCellKey,mapReachableRoutes,mapRoutePoints,hexCellPoints} from '../../state/battleMapRoutes.mjs';
+import {mapCell,mapCellCenter,mapCellKey,mapReachableRoutes,mapRoutePoints,measureMapRoute} from '../../state/battleMapRoutes.mjs';
 import {MAP_MOVE_AP} from '../../state/battleMapMovement.mjs';
 import {battleMapPoint} from '../../state/battleMapModel.mjs';
 import styles from './CampaignMapWorkspace.module.css';
@@ -13,7 +17,7 @@ import styles from './CampaignMapWorkspace.module.css';
 const empty=()=>({
   name:'',description:'',visibility:'gm',gridColumns:20,gridRows:15,
   gridOpacity:40,gridVisible:true,fogEnabled:false,
-  fogCells:createFogCells(20,15),metresPerCell:3,tokens:[],gridType:'square',terrainCells:[]
+  fogCells:createFogCells(20,15),metresPerCell:3,gridType:'hex',terrainCells:[],tokens:[]
 });
 const fileSize=async file=>{
   const url=URL.createObjectURL(file);
@@ -97,29 +101,26 @@ export function CampaignMapCanvas({api,campaignId,map,mode='player',atlas=false,
   const node=useRef(null),drag=useRef(null),[playing,setPlaying]=useState(true);
   const [localCamera,setLocalCamera]=useState(DEFAULT_BATTLE_MAP_CAMERA);
   const [tool,setTool]=useState('pan'),[selection,setSelection]=useState(''),[ruler,setRuler]=useState([]);
+  const [area,setArea]=useState({shape:''});
   const [destination,setDestination]=useState(null),[moving,setMoving]=useState(false),[moveNotice,setMoveNotice]=useState('');
   const [moveQueued,setMoveQueued]=useState(false);
   const marker=map?.tokens?.find(row=>row.id===movement?.tokenId);
   const canMove=Boolean(marker&&movement?.distance>0&&!movement.disabled);
   const moveMode=tool==='move'&&canMove;
   const cols=map?.gridColumns||20,rows=map?.gridRows||15;
-  const hex=map?.gridType==='hex';
-  const hexShapes=useMemo(()=>hex?Array.from({length:rows*cols},(_,i)=>
-    hexCellPoints({column:i%cols,row:Math.floor(i/cols)},cols,rows)
-      .map(pair=>pair.join(',')).join(' ')):[],[hex,cols,rows]);
   const routes=useMemo(()=>tool==='move'&&canMove?mapReachableRoutes(map,marker,movement.distance,{
     occupied:map.tokens.filter(row=>row.id!==marker.id),diagonalParity:movement.diagonalParity,revealedOnly:true,
     movementKind:movement.routeKind||movement.approvedKind
   }):new Map(),[tool,canMove,map,marker,movement?.distance,movement?.diagonalParity,movement?.approvedKind,movement?.routeKind]);
   const route=destination?routes.get(destination):null;
-  const routePoints=route?mapRoutePoints(route,cols,rows,map.gridType):[];
+  const routePoints=route?mapRoutePoints(route,cols,rows,map):[];
   useEffect(()=>{setDestination(null);setMoveNotice('');setMoveQueued(false);},[map?.id,marker?.x,marker?.y]);
   useEffect(()=>setDestination(null),[movement?.revision]);
   const commitMove=async target=>{
     if(!target||moving||!moveMode)return;
     setMoving(true);setMoveNotice('');
     try{
-      const result=await movement.onMove(mapCellCenter(target,cols,rows,map.gridType));
+      const result=await movement.onMove(mapCellCenter(target,cols,rows,map));
       setDestination(null);setMoveQueued(result?.queued===true);
     }
     catch(error){setMoveNotice(error?.message||'The move could not be confirmed.');}
@@ -155,9 +156,9 @@ export function CampaignMapCanvas({api,campaignId,map,mode='player',atlas=false,
     const raw=battleMapPoint(
       (event.clientX-bounds.left)*100/bounds.width,
       (event.clientY-bounds.top)*100/bounds.height,
-      {columns:cols,rows,snap:showGrid&&map.gridVisible,gridType:map.gridType});
+      {...map,columns:cols,rows,snap:showGrid&&map.gridVisible});
     if(moveMode){
-      const cell=mapCell(raw,cols,rows,map.gridType);
+      const cell=mapCell(raw,cols,rows,map);
       if(!cell)return;
       const key=mapCellKey(cell);
       if(!routes.has(key)||(fog&&fogCells[cell.row*cols+cell.column]!=='1')){
@@ -171,8 +172,8 @@ export function CampaignMapCanvas({api,campaignId,map,mode='player',atlas=false,
     if(interactive&&!editing&&tool==='ruler')setRuler(previous=>previous.length===1?[previous[0],raw]:[raw]);
     else onPoint?.(raw);
   };
+  const distance=useMemo(()=>map&&ruler.length===2?measureMapRoute(map,ruler[0],ruler[1],{revealedOnly:mode!=='gm'}):null,[map,ruler,mode]);
   if(!map)return <p>No map selected.</p>;
-  const distance=ruler.length===2?measureGridDistance(ruler[0],ruler[1],cols,rows,map.metresPerCell,map.gridType):null;
   return <section className={styles.viewer} aria-label={'Campaign map: '+map.name}
     data-testid="site-media-map-canvas">
     {map.kind==='video'?<div className={styles.controls}>
@@ -188,9 +189,10 @@ export function CampaignMapCanvas({api,campaignId,map,mode='player',atlas=false,
       <button type="button" aria-pressed={tool==='pan'} onClick={()=>setTool('pan')}>Pan</button>
       <button type="button" aria-pressed={tool==='ruler'} onClick={()=>{setTool('ruler');setRuler([]);}}>Ruler</button>
       {marker?<button type="button" aria-pressed={tool==='move'} disabled={!canMove}
-        onClick={()=>{setTool('move');setSelection(marker.id);setDestination(null);}}>Move my token</button>:null}
-      {tool==='ruler'?<output>{distance?distance.metres+' m':ruler.length?'Choose the end point':'Choose the start point'}</output>:null}
+        onClick={()=>{setTool('move');setSelection(marker.id);setDestination(null);}}>{movement.label||'Move my token'}</button>:null}
+      {tool==='ruler'?<output>{distance?<RouteReading result={distance}/>:ruler.length?'Choose the end point':'Choose the start point'}</output>:null}
     </div>:null}
+    {interactive&&tool==='ruler'&&!atlas?<AreaControls value={area} onChange={setArea}/>:null}
     {moveMode?<div className={styles.controls}>
       <output aria-live="polite">{movement.outOfTurn?'Out-of-turn move · ':''}
         {movement.kind==='approved'?({dash:'Paid Dash',fly:'Approved flight',swim:'Approved swim',
@@ -222,33 +224,12 @@ export function CampaignMapCanvas({api,campaignId,map,mode='player',atlas=false,
           ref={el=>{if(!el)return;if(playing)el.play().catch(()=>{});else el.pause();}}
           aria-label={'Looping map: '+map.name}/>
         :<img className={styles.image} src={media.url} alt={map.name}/>)}
-      {!atlas&&map.gridVisible&&showGrid?(hex?<svg aria-hidden="true"
-        viewBox="0 0 100 100" preserveAspectRatio="none" className={styles.reachable}
-        style={{opacity:map.gridOpacity/100}}>
-        {hexShapes.map((points,index)=><polygon key={index} points={points}
-          fill="none" stroke="white" strokeWidth=".12"/>)}
-      </svg>:<div className={styles.grid} aria-hidden="true"
-        style={{backgroundSize:(100/cols)+'% '+(100/rows)+'%',
-          opacity:map.gridOpacity/100}}/>):null}
-      {!atlas&&Array.isArray(map.terrainCells)&&map.terrainCells.length>0?<svg
-        aria-label="Map terrain overlay" viewBox="0 0 100 100" preserveAspectRatio="none"
-        className={styles.reachable} style={{pointerEvents:'none'}}>
-        {map.terrainCells.map(cell=>{
-          const fill={wall:'#c74444',water:'#317ec4',difficult:'#a87a32',
-            hazard:'#a8429c',cover:'#678663',stairs:'#989bb2'}[cell.kind]||'#94a1ae';
-          return hex?<polygon key={mapCellKey(cell)} points={hexCellPoints(cell,cols,rows)
-            .map(pair=>pair.join(',')).join(' ')} fill={fill} fillOpacity=".22"/>:
-            <rect key={mapCellKey(cell)} x={cell.column*100/cols} y={cell.row*100/rows}
-              width={100/cols} height={100/rows} fill={fill} fillOpacity=".22"/>;
-        })}
-      </svg>:null}
+      {!atlas?<GridLayer map={mode==='gm'&&previewFog?{...map,terrainCells:publicTerrainCells(map,map.fogCells)}:map} visible={map.gridVisible&&showGrid}/>:null}
+      {tool==='ruler'&&!atlas?<AreaOverlay map={map} area={area} points={ruler}/>:null}
       {moveMode?<svg className={styles.reachable} data-move-kind={movement.approvedKind||'walk'}
         aria-label="Reachable destinations" viewBox="0 0 100 100" preserveAspectRatio="none">
         {[...routes.values()].filter(cell=>!fog||fogCells[cell.row*cols+cell.column]==='1').map(cell=>
-          hex?<polygon key={mapCellKey(cell)} points={hexCellPoints(cell,cols,rows)
-            .map(pair=>pair.join(',')).join(' ')}/>:
-          <rect key={mapCellKey(cell)} x={cell.column*100/cols} y={cell.row*100/rows}
-            width={100/cols} height={100/rows}/>)}
+          <polygon key={mapCellKey(cell)} points={cellOutline(map,cell)}/>)}
         {routePoints.length?<polyline points={routePoints.map(p=>p.x+','+p.y).join(' ')}/>:null}
       </svg>:null}
       {mode==='gm'&&routeOverlay.length>1?<svg className={styles.reachable}
@@ -257,9 +238,8 @@ export function CampaignMapCanvas({api,campaignId,map,mode='player',atlas=false,
       </svg>:null}
       {!atlas&&tokens.filter(t=>{
         if(!fog)return true;
-        const x=Math.min(cols-1,Math.floor(t.x*cols/100));
-        const y=Math.min(rows-1,Math.floor(t.y*rows/100));
-        return fogCells[y*cols+x]==='1';
+        const cell=mapCell(t,cols,rows,map);
+        return cell&&fogCells[cell.row*cols+cell.column]==='1';
       }).map(t=><BattleMapToken key={t.id} token={t} columns={cols} rows={rows} className={styles.token}
         selected={selection===t.id} current={map.activeTokenId===t.id} defeated={t.defeated===true}
         onSelect={interactive&&!moveMode&&tool!=='ruler'?()=>{
@@ -272,7 +252,7 @@ export function CampaignMapCanvas({api,campaignId,map,mode='player',atlas=false,
       </svg>:null}
       {atlas&&(map.pins||[]).map(pin=><span key={pin.id} className={styles.token}
         style={{left:pin.x+'%',top:pin.y+'%'}} title={pin.name}>{pin.name}</span>)}
-      {fog?<svg className={styles.fog} viewBox="0 0 100 100"
+      {fog&&(map.exploredCells||map.gridType==='hex'||map.gridOffsetX||map.gridOffsetY)?<CellFog map={map} cells={fogCells} className={styles.fog}/>:fog?<svg className={styles.fog} viewBox="0 0 100 100"
         preserveAspectRatio="none" aria-label="Hidden fog of war">
         {hidden.map((r,i)=><rect key={i} x={r.x} y={r.y}
           width={r.width} height={r.height}/>)}
@@ -290,8 +270,10 @@ export function CampaignMapWorkspace({api,campaignId,role='player',selectedMapId
   const [selected,setSelected]=useState(''),[draft,setDraft]=useState(empty);
   const [file,setFile]=useState(null),[busy,setBusy]=useState(false);
   const [error,setError]=useState(''),[notice,setNotice]=useState('');
+  const [brush,setBrush]=useState(firstTerrainBrush),[source,setSource]=useState(null);
   const [fogMode,setFogMode]=useState('none'),[showGrid,setShowGrid]=useState(true);
   const [previewFog,setPreviewFog]=useState(false);
+  const published=useCampaignStream(api,'watchMaps',[campaignId,'player'],mode==='gm'&&previewFog&&!!draft.vision?.automatic);
   const liveRequired=mode==='player'&&encounter?.status==='active'&&!selectedMapId;
   const liveMapId=liveRequired?encounter.battleMapId||'':'';
   const requiredMapId=selectedMapId||liveMapId;
@@ -303,8 +285,8 @@ export function CampaignMapWorkspace({api,campaignId,role='player',selectedMapId
       name:map.name,description:map.description,visibility:map.visibility,
       gridColumns:map.gridColumns,gridRows:map.gridRows,gridOpacity:map.gridOpacity,
       gridVisible:map.gridVisible,fogEnabled:map.fogEnabled,
-      gridType:map.gridType||'square',terrainCells:map.terrainCells||[],
-      fogCells:map.fogCells,metresPerCell:map.metresPerCell,tokens:map.tokens
+      fogCells:map.fogCells,metresPerCell:map.metresPerCell,tokens:map.tokens,
+      ...(map.vision?{vision:map.vision}:{}),gridType:map.gridType||'square',gridOffsetX:map.gridOffsetX||0,gridOffsetY:map.gridOffsetY||0,terrainCells:map.terrainCells||[]
     }:empty());
     setError('');
   },[map?.id,map?.updatedAt]);
@@ -327,12 +309,25 @@ export function CampaignMapWorkspace({api,campaignId,role='player',selectedMapId
   'Map settings saved.');
   const remove=()=>{if(!window.confirm('Delete this map and its media?'))return;
     run(async()=>{await api.removeMap(campaignId,map.id);setSelected('');},'Map deleted.');};
+  const resizeGrid=(field,count)=>setDraft(d=>{
+    if(!Number.isInteger(count)||count<1||count>80)return d;
+    const cols=field==='gridColumns'?count:d.gridColumns,rows=field==='gridRows'?count:d.gridRows;
+    return {...d,[field]:count,terrainCells:resizeTerrainCells(d.terrainCells,d.gridColumns,d.gridRows,cols,rows),
+      fogCells:resizeFogCells(d.fogCells,d.gridColumns,d.gridRows,cols,rows)};
+  });
   const editFog=point=>{
-    if(!['reveal','hide'].includes(fogMode)||!map||!draft.fogEnabled)return;
-    setDraft(current=>({...current,fogCells:paintFogStroke(current.fogCells,
-      current.gridColumns,current.gridRows,point,point,fogMode,1)}));
+    if(source&&fogMode==='source'){setDraft(d=>({...d,vision:{...d.vision,sources:[...(d.vision?.sources||[]),{...source,...point}]}}));setSource(null);setFogMode('none');return;}
+    if(fogMode==='terrain'){setDraft(d=>({...d,terrainCells:terrainAtPoint(d,point,brush)}));return;}
+    if(!['reveal','hide','auto'].includes(fogMode)||!map||!draft.fogEnabled)return;
+    setDraft(current=>({...current,...mapFogStroke(current,point,point,fogMode,1)}));
   };
-  const preview=map?{...map,...(mode==='gm'?draft:{})}:null;
+  const draftPreview=map?{...map,...(mode==='gm'?draft:{})}:null;
+  const preview=mode==='gm'&&previewFog&&draft.vision?.automatic&&!source&&fogMode==='none'?
+    (published.data||[]).find(row=>row.id===map?.id)||null:draftPreview;
+  const fillFog=reveal=>setDraft(d=>{
+    const cells=createFogCells(d.gridColumns,d.gridRows,reveal);
+    return d.vision?.automatic?{...d,vision:{...d.vision,overrides:cells}}:{...d,fogCells:cells};
+  });
   return <section className={styles.workspace} data-testid={'site-'+mode+'-campaign-maps'}>
     {stream.loading?<p role="status">Checking shared maps…</p>:null}
     {stream.error?<p role="alert">{stream.error}</p>:null}
@@ -362,19 +357,18 @@ export function CampaignMapWorkspace({api,campaignId,role='player',selectedMapId
           onChange={e=>setDraft(d=>({...d,visibility:e.target.value}))}>
           <option value="gm">GM only</option><option value="players">Published to players</option>
         </select></label>
+        <GeometryControls map={draft} patch={values=>setDraft(d=>({...d,...values}))} locked={Boolean(map?.combatId)}/>
+        <label>Metres per cell<input type="number" min=".1" max="100" step=".01" disabled={Boolean(map?.combatId)}
+          value={draft.metresPerCell} onChange={e=>setDraft(d=>({...d,metresPerCell:Number(e.target.value)}))}/></label>
         <label>Grid columns<input type="number" min={1} max={80}
           disabled={Boolean(map?.combatId)} value={draft.gridColumns}
-          onChange={e=>setDraft(d=>({...d,gridColumns:Number(e.target.value)}))}/></label>
+          onChange={e=>resizeGrid('gridColumns',Number(e.target.value))}/></label>
         <label>Grid rows<input type="number" min={1} max={80}
           disabled={Boolean(map?.combatId)} value={draft.gridRows}
-          onChange={e=>setDraft(d=>({...d,gridRows:Number(e.target.value)}))}/></label>
+          onChange={e=>resizeGrid('gridRows',Number(e.target.value))}/></label>
         <label>Grid opacity<input type="number" min={0} max={100}
           value={draft.gridOpacity} onChange={e=>setDraft(d=>({...d,gridOpacity:Number(e.target.value)}))}/></label>
       </div>
-      <label>Grid geometry<select value={draft.gridType||'square'} disabled={Boolean(map?.combatId)}
-        onChange={e=>setDraft(d=>({...d,gridType:e.target.value}))}>
-        <option value="square">Square grid</option><option value="hex">Hexagonal grid</option>
-      </select></label>
       <label>Description<textarea maxLength={300} value={draft.description}
         onChange={e=>setDraft(d=>({...d,description:e.target.value}))}/></label>
       <div className={styles.controls}>
@@ -384,14 +378,16 @@ export function CampaignMapWorkspace({api,campaignId,role='player',selectedMapId
           onChange={e=>setDraft(d=>({...d,fogEnabled:e.target.checked}))}/>Fog of war</label>
         <label><input type="checkbox" checked={previewFog}
           onChange={e=>setPreviewFog(e.target.checked)}/>Preview player fog</label>
-        {map&&draft.fogEnabled?<label>Fog tool<select value={fogMode}
+        {map?<label>Map brush<select value={fogMode}
           onChange={e=>setFogMode(e.target.value)}>
-          <option value="none">None</option><option value="reveal">Reveal</option>
-          <option value="hide">Hide</option></select></label>:null}
-        {map&&draft.fogEnabled?<button type="button" onClick={()=>setDraft(d=>({...d,
-          fogCells:createFogCells(d.gridColumns,d.gridRows,true)}))}>Reveal all</button>:null}
-        {map&&draft.fogEnabled?<button type="button" onClick={()=>setDraft(d=>({...d,
-          fogCells:createFogCells(d.gridColumns,d.gridRows,false)}))}>Hide all</button>:null}
+          <option value="none">None</option>{source?<option value="source">Place source</option>:null}
+          {draft.vision?.automatic?<option value="auto">Restore automatic vision</option>:null}<option value="terrain">Terrain</option><option disabled={!draft.fogEnabled} value="reveal">Reveal</option>
+          <option disabled={!draft.fogEnabled} value="hide">Hide</option></select></label>:null}
+        <BattleMapVisionControls map={draft} patch={fields=>setDraft(d=>({...d,...fields}))} placing={source}
+          onPlace={item=>{setSource(item);setFogMode(item?'source':'none');}}/>
+        {fogMode==='terrain'?<TerrainControls brush={brush} onChange={setBrush}/>:null}
+        {map&&draft.fogEnabled?<button type="button" onClick={()=>fillFog(true)}>Reveal all</button>:null}
+        {map&&draft.fogEnabled?<button type="button" onClick={()=>fillFog(false)}>Hide all</button>:null}
       </div>
       {!map?<label>Upload map media<input type="file"
         accept="image/png,image/jpeg,image/webp,image/gif,video/mp4,video/webm"
@@ -409,7 +405,7 @@ export function CampaignMapWorkspace({api,campaignId,role='player',selectedMapId
     </div>:null}
     {preview?<CampaignMapCanvas api={api} campaignId={campaignId} map={preview} camera={camera} interactive={interactive} movement={movement}
       mode={mode} showGrid={showGrid} previewFog={previewFog}
-      editing={mode==='gm'&&draft.fogEnabled&&fogMode!=='none'} onPoint={editFog}/>:null}
+      editing={mode==='gm'&&(fogMode==='terrain'||draft.fogEnabled&&fogMode!=='none')} onPoint={editFog}/>:null}
     {map?<label className={styles.compact}><input type="checkbox" checked={showGrid}
       onChange={e=>setShowGrid(e.target.checked)}/>Show grid overlay</label>:null}
     {notice?<p role="status">{notice}</p>:null}

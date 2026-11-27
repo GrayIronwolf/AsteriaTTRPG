@@ -183,12 +183,12 @@ export function createCombatCommands(context) {
         if(offTurn&&move.outOfTurn!==true)throw Error('Confirm use of the out-of-turn movement opportunity.');
         if(offTurn&&!apPaid)validateMapOpportunity(encounter,id);
         const original=boundMap.tokens.find(row=>row.combatantId===id);
-        const projection=publicPresentationBattleMap(boundMap,campaignId,boundMapId,encounter);
+        const projection=publicPresentationBattleMap(boundMap,campaignId,boundMapId,encounter,characters);
         if(!original||!projection.tokens.some(row=>row.id===original.id))
           throw Error('No visible token is assigned to this participant.');
         if(move.origin&&(original.x!==move.origin.x||original.y!==move.origin.y))
           throw Error('The confirmed route no longer starts at the token position.');
-        const dest=mapCell(move.point,boundMap.gridColumns,boundMap.gridRows,boundMap.gridType);
+        const dest=mapCell(move.point,boundMap.gridColumns,boundMap.gridRows,boundMap);
         if(!dest)throw Error('Choose a valid destination.');
         if(boundMap.fogEnabled&&projection.fogCells[dest.row*boundMap.gridColumns+dest.column]!=='1')
           throw Error('Choose a revealed destination.');
@@ -204,13 +204,13 @@ export function createCombatCommands(context) {
         if(!apPaid&&s.ap<ap)throw Error('Not enough AP.');
         const movement=approved?s.movement:{actionId:context.requestId,kind:'walk',remaining:allowance};
         const kind=movement.routeKind||movement.kind;
-        const routes=mapReachableRoutes(boundMap,original,allowance,{
+        const routes=mapReachableRoutes({...boundMap,fogCells:projection.fogCells},original,allowance,{
           occupied:boundMap.tokens.filter(row=>row.id!==original.id),
           diagonalParity:movement.diagonalParity,revealedOnly:true,movementKind:kind
         });
         const route=routes.get(mapCellKey(dest));
         if(!route)throw Error('That destination is unavailable within the current movement allowance.');
-        const point=mapCellCenter(dest,boundMap.gridColumns,boundMap.gridRows,boundMap.gridType);
+        const point=mapCellCenter(dest,boundMap.gridColumns,boundMap.gridRows,boundMap);
         return {original,point,route,movement,kind,offTurn,ap,projection};
       };
       const applyPlayerMapMove=(actor,plan,playerUid,apPaid=false)=>{
@@ -822,7 +822,7 @@ export function createCombatCommands(context) {
         if(offTurn){
           if(!gm&&boundMap&&boundMap.combatId===encounter.combatId){
             const share=boundMap.visibility==='players'?
-              publicPresentationBattleMap(boundMap,campaignId,boundMapId,encounter):null;
+              publicPresentationBattleMap(boundMap,campaignId,boundMapId,encounter,characters):null;
             const visible=new Set(share?.tokens.map(row=>row.id)||[]);
             if(p.targetIds.some(target=>!entry(target)?.characterId&&!boundMap.tokens.some(
               token=>token.combatantId===target&&visible.has(token.id))))

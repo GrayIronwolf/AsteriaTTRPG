@@ -1,5 +1,5 @@
 import {
-  battleMapAssetPath,battleMapCanPreview,battleMapEditableSettings,
+  battleMapAssetPath,battleMapCanPreview,newBattleMapSettings,battleMapEditableSettings,
   battleMapDimensions,battleMapFileError,battleMapFileKind,battleMapTokens,
   BATTLE_MAP_MAX_RECORDS
 } from '../../state/battleMapModel.mjs';
@@ -8,7 +8,7 @@ import {publicTerrainCells} from '../../state/battleMapTerrainModel.mjs';
 import {atlasMapCanPreview,atlasPublicProjection} from '../../state/worldAtlasModel.mjs';
 import {PRESENTATION_DEFAULT,presentationDraft,presentationId,safePartyPresentation} from '../../state/playerPresentationModel.mjs';
 
-export {battleMapAssetPath,battleMapEditableSettings,battleMapDimensions,
+export {battleMapAssetPath,newBattleMapSettings,battleMapEditableSettings,battleMapDimensions,
   battleMapFileError,battleMapFileKind,BATTLE_MAP_MAX_RECORDS,atlasMapCanPreview,presentationDraft};
 export const mapId=presentationId;
 const number=(value,fallback)=>Number.isFinite(Number(value))?Number(value):fallback;
@@ -34,6 +34,11 @@ export function mapForViewer(raw,campaignId,mode='player'){
       fogEnabled:settings.fogEnabled,fogCells:settings.fogCells,
       metresPerCell:settings.metresPerCell,gridType:settings.gridType,
       terrainCells:mode==='gm'?settings.terrainCells:publicTerrainCells(settings,settings.fogCells),
+      gridOffsetX:settings.gridOffsetX,gridOffsetY:settings.gridOffsetY,
+      ...(mode==='gm'&&settings.vision?{vision:settings.vision,explorationKey:raw.explorationKey||''}:{}),
+      ...(raw.exploredCells?{exploredCells:validFogCells(raw.exploredCells,cols,rows)}:{}),
+      ...(mode!=='gm'&&typeof raw.lightingCells==='string'&&raw.lightingCells.length===cols*rows&&/^[012]+$/.test(raw.lightingCells)?
+        {lightingCells:raw.lightingCells,effectCells:raw.effectCells||{}}:{}),
       tokens:battleMapTokens(settings.tokens),
       combatId:mapId(raw.combatId)?raw.combatId:'',
       ...(mode==='gm'?{updatedAt:raw.updatedAt||null}:

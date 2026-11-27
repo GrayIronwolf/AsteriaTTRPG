@@ -13,7 +13,7 @@ import {
 } from '../../state/campaignMediaLibraryModel.mjs';
 import {
   mapId,mapForViewer,publishedAtlas,presentationForViewer,timestampRevision,
-  battleMapEditableSettings,battleMapDimensions,battleMapFileError,battleMapFileKind,
+  newBattleMapSettings,battleMapEditableSettings,battleMapDimensions,battleMapFileError,battleMapFileKind,
   battleMapAssetPath,atlasMapCanPreview,BATTLE_MAP_MAX_RECORDS
 } from './campaignMediaModel.mjs';
 
@@ -283,7 +283,7 @@ export function createFirebaseCampaignMediaService({
   async function uploadMap(id,file,settings,dimensions){
     const issue=battleMapFileError(file);
     if(issue)throw Error(issue);
-    const details=battleMapEditableSettings(settings);
+    const details=newBattleMapSettings(settings);
     const size=battleMapDimensions(dimensions?.width,dimensions?.height);
     const {uid}=await check(id,'gm');
     const existing=await firestoreSdk.getDocsFromServer(
@@ -333,7 +333,7 @@ export function createFirebaseCampaignMediaService({
         details.gridRows!==before.gridRows||details.gridColumns!==before.gridColumns||
         details.metresPerCell!==before.metresPerCell||
         details.gridType!==(before.gridType||'square')||
-        JSON.stringify(details.terrainCells)!==JSON.stringify(before.terrainCells||[])))
+        details.gridOffsetX!==(before.gridOffsetX||0)||details.gridOffsetY!==(before.gridOffsetY||0)))
         throw Error('End the linked combat before changing token or grid geometry.');
       tx.update(mapRef(id,map),{...details,updatedAt:firestoreSdk.serverTimestamp()});
     });

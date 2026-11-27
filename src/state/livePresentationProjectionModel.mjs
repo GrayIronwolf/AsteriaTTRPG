@@ -1,3 +1,5 @@
+import {partyVisibility} from './battleMapVision.mjs';
+import {mapCell,gridSettings} from './battleMapGrid.mjs';
 /**
  * Phase 7.4: authoritative, allowlisted player-facing combat and
  * presentation map documents. Never publish raw encounter state or GM pins.
@@ -121,15 +123,14 @@ export function publicCombatPresentation(raw={},publishedMap=null){
     ...(combat.publicEvent?{event:combat.publicEvent}:{})
   });
 }
-function tokenIsRevealed(token,cells,columns,rows){
-  const x=Math.min(columns-1,Math.floor(clamp(token.x,0,99.999,0)*columns/100));
-  const y=Math.min(rows-1,Math.floor(clamp(token.y,0,99.999,0)*rows/100));
-  return cells[y*columns+x]==='1';
+function tokenIsRevealed(token,cells,columns,rows,map){
+  const cell=mapCell(token,columns,rows,map);
+  return cell&&cells[cell.row*columns+cell.column]==='1';
 }
 /** Render map media stays an already-published original map. Visual fog cannot
  * conceal hidden details baked into the original image or looping video.
  */
-export function publicPresentationBattleMap(raw={},campaignId='',mapId='',encounter={}){
+export function publicPresentationBattleMap(raw={},campaignId='',mapId='',encounter={},characters={}){
   const source={...raw,id:mapId};
   if(raw.visibility!=='players'||!battleMapCanPreview(source,campaignId))
     throw Error('Only an existing published map may be presented.');
@@ -137,13 +138,14 @@ export function publicPresentationBattleMap(raw={},campaignId='',mapId='',encoun
   if(!Number.isSafeInteger(columns)||!Number.isSafeInteger(rows))
     throw Error('Invalid map grid.');
   const fogEnabled=raw.fogEnabled===true;
-  const fogCells=validFogCells(raw.fogCells,columns,rows);
+  const visibility=fogEnabled&&raw.vision?.automatic?partyVisibility(raw,encounter,characters):null;
+  const fogCells=visibility?.fogCells??validFogCells(raw.fogCells,columns,rows);
   const linked=encounter.status==='active'&&encounter.combat?.version===1&&
     id(encounter.combatId)&&encounter.battleMapId===mapId&&raw.combatId===encounter.combatId;
   const actors=new Map(linked?(encounter.combatants||[]).map(row=>[row.id,row]):[]);
   const visibleTokens=battleMapTokens(raw.tokens||[]).filter(row=>
     row.visibility!=='gm'&&(!row.combatantId||actors.has(row.combatantId))&&
-    (!fogEnabled||tokenIsRevealed(row,fogCells,columns,rows)));
+    (!fogEnabled||tokenIsRevealed(row,visibility?.tokenCells??fogCells,columns,rows,raw)));
   const current=linked?encounter.combatants?.[encounter.turnIndex]?.id:'';
   const focus=current?visibleTokens.find(row=>row.combatantId===current):null;
   const tokens=visibleTokens.map(row=>({id:row.id,label:row.label.slice(0,48),
@@ -159,7 +161,8 @@ export function publicPresentationBattleMap(raw={},campaignId='',mapId='',encoun
     gridColumns:columns,gridRows:rows,
     gridVisible:raw.gridVisible===true,
     gridOpacity:clamp(raw.gridOpacity,0,100,40),
-    fogEnabled,fogCells,gridType:mapGridType(raw.gridType),
+    ...(visibility?{exploredCells:visibility.exploredCells,lightingCells:visibility.lightingCells,effectCells:visibility.effectCells}:{}),
+    fogEnabled,fogCells,...gridSettings({...raw,gridType:mapGridType(raw.gridType)}),
     terrainCells:publicTerrainCells({...raw,gridColumns:columns,gridRows:rows,fogEnabled},fogCells),
     metresPerCell:clamp(raw.metresPerCell,0.1,1000,1),
     ...(linked?{combatId:encounter.combatId,activeTokenId:focus?.id||''}:{}),

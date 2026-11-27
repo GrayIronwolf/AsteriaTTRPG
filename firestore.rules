@@ -287,6 +287,11 @@ service cloud.firestore {
         data.gridOpacity is int && data.gridOpacity >= 0 && data.gridOpacity <= 100 &&
         data.gridVisible is bool &&
         data.get('gridType','square') in ['square','hex'] &&
+        data.get('gridOffsetX',0) is number && math.abs(data.get('gridOffsetX',0)) <= 0.49 &&
+        data.get('gridOffsetY',0) is number && math.abs(data.get('gridOffsetY',0)) <= 0.49 &&
+        data.get('vision',{}) is map && data.get('vision',{}).get('sources',[]) is list &&
+        data.get('vision',{}).get('sources',[]).size() <= 40 &&
+        data.get('vision',{}).get('senses',{}) is map && data.get('vision',{}).get('senses',{}).size() <= 60 &&
         data.get('terrainCells',[]) is list &&
         data.get('terrainCells',[]).size() <= data.gridColumns * data.gridRows &&
         data.get('fogEnabled',false) is bool &&
@@ -381,7 +386,7 @@ service cloud.firestore {
             'id','campaignId','name','description','visibility','kind','contentType',
             'storagePath','gridColumns','gridRows','gridOpacity','gridVisible',
             'tokens','width','height','createdBy','createdAt','updatedAt',
-            'fogEnabled','fogCells','metresPerCell','combatId','gridType','terrainCells'
+            'fogEnabled','fogCells','metresPerCell','combatId','gridType','terrainCells','gridOffsetX','gridOffsetY','vision'
           ]) &&
           request.resource.data.keys().hasAll([
             'id','campaignId','name','visibility','kind','contentType','storagePath',
@@ -397,7 +402,7 @@ service cloud.firestore {
           request.resource.data.diff(resource.data).affectedKeys().hasOnly([
             'name','description','visibility','gridColumns','gridRows',
             'gridOpacity','gridVisible','tokens','updatedAt',
-            'fogEnabled','fogCells','metresPerCell','gridType','terrainCells'
+            'fogEnabled','fogCells','metresPerCell','gridType','terrainCells','gridOffsetX','gridOffsetY','vision'
           ]) &&
           (resource.data.get('combatId','') == '' ||
             (request.resource.data.tokens == resource.data.tokens &&
@@ -405,7 +410,8 @@ service cloud.firestore {
              request.resource.data.gridRows == resource.data.gridRows &&
              request.resource.data.get('metresPerCell',1) == resource.data.get('metresPerCell',1) &&
              request.resource.data.get('gridType','square') == resource.data.get('gridType','square') &&
-             request.resource.data.get('terrainCells',[]) == resource.data.get('terrainCells',[]))) &&
+             request.resource.data.get('gridOffsetX',0) == resource.data.get('gridOffsetX',0) &&
+             request.resource.data.get('gridOffsetY',0) == resource.data.get('gridOffsetY',0))) &&
           validBattleMapData(campaignId,mapId,request.resource.data);
         allow delete: if isCampaignGM(campaignId) && resource.data.get('combatId','') == '';
       }

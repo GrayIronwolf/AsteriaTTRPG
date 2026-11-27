@@ -1,3 +1,5 @@
+import {visionSettings} from './battleMapVision.mjs';
+import {gridSettings} from './battleMapGrid.mjs';
 import {validFogCells,resizeFogCells,distanceMetersPerCell} from './battleMapFogModel.mjs';
 import {mapGridType,validateTerrainCells,resizeTerrainCells} from './battleMapTerrainModel.mjs';
 import {mapCell,mapCellCenter} from './battleMapRoutes.mjs';
@@ -39,6 +41,9 @@ export function battleMapAssetPath(campaignId,mapId,mime){
 export function battleMapFileKind(mime){
   return BATTLE_MAP_FORMATS[String(mime||'').toLowerCase()]?.kind||'';
 }
+export function newBattleMapSettings(input={}){
+  return battleMapEditableSettings({gridType:'hex',metresPerCell:3,...input});
+}
 export function battleMapEditableSettings(input={}){
   const name=String(input.name??'').trim(),description=String(input.description??'').trim();
   if(!name||name.length>100)throw Error('Map name must contain 1–100 characters.');
@@ -62,7 +67,8 @@ export function battleMapEditableSettings(input={}){
     ?resizeFogCells(input.fogCells,previousCols,previousRows,gridColumns,gridRows)
     :validFogCells(input.fogCells,gridColumns,gridRows);
   return {name,description,visibility,gridColumns,gridRows,gridOpacity,gridVisible,
-    tokens,fogEnabled,fogCells,metresPerCell,gridType,terrainCells};
+    tokens,fogEnabled,fogCells,metresPerCell,...gridSettings({...input,gridType}),terrainCells,
+    ...(input.vision?{vision:visionSettings(input.vision,gridColumns*gridRows)}:{})};
 }
 export function battleMapDimensions(width,height){
   return {width:safeNumber(width,1,8192,'map width'),height:safeNumber(height,1,8192,'map height')};
@@ -107,12 +113,12 @@ export function battleMapTokens(items){
       x:Math.round(x*100)/100,y:Math.round(y*100)/100,...battleMapTokenAppearance(row)};
   });
 }
-export function battleMapPoint(x,y,{columns=20,rows=15,snap=false,gridType='square'}={}){
+export function battleMapPoint(x,y,{columns=20,rows=15,snap=false,...grid}={}){
   const a=Math.max(0,Math.min(100,Number(x))),b=Math.max(0,Math.min(100,Number(y)));
   if(!Number.isFinite(a)||!Number.isFinite(b))throw Error('Invalid map coordinates.');
   if(!snap)return {x:Math.round(a*100)/100,y:Math.round(b*100)/100};
   const cols=safeNumber(columns,1,80,'grid columns'),count=safeNumber(rows,1,80,'grid rows');
-  const centre=mapCellCenter(mapCell({x:a,y:b},cols,count,gridType),cols,count,gridType);
+  const centre=mapCellCenter(mapCell({x:a,y:b},cols,count,grid),cols,count,grid);
   return {x:Math.round(centre.x*100)/100,y:Math.round(centre.y*100)/100};
 }
 export function battleMapIsPublished(record){
