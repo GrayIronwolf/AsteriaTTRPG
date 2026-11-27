@@ -1,6 +1,5 @@
 import {legacyMembershipPlan, MEMBER_ROLES, MEMBER_STATUSES} from './campaignMembership.mjs';
 import {allowedMemberControls} from './campaignMemberControls.mjs';
-import {attendanceSummary} from './campaignAttendance.mjs';
 
 const ID=/^[A-Za-z0-9_-]{1,160}$/;
 const MAX_ROSTER=100;
@@ -84,27 +83,13 @@ export async function listCampaignPlayerRoster(db,actorUid,campaignId){
       if(!gm || gm.uid!==actorUid || gm.campaignId!==campaignId ||
         gm.role!=='co-gm' || gm.status!=='active')throw new Error('Only an active campaign GM may view the roster.');
     }
-    const [membershipRows,requests,attendanceRows]=await Promise.all([
+    const [membershipRows,requests]=await Promise.all([
       db.collection('campaigns/'+campaignId+'/members').limit(MAX_ROSTER+1).get(),
-      db.collection('campaigns/'+campaignId+'/joinRequests').where('status','==','pending').limit(MAX_PENDING+1).get(),
-      db.collection('campaigns/'+campaignId+'/attendance').limit(MAX_ROSTER+1).get()
+      db.collection('campaigns/'+campaignId+'/joinRequests').where('status','==','pending').limit(MAX_PENDING+1).get()
     ]);
     if(membershipRows.size>MAX_ROSTER)
       throw new Error('Campaign roster is too large to display safely.');
     truncated=requests.size>MAX_PENDING;
-    if(attendanceRows.size>MAX_ROSTER)
-      throw new Error('Campaign attendance records require review.');
-    const attendance=new Map();
-    for(const doc of attendanceRows.docs){
-      const value=doc.data();
-      const safe=attendanceSummary(value);
-      if(!safe||doc.id!==safe.uid||value.campaignId!==campaignId||
-        !['in-person','remote','not-participating'].includes(value.mode)||
-        !Number.isSafeInteger(value.revision)||value.revision<1||
-        attendance.has(doc.id))
-        throw new Error('Campaign attendance records require review.');
-      attendance.set(doc.id,safe);
-    }
     for(const doc of membershipRows.docs){
       const row=doc.data();
       if(!validId(doc.id)||!record(row)||row.uid!==doc.id||row.campaignId!==campaignId ||
@@ -112,15 +97,13 @@ export async function listCampaignPlayerRoster(db,actorUid,campaignId){
       if(row.role==='owner' && (doc.id!==campaign.ownerUid||row.status!=='active'))
         throw new Error('Campaign owner membership requires review.');
       const entry=summarizeMember(campaign,row);
-      entry.attendance=row.role==='player'&&row.status==='active'?
-        attendance.get(row.uid)||{uid:row.uid,mode:'not-participating',revision:0,updatedAt:null}:null;
       entry.controls=allowedMemberControls(campaign,actorUid,actorMember,row);
       entry.roleEditable=actorUid===campaign.ownerUid && row.uid!==campaign.ownerUid && row.status==='active' && ['player','co-gm'].includes(row.role);
       members.push(entry);
     }
     // The owner is always authoritative even if canonical staging is incomplete.
     if(!members.some(row=>row.uid===campaign.ownerUid))
-      members.push({...summarizeMember(campaign,{uid:campaign.ownerUid,role:'owner',status:'active'}),attendance:null,controls:[],roleEditable:false});
+      members.push({...summarizeMember(campaign,{uid:campaign.ownerUid,role:'owner',status:'active'}),controls:[],roleEditable:false});
     pending=requests.docs.map(row=>safePending(row,campaignId)).filter(Boolean)
       .filter(row=>!members.some(member=>member.uid===row.uid));
   }else if(version===undefined||version===null||version===1){
