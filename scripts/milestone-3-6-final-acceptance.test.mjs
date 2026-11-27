@@ -43,7 +43,7 @@ test('3.6 acceptance: GM-only physical observations use authoritative combat rev
     /changeCombatHP|applyResourceChanges|spendMapMovement/);
 });
 test('3.6 acceptance: token visibility blocks hidden enemy markers even without fog',()=>{
-  const raw={id:'map3',visibility:'players',kind:'image',contentType:'image/png',
+  const raw={id:'map3',name:'Shared encounter',visibility:'players',kind:'image',contentType:'image/png',
     storagePath:'campaigns/camp3/battleMaps/map3/scene.png',width:1000,height:1000,
     gridColumns:2,gridRows:2,fogEnabled:false,tokens:[
       {id:'hero-marker',kind:'character',label:'Lyris',x:10,y:10},
