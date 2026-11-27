@@ -2782,6 +2782,12 @@
       console.warn('Character save deferred until rules are available.',error);
       return false;
     }
+    const firebase = window.AsteriaFirebase;
+    const authenticatedUid = firebase?.getUser?.()?.uid;
+    if(firebase && (!authenticatedUid || !firebase.isReady?.())) {
+      window.toast?.('Sign in and wait for Firebase to reconnect before saving. Your draft is retained.');
+      return false;
+    }
     const d = draft();
     if(!d.raceSlug){
       activeTab = 'Race';
@@ -2976,7 +2982,7 @@
       origin:d.originSlug || d.backgroundSlug || '',
       originTitle:originEntry?.title || '',
       originNotes:d.origin.notes || d.origin.backstory || '',
-      ownerUid:existingCharacter?.ownerUid || currentUserKey(),
+      ownerUid:existingCharacter?.ownerUid || authenticatedUid || currentUserKey(),
       ...(existingCharacter ? {sourceCharacterId:existingCharacter.sourceCharacterId,sharedCampaignId:existingCharacter.sharedCampaignId,linkedCampaignIds:existingCharacter.linkedCampaignIds} : {}),
       level:Number(existingCharacter?.level ?? 0),
       hp:existingCharacter?.hp ? [Math.min(Number(existingCharacter.hp[0] || 0), hpMax), hpMax] : [hpMax, hpMax],
@@ -3049,7 +3055,11 @@
     d.editCharacterId = id;
     saveState(editingId ? 'phase3a-character-updated' : 'phase3a-character-forged');
     try {
-      if(window.AsteriaFirebase && !await window.AsteriaFirebase.saveCharacter(id, window.chars[id])) {
+      if(firebase && firebase.getUser?.()?.uid !== authenticatedUid) {
+        window.toast?.('Account changed during save. Your character is retained locally. Sign in to the original account.');
+        return false;
+      }
+      if(firebase && !await firebase.saveCharacter(id, window.chars[id], { throwOnError:true })) {
         window.toast?.('Character kept locally, but Firebase could not save it. Check the connection and retry Save.');
         return false;
       }
