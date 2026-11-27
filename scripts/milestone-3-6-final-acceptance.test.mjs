@@ -1,3 +1,4 @@
+import {hybridD20,validateHybridPhysicalDice} from '../src/state/hybridCombatDiceModel.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -96,4 +97,41 @@ test('3.6 acceptance: recovery checkpoint retains fog and combat logs without pr
   assert.match(recovery,/revision:revision\+1/);
   assert.match(recovery,/Resolve the pending action/);
   assert.match(recovery,/saved\.geometry/);
+});
+
+test('3.6 final: witnessed physical d20 outcomes enter canonical combat checks',()=>{
+  const valid=validateHybridPhysicalDice({primary:[19,3],defence:[7]});
+  assert.deepEqual([...valid.primary],[19,3]);
+  assert.deepEqual(hybridD20({advantage:true},[19,3]),{
+    dice:[19,3],die:19,source:'physical'
+  });
+  assert.deepEqual(hybridD20({disadvantage:true},[19,3]),{
+    dice:[19,3],die:3,source:'physical'
+  });
+  assert.deepEqual(hybridD20({advantage:true,disadvantage:true},[13]),{
+    dice:[13],die:13,source:'physical'
+  });
+  assert.deepEqual(hybridD20({},undefined,()=>0),{
+    dice:[1],die:1,source:'digital'
+  });
+  for(const invalid of [null,{},[],{primary:[]},{primary:[0]},
+    {primary:[21]},{primary:[1.5]},{primary:['20']},
+    {primary:[1,2,3]},{primary:[12],privateResult:true}]){
+    assert.throws(()=>validateHybridPhysicalDice(invalid));
+  }
+  assert.throws(()=>hybridD20({advantage:true},[18]),/2 physical/);
+  assert.throws(()=>hybridD20({},[2,4]),/1 physical/);
+});
+test('3.6 final: physical/digital pending action uses GM and revision guards',()=>{
+  const backend=source('functions/combatCommands.mjs');
+  const frontend=source('src/dashboards/combat/GMAdvancedCombatControls.jsx');
+  assert.match(backend,/management\\.has\\(input\\.operation\\)&&!gm/);
+  assert.match(backend,/input\\.revision!==oldRevision/);
+  assert.match(backend,/validateHybridPhysicalDice\\(input\\.physicalDice\\)/);
+  assert.match(backend,/recordedRoll\\('primary'/);
+  assert.match(backend,/recordedRoll\\('defence'/);
+  assert.match(backend,/recordedRoll\\('opposed'/);
+  assert.match(backend,/consumedDice\\.has/);
+  assert.match(frontend,/data-testid="hybrid-physical-dice"/);
+  assert.match(frontend,/operation:'roll',physicalDice:dice/);
 });
