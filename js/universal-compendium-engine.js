@@ -16,7 +16,7 @@
   let activeIncludeGM = false;
   let categoryClickTimer = null;
   let activeLimit = 60;
-  let activeIndexCategory = 'All';
+  let activeIndexCategory = 'Items';
   let readingRoute = false;
   let routeMessage = '';
   let routeChoices = null;
@@ -393,13 +393,15 @@
   function indexCardPanel(){
     const api=window.AsteriaIndexCards;
     if(!api?.all)return '';
+    // The catalogue has its own category dropdown; other Compendium domains stay untouched.
+    if(activeDomain!=='item'||activePath.length||routeChoices)return '';
     const pending=api.placeholders(allEntries().map(entry=>entry.id));
     if(!pending.length)return '';
     const categories=['All',...api.categories];
     const options=categories.map(name=>'<option value="'+escapeHtml(name)+'"'+(name===activeIndexCategory?' selected':'')+'>'+escapeHtml(name)+'</option>').join('');
     const filtered=pending.filter(row=>(activeIndexCategory==='All'||row.category===activeIndexCategory)
       &&(!activeQuery||(row.name+' '+row.asteriaId+' '+row.category).toLowerCase().includes(activeQuery.toLowerCase())));
-    const cards=filtered.slice(0,60).map(row=>
+    const cards=filtered.slice(0,activeLimit).map(row=>
       '<article class="codex-card universal-card asteria-index-placeholder" data-asteria-id="'+escapeHtml(row.asteriaId)+'">'+
         '<div class="codex-card-art"><span>'+escapeHtml(initials(row.name))+'</span></div>'+
         '<h3>'+escapeHtml(row.name)+'</h3>'+
@@ -412,7 +414,7 @@
       '<div class="codex-display-status"><span>Asteria ID placeholder cards</span><b>'+filtered.length+' entries</b></div>'+
       '<label>Placeholder category <select id="asteriaIndexCategory">'+options+'</select></label>'+
       '<div class="codex-card-grid">'+(cards||'<p>No approved placeholder IDs in this category.</p>')+'</div>'+
-      (filtered.length>60?'<p>Showing the first 60 matching placeholders. Use category or search to narrow results.</p>':'')+
+      (filtered.length>activeLimit?'<button type="button" id="asteriaIndexLoadMore">Show more Asteria ID cards</button>':'')+
     '</section>';
   }
 
@@ -610,7 +612,8 @@
   }
 
   function bind(){
-    byId('asteriaIndexCategory')?.addEventListener('change',event=>{activeIndexCategory=event.target.value||'All';render();});
+    byId('asteriaIndexCategory')?.addEventListener('change',event=>{activeIndexCategory=event.target.value||'Items';activeLimit=60;render();});
+    byId('asteriaIndexLoadMore')?.addEventListener('click',()=>{activeLimit+=60;render();});
     byId('universalLoadMore')?.addEventListener('click', () => { activeLimit+=60; render(); });
     byId('universalClearFilters')?.addEventListener('click', () => openSection(activeDomain));
     byId('universalAllBtn')?.addEventListener('click', () => {
