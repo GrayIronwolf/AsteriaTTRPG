@@ -78,6 +78,8 @@
     const session = window.AsteriaAuthBridge?.getSession?.() || window.session || {};
     const user = window.AsteriaFirebase?.getUser?.();
     const campaign = activeCampaign();
+    if(campaign?.membershipSchemaVersion===2)return ['owner','co-gm'].includes(
+      window.AsteriaFirebase?.getDiscoveredCampaignRole?.(campaign.id,user?.uid));
     return session.role === 'gm'
       || document.body?.dataset?.role === 'gm'
       || Boolean(user?.uid && campaign && (

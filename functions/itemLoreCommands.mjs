@@ -22,7 +22,7 @@ export function createItemLoreCommands(context){
             const record=await tx.get(ref);
             return {exists:exists(record),data:()=>record.data()};
           }},db,campaignId,campaign,currentUser.uid);
-          if(!isCampaignGM(campaign,currentUser.uid,membership))throw Error('Only a campaign GM may edit secret item lore.');
+          if(!isCampaignGM(campaign,currentUser.uid,membership,campaignId))throw Error('Only a campaign GM may edit secret item lore.');
           const charRef=doc(db,'campaigns',campaignId,'characters',characterId);
           const loreRef=doc(db,'campaigns',campaignId,'itemLore',loreId);
           const revealRef=doc(db,'campaigns',campaignId,'itemDiscoveries',loreId);

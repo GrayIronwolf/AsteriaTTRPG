@@ -97,7 +97,7 @@ export async function moderateCampaignMember(db,actorUid,
     if(!permitted.includes(action))throw new Error('Only an authorised GM may perform this member action.');
 
     if(action==='restore'&&target.role==='player'){
-      const count=await countActivePlayers(tx,db,campaignId);
+      const count=await countActivePlayers(tx,db,campaignId,campaign.ownerUid);
       if(count>=campaignPlayerCapacity(campaign))
         throw new Error('Campaign player capacity has been reached. Restore is blocked.');
     }

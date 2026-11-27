@@ -1,3 +1,4 @@
+import {campaignMembershipRole,isGameMasterRole} from './campaignMembershipAccess.mjs';
 import {gmCampaignMemberSummary} from './gmCampaignRosterModel.mjs';
 
 export const GM_PLAYER_MANAGER_VIEWS=Object.freeze([
@@ -22,23 +23,17 @@ const roles=new Set(['owner','co-gm','player']);
 const limited=value=>String(value||'').trim().slice(0,120);
 
 export function gmPlayerManagerAccess({campaign={},actorUid='',membership=null,flags={}}={}){
-  const version=campaign?.membershipSchemaVersion;
-  const v2=version===2;
-  const supported=v2||version===1||version==null;
-  const owner=supported&&id(campaign?.id)&&id(actorUid)&&campaign?.ownerUid===actorUid;
-  const gmMember=v2&&!owner&&membership?.uid===actorUid&&membership?.campaignId===campaign?.id&&
-    membership?.status==='active'&&membership?.role==='co-gm';
-  const legacyGM=!v2&&(campaign?.membershipSchemaVersion==null||campaign?.membershipSchemaVersion===1)&&
-    (owner||campaign?.roles?.[actorUid]==='gm'||(Array.isArray(campaign?.gmUids)&&campaign.gmUids.includes(actorUid)));
-  const gm=Boolean(owner||gmMember||legacyGM);
+  const v2=campaign.membershipSchemaVersion===2;
+  const role=id(campaign.id)&&id(actorUid)?campaignMembershipRole(campaign,actorUid,membership):'';
+  const owner=role==='owner',gmMember=role==='co-gm',gm=isGameMasterRole(role);
   const enabled=flag=>v2&&gm&&flags?.[flag]===true;
   return {
     v2,gm,owner:!!owner,coGM:!!gmMember,
     roster:enabled('campaignPlayerRoster'),
     attendance:enabled('campaignAttendance')&&enabled('campaignPlayerRoster'),
     joinReview:enabled('campaignJoinReview')&&(owner||membership?.capabilityOverrides?.['review-join-requests']===true),
-    characterApproval:enabled('campaignCharacterApproval'),
-    characterLifecycle:enabled('campaignCharacterLifecycle'),
+    characterApproval:enabled('campaignCharacterApproval')&&(owner||membership?.capabilityOverrides?.['review-join-requests']===true),
+    characterLifecycle:enabled('campaignCharacterLifecycle')&&(owner||membership?.capabilityOverrides?.['moderate-members']===true),
     invitationManagement:enabled('secureInvitationManager')&&owner,
     memberControls:enabled('campaignMemberControls')&&(owner||membership?.capabilityOverrides?.['moderate-members']===true),
     rolePermissions:enabled('campaignRolePermissions')&&owner,

@@ -1,3 +1,4 @@
+import {campaignMembershipRole} from '../src/state/campaignMembershipAccess.mjs';
 import {memberDocument} from './campaignMembership.mjs';
 import {enqueueCampaignNotification} from './campaignNotifications.mjs';
 
@@ -30,11 +31,8 @@ function safeReview(row){
   };
 }
 function authorizedReviewer(campaign,campaignId,uid,membership){
-  if(campaign?.ownerUid===uid) return true;
-  return membership?.uid===uid &&
-    membership?.campaignId===campaignId &&
-    membership?.status==='active' && membership?.role==='co-gm' &&
-    membership?.capabilityOverrides?.['review-join-requests']===true;
+  const role=campaignMembershipRole(campaign,uid,membership,campaignId);
+  return role==='owner'||(role==='co-gm'&&membership.capabilityOverrides?.['review-join-requests']===true);
 }
 function validateCampaign(campaign,campaignId){
   if(!plainObject(campaign) || campaign.membershipSchemaVersion!==2 ||
@@ -42,21 +40,27 @@ function validateCampaign(campaign,campaignId){
   if(campaign.id && campaign.id!==campaignId) throw new Error('Campaign identity mismatch.');
 }
 /** Query all ACTIVE members. Counting only player roles keeps owner/co-GM out of the player cap. */
-export async function countActivePlayers(tx,db,campaignId){
-  const rows=await tx.get(db.collection('campaigns/'+campaignId+'/members').where('status','==','active'));
+function activePlayerCount(rows,campaignId,ownerUid){
   let count=0;
-  for(const row of rows.docs || []){
-    const m=row.data();
-    if(m.status==='active' && m.role==='player') count++;
+  for(const row of rows.docs){
+    const member=row.data();
+    if(member.uid!==row.id||member.campaignId!==campaignId||member.status!=='active'||
+      !['owner','co-gm','player'].includes(member.role)||(member.role==='owner')!==(row.id===ownerUid))
+      throw Error('Campaign membership records require review.');
+    if(member.role==='player')count++;
   }
   return count;
+}
+export async function countActivePlayers(tx,db,campaignId,ownerUid){
+  const rows=await tx.get(db.collection('campaigns/'+campaignId+'/members').where('status','==','active'));
+  return activePlayerCount(rows,campaignId,ownerUid);
 }
 /** All Firestore reads occur before apply() mutates the transaction. */
 export async function preparePlayerApproval(tx,db,campaignId,uid,campaign,now,actorUid=null){
   const capacity=campaignPlayerCapacity(campaign);
   const projectionRef=db.doc('campaignMemberProjections/'+uid+'/campaigns/'+campaignId);
   const [projection,activePlayers]=await Promise.all([
-    tx.get(projectionRef),countActivePlayers(tx,db,campaignId)
+    tx.get(projectionRef),countActivePlayers(tx,db,campaignId,campaign.ownerUid)
   ]);
   if(projection.exists) throw new Error('Existing account access requires membership review.');
   return {
@@ -94,7 +98,7 @@ export async function listPendingCampaignJoinRequests(db,actorUid,campaignId,{au
   ]);
   const requests=pending.docs.map(safeReview).filter(x=>x.campaignId===campaignId && validId(x.uid))
     .sort((a,b)=>String(a.requestedAt).localeCompare(String(b.requestedAt)));
-  const activePlayers=active.docs.filter(row=>row.data().role==='player').length;
+  const activePlayers=activePlayerCount(active,campaignId,campaign.ownerUid);
   return {
     campaignId,requests,activePlayers,capacity:campaignPlayerCapacity(campaign),
     approvalMode:campaign.joinPolicy?.autoApprove===true?'automatic':'manual',

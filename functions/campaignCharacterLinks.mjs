@@ -1,3 +1,4 @@
+import {campaignMembershipRole} from '../src/state/campaignMembershipAccess.mjs';
 import {createHash,randomUUID} from 'node:crypto';
 
 // Phase 5.1: account-owned character participation requests only.
@@ -27,15 +28,15 @@ function existingStatus(campaignId,link,alreadyExists=true){
     status:link.status,campaignCharacterId:link.campaignCharacterId||null,
     revision:Number.isSafeInteger(link.revision)?link.revision:1,alreadyExists};
 }
-function ensureActiveMember(campaign,member,projection,uid,campaignId){
-  const role=uid===campaign.ownerUid?'owner':member?.role;
-  if(!record(member)||member.uid!==uid||member.campaignId!==campaignId||
+export function ensureActiveMember(campaign,member,projection,uid,campaignId,errorMessage){
+  const role=campaignMembershipRole(campaign,uid,member,campaignId);
+  if(!role||!record(member)||member.uid!==uid||member.campaignId!==campaignId||
     member.role!==role||member.status!=='active'||
     !Number.isSafeInteger(member.revision)||member.revision<1)
-    throw new Error('Active campaign membership is required to request a character link.');
+    throw new Error(errorMessage||'Active campaign membership is required to request a character link.');
   if(!record(projection)||projection.campaignId!==campaignId||
     projection.status!=='active'||projection.role!==role)
-    throw new Error('Campaign membership needs reconciliation before linking a character.');
+    throw new Error(errorMessage||'Campaign membership needs reconciliation before linking a character.');
 }
 export function ensureOwnedCampaignSheet(sheet,uid,sourceCharacterId){
   if(!record(sheet)||sheet.ownerUid!==uid||

@@ -66,8 +66,8 @@ export async function universalCheckAction(db,uid,input,stamp=()=>new Date()){
     ensure(campaignSnap.exists,'Campaign not found.');
     const campaign=campaignSnap.data();
     const membership=await readCampaignMember(tx,db,campaignId,campaign,uid);
-    ensure(isCampaignMember(campaign,uid,membership),'Campaign membership required.');
-    const gm=isCampaignGM(campaign,uid,membership);
+    ensure(isCampaignMember(campaign,uid,membership,campaignId),'Campaign membership required.');
+    const gm=isCampaignGM(campaign,uid,membership,campaignId);
     const previous=await tx.get(receiptRef);
     if(previous.exists){
       ensure(previous.data().signature===digest,'Operation ID was reused for different input.');
@@ -95,7 +95,7 @@ export async function universalCheckAction(db,uid,input,stamp=()=>new Date()){
         ensure(snap.exists&&isLinkedCharacter(campaign,id,snap.data(),campaignId),'Character is not linked.');
         const character=snap.data(),ownerUid=character.ownerUid;
         ensure(identifier(ownerUid),'Linked character has no owner.');
-        ensure(isCampaignMember(campaign,ownerUid,ownerMemberships.get(ownerUid)||null),'Target owner is not an active campaign member.');
+        ensure(isCampaignMember(campaign,ownerUid,ownerMemberships.get(ownerUid)||null,campaignId),'Target owner is not an active campaign member.');
         const modifier=universalAutomaticModifiers(character,{
           type:input.type,skill:safeText(input.skill,100),characteristic:input.characteristic,
           rankOverride:input.rankOverride,modifiers:input.modifiers,

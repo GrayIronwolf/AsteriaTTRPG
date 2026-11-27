@@ -1,4 +1,4 @@
-import {characterCapacityLimits,assertCharacterLinkCapacity,ensureOwnedCampaignSheet,
+import {ensureActiveMember,characterCapacityLimits,assertCharacterLinkCapacity,ensureOwnedCampaignSheet,
   legacyCharacterLinkExists} from './campaignCharacterLinks.mjs';
 
 const ID=/^[A-Za-z0-9_-]{1,160}$/;
@@ -139,12 +139,7 @@ export async function reviewCampaignCharacterLink(db,actorUid,
       throw Error('Character link reservation requires reconciliation.');
     const member=memberSnap.exists?memberSnap.data():null;
     const projection=projectionSnap.exists?projectionSnap.data():null;
-    const role=link.ownerUid===c.ownerUid?'owner':member?.role;
-    if(!record(member)||member.uid!==link.ownerUid||member.campaignId!==campaignId||
-      member.status!=='active'||member.role!==role||!goodRevision(member.revision)||
-      !record(projection)||projection.campaignId!==campaignId||
-      projection.role!==role||projection.status!=='active')
-      throw Error('Active member and matching account projection required.');
+    ensureActiveMember(c,member,projection,link.ownerUid,campaignId,'Active member and matching account projection required.');
     if(!sheetSnap.exists)throw Error('Saved character no longer exists.');
     const sheet=sheetSnap.data();
     ensureOwnedCampaignSheet(sheet,link.ownerUid,link.sourceCharacterId);

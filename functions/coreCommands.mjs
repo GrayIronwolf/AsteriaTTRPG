@@ -19,9 +19,9 @@ export function createCoreCommands(context) {
         if(!campaignSnapshot.exists() || !characterSnapshot.exists()) throw new Error('Linked character not found.');
         const campaign=campaignSnapshot.data(),original=characterSnapshot.data(),session=sessionSnapshot.data() || {};
         const memberRecord=await readCampaignMember({get:async ref=>{const snapshot=await tx.get(ref);return {exists:snapshot.exists(),data:()=>snapshot.data()};}},db,campaignId,campaign,currentUser.uid);
-        if(!isCampaignMember(campaign,currentUser.uid,memberRecord)) throw new Error('Campaign membership is required.');
+        if(!isCampaignMember(campaign,currentUser.uid,memberRecord,campaignId)) throw new Error('Campaign membership is required.');
         if(!isLinkedCharacter(campaign,characterId,original,campaignId)) throw new Error('This character is not linked to the campaign.');
-        const isGM=isCampaignGM(campaign,currentUser.uid,memberRecord),isOwner=original.ownerUid===currentUser.uid;
+        const isGM=isCampaignGM(campaign,currentUser.uid,memberRecord,campaignId),isOwner=original.ownerUid===currentUser.uid;
         if(!isOwner && !isGM) throw new Error('Character access is not permitted.');
         if(session.status!=='active' || effectTimeMs(session.expiresAt)<=Date.now()) throw new Error('The GM must start the session before this dashboard can be edited.');
         const privateRef=doc(db,'users',original.ownerUid,'characters',original.sourceCharacterId || characterId),privateSnapshot=await tx.get(privateRef);

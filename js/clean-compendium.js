@@ -273,6 +273,11 @@
 
   function campaignRole(campaign) {
     const uid = accountKey();
+    if(campaign.membershipSchemaVersion===2){
+      const role=window.AsteriaFirebase?.getDiscoveredCampaignRole?.(campaign.id,uid);
+      return role==='owner'||role==='co-gm'?'GM':role==='player'?'Player':'';
+    }
+    if(![1,undefined,null].includes(campaign.membershipSchemaVersion))return '';
     const roles = campaign.roles || {};
     if (campaign.ownerUid === uid || roles[uid] === 'gm' || arrayValue(campaign.gmUids).includes(uid)) return 'GM';
     if (roles[uid] === 'player' || arrayValue(campaign.playerUids).includes(uid)) return 'Player';

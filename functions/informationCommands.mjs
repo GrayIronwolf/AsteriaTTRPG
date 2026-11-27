@@ -8,7 +8,7 @@ export function createInformationCommands({db,currentUser,requestId,doc,runTrans
         const membership=await readCampaignMember({get:async ref=>{
           const row=await tx.get(ref);return {exists:row.exists(),data:()=>row.data()};
         }},db,campaignId,campaign.data(),currentUser.uid);
-        if(!isCampaignGM(campaign.data(),currentUser.uid,membership))throw new Error('Only the campaign GM can send this notification.');
+        if(!isCampaignGM(campaign.data(),currentUser.uid,membership,campaignId))throw new Error('Only the campaign GM can send this notification.');
         if(!target.exists())throw new Error('Character not found.');
         const title=String(input.title || '').trim().slice(0,160),message=String(input.message || '').trim().slice(0,4000);
         if(!title || !message)throw new Error('Enter a title and message.');
@@ -23,7 +23,7 @@ export function createInformationCommands({db,currentUser,requestId,doc,runTrans
         const membership=await readCampaignMember({get:async ref=>{
           const row=await tx.get(ref);return {exists:row.exists(),data:()=>row.data()};
         }},db,campaignId,campaignSnap.data(),currentUser.uid);
-        if(!isCampaignMember(campaignSnap.data(),currentUser.uid,membership))throw new Error('Campaign membership is required.');
+        if(!isCampaignMember(campaignSnap.data(),currentUser.uid,membership,campaignId))throw new Error('Campaign membership is required.');
         const ref=doc(db,'campaigns',campaignId,'characters',characterId),snapshot=await tx.get(ref);
         if(!snapshot.exists() || snapshot.data().ownerUid!==currentUser.uid)throw new Error('Only the character owner can change read state.');
         const character=snapshot.data();

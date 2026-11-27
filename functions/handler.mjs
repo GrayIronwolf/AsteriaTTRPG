@@ -48,7 +48,7 @@ export async function executeAction(db,uid,data,serverTimestamp) {
     const campaignSnapshot=await transaction.get(campaignRef);
     if(!campaignSnapshot.exists) throw new Error('Campaign membership is required.');
     const memberRecord=await readCampaignMember(transaction,db,campaignId,campaignSnapshot.data(),uid);
-    if(!member(campaignSnapshot.data(),uid,memberRecord)) throw new Error('Campaign membership is required.');
+    if(!member(campaignSnapshot.data(),uid,memberRecord,campaignId)) throw new Error('Campaign membership is required.');
     const [characterSnapshot,receipt]=await Promise.all([transaction.get(characterRef),transaction.get(receiptRef)]);
     const campaignOnlyGMAction=new Set(['manageMerchantRelationship','manageEnhancementPlan','reviewEnhancement','manageCraftingStation','manageNPCService','reviewNPCRepair','manageCampaignCraftingRecipe','reviewCraftingRequest','manageCampaignShop','manageGMRewardBundle','syncCampaignShopStores','syncGMRewardBundles','managePartyStash','managePartyLootDrop','splitPartyLootCurrency','respondMerchantDeal','manageItemLore','manageLootTable','manageRandomTable','manageEncounterReward','manageEncounterCompletion','manageAsteriaCalendar','manageWeatherEnvironment','manageWorldAtlas','manageSessionLibrary','manageCampaignAudio','manageSessionRecording','managePlayerPresentation','rebuildPresentationProjections']).has(action);
     const campaignOnlyMemberAction=action==='respondRecordingConsent';
@@ -58,8 +58,8 @@ export async function executeAction(db,uid,data,serverTimestamp) {
     const character=characterSnapshot.data()||{};
     // Character ownership comes from Firestore, never a caller-supplied private copy.
     const linked=isLinkedCharacter(campaign,args[1],character,campaignId);
-    const gmAccess=(campaignOnlyGMAction && gm(campaign,uid,memberRecord)) ||
-      (GM_CHARACTER_ACTIONS.has(action) && gm(campaign,uid,memberRecord) && linked);
+    const gmAccess=(campaignOnlyGMAction && gm(campaign,uid,memberRecord,campaignId)) ||
+      (GM_CHARACTER_ACTIONS.has(action) && gm(campaign,uid,memberRecord,campaignId) && linked);
     if(GM_ONLY_ACTIONS.has(action) && !gmAccess) throw new Error('Only the GM of this linked character can make this change.');
     if(!combatAction&&!campaignOnlyGMAction&&!campaignOnlyMemberAction&&character.ownerUid!==uid && !gmAccess) throw new Error('This character belongs to another account.');
     if(receipt.exists){
@@ -75,7 +75,7 @@ export async function executeAction(db,uid,data,serverTimestamp) {
     for(const detail of args.slice(2)) if(detail && typeof detail==='object' && detail.expectedCoreRevision!==undefined) {
       if(!Number.isSafeInteger(detail.expectedCoreRevision) || detail.expectedCoreRevision!==Number(character.coreRevision || 0)) throw new Error('The character changed. Wait for live sync before trying again.');
     }
-    if(action==='updateCharacterInventory' && args[2]?.type==='add-item' && !gm(campaign,uid,memberRecord)) throw new Error('Ask the GM to grant new items.');
+    if(action==='updateCharacterInventory' && args[2]?.type==='add-item' && !gm(campaign,uid,memberRecord,campaignId)) throw new Error('Ask the GM to grant new items.');
     if(action==='updateCampaignCharacterCurrency' && (!Number.isSafeInteger(args[3]) || Math.abs(args[3])>1e9)) throw new Error('Choose a whole currency amount within range.');
     if(action==='updateCampaignCharacterResource' && (!Number.isFinite(args[3]) || Math.abs(args[3])>1e9)) throw new Error('Invalid resource amount.');
     for(const detail of args.slice(2)) if(detail && typeof detail==='object') for(const key of ['quantity','exchangeQuantity','priceCopper','rows','cols','soulRecovery']) {
