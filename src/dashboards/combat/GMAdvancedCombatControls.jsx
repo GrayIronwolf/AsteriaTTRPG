@@ -16,7 +16,7 @@ function HybridPhysicalDiceEntry({busy,onSubmit,actionId}){
   const parse=value=>{
     const text=value.trim();
     if(!text)return null;
-    if(!/^(?:[1-9]|1[0-9]|20)(?:\\s*,\\s*(?:[1-9]|1[0-9]|20))?$/.test(text))
+    if(!/^(?:[1-9]|1[0-9]|20)(?:\s*,\s*(?:[1-9]|1[0-9]|20))?$/.test(text))
       throw Error('Enter one or two d20 faces (1–20), separated by a comma.');
     return text.split(',').map(Number);
   };
