@@ -16,6 +16,7 @@ export function createHybridPresentationSessionCommands(context,{requireCampaign
           const sessionRef=doc(db,'campaigns',campaignId,'hybridSessionControl','current');
           const safeRef=doc(db,'campaigns',campaignId,'presentationRestricted','current');
           const accessRef=doc(db,'campaigns',campaignId,'presentationAssetAccess','current');
+          const combatRef=doc(db,'campaigns',campaignId,'presentationCombat','current');
           const [current,accessSnap]=await Promise.all([
             tx.get(sessionRef),tx.get(accessRef)
           ]);
@@ -39,6 +40,8 @@ export function createHybridPresentationSessionCommands(context,{requireCampaign
               updatedAt:serverTimestamp()});
             tx.set(safeRef,{...restrictedPresentationProjection({},0),
               epoch,updatedAt:serverTimestamp()});
+            tx.set(combatRef,{active:false,round:0,current:'',endsAt:0,
+              epoch,visible:false,updatedAt:serverTimestamp()});
             return {status:'open',revision,expiresAt:now+action.durationMinutes*60*1000};
           }
           if(action.type==='close'){
@@ -50,6 +53,8 @@ export function createHybridPresentationSessionCommands(context,{requireCampaign
               updatedAt:serverTimestamp()});
             tx.set(safeRef,{...restrictedPresentationProjection({},0),
               epoch:session.epoch,updatedAt:serverTimestamp()});
+            tx.set(combatRef,{active:false,round:0,current:'',endsAt:0,
+              epoch:session.epoch,visible:false,updatedAt:serverTimestamp()});
             return {status:'closed',revision};
           }
           if(session.status!=='open'||sessionTimestampMs(session.expiresAt)<=now)
