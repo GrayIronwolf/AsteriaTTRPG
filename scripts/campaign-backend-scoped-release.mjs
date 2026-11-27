@@ -26,7 +26,20 @@ function isolatedEntrypoint(source){
        source.indexOf(marker,start+1)!==-1||
        source.indexOf(nextMarker,end+1)!==-1)
       die('Unreviewed campaign callable boundary: '+name);
-    const block=source.slice(start,end).trim();
+    let block=source.slice(start,end).trim();
+    // Milestone 4.1 attendance is implemented but not production-approved.
+    // The pre-approved five-callable release must not stage the new attendance
+    // module even though the development entrypoint can route to it.
+    if(name==='asteriaCampaignJoinReview'){
+      const attendanceStart="    if(data.action==='attendance-list'||data.action==='attendance-set'){";
+      const rosterStart="    if(data.action==='roster'){";
+      const a=block.indexOf(attendanceStart);
+      const b=block.indexOf(rosterStart,a);
+      if(a<0||b<=a||!block.slice(a,b).includes('ASTERIA_CAMPAIGN_ATTENDANCE_ENABLED')||
+        !block.slice(a,b).includes("import('./campaignAttendance.mjs')"))
+        die('Unreviewed campaign attendance staging boundary.');
+      block=block.slice(0,a)+block.slice(b);
+    }
     if((block.match(/export const /g)||[]).length!==1||
        !block.includes("region:'us-central1'")||
        !block.includes('maxInstances:3')||

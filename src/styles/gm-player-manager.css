@@ -181,3 +181,10 @@
 @media(prefers-reduced-motion:reduce){
   .react-gm-player-manager *{scroll-snap-type:none!important;animation:none!important;}
 }
+
+/* M4.1: attendance is a separate roster attribute, never an access toggle. */
+.react-gm-player-attendance{display:flex;align-items:end;gap:12px;flex-wrap:wrap;
+  padding:10px 12px;background:#0b2030;border:1px solid #405e70;}
+.react-gm-player-attendance label{flex:0 1 230px;}
+.react-gm-player-attendance select{width:100%;}
+.react-gm-player-attendance small{flex:1 1 190px;}

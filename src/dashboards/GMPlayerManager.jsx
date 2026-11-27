@@ -44,6 +44,7 @@ export function GMPlayerManager({campaignId,campaign={},characters={},members=nu
   const [rosterPageSize,setRosterPageSize]=useState(12);
   const deferredQuery=useDeferredValue(query);
   const [serverRoster,setServerRoster]=useState(null);
+  const [attendanceData,setAttendanceData]=useState(null);
   const [joinData,setJoinData]=useState(null);
   const [linksData,setLinksData]=useState(null);
   const [lifecycleData,setLifecycleData]=useState(null);
@@ -92,6 +93,8 @@ export function GMPlayerManager({campaignId,campaign={},characters={},members=nu
   const liveScope=useRef(scope);
   liveScope.current=scope;
   const owner=access.owner;
+  const attendanceByUid=useMemo(()=>new Map((attendanceData?.entries||[])
+    .map(entry=>[entry.uid,entry])),[attendanceData]);
 
   // Page data is fetched from existing authenticated callable services.
   // Memberships and party resources are already observed by the live hook.
@@ -101,6 +104,8 @@ export function GMPlayerManager({campaignId,campaign={},characters={},members=nu
     const enqueue=(key,allowed,request)=>{
       if(allowed)tasks.push({key,request:Promise.resolve().then(request)});
     };
+    enqueue('attendance',view==='players'&&access.attendance,
+      ()=>firebaseService.listCampaignAttendance(campaignId));
     enqueue('roster',(view==='players'||view==='access')&&access.roster,
       ()=>firebaseService.listCampaignPlayerRoster(campaignId));
     enqueue('joins',view==='joins'&&access.joinReview,
@@ -119,7 +124,8 @@ export function GMPlayerManager({campaignId,campaign={},characters={},members=nu
     setLoadErrors(previous=>({...previous,...Object.fromEntries(tasks.map(item=>[item.key,'']))}));
     // Never leave stale privileged controls visible after a refresh failure.
     for(const task of tasks){
-      if(task.key==='roster')setServerRoster(null);
+      if(task.key==='attendance')setAttendanceData(null);
+      else if(task.key==='roster')setServerRoster(null);
       else if(task.key==='joins')setJoinData(null);
       else if(task.key==='links')setLinksData(null);
       else if(task.key==='lifecycle')setLifecycleData(null);
@@ -138,7 +144,12 @@ export function GMPlayerManager({campaignId,campaign={},characters={},members=nu
         if(!value||value.campaignId!==campaignId){
           errors[key]='Campaign data did not match the selected campaign.';return;
         }
-        if(key==='roster'){
+        if(key==='attendance'){
+          if(!Array.isArray(value.entries)){
+            errors[key]='Attendance response is invalid.';return;
+          }
+          setAttendanceData(value);
+        }else if(key==='roster'){
           if(!Array.isArray(value.active)||!Array.isArray(value.inactive)){
             errors[key]='Server roster response is invalid.';return;
           }
@@ -164,7 +175,7 @@ export function GMPlayerManager({campaignId,campaign={},characters={},members=nu
       setLoading(false);
     });
     return()=>{active=false;};
-  },[scope,view,revision,cursorIndex,access.gm,access.roster,access.joinReview,
+  },[scope,view,revision,cursorIndex,access.gm,access.roster,access.attendance,access.joinReview,
     access.characterApproval,access.characterLifecycle,access.invitationManagement,access.activity]);
 
   // The existing Universal Check System is the only request and roll feed.
@@ -184,7 +195,7 @@ export function GMPlayerManager({campaignId,campaign={},characters={},members=nu
 
   // One-time invitation credentials must never survive a campaign/account switch.
   useEffect(()=>{
-    setIssuedLink('');setCopyMessage('');setServerRoster(null);
+    setIssuedLink('');setCopyMessage('');setServerRoster(null);setAttendanceData(null);
     setJoinData(null);setLinksData(null);setLifecycleData(null);
     setInvitationData(null);setActivityData(null);
     setCursorHistory([null]);setCursorIndex(0);
@@ -216,6 +227,14 @@ export function GMPlayerManager({campaignId,campaign={},characters={},members=nu
       refresh();
     }catch(error){setFeedback(errorText(error));}
     finally{setBusy('');}
+  };
+  const changeAttendance=(row,mode)=>{
+    if(!access.attendance||!report.server||row.role!=='player'||
+      row.status!=='active'||!attendanceData)return;
+    const previous=attendanceByUid.get(row.uid);
+    run('attendance:'+row.uid,()=>firebaseService.setCampaignAttendance(
+      campaignId,row.uid,mode,previous?.revision||0),
+      'Attendance saved. Campaign membership and second-screen visibility are unchanged.');
   };
   const reviewJoin=(row,decision)=>{
     if(!access.joinReview||!gmPlayerManagerApprovalAllowed(row,decision,capacity))return;
@@ -419,6 +438,7 @@ export function GMPlayerManager({campaignId,campaign={},characters={},members=nu
         </select></label>
       </div>
       {report.state!=='ready'?<ReadOnlyNotice>{report.message}</ReadOnlyNotice>:null}
+      {access.attendance&&loadErrors.attendance?<ReadOnlyNotice>{loadErrors.attendance}</ReadOnlyNotice>:null}
       {report.issues.length?<ReadOnlyNotice>{report.issues.length} membership record issue(s) require review; no unverified account is granted access.</ReadOnlyNotice>:null}
       {counts?.unverifiedCharacters?<ReadOnlyNotice>{counts.unverifiedCharacters} character record(s) were excluded because ownership links could not be verified.</ReadOnlyNotice>:null}
       <div className="react-gm-player-roster" aria-live="polite">
@@ -430,6 +450,19 @@ export function GMPlayerManager({campaignId,campaign={},characters={},members=nu
               {row.online?<span className="react-gm-player-online">Online</span>:<span className="react-gm-player-offline">Presence unavailable / offline</span>}
             </div>
           </div>
+          {row.role==='player'&&row.status==='active'?<div className="react-gm-player-attendance">
+            <label>Attendance for this session
+              <select aria-label={'Attendance for '+(row.displayName||row.uid)}
+                value={attendanceByUid.get(row.uid)?.mode||'not-participating'}
+                disabled={!access.attendance||!report.server||!attendanceData||!!busy}
+                onChange={event=>changeAttendance(row,event.target.value)}>
+                <option value="not-participating">Not Participating</option>
+                <option value="in-person">In-person</option>
+                <option value="remote">Remote</option>
+              </select>
+            </label>
+            <small>Separate from presence, combat participation and screen visibility.</small>
+          </div>:null}
           <div className="react-gm-player-character-list">
             {row.characters.map(character=><div className="react-gm-player-character" key={character.id}>
               <div><strong>{character.name}</strong><small>{character.level!=null?'Level '+character.level:'Level not recorded'}</small></div>
