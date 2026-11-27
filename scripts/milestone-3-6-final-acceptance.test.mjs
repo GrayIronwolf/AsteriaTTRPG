@@ -5,6 +5,7 @@ import {readFileSync} from 'node:fs';
 import {PHYSICAL_DICE_FACES,validatePhysicalDiceRecord}
   from '../src/state/hybridPhysicalDiceModel.mjs';
 import {battleMapTokens} from '../src/state/battleMapModel.mjs';
+import {mapForViewer} from '../src/dashboards/presentation/campaignMediaModel.mjs';
 import {publicPresentationBattleMap} from '../src/state/livePresentationProjectionModel.mjs';
 import {captureEncounterRecovery} from '../functions/encounterRecovery.mjs';
 import {hybridViewerCanRead,restrictedPresentationProjection}
@@ -52,6 +53,13 @@ test('3.6 acceptance: token visibility blocks hidden enemy markers even without 
   const projection=publicPresentationBattleMap(raw,'camp3','map3');
   assert.deepEqual(projection.tokens.map(row=>row.id),['hero-marker']);
   assert.doesNotMatch(JSON.stringify(projection),/Secret Ork|secret-marker/);
+  const adapted=mapForViewer(raw,'camp3','player');
+  assert.deepEqual(adapted.tokens.map(row=>row.id),['hero-marker']);
+  assert.doesNotMatch(JSON.stringify(adapted),/Secret Ork|secret-marker/);
+  const forged={...raw,activeTokenId:'secret-marker'};
+  assert.equal(mapForViewer(forged,'camp3','player').activeTokenId,'');
+  assert.deepEqual(mapForViewer(raw,'camp3','gm').tokens.map(row=>row.id),
+    ['hero-marker','secret-marker']);
   const publicTokens=battleMapTokens(raw.tokens.map(row=>row.id==='secret-marker'?
     {...row,visibility:'players'}:row));
   const visible=publicPresentationBattleMap({...raw,tokens:publicTokens},'camp3','map3');
