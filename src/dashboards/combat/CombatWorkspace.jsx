@@ -166,7 +166,8 @@ function GMEncounterSnapshots({api,campaignId,combat,busy,onCommand}){
     setEntries([]);setError('');setName('');setReason('');
     if(!activeId||!api?.watchEncounterSnapshots)return undefined;
     return api.watchEncounterSnapshots(campaignId,activeId,setEntries,
-      failure=>setError(failure?.message||'Encounter snapshots could not load.'));
+      failure=>{setEntries([]);
+        setError(failure?.message||'Encounter snapshots could not load.');});
   },[api,campaignId,activeId]);
   if(!activeId||!api?.watchEncounterSnapshots)return null;
   const disabled=busy||!combat.sessionEditable;
