@@ -17,6 +17,7 @@ import {ForgedBadge} from './ForgedBadge.jsx';
 
 const emptyEnemy={name:'',type:'Creature',hp:'20',sp:'',mp:'',xpReward:'0',ac:'',initiative:''};
 function useCombatStream(api,method,args){
+  const [generation,setGeneration]=useState(0);
   const [state,setState]=useState({loading:true,data:null,error:''});
   useEffect(()=>{
     let alive=true,stop=()=>{};
@@ -33,8 +34,10 @@ function useCombatStream(api,method,args){
       });
     }catch(error){setState({loading:false,data:null,error:error?.message||'Combat is unavailable.'});}
     return()=>{alive=false;stop?.();};
-  },[api,method,...args]);
-  return state;
+  },[api,method,...args,generation]);
+  // Reconnect always creates a fresh authenticated listener. The previous
+  // listener is disposed and cached combat data is hidden until verified.
+  return {...state,reconnect:()=>setGeneration(value=>value+1)};
 }
 const Resources=({row})=><span className={styles.resources}>
   {['hp','sp','mp'].map(key=><span key={key}>{key.toUpperCase()}: {row[key]
@@ -259,6 +262,10 @@ export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigat
     <h2>Combat Command Centre</h2>
     {stream.loading?<p role="status">Verifying live combat access…</p>:null}
     {stream.error?<p role="alert">{stream.error}</p>:null}
+    <button type="button" data-testid="site-gm-combat-reconnect"
+      disabled={stream.loading||busy} onClick={stream.reconnect}>
+      Reconnect live encounter
+    </button>
     <CombatCommandCentre key={uid+':'+campaignId} uid={uid} campaignId={campaignId}>
     <CombatCommandPanel id="resources">
       {typeof renderPartyResources==='function'?
@@ -514,6 +521,10 @@ export function PlayerCombatWorkspace({api,campaignId,characterId}){
     <h2>Combat &amp; Initiative</h2>
     {stream.loading?<p role="status">Verifying your combat participant…</p>:null}
     {stream.error?<p role="alert">{stream.error}</p>:null}
+    <button type="button" data-testid="site-player-combat-reconnect"
+      disabled={stream.loading||busy} onClick={stream.reconnect}>
+      Reconnect combat status
+    </button>
     {combat?<>
       <p role="status">{combat.paused?'PAUSED':combat.status.toUpperCase()} · Round {combat.round}
         {' · '}Session {stream.data.session.status}</p>
