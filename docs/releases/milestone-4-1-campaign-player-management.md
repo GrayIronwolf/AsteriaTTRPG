@@ -30,3 +30,7 @@ Both the canonical website release manifest and the website's derived flags have
 - Browser baseline and publishing-isolation checks before integration.
 
 Live account, mobile UI and production backend acceptance have not been established by automated CI alone. Do not claim this code is activated in production.
+
+## Final branch verification
+
+After the development-only asset synchronisation, the latest human-authored pull-request commit must pass all required CI workflows. Action-required checks on the bot-generated asset commit are not evidence of success. No merge may occur while checks are pending or failed.
