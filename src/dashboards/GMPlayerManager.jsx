@@ -63,6 +63,8 @@ export function GMPlayerManager({campaignId,campaign={},characters={},members=nu
   const [issuedLink,setIssuedLink]=useState('');
   const [copyMessage,setCopyMessage]=useState('');
   const qrHost=useRef(null);
+  const recipientHost=useRef(null);
+  const linkRequest=useRef(null);
   const flags=typeof window!=='undefined'?window.AsteriaFeatureFlags||{}:{};
   const access=gmPlayerManagerAccess({campaign,actorUid:uid,membership,flags});
   // Membership reconciliation is independent of UI filters and search typing.
@@ -95,6 +97,23 @@ export function GMPlayerManager({campaignId,campaign={},characters={},members=nu
   const owner=access.owner;
   const attendanceByUid=useMemo(()=>new Map((attendanceData?.entries||[])
     .map(entry=>[entry.uid,entry])),[attendanceData]);
+
+  const recipientPickerEnabled=access.invitationManagement&&flags.campaignFriendRecipients===true;
+  useEffect(()=>{
+    if(view!=='invitations'||!recipientPickerEnabled)return;
+    const dispose=window.AsteriaCampaignFriendRecipients?.mount(recipientHost.current,{
+      id:campaignId,ownerUid:uid,membershipSchemaVersion:2
+    },{
+      api:{
+        getUser:firebaseService.currentUser,
+        isReady:()=>window.AsteriaFirebase?.isReady?.(),
+        selectCampaignFriendRecipients:firebaseService.selectCampaignFriendRecipients,
+        issueCampaignFriendInvitation:firebaseService.issueCampaignFriendInvitation
+      },
+      onIssued:()=>{setCursorIndex(0);setRevision(value=>value+1);}
+    });
+    return typeof dispose==='function'?dispose:undefined;
+  },[scope,view,recipientPickerEnabled,campaignId,uid]);
 
   // Page data is fetched from existing authenticated callable services.
   // Memberships and party resources are already observed by the live hook.
@@ -195,6 +214,7 @@ export function GMPlayerManager({campaignId,campaign={},characters={},members=nu
 
   // One-time invitation credentials must never survive a campaign/account switch.
   useEffect(()=>{
+    linkRequest.current=null;
     setIssuedLink('');setCopyMessage('');setServerRoster(null);setAttendanceData(null);
     setJoinData(null);setLinksData(null);setLifecycleData(null);
     setInvitationData(null);setActivityData(null);
@@ -315,21 +335,27 @@ export function GMPlayerManager({campaignId,campaign={},characters={},members=nu
       setFeedback('Secure invitation creation requires HTTPS and the authenticated invitation link helper.');
       return;
     }
-    if(!window.confirm('Create a one-time private '+roleLabel(inviteRole)+' invitation? The link cannot be recovered later.'))return;
+    if(!window.confirm('Create a private '+roleLabel(inviteRole)+' link for up to '+maxUses+' use(s)?'))return;
+    const signature=JSON.stringify([scope,inviteRole,expiresInHours,maxUses]);
+    if(linkRequest.current?.signature!==signature)
+      linkRequest.current={signature,requestId:window.crypto.randomUUID()};
+    const requestId=linkRequest.current.requestId;
     setIssuedLink('');setCopyMessage('');
     run('invite-issue',async()=>{
       const result=await firebaseService.issueSecureCampaignInvitation({
-        campaignId,requestId:window.crypto.randomUUID(),type:'share-link',
+        campaignId,requestId,type:'share-link',
         roleOffered:inviteRole,recipientEmail:null,expiresInHours,maxUses
       });
       if(firebaseService.currentUser()?.uid!==uid||liveScope.current!==scope)
         throw Error('Campaign or account changed. Private link will not be displayed.');
+      linkRequest.current=null;
+      setCursorIndex(0);
       if(result?.token&&result?.inviteId){
         const base=window.location.href.split('#')[0];
         setIssuedLink(linkBuilder(base,campaignId,result.inviteId,result.token));
       }else setCopyMessage('Invitation exists, but its one-time link is no longer available.');
       return result;
-    },'Invitation created. Copy the private link now; it is not stored in the Player Manager.');
+    },'Invitation record saved.');
   };
   const changeInvitation=(row,action)=>{
     if(!access.invitationManagement||!owner||row.status!=='active'||!validRevision(row.revision))return;
@@ -584,9 +610,11 @@ export function GMPlayerManager({campaignId,campaign={},characters={},members=nu
       </Panel>
     </div>:null}
 
-    {view==='invitations'?<Panel title="Secure Campaign Invitations" eyebrow="Owner-Only / One-Time Private Links">
+    {view==='invitations'?<Panel title="Secure Campaign Invitations" eyebrow="Campaign Owner">
       <p className="react-gm-player-hint">Invitations are recipient-bound or private share links. No email is sent. Issuing an invitation does not grant membership without GM approval.</p>
       {!access.invitationManagement?<ReadOnlyNotice>{stateMessage('invitations',access.invitationManagement)}</ReadOnlyNotice>:null}
+      {recipientPickerEnabled?<div ref={recipientHost}/>:null}
+      {access.invitationManagement?<h3>Private link or QR code</h3>:null}
       {access.invitationManagement?<div className="react-gm-player-invite-controls">
         <label>Offered role<select value={inviteRole} onChange={e=>setInviteRole(e.target.value)}
           disabled={!!busy}><option value="player">Player</option><option value="co-gm">Co-GM (approval required)</option></select></label>
@@ -612,7 +640,7 @@ export function GMPlayerManager({campaignId,campaign={},characters={},members=nu
       {loadErrors.invitations?<ReadOnlyNotice>{loadErrors.invitations}</ReadOnlyNotice>:null}
       {access.invitationManagement&&invitationData&&!invitations.length?<ReadOnlyNotice>No invitation records on this page.</ReadOnlyNotice>:null}
       <div className="react-gm-player-record-list">{access.invitationManagement&&invitations.map(row=><article key={row.inviteId}>
-        <div><h3>{row.type||'Invitation'} · {String(row.inviteId).slice(0,12)}</h3>
+        <div><h3>{row.recipientUid?'Account invitation':row.type==='share-link'?'Private link':row.type||'Invitation'} · {String(row.inviteId).slice(0,12)}</h3>
           <small>{roleLabel(row.roleOffered)} · {row.usedCount}/{row.maxUses} uses</small>
           <p>Expires: {row.expiresAt||'Unknown'} · <RecordStatus status={row.status}/></p></div>
         {row.status==='active'?<div className="react-gm-player-actions">

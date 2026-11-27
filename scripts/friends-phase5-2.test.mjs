@@ -48,6 +48,13 @@ function fixture(){
    return {exists:store.has(path),data:()=>clone(store.get(path))};
  }});
  const db={store,doc:ref,
+   collection:path=>({where:(field,operator,value)=>({get:async()=>{
+     assert.equal(operator,'==');
+     const docs=[...store.entries()].filter(([key,row])=>key.startsWith(path+'/')&&
+       !key.slice(path.length+1).includes('/')&&row[field]===value)
+       .map(([key,row])=>({id:key.slice(path.length+1),data:()=>clone(row)}));
+     return {docs,size:docs.length};
+   }})}),
    async runTransaction(fn){
      const writes=[];
      const tx={
@@ -271,4 +278,19 @@ test('notice path fails closed without recipient notification, disabled flags, o
  db.store.set('friendRelationships/'+pair.pairId,blocked);
  await assert.rejects(acceptSecureCampaignInvitation(db,{uid:'bob'},notify,opts),/unavailable/);
  assert.equal(db.store.has('campaigns/campaign01/members/bob'),false);
+});
+
+test('two owner tabs reuse one live delivery and revocation allows a fresh invitation',async()=>{
+ const db=fixture();
+ const send=requestId=>issueAccountBoundFriendInvitation(db,auth,'alice',
+   issueInput('Poppa_J#52816',requestId),{signingKey:key,now,notificationsEnabled:true});
+ const first=await send('invite-delivery-tab-one');
+ const repeated=await send('invite-delivery-tab-two');
+ assert.equal(repeated.inviteId,first.inviteId);
+ assert.equal(repeated.alreadyIssued,true);
+ assert.equal([...db.store.keys()].filter(k=>k.startsWith('campaignNotificationInbox/bob/items/')).length,1);
+ await changeSecureCampaignInvitation(db,'alice',{
+   campaignId:'campaign01',inviteId:first.inviteId,action:'revoke',expectedRevision:1
+ },{now});
+ assert.notEqual((await send('invite-delivery-tab-three')).inviteId,first.inviteId);
 });

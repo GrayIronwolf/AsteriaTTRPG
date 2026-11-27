@@ -1,5 +1,5 @@
 import {createHash,createHmac,randomBytes,timingSafeEqual} from 'node:crypto';
-import {enqueueCampaignNotification} from './campaignNotifications.mjs';
+import {enqueueCampaignNotification,friendInvitationNoticeRef} from './campaignNotifications.mjs';
 
 // Phase 6.1: issuance and pure validation only. No join, approval,
 // member/character changes, delivery, or browser-manageable invitation data.
@@ -164,11 +164,27 @@ export async function issueSecureCampaignInvitation(db,actorUid,{
       throw Error('Invitation identifier or token already reserved. Use a new request ID.');
     if(campaign.joinPolicy?.joinRequestsOpen===false)
       throw Error('The campaign is not accepting new invitations.');
-    const throttle=dayLimit(throttleSnap.exists?throttleSnap.data():null,time);
     const boundUid=resolveBoundRecipient?
       await resolveBoundRecipient(tx,{campaignId,actorUid,now}):uid;
     if(resolveBoundRecipient&&(!validId(boundUid)||boundUid===actorUid))
       throw Error('Invitation recipient unavailable.');
+    if(bindingKind==='friend-account'&&options.notificationsEnabled===true){
+      // Reuse an outstanding delivery even when two tabs use different request IDs.
+      // New issuances also update the shared owner throttle in this transaction.
+      const prior=await tx.get(db.collection(path+'/invitations').where('recipientUid','==',boundUid));
+      for(const row of prior.docs){
+        const previous=row.data();
+        if(previous.bindingKind!=='friend-account'||previous.createdByUid!==actorUid||
+           previous.status!=='active'||previous.usedCount!==0||
+           !(dateValue(previous.expiresAt)>now))continue;
+        assertNotifiedFriendInvitationEligible(previous,{
+          campaignId,inviteId:row.id,claimantUid:boundUid,now
+        });
+        const notice=await tx.get(friendInvitationNoticeRef(db,boundUid,campaignId,row.id));
+        if(notice.exists)return {...safeSummary(previous,true),token:null};
+      }
+    }
+    const throttle=dayLimit(throttleSnap.exists?throttleSnap.data():null,time);
     const recordValue={
       inviteId,campaignId,type,roleOffered,status:'active',
       tokenDigest:digest,

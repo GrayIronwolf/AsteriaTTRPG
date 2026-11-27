@@ -50,7 +50,7 @@ function harness({enabled=true,owner=true,loggedIn=true}={}){
  return {root,article,grid,campaign,calls,created,events,tick,
    open:()=>root.AsteriaCampaignFriendRecipients.render(grid,campaign),
    find:t=>created.find(n=>n.textContent===t),
-   input:()=>created.find(n=>n.id==='workspaceCampaignFriendAccountId'),
+   input:()=>created.find(n=>n.name==='campaignFriendAccountId'),
    setUid:value=>{uid=value;events['asteria:auth-changed']?.();},
    setLoggedIn:value=>{loggedIn=value;},
    setReady:value=>{ready=value;}
@@ -120,4 +120,34 @@ test('website does not enable a server rollout or campaign issuance',()=>{
  assert.doesNotMatch(ui,/getDoc\(|getDocs\(|setDoc\(|fetch\(|localStorage|sessionStorage|innerHTML/);
  assert.doesNotMatch(selector,/tx\.(create|update|delete)\(|tokenFactory|issueSecureCampaignInvitation/);
  assert.doesNotMatch(server,/ASTERIA_CAMPAIGN_FRIEND_RECIPIENTS_ENABLED==='1'/);
+});
+
+
+test('the browser accepts the callable’s token-free delivery receipt and rejects a bearer response',async()=>{
+ const source=read('js/firebase-auth.js');
+ const start=source.indexOf('  issueCampaignFriendInvitation: async function');
+ const end=source.indexOf('  // Phase 3.2:',start);
+ const receipt={campaignId:'campaign01',inviteId:'a'.repeat(64),roleOffered:'player',
+   type:'share-link',requiresGMApproval:true,maxUses:1,usedCount:0,alreadyIssued:false};
+ const h=harness();
+ const flags=h.root.AsteriaFeatureFlags;
+ Object.assign(flags,{secureInvitationManager:true,campaignFriendInvitations:true});
+ const user={uid:'alice'};
+ const service=vm.runInNewContext('({'+source.slice(start,end)+'})',{
+   currentUser:user,auth:{currentUser:user},ownershipReadyUid:user.uid,functionsClient:{},
+   window:h.root,httpsCallable:()=>async()=>({data:receipt})
+ });
+ h.root.crypto={randomUUID:()=>'invitation-request-from-owner'};
+ h.root.confirm=()=>true;
+ h.root.AsteriaFirebase.issueCampaignFriendInvitation=service.issueCampaignFriendInvitation;
+ assert.equal(h.open(),true);
+ h.input().value='Poppa_J#52816';
+ h.find('Check Account ID').handlers.click();await tick();
+ await h.find('Send Asteria Invitation').handlers.click();
+ assert.ok(h.created.some(el=>el.textContent.startsWith('Invitation delivered to the selected account')));
+ receipt.alreadyIssued=true;
+ const again=await service.issueCampaignFriendInvitation('campaign01','Poppa_J#52816','invitation-request-from-owner',168);
+ assert.equal(again.alreadyIssued,true);assert.equal('token' in again,false);
+ receipt.token='A'.repeat(43);
+ await assert.rejects(service.issueCampaignFriendInvitation('campaign01','Poppa_J#52816','invitation-request-from-owner',168),/Invalid/);
 });

@@ -1,7 +1,3 @@
-/* Friends Phase 5.1 — owner-only campaign invitation recipient preview.
- * Read-only; no token, email, membership or invitation write is possible.
- * The server must re-check all eligibility again during Phase 5.2 issuance.
- */
 (function(root){
   'use strict';
   let revision=0;
@@ -16,9 +12,13 @@
   root.addEventListener?.('asteria:firebase-signed-out',clear);
 
   function render(grid,campaign){
-    const api=root.AsteriaFirebase;
+    return Boolean(mount(grid?.querySelector?.('.workspace-viewer'),campaign));
+  }
+
+  function mount(article,campaign,{api=root.AsteriaFirebase,onIssued}={}){
+
     const uid=api?.getUser?.()?.uid;
-    if(!grid||!root.document||!uid||!api?.isReady?.()||
+    if(!article||!root.document||!uid||!api?.isReady?.()||
        root.AsteriaAuthBridge?.isLoggedIn?.()!==true||
        root.AsteriaFeatureFlags?.campaignFriendRecipients!==true||
        campaign?.membershipSchemaVersion!==2||
@@ -26,8 +26,6 @@
        typeof api.selectCampaignFriendRecipients!=='function')return false;
     const campaignId=campaign.id;
     if(typeof campaignId!=='string'||!/^[A-Za-z0-9_-]{1,160}$/.test(campaignId))return false;
-    const article=grid.querySelector?.('.workspace-viewer');
-    if(!article)return false;
 
     const el=(tag,cls='',text='')=>{
       const node=root.document.createElement(tag);
@@ -43,7 +41,7 @@
     const row=el('div','workspace-campaign-recipient-form');
     const label=el('label','','Exact Account ID');
     const input=el('input');
-    input.id='workspaceCampaignFriendAccountId';
+    input.name='campaignFriendAccountId';
     input.type='text';
     input.autocomplete='off';
     input.maxLength=40;
@@ -122,7 +120,7 @@
       const button=el('button','','Select');
       button.type='button';
       button.setAttribute('aria-label','Select '+friend.accountId);
-      button.addEventListener('click',()=>choose(friend));
+      button.addEventListener('click',()=>{if(!busy)choose(friend);});
       item.append(name,button);
       list.appendChild(item);
     }
@@ -154,6 +152,9 @@
     }
     async function resolveHandle(){
       if(busy||!valid())return;
+      chosen=null;pendingRequest=null;pendingSignature=null;
+      selected.textContent='No recipient selected.';
+      issueButton.disabled=true;
       const accountId=input.value.trim();
       if(!HANDLE.test(accountId)){
         status.textContent='Enter a complete Account ID, for example Player#01234.';
@@ -172,7 +173,7 @@
           return;
         }
         choose(result.recipient);
-        status.textContent='Eligible recipient selected for a future secure invitation.';
+        status.textContent='Eligible recipient selected.';
       }catch{
         if(valid()&&call===serial)
           status.textContent='This recipient is unavailable for an invitation.';
@@ -195,13 +196,15 @@
         const result=await api.issueCampaignFriendInvitation(
           campaignId,chosenId,pendingRequest,hours);
         if(!valid()||call!==serial)return;
+        if(typeof result.inviteId!=='string'||result.token!==undefined)
+          throw Error('Invalid private notification delivery response.');
+        onIssued?.();
+        selected.textContent='No recipient selected.';
         if(result.alreadyIssued){
           status.textContent='Invitation already delivered. Check the recipient account’s notifications.';
           chosen=null;pendingRequest=null;pendingSignature=null;
           return;
         }
-        if(typeof result.inviteId!=='string'||result.token!==undefined)
-          throw Error('Invalid private notification delivery response.');
         status.textContent='Invitation delivered to the selected account’s Asteria notifications. They can request to join; GM approval is still required.';
         oneTime.append(el('p','','Invitation sent in Asteria — no email or private link needed.'));
         chosen=null;pendingRequest=null;pendingSignature=null;
@@ -211,19 +214,28 @@
       }finally{if(valid()&&call===serial)setBusy(false);}
     });
     resolve.addEventListener('click',()=>{void resolveHandle();});
+    input.addEventListener('input',()=>{
+      chosen=null;pendingRequest=null;pendingSignature=null;
+      selected.textContent='No recipient selected.';
+      issueButton.disabled=true;
+    });
     input.addEventListener('keydown',event=>{
       if(event.key==='Enter'){event.preventDefault();void resolveHandle();}
     });
     reload.addEventListener('click',()=>{void load(false);});
     more.addEventListener('click',()=>{void load(true);});
-    views.add(()=>{
+    const dismiss=()=>{
       serial++;host.hidden=true;list.replaceChildren();selected.textContent='';
       input.value='';status.textContent='';nextCursor=null;cursor=0;
       chosen=null;pendingRequest=null;pendingSignature=null;
       oneTime.replaceChildren();issueButton.disabled=true;
-    });
-    status.textContent='Recipient selection is read-only. No invitation will be created.';
-    return true;
+    };
+    views.add(dismiss);
+    return ()=>{
+      views.delete(dismiss);
+      dismiss();
+      host.remove();
+    };
   }
-  root.AsteriaCampaignFriendRecipients=Object.freeze({render});
+  root.AsteriaCampaignFriendRecipients=Object.freeze({render,mount});
 })(typeof window!=='undefined'?window:{});

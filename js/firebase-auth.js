@@ -2883,12 +2883,10 @@ const firebasePublicApi = {
        invite.requiresGMApproval!==true||invite.maxUses!==1||
        ![0,1].includes(invite.usedCount)||
        typeof invite.alreadyIssued!=='boolean'||
-       !(invite.alreadyIssued===true&&invite.token===null||
-         invite.alreadyIssued===false&&typeof invite.token==='string'&&
-         /^[A-Za-z0-9_-]{43}$/.test(invite.token)))
+       Object.hasOwn(invite,'token'))
       throw new Error('Invalid campaign friend invitation response.');
     return {campaignId,inviteId:invite.inviteId,
-      token:invite.token,alreadyIssued:invite.alreadyIssued,
+      alreadyIssued:invite.alreadyIssued,
       requiresGMApproval:true};
   },
   // Phase 3.2: relationship management has independent version checking.
