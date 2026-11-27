@@ -1,0 +1,41 @@
+name: Milestones 1-3 cross-system integration audit
+on:
+  pull_request:
+    branches: [Website-Build-Test]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cross-system:
+    name: Verify M1-M3 dashboard, canvas, combat, map, presentation and recovery
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Targeted milestone audit and regression suite
+        run: |
+          node --test \
+            scripts/milestones-1-2-3-cross-system-audit.test.mjs \
+            scripts/gm-player-foundations.test.mjs \
+            scripts/milestone2-1-dashboard.test.mjs \
+            scripts/milestone2-1-visual-refinement.test.mjs \
+            scripts/milestone2-2-canvas-performance.test.mjs \
+            scripts/milestone2-3-window-sizing.test.mjs \
+            scripts/milestone2-4-navigation.test.mjs \
+            scripts/milestone2-5-integration.test.mjs \
+            scripts/gm-main-canvas-phase2.test.mjs \
+            scripts/player-main-canvas-phase3.test.mjs \
+            scripts/milestone-3-6-hybrid-recovery.test.mjs \
+            scripts/site-phase7-share-present.test.mjs \
+            scripts/site-combat-final-phase6-9.test.mjs
+      - run: npm run lint
+      - run: npm run build
+      - name: Verify generated frontend assets match committed source
+        run: git diff --exit-code -- react-dist data/compendium.js data/compendium-handbook.js data/compendium-index.js data/compendium-parts
