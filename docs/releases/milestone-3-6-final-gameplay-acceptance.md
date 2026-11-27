@@ -22,6 +22,7 @@
 
 - GM and player combat workspaces now offer an explicit reconnect control. It discards stale data, disposes the old realtime listener and subscribes afresh using the existing authenticated backend.
 - Encounter state remains persisted by the authoritative combat transaction; named recovery snapshots, private GM history, paused reopening and revision guards are retained.
+- GM history and snapshot lists fail closed when membership or stream access is lost; stale private records are cleared rather than kept onscreen.
 - Recovery never reapplies resolved costs or duplicates reward delivery automatically.
 
 ## Automated acceptance
