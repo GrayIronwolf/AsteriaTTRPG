@@ -4,7 +4,7 @@ import {createPlayerPresentationCommands} from '../functions/playerPresentationC
 import {createHybridPresentationSessionCommands} from '../functions/hybridPresentationSessionCommands.mjs';
 import {hybridViewerCanRead,restrictedPresentationProjection}
   from '../src/state/hybridPresentationSessionModel.mjs';
-import {captureEncounterRecovery} from '../functions/encounterRecovery.mjs';
+import {captureEncounterRecovery,applyEncounterRecovery} from '../functions/encounterRecovery.mjs';
 
 const campaign='camp-36';
 const path=(collection,id='current')=>'campaigns/'+campaign+'/'+collection+'/'+id;
@@ -128,4 +128,42 @@ test('3.6: existing recovery checkpoint excludes pending action and retains fog 
   assert.equal(checkpoint.encounter.combat.pending,null);
   assert.equal(checkpoint.map.fogCells,'1000');
   assert.equal('pending' in checkpoint.privateState,false);
+});
+
+test('3.6: GM snapshots can be saved and restored without replaying private decisions',async()=>{
+  const h=harness();
+  const encounter={
+    combatId:'combat36',battleMapId:'',status:'active',round:3,turnIndex:0,
+    combatants:[{id:'hero36',characterId:'char36',name:'Hero',initiative:10}],
+    enemies:[],combat:{revision:7,pending:null,participants:{},log:[]}
+  };
+  const privateState={pending:null,preparations:{}};
+  const encounterRef={path:path('systems','encounter')};
+  const gmRef={path:path('gmWorkspace')};
+  const gmSnap={exists:()=>true,data:()=>({combatState:privateState})};
+  const doc=(_db,...parts)=>({path:parts.join('/')});
+  const tx={
+    get:async ref=>({exists:()=>h.store.has(ref.path),data:()=>h.store.get(ref.path)}),
+    set:(ref,value)=>h.store.set(ref.path,value),
+    update:(ref,value)=>h.store.set(ref.path,{...h.store.get(ref.path),...value}),
+    delete:ref=>h.store.delete(ref.path)
+  };
+  const invoke=(input,requestId)=>applyEncounterRecovery({
+    tx,db:{},doc,campaignId:campaign,encounterRef,gmRef,gmSnap,
+    encounter,privateState,input,now:Date.now(),uid:'gm36',requestId,
+    serverTimestamp:()=>12345,isLinked:()=>true
+  });
+  const saved=await invoke({operation:'save-snapshot',name:'Before ambush'},'snapshot36');
+  assert.equal(saved.ok,true);
+  const checkpoint=h.store.get(path('encounterHistory','combat36')+'/recovery/snapshot36');
+  assert.equal(checkpoint.encounter.round,3);
+  assert.equal(checkpoint.encounter.combat.pending,null);
+  const restored=await invoke({operation:'restore-snapshot',snapshotId:'snapshot36',
+    reason:'Correct an accidentally moved marker'},'restore36');
+  assert.equal(restored.ok,true);
+  assert.equal(restored.revision,8);
+  const state=h.store.get(path('systems','encounter'));
+  assert.equal(state.status,'active');
+  assert.equal(state.combat.revision,8);
+  assert.equal(state.combat.log[0].snapshotId,'snapshot36');
 });
