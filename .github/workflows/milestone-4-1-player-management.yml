@@ -1,0 +1,29 @@
+name: Milestone 4.1 - Campaign player roster and attendance
+on:
+  pull_request:
+    branches: [Website-Build-Test]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Campaign attendance and existing roster regression tests
+        run: |
+          node --test scripts/milestone-4-1-player-management.test.mjs \
+            scripts/campaign-roster-phase4-1.test.mjs \
+            scripts/campaign-member-controls-phase4-2.test.mjs \
+            scripts/gm-player-manager.test.mjs \
+            scripts/gm-player-manager-phase11-12.test.mjs
+      - run: npm run lint
+      - run: npm run build
+      - name: Ensure frontend assets were regenerated
+        run: git diff --exit-code -- react-dist data/compendium.js data/compendium-handbook.js data/compendium-index.js data/compendium-parts
