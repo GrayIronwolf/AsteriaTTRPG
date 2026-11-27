@@ -50,7 +50,8 @@ test('package contains pinned runtime dependencies and closed local dependency g
     'functions/campaignJoinApproval.mjs','functions/campaignCharacterLifecycle.mjs',
     'functions/campaignCharacterApproval.mjs','functions/campaignCharacterLinks.mjs',
     'functions/campaignRolePermissions.mjs','functions/campaignMemberControls.mjs',
-    'functions/campaignPlayerRoster.mjs','functions/campaignNotifications.mjs',
+    'functions/campaignPlayerRoster.mjs','functions/campaignAttendance.mjs',
+    'functions/campaignNotifications.mjs',
     'src/state/characterIntegrityModel.mjs','src/state/resourceValues.mjs'
   ]){
     assert.equal(files[filename],read(filename),filename+' must exactly match reviewed source');
@@ -59,7 +60,8 @@ test('package contains pinned runtime dependencies and closed local dependency g
     assert.doesNotMatch(content,forbidden,filename);
     assert.doesNotMatch(filename,/\.env|firebase-adminsdk|credential|secret/i);
   }
-  assert.equal(Object.keys(files).filter(x=>x.startsWith('functions/')).length,13);
+  // Attendance is the one newly reviewed, flag-gated local callable dependency.
+  assert.equal(Object.keys(files).filter(x=>x.startsWith('functions/')).length,14);
   assert.ok(!Object.hasOwn(files,'firestore.rules'));
   assert.ok(!Object.hasOwn(files,'storage.rules'));
 });
