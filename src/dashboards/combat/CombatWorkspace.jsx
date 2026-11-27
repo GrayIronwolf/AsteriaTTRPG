@@ -12,6 +12,7 @@ import {GMEncounterHistoryPanel} from './GMEncounterHistoryPanel.jsx';
 import styles from './CombatWorkspace.module.css';
 import {GMAdvancedCombatControls,GMAdvancedActionQueue} from './GMAdvancedCombatControls.jsx';
 import {CombatInitiativeInput} from './CombatInitiativeInput.jsx';
+import {PHYSICAL_DICE_FACES} from '../../state/hybridPhysicalDiceModel.mjs';
 import {ForgedBadge} from './ForgedBadge.jsx';
 
 const emptyEnemy={name:'',type:'Creature',hp:'20',sp:'',mp:'',xpReward:'0',ac:'',initiative:''};
@@ -122,6 +123,37 @@ function Actions({combat,actor,disabled,onCommand,mode}){
     </select><button type="button" disabled={disabled||!own||actor.ap<cost}
       onClick={()=>onCommand(actor.id,{operation:'spend-ap',ap:cost})}>Spend selected AP</button></label>:null}
   </div>;
+}
+function GMPhysicalDiceRecord({combat,busy,onCommand}){
+  const [targetId,setTargetId]=useState(''),[faces,setFaces]=useState(20),
+    [result,setResult]=useState(''),[purpose,setPurpose]=useState('');
+  const participants=combat?.combatants||[];
+  const chosen=participants.some(row=>row.id===targetId)?targetId:participants[0]?.id||'';
+  const face=Number(result);
+  const valid=Number.isSafeInteger(face)&&face>=1&&face<=faces&&
+    purpose.trim().length>=3&&purpose.trim().length<=160&&Boolean(chosen);
+  return <details className={styles.section} data-testid="site-hybrid-physical-dice">
+    <summary>Hybrid gameplay · witnessed physical dice</summary>
+    <p>Record a real-world die result in the encounter history. This never spends AP,
+      deals damage, casts spells or replaces the normal GM action approval.</p>
+    <div className={styles.fields}>
+      <label>Participant<select value={chosen} onChange={e=>setTargetId(e.target.value)}>
+        {participants.map(row=><option key={row.id} value={row.id}>{row.name}</option>)}
+      </select></label>
+      <label>Die<select value={faces} onChange={e=>{setFaces(Number(e.target.value));setResult('');}}>
+        {PHYSICAL_DICE_FACES.map(value=><option key={value} value={value}>d{value}</option>)}
+      </select></label>
+      <label>Observed result<input type="number" min="1" max={faces} step="1"
+        value={result} onChange={e=>setResult(e.target.value)}/></label>
+      <label>Reason / action<input maxLength={160} value={purpose}
+        onChange={e=>setPurpose(e.target.value)} placeholder="e.g. Physical initiative roll"/></label>
+      <button type="button" disabled={busy||!combat?.isActive||!combat?.sessionEditable||!valid}
+        onClick={()=>{onCommand('encounter',{operation:'record-physical-roll',
+          targetId:chosen,faces,result:face,reason:purpose.trim()});setResult('');}}>
+        Record witnessed roll
+      </button>
+    </div>
+  </details>;
 }
 function GMEncounterSnapshots({api,campaignId,combat,busy,onCommand}){
   const [entries,setEntries]=useState([]),[name,setName]=useState(''),[reason,setReason]=useState('');
@@ -259,6 +291,7 @@ export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigat
       <CombatCommandPanel id="history">
         <GMEncounterHistoryPanel api={api} campaignId={campaignId} busy={busy} combat={combat} onCommand={submit}/>
         <GMEncounterSnapshots api={api} campaignId={campaignId} combat={combat} busy={busy} onCommand={submit}/>
+        <GMPhysicalDiceRecord combat={combat} busy={busy} onCommand={submit}/>
       </CombatCommandPanel>
       <CombatCommandPanel id="enemyTracker">
         <EnemyCombatTracker combat={combat} onCommand={submit}
