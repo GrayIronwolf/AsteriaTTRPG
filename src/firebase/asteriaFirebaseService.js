@@ -49,6 +49,9 @@ export const firebaseService = {
   subscribeCampaignMembers: (campaignId,onChange,onError) => requireMethod('subscribeCampaignMembers')(campaignId,onChange,onError),
   // Existing authenticated, flag-gated campaign administration callables.
   listCampaignPlayerRoster: campaignId => requireMethod('listCampaignPlayerRoster')(campaignId),
+  listCampaignAttendance: campaignId => requireMethod('listCampaignAttendance')(campaignId),
+  setCampaignAttendance: (campaignId,memberUid,mode,expectedRevision) =>
+    requireMethod('setCampaignAttendance')(campaignId,memberUid,mode,expectedRevision),
   listCampaignJoinRequests: campaignId => requireMethod('listCampaignJoinRequests')(campaignId),
   reviewCampaignJoinRequest: (campaignId,uid,decision,revision) =>
     requireMethod('reviewCampaignJoinRequest')(campaignId,uid,decision,revision),
