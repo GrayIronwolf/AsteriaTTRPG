@@ -2463,6 +2463,9 @@ const firebasePublicApi = {
         { characters:arrayUnion(id), updatedAt:serverTimestamp() }, { merge:true });
       if(currentUser?.uid!==uid) return fail('Account changed during character save.');
       await batch.commit();
+      // The write belongs to the captured account even if sign-in changed
+      // while Firestore was acknowledging it. Do not touch the new session.
+      if(currentUser?.uid!==uid) return true;
       currentProfile = Object.assign({}, currentProfile || {}, {
         characters:Array.from(new Set([...(currentProfile?.characters || []), id]))
       });

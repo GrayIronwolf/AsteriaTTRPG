@@ -26,7 +26,7 @@ function fixture({uid='owner',commitError=null,projectionError=null}={}){
     console:{warn:()=>{}}
   };
   const api=vm.runInNewContext('({' + source.slice(start,end) + '})',context);
-  return {api,writes,counts:()=>({commits,projections})};
+  return {api,writes,context,counts:()=>({commits,projections})};
 }
 
 test('new character persists private record and profile index in one batch',async()=>{
@@ -62,4 +62,19 @@ test('campaign projection failure does not turn a committed private save into fa
   const f=fixture({projectionError:new Error('campaign offline')});
   assert.equal(await f.api.saveCharacter('new',{ownerUid:'owner'}),true);
   assert.deepEqual(f.counts(),{commits:1,projections:1});
+});
+
+test('a committed save cannot contaminate another account after an account switch',async()=>{
+  const f=fixture();
+  let finish;
+  f.context.writeBatch=()=>({set(){},commit:()=>new Promise(resolve=>{finish=resolve;})});
+  const saving=f.api.saveCharacter('new',{ownerUid:'owner'});
+  f.context.currentUser={uid:'other'};
+  const otherProfile={characters:['other-character']};
+  f.context.currentProfile=otherProfile;
+  finish();
+  assert.equal(await saving,true);
+  assert.equal(f.context.currentProfile,otherProfile);
+  assert.deepEqual(otherProfile.characters,['other-character']);
+  assert.equal(f.counts().projections,0);
 });

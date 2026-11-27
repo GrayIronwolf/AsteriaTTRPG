@@ -2983,7 +2983,7 @@
       originTitle:originEntry?.title || '',
       originNotes:d.origin.notes || d.origin.backstory || '',
       ownerUid:existingCharacter?.ownerUid || authenticatedUid || currentUserKey(),
-      ...(existingCharacter ? {sourceCharacterId:existingCharacter.sourceCharacterId,sharedCampaignId:existingCharacter.sharedCampaignId,linkedCampaignIds:existingCharacter.linkedCampaignIds} : {}),
+      ...(existingCharacter ? {sourceCharacterId:existingCharacter.sourceCharacterId,sharedCampaignId:existingCharacter.sharedCampaignId,linkedCampaignIds:existingCharacter.linkedCampaignIds,campaignCharacterIds:existingCharacter.campaignCharacterIds} : {}),
       level:Number(existingCharacter?.level ?? 0),
       hp:existingCharacter?.hp ? [Math.min(Number(existingCharacter.hp[0] || 0), hpMax), hpMax] : [hpMax, hpMax],
       sp:existingCharacter?.sp ? [Math.min(Number(existingCharacter.sp[0] || 0), spMax), spMax] : [spMax, spMax],
@@ -3077,7 +3077,18 @@
       console.warn('Character Forge cloud save failed.', error);
       return false;
     }
-    const joinedCampaign = await window.AsteriaWorkspace?.consumePendingCampaignJoin?.(id);
+    if(firebase && firebase.getUser?.()?.uid !== authenticatedUid) {
+      window.toast?.('Character saved to the original account. Sign in to that account to continue.');
+      return true;
+    }
+    let joinedCampaign = null;
+    let campaignJoinFailed = false;
+    try {
+      joinedCampaign = await window.AsteriaWorkspace?.consumePendingCampaignJoin?.(id);
+    } catch(error) {
+      campaignJoinFailed = true;
+      console.warn('Character saved, but the pending campaign link failed.', error);
+    }
     state.drafts.characterCreator = defaultState().drafts.characterCreator;
     saveState('phase3a-character-save-confirmed');
     window.ensureProgressionData?.();
@@ -3086,7 +3097,7 @@
     window.renderUnlockedTalentSummary?.(id);
     window.renderTalentTreeUI?.(id);
     if(document.getElementById('player')?.classList.contains('show')) window.loadPlayer?.(id);
-    window.toast?.(`${editingId ? 'Character updated' : 'Character saved'}: ${name}${joinedCampaign?.name ? ` linked to ${joinedCampaign.name}` : ''}`);
+    window.toast?.(`${editingId ? 'Character updated' : 'Character saved'}: ${name}${joinedCampaign?.name ? ` linked to ${joinedCampaign.name}` : ''}${campaignJoinFailed ? '. The campaign link failed; retry linking from the campaign.' : ''}`);
     openCharacterForgeHub();
   }
 
