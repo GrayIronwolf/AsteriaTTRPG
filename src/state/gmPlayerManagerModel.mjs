@@ -35,6 +35,7 @@ export function gmPlayerManagerAccess({campaign={},actorUid='',membership=null,f
   return {
     v2,gm,owner:!!owner,coGM:!!gmMember,
     roster:enabled('campaignPlayerRoster'),
+    attendance:enabled('campaignAttendance'),
     attendance:enabled('campaignAttendance')&&enabled('campaignPlayerRoster'),
     joinReview:enabled('campaignJoinReview')&&(owner||membership?.capabilityOverrides?.['review-join-requests']===true),
     characterApproval:enabled('campaignCharacterApproval'),
