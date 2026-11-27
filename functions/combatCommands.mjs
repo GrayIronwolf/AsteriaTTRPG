@@ -18,6 +18,7 @@ import {combatMapMovePlan,synchronizeCombatMapTokens,activeMapEncounter} from '.
 import {battleMapTokenAppearance} from '../src/state/battleMapModel.mjs';
 import {preparedMapTokenCapacity} from '../src/state/preparedBattleMapModel.mjs';
 import {applyEncounterRecovery,captureEncounterRecovery,nextCompletionRecord,recoveryOperations} from './encounterRecovery.mjs';
+import {validateHybridPhysicalDice,hybridD20} from '../src/state/hybridCombatDiceModel.mjs';
 import {captureEncounterCompletion} from '../src/state/encounterCompletionModel.mjs';
 import {applyLiveTimerCommand,resetLiveTurnTimer}
   from '../src/state/liveCombatCommandModel.mjs';
@@ -30,6 +31,7 @@ import {mapCell,mapCellCenter,mapCellKey,mapReachableRoutes} from '../src/state/
 import {MAP_MOVE_AP,approvedMapMovementAward,spendMapMovement,validateMapOpportunity,walkingAllowance}
   from '../src/state/battleMapMovement.mjs';
 import {publicPresentationBattleMap} from '../src/state/livePresentationProjectionModel.mjs';
+import {validatePhysicalDiceRecord} from '../src/state/hybridPhysicalDiceModel.mjs';
 
 const copy=value=>JSON.parse(JSON.stringify(value));
 const text=(value,max=1000)=>String(value||'').trim().slice(0,max);
@@ -40,7 +42,7 @@ const combatCharacterFields=new Set(['hp','sp','mp','bp','zp','resources','resou
 const ENCOUNTER_INITIATIVE_MODES=new Set(['automatic','manual','mixed']);
 const initiativeMode=value=>ENCOUNTER_INITIATIVE_MODES.has(value)?value:'automatic';
 const needsManualInitiative=(row,mode)=>mode==='manual'||(mode==='mixed'&&Boolean(row.characterId));
-const management=new Set([...recoveryOperations,'skip-turn','override-turn','release-wave','trigger-event','timer','map-link','map-move','map-delegate','map-token-appearance','save','stage-prepared','unstage-prepared','load-prepared','map-prepare','start','pause','resume','next','end','clear','approve','reject','window','close-window','resolve','roll','resolve-reaction','correct','condition','ambush','trigger-prepared']);
+const management=new Set(['record-physical-roll',...recoveryOperations,'skip-turn','override-turn','release-wave','trigger-event','timer','map-link','map-move','map-delegate','map-token-appearance','save','stage-prepared','unstage-prepared','load-prepared','map-prepare','start','pause','resume','next','end','clear','approve','reject','window','close-window','resolve','roll','resolve-reaction','correct','condition','ambush','trigger-prepared']);
 const publicPending=p=>p?{id:p.id,actorId:p.actorId,actorName:p.actorName,optionId:p.actorKind==='player'?p.optionId:'',name:p.actorKind==='player'?p.name:'Creature action',status:p.status,targetIds:p.targetIds,ap:p.ap,bonus:p.bonus,apPaid:Boolean(p.prepaidAP),costs:p.actorKind==='player'?p.costs:{},reactionWindow:p.status==='reactions',reactorId:p.window?.[p.windowIndex||0]?.actorId||'',reactionChoices:p.window?.[p.windowIndex||0]?.choices||[],reaction:p.reaction?{actorId:p.reaction.actorId,name:p.reaction.name}:null,message:p.publicMessage||''}:null;
 
 // An extension of asteriaAction: one encounter document, existing resource/effect
@@ -69,7 +71,7 @@ export function createCombatCommands(context) {
         tx.set(gmRef,{combatState:{...combatState,stagedEncounters}},{merge:true});
         return {ok:true,revision:Number(encounter.combat?.revision||0)};
       }
-      if(encounter.paused===true&&!recoveryOperations.has(input.operation)&&!['resume','end','correct','condition'].includes(input.operation))
+      if(encounter.paused===true&&!recoveryOperations.has(input.operation)&&!['resume','end','correct','condition','record-physical-roll'].includes(input.operation))
         throw new Error('Combat is paused. Resume the encounter before continuing.');
       const oldRevision=Number(encounter.combat?.revision||0);
       if(input.revision!==oldRevision)throw new Error('Combat changed. Wait for live sync and try again.');
@@ -748,6 +750,16 @@ export function createCombatCommands(context) {
           delete privateState.preparedDetails;
         }
         log('Combat ended; remaining resources and conditions retained.');
+      }else if(input.operation==='record-physical-roll'){
+        requireActive();
+        const physical=validatePhysicalDiceRecord(input,encounter.combatants);
+        const participant=entry(physical.targetId);
+        log('GM verified physical d'+physical.faces+' roll for '+participant.name+
+          ': '+physical.result+' — '+physical.reason,{
+          actorUid:currentUser.uid,targetId:physical.targetId,
+          rollSource:'physical-gm-verified',dieFaces:physical.faces,
+          faceResult:physical.result,reason:physical.reason
+        });
       }else if(input.operation==='correct'){
         const reason=text(input.reason);if(!reason)throw new Error('A GM correction needs a recorded reason.');
         const id=input.targetId||actorId,character=get(id);
@@ -925,22 +937,33 @@ export function createCombatCommands(context) {
       }else if(input.operation==='roll'){
         const p=privateState.pending;if(!p||p.status!=='awaiting-roll')throw new Error('Close pre-roll reactions before rolling.');
         const a=p.approval||{},character=get(p.actorId);
+        const manualDice=validateHybridPhysicalDice(input.physicalDice);
+        const consumedDice=new Set();
+        const recordedRoll=(key,check)=>{
+          if(manualDice?.[key])consumedDice.add(key);
+          return hybridD20(check,manualDice?.[key],numberDie);
+        };
+        if(a.checkType==='none'&&manualDice)
+          throw Error('This action has no d20 check to record.');
         if(a.checkType==='none'){p.result={success:true,check:'None / N/A'};}
         else{
           if(!a.skill)throw new Error('A named skill and check type are required.');
-          const check=p.kind==='scroll'?{skill:a.skill,modifier:bounded(p.creatorStatistics?.modifier,-100,1000),advantage:Boolean(a.advantage&&!a.disadvantage),disadvantage:Boolean(a.disadvantage&&!a.advantage)}:skillCheck(character,a.skill,{catalog:context.catalog,characteristic:a.characteristic,secondaryApproved:a.secondaryApproved,modifier:a.modifier,advantage:a.advantage||p.ambush,disadvantage:a.disadvantage,clock:{now,encounter}}),dice=rollD20(check,numberDie),attack={...dice,total:dice.die+check.modifier,...check};
+          const check=p.kind==='scroll'?{skill:a.skill,modifier:bounded(p.creatorStatistics?.modifier,-100,1000),advantage:Boolean(a.advantage&&!a.disadvantage),disadvantage:Boolean(a.disadvantage&&!a.advantage)}:skillCheck(character,a.skill,{catalog:context.catalog,characteristic:a.characteristic,secondaryApproved:a.secondaryApproved,modifier:a.modifier,advantage:a.advantage||p.ambush,disadvantage:a.disadvantage,clock:{now,encounter}}),dice=recordedRoll('primary',check),attack={...dice,total:dice.die+check.modifier,...check};
           if(a.checkType==='attack'){
             const target=get(p.targetIds[0]);if(a.cover==='full'&&!a.bypassCover)throw new Error('Full cover blocks direct delivery.');
             const ac=target.kind==='enemy'?Number(target.ac):calculateCharacterAC(target).finalAC;
             if(!Number.isFinite(ac))throw new Error('The target’s applicable AC is missing.');
             attack.total+=a.flanking===true?2:0;let defence;
-            if(attackResult(attack,ac+(a.cover==='partial'?2:a.cover==='substantial'?4:0)).hit){const reaction=p.defences?.find(row=>row.actorId===p.targetIds[0]);if(reaction){const skill={dodge:'Dodging',block:'Shield Use',parry:'Parrying'}[reaction.key],dc=skillCheck(target,skill,{catalog:context.catalog,clock:{now,encounter}}),d=rollD20(dc,numberDie);defence={...d,total:d.die+dc.modifier,key:reaction.key};}}
+            if(attackResult(attack,ac+(a.cover==='partial'?2:a.cover==='substantial'?4:0)).hit){const reaction=p.defences?.find(row=>row.actorId===p.targetIds[0]);if(reaction){const skill={dodge:'Dodging',block:'Shield Use',parry:'Parrying'}[reaction.key],dc=skillCheck(target,skill,{catalog:context.catalog,clock:{now,encounter}}),d=recordedRoll('defence',dc);defence={...d,total:d.die+dc.modifier,key:reaction.key};}}
             p.result={attack,ac,defence:defence||null,...attackResult(attack,ac+(a.cover==='partial'?2:a.cover==='substantial'?4:0),defence)};p.result.success=p.result.hit;
           }else if(a.checkType==='opposed'){
-            if(!a.opposedSkill)throw new Error('Name the opposing skill.');const check2=skillCheck(get(p.targetIds[0]),a.opposedSkill,{catalog:context.catalog,clock:{now,encounter}}),d=rollD20(check2,numberDie),opponent={...d,total:d.die+check2.modifier,...check2};p.result={roll:attack,opponent,success:checkResult(attack,opponent.total,{opposed:true})};
+            if(!a.opposedSkill)throw new Error('Name the opposing skill.');const check2=skillCheck(get(p.targetIds[0]),a.opposedSkill,{catalog:context.catalog,clock:{now,encounter}}),d=recordedRoll('opposed',check2),opponent={...d,total:d.die+check2.modifier,...check2};p.result={roll:attack,opponent,success:checkResult(attack,opponent.total,{opposed:true})};
           }else{if(!Number.isFinite(a.dc))throw new Error('Set the numeric DC before rolling.');p.result={roll:attack,dc:a.dc,success:checkResult(attack,a.dc)};}
         }
-        p.status='awaiting-resolution';log(`${p.actorName}'s check rolled; awaiting effects.`);
+        if(manualDice&&Object.keys(manualDice).some(key=>!consumedDice.has(key)))
+          throw Error('Physical dice were supplied for a check that did not occur.');
+        p.status='awaiting-resolution';
+        log(`${p.actorName}'s check recorded (${consumedDice.size?'physical/digital hybrid':'digital'}); awaiting effects.`);
       }else if(input.operation==='resolve'){
         const p=privateState.pending;if(!p||!['awaiting-resolution','awaiting-roll'].includes(p.status))throw new Error('Handle reactions and rolls before resolving.');
         const reason=text(input.reason);if(!p.result&&!reason)throw new Error('Record the GM adjudication for an unresolved source effect.');

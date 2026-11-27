@@ -12,10 +12,12 @@ import {GMEncounterHistoryPanel} from './GMEncounterHistoryPanel.jsx';
 import styles from './CombatWorkspace.module.css';
 import {GMAdvancedCombatControls,GMAdvancedActionQueue} from './GMAdvancedCombatControls.jsx';
 import {CombatInitiativeInput} from './CombatInitiativeInput.jsx';
+import {PHYSICAL_DICE_FACES} from '../../state/hybridPhysicalDiceModel.mjs';
 import {ForgedBadge} from './ForgedBadge.jsx';
 
 const emptyEnemy={name:'',type:'Creature',hp:'20',sp:'',mp:'',xpReward:'0',ac:'',initiative:''};
 function useCombatStream(api,method,args){
+  const [generation,setGeneration]=useState(0);
   const [state,setState]=useState({loading:true,data:null,error:''});
   useEffect(()=>{
     let alive=true,stop=()=>{};
@@ -32,8 +34,10 @@ function useCombatStream(api,method,args){
       });
     }catch(error){setState({loading:false,data:null,error:error?.message||'Combat is unavailable.'});}
     return()=>{alive=false;stop?.();};
-  },[api,method,...args]);
-  return state;
+  },[api,method,...args,generation]);
+  // Reconnect always creates a fresh authenticated listener. The previous
+  // listener is disposed and cached combat data is hidden until verified.
+  return {...state,reconnect:()=>setGeneration(value=>value+1)};
 }
 const Resources=({row})=><span className={styles.resources}>
   {['hp','sp','mp'].map(key=><span key={key}>{key.toUpperCase()}: {row[key]
@@ -123,6 +127,37 @@ function Actions({combat,actor,disabled,onCommand,mode}){
       onClick={()=>onCommand(actor.id,{operation:'spend-ap',ap:cost})}>Spend selected AP</button></label>:null}
   </div>;
 }
+function GMPhysicalDiceRecord({combat,busy,onCommand}){
+  const [targetId,setTargetId]=useState(''),[faces,setFaces]=useState(20),
+    [result,setResult]=useState(''),[purpose,setPurpose]=useState('');
+  const participants=combat?.combatants||[];
+  const chosen=participants.some(row=>row.id===targetId)?targetId:participants[0]?.id||'';
+  const face=Number(result);
+  const valid=Number.isSafeInteger(face)&&face>=1&&face<=faces&&
+    purpose.trim().length>=3&&purpose.trim().length<=160&&Boolean(chosen);
+  return <details className={styles.section} data-testid="site-hybrid-physical-dice">
+    <summary>Hybrid gameplay · witnessed physical dice</summary>
+    <p>Record a real-world die result in the encounter history. This never spends AP,
+      deals damage, casts spells or replaces the normal GM action approval.</p>
+    <div className={styles.fields}>
+      <label>Participant<select value={chosen} onChange={e=>setTargetId(e.target.value)}>
+        {participants.map(row=><option key={row.id} value={row.id}>{row.name}</option>)}
+      </select></label>
+      <label>Die<select value={faces} onChange={e=>{setFaces(Number(e.target.value));setResult('');}}>
+        {PHYSICAL_DICE_FACES.map(value=><option key={value} value={value}>d{value}</option>)}
+      </select></label>
+      <label>Observed result<input type="number" min="1" max={faces} step="1"
+        value={result} onChange={e=>setResult(e.target.value)}/></label>
+      <label>Reason / action<input maxLength={160} value={purpose}
+        onChange={e=>setPurpose(e.target.value)} placeholder="e.g. Physical initiative roll"/></label>
+      <button type="button" disabled={busy||!combat?.isActive||!combat?.sessionEditable||!valid}
+        onClick={()=>{onCommand('encounter',{operation:'record-physical-roll',
+          targetId:chosen,faces,result:face,reason:purpose.trim()});setResult('');}}>
+        Record witnessed roll
+      </button>
+    </div>
+  </details>;
+}
 function GMEncounterSnapshots({api,campaignId,combat,busy,onCommand}){
   const [entries,setEntries]=useState([]),[name,setName]=useState(''),[reason,setReason]=useState('');
   const [error,setError]=useState('');
@@ -131,7 +166,8 @@ function GMEncounterSnapshots({api,campaignId,combat,busy,onCommand}){
     setEntries([]);setError('');setName('');setReason('');
     if(!activeId||!api?.watchEncounterSnapshots)return undefined;
     return api.watchEncounterSnapshots(campaignId,activeId,setEntries,
-      failure=>setError(failure?.message||'Encounter snapshots could not load.'));
+      failure=>{setEntries([]);
+        setError(failure?.message||'Encounter snapshots could not load.');});
   },[api,campaignId,activeId]);
   if(!activeId||!api?.watchEncounterSnapshots)return null;
   const disabled=busy||!combat.sessionEditable;
@@ -227,6 +263,10 @@ export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigat
     <h2>Combat Command Centre</h2>
     {stream.loading?<p role="status">Verifying live combat access…</p>:null}
     {stream.error?<p role="alert">{stream.error}</p>:null}
+    <button type="button" data-testid="site-gm-combat-reconnect"
+      disabled={stream.loading||busy} onClick={stream.reconnect}>
+      Reconnect live encounter
+    </button>
     <CombatCommandCentre key={uid+':'+campaignId} uid={uid} campaignId={campaignId}>
     <CombatCommandPanel id="resources">
       {typeof renderPartyResources==='function'?
@@ -259,6 +299,7 @@ export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigat
       <CombatCommandPanel id="history">
         <GMEncounterHistoryPanel api={api} campaignId={campaignId} busy={busy} combat={combat} onCommand={submit}/>
         <GMEncounterSnapshots api={api} campaignId={campaignId} combat={combat} busy={busy} onCommand={submit}/>
+        <GMPhysicalDiceRecord combat={combat} busy={busy} onCommand={submit}/>
       </CombatCommandPanel>
       <CombatCommandPanel id="enemyTracker">
         <EnemyCombatTracker combat={combat} onCommand={submit}
@@ -481,6 +522,10 @@ export function PlayerCombatWorkspace({api,campaignId,characterId}){
     <h2>Combat &amp; Initiative</h2>
     {stream.loading?<p role="status">Verifying your combat participant…</p>:null}
     {stream.error?<p role="alert">{stream.error}</p>:null}
+    <button type="button" data-testid="site-player-combat-reconnect"
+      disabled={stream.loading||busy} onClick={stream.reconnect}>
+      Reconnect combat status
+    </button>
     {combat?<>
       <p role="status">{combat.paused?'PAUSED':combat.status.toUpperCase()} · Round {combat.round}
         {' · '}Session {stream.data.session.status}</p>
