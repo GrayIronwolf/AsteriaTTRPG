@@ -73,7 +73,7 @@ export function createPlayerPresentationCommands(context,{requireCampaignGM}){
               ...restrictedPresentationProjection(safe,revision),
               epoch:hybrid.epoch,updatedAt:serverTimestamp()
             });
-            if(safe.scene==='blank'){
+            if(safe.scene!=='combat'){
               transaction.set(doc(db,'campaigns',campaignId,'presentationCombat','current'),{
                 active:false,round:0,current:'',endsAt:0,epoch:hybrid.epoch,
                 visible:false,updatedAt:serverTimestamp()
