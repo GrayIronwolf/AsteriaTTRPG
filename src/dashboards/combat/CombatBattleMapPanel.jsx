@@ -90,43 +90,21 @@ export function CombatBattleMapPanel({mediaApi,campaignId,combat,pending,onComma
         {token.label}
         <select value={token.visibility==='gm'?'gm':'players'}
           disabled={busy||!combat.sessionEditable||combat.paused}
-          onChange={event=>onCommand('encounter',{
+          onChange={event=>{
+            if(event.target.value==='players'&&!window.confirm(
+              'Reveal this token to players when their fog of war allows it?'))return;
+            onCommand('encounter',{
             operation:'map-token-appearance',mapId:map.id,tokenId:token.id,
             appearance:{
               portrait:token.portrait||'',faction:token.faction||'',
               cells:token.cells??1,visibility:event.target.value
             }
-          })}>
+          });}}>
           <option value="gm">GM only</option>
-          <option value="players">Visible to players</option>
+          <option value="players">Players when revealed</option>
         </select>
       </label>)}
     </details>:null}
-    {map&&!preview&&combat?.isActive&&combat?.battleMapId===map.id?
-      <details data-testid="gm-live-token-visibility">
-        <summary>GM token visibility on player map</summary>
-        <p>GM-only tokens are excluded from player and restricted-viewer projections.
-          Publishing a token reveals it only in currently visible fog cells.</p>
-        {(map.tokens||[]).filter(token=>token.combatantId).map(token=><div key={token.id}>
-          <label>{token.label} · <select
-            aria-label={'Visibility of '+token.label}
-            value={token.visibility==='gm'?'gm':'players'}
-            disabled={busy||combat.paused||!combat.sessionEditable}
-            onChange={event=>{
-              const visibility=event.target.value;
-              if(visibility==='players'&&!window.confirm(
-                'Reveal this token to players when their fog of war allows it?'))return;
-              onCommand('encounter',{operation:'map-token-appearance',
-                mapId:map.id,tokenId:token.id,appearance:{
-                  portrait:token.portrait||'',faction:token.faction||'',
-                  cells:token.cells||1,visibility
-                }});
-            }}>
-            <option value="gm">GM only</option>
-            <option value="players">Players when revealed</option>
-          </select></label>
-        </div>)}
-      </details>:null}
     {map?<><p>{combat?.battleMapId?
       'Live combat map — combatant tokens are managed by the existing server.':
       'Prepared map preview — live combat tokens will be linked on Start Combat.'}</p>
