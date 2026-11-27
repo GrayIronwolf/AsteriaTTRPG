@@ -133,13 +133,15 @@ test('3.6 final: witnessed physical d20 outcomes enter canonical combat checks',
 test('3.6 final: physical/digital pending action uses GM and revision guards',()=>{
   const backend=source('functions/combatCommands.mjs');
   const frontend=source('src/dashboards/combat/GMAdvancedCombatControls.jsx');
-  assert.match(backend,/management\\.has\\(input\\.operation\\)&&!gm/);
-  assert.match(backend,/input\\.revision!==oldRevision/);
-  assert.match(backend,/validateHybridPhysicalDice\\(input\\.physicalDice\\)/);
-  assert.match(backend,/recordedRoll\\('primary'/);
-  assert.match(backend,/recordedRoll\\('defence'/);
-  assert.match(backend,/recordedRoll\\('opposed'/);
-  assert.match(backend,/consumedDice\\.has/);
-  assert.match(frontend,/data-testid="hybrid-physical-dice"/);
-  assert.match(frontend,/operation:'roll',physicalDice:dice/);
+  for(const expected of [
+    'management.has(input.operation)&&!gm',
+    'input.revision!==oldRevision',
+    'validateHybridPhysicalDice(input.physicalDice)',
+    "recordedRoll('primary'",
+    "recordedRoll('defence'",
+    "recordedRoll('opposed'",
+    'consumedDice.has'
+  ])assert.ok(backend.includes(expected),'Missing physical dice guard: '+expected);
+  assert.ok(frontend.includes('data-testid="hybrid-physical-dice"'));
+  assert.ok(frontend.includes("operation:'roll',physicalDice:dice"));
 });
