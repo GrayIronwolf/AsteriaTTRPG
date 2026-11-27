@@ -30,6 +30,7 @@ import {mapCell,mapCellCenter,mapCellKey,mapReachableRoutes} from '../src/state/
 import {MAP_MOVE_AP,approvedMapMovementAward,spendMapMovement,validateMapOpportunity,walkingAllowance}
   from '../src/state/battleMapMovement.mjs';
 import {publicPresentationBattleMap} from '../src/state/livePresentationProjectionModel.mjs';
+import {validatePhysicalDiceRecord} from '../src/state/hybridPhysicalDiceModel.mjs';
 
 const copy=value=>JSON.parse(JSON.stringify(value));
 const text=(value,max=1000)=>String(value||'').trim().slice(0,max);
@@ -40,7 +41,7 @@ const combatCharacterFields=new Set(['hp','sp','mp','bp','zp','resources','resou
 const ENCOUNTER_INITIATIVE_MODES=new Set(['automatic','manual','mixed']);
 const initiativeMode=value=>ENCOUNTER_INITIATIVE_MODES.has(value)?value:'automatic';
 const needsManualInitiative=(row,mode)=>mode==='manual'||(mode==='mixed'&&Boolean(row.characterId));
-const management=new Set([...recoveryOperations,'skip-turn','override-turn','release-wave','trigger-event','timer','map-link','map-move','map-delegate','map-token-appearance','save','stage-prepared','unstage-prepared','load-prepared','map-prepare','start','pause','resume','next','end','clear','approve','reject','window','close-window','resolve','roll','resolve-reaction','correct','condition','ambush','trigger-prepared']);
+const management=new Set(['record-physical-roll',...recoveryOperations,'skip-turn','override-turn','release-wave','trigger-event','timer','map-link','map-move','map-delegate','map-token-appearance','save','stage-prepared','unstage-prepared','load-prepared','map-prepare','start','pause','resume','next','end','clear','approve','reject','window','close-window','resolve','roll','resolve-reaction','correct','condition','ambush','trigger-prepared']);
 const publicPending=p=>p?{id:p.id,actorId:p.actorId,actorName:p.actorName,optionId:p.actorKind==='player'?p.optionId:'',name:p.actorKind==='player'?p.name:'Creature action',status:p.status,targetIds:p.targetIds,ap:p.ap,bonus:p.bonus,apPaid:Boolean(p.prepaidAP),costs:p.actorKind==='player'?p.costs:{},reactionWindow:p.status==='reactions',reactorId:p.window?.[p.windowIndex||0]?.actorId||'',reactionChoices:p.window?.[p.windowIndex||0]?.choices||[],reaction:p.reaction?{actorId:p.reaction.actorId,name:p.reaction.name}:null,message:p.publicMessage||''}:null;
 
 // An extension of asteriaAction: one encounter document, existing resource/effect
@@ -69,7 +70,7 @@ export function createCombatCommands(context) {
         tx.set(gmRef,{combatState:{...combatState,stagedEncounters}},{merge:true});
         return {ok:true,revision:Number(encounter.combat?.revision||0)};
       }
-      if(encounter.paused===true&&!recoveryOperations.has(input.operation)&&!['resume','end','correct','condition'].includes(input.operation))
+      if(encounter.paused===true&&!recoveryOperations.has(input.operation)&&!['resume','end','correct','condition','record-physical-roll'].includes(input.operation))
         throw new Error('Combat is paused. Resume the encounter before continuing.');
       const oldRevision=Number(encounter.combat?.revision||0);
       if(input.revision!==oldRevision)throw new Error('Combat changed. Wait for live sync and try again.');
@@ -748,6 +749,16 @@ export function createCombatCommands(context) {
           delete privateState.preparedDetails;
         }
         log('Combat ended; remaining resources and conditions retained.');
+      }else if(input.operation==='record-physical-roll'){
+        requireActive();
+        const physical=validatePhysicalDiceRecord(input,encounter.combatants);
+        const participant=entry(physical.targetId);
+        log('GM verified physical d'+physical.faces+' roll for '+participant.name+
+          ': '+physical.result+' — '+physical.reason,{
+          actorUid:currentUser.uid,targetId:physical.targetId,
+          rollSource:'physical-gm-verified',dieFaces:physical.faces,
+          faceResult:physical.result,reason:physical.reason
+        });
       }else if(input.operation==='correct'){
         const reason=text(input.reason);if(!reason)throw new Error('A GM correction needs a recorded reason.');
         const id=input.targetId||actorId,character=get(id);
