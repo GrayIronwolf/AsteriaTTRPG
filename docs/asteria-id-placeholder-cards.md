@@ -36,3 +36,28 @@ The catalogue is intentionally **empty** until IDs are verified and approved. Th
 - Adding new gameplay-defined items or spells from placeholders alone.
 
 The existing `scripts/import-approved-vault.cjs` staged import bridge remains unchanged; its public-review safeguards continue to apply.
+
+## Step 1.3 — Metadata catalogue initial population (27 November 2026)
+
+Source of identifiers: the vault's existing `Asteria Definition ID Register.json`, not auto-numbered filenames or imported Markdown pages. The register is a **reservation and allocation record**. Its `allocation_status: active` values are used as the initial identity source. This does not certify that the current Markdown file itself contains the ID property or is ready to publish.
+
+| Scope | Count |
+| --- | ---: |
+| All recorded allocations in the source register | 5,130 |
+| Active allocations across all systems | 4,948 |
+| Active allocations in Items, Resources, Schematics, Recipes, Blueprints, Patterns and Designs | 4,830 |
+| Excluded due to duplicate names within a category | 201 |
+| Excluded due to possible same-name website item/resource definition | 134 |
+| **ID-only Coming Soon cards enabled** | **4,495** |
+
+Cards by category: Items 2,088; Resources & Materials 884; Schematics 336; Recipes 547; Blueprints 196; Patterns 234; Designs 210.
+
+No permanent definition ID has been invented. All mapped IDs are syntactically valid and were unique in the source register. The catalogue does not contain `sourcePath`, descriptions, Markdown text, rules, stats, images, or other content fields.
+
+**Review required before additional mappings:** The 201 duplicate-name records may be distinct definitions, not necessarily errors. The 134 apparent website overlaps are name/slug matches only and must never be treated as verified ID relationships automatically. All 182 reserved allocations across the full register remain excluded. Races, Classes, Talents, Spells & Magic and Formulas remain unpopulated until the source IDs are assigned and verified.
+
+**Placement:** The ID-only panel is visible from the **Items Compendium root** with its own selector for each of the seven populated categories, text searching and Show More pagination. Other Compendium domains and existing item detail pages do not receive unrelated cards.
+
+**Future completion path:** Later, after explicit user approval and an ID migration, published canonical Markdown entries using the same assigned Asteria ID replace the placeholder in the existing Compendium. Merely retaining a file inside Dropbox does **not** publish it; this phase adds no automatic vault reader or upload.
+
+**Operational boundary:** No modifications to the Dropbox vault, Firestore, existing canonical website IDs, inventory mechanics, spell content, or live branch.
