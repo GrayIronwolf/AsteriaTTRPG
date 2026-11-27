@@ -145,3 +145,11 @@ test('3.6 final: physical/digital pending action uses GM and revision guards',()
   assert.ok(frontend.includes('data-testid="hybrid-physical-dice"'));
   assert.ok(frontend.includes("operation:'roll',physicalDice:dice"));
 });
+
+test('3.6 final: GM witnessed physical rolls pass client allowlist, players are rejected',async()=>{
+  const {validateCombatCommand}=await import('../src/dashboards/combat/combatModel.mjs');
+  const command={operation:'record-physical-roll',revision:2,targetId:'hero',
+    faces:20,result:17,reason:'Verified attack roll'};
+  assert.doesNotThrow(()=>validateCombatCommand('gm','encounter',command));
+  assert.throws(()=>validateCombatCommand('player','hero',command),/unavailable/);
+});
