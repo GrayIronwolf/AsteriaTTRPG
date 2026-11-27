@@ -103,6 +103,7 @@ export function CampaignPresentationController({api,campaignId,party=[]}){
   const presentationAssets=useCampaignStream(api,'watchPresentationAssets',[campaignId]);
   const [draft,setDraft]=useState(()=>fields(PRESENTATION_DEFAULT));
   const [preview,setPreview]=useState(false);
+  const previewCombat=useCampaignStream(api,'watchEncounter',[campaignId],preview&&draft.scene==='combat');
   const camera=draft.mapCamera||DEFAULT_BATTLE_MAP_CAMERA;
   const updateCamera=changes=>setDraft(previous=>({...previous,mapCamera:{...(previous.mapCamera||DEFAULT_BATTLE_MAP_CAMERA),...changes}}));
   const [busy,setBusy]=useState(false),[message,setMessage]=useState('');
@@ -169,9 +170,6 @@ export function CampaignPresentationController({api,campaignId,party=[]}){
           <label>Vertical centre<input type="range" min="0" max="100" value={camera.y}
             onChange={event=>updateCamera({y:Number(event.target.value)})}/></label>
         </>:null}
-        <button type="button" aria-pressed={preview} onClick={()=>setPreview(value=>!value)}>
-          Preview Player View
-        </button>
       </fieldset>:null}
       {PRESENTATION_MEDIA_SCENES.includes(draft.scene)?<label>
         Published presentation media
@@ -198,8 +196,14 @@ export function CampaignPresentationController({api,campaignId,party=[]}){
         </fieldset>
       </>:null}
     </div>
-    {preview&&draft.scene==='battle-map'&&draft.mapId?<Scene api={api} campaignId={campaignId}
-      display={{...draft,mapCamera:camera}}/>:null}
+    <button type="button" aria-pressed={preview} disabled={busy||control.loading}
+      onClick={()=>setPreview(value=>!value)}>
+      {preview?'Hide Scene Preview':'Preview Player View'}
+    </button>
+    {preview?<div aria-label="Unpublished player scene preview" className={styles.stage}>
+      <Scene api={api} campaignId={campaignId} display={{...draft,mapCamera:camera}}
+        party={party} combat={previewCombat.data||{}}/>
+    </div>:null}
     <div className={styles.actions}>
       <button type="button" disabled={busy||control.loading||Boolean(control.error)}
         data-testid="site-presentation-publish" onClick={()=>run('set-scene')}>Present Scene</button>
