@@ -34,3 +34,7 @@ Live account, mobile UI and production backend acceptance have not been establis
 ## Final branch verification
 
 After the development-only asset synchronisation, the latest human-authored pull-request commit must pass all required CI workflows. Action-required checks on the bot-generated asset commit are not evidence of success. No merge may occur while checks are pending or failed.
+
+## Final verification safeguard
+
+The generated frontend assets are committed on the Milestone 4.1 branch. Checks reporting `action_required` on a bot-generated asset commit do not count as passing; the final pull request must pass a new human-authored verification run on the exact reviewed head before any merge.
