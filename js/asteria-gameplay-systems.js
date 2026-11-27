@@ -3064,7 +3064,17 @@
         return false;
       }
     } catch(error) {
-      window.toast?.(`Character kept locally. Save failed: ${error.message || error}`);
+      const code = String(error?.code || '').replace(/^firestore\//,'');
+      const messages = {
+        'permission-denied':'Firebase denied the save. Check character ownership and deployed permissions.',
+        'unauthenticated':'Authentication expired. Sign in to the original account and retry.',
+        'invalid-argument':'Firebase rejected the character data.',
+        'unavailable':'Firebase is temporarily unavailable. Retry when connected.',
+        'deadline-exceeded':'Firebase did not respond in time. Retry Save.',
+        'resource-exhausted':'Firebase storage or request limits were reached.'
+      };
+      window.toast?.(`Character kept locally. ${messages[code] || error?.message || 'Save failed.'}`);
+      console.warn('Character Forge cloud save failed.', error);
       return false;
     }
     const joinedCampaign = await window.AsteriaWorkspace?.consumePendingCampaignJoin?.(id);
