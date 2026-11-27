@@ -67,3 +67,45 @@ export async function updateCampaignAttendance(db,actorUid,input){
     return {campaignId,...attendanceSummary(next)};
   });
 }
+
+export async function listCampaignAttendance(db,actorUid,campaignId){
+  if(!validId(actorUid)||!validId(campaignId))
+    throw Error('Campaign GM sign-in required.');
+  const snap=await db.doc('campaigns/'+campaignId).get();
+  if(!snap.exists)throw Error('Campaign not found.');
+  const campaign=snap.data()||{};
+  if(campaign.membershipSchemaVersion!==2||!validId(campaign.ownerUid))
+    throw Error('Canonical campaign membership required for attendance.');
+  if(actorUid!==campaign.ownerUid){
+    const actorSnap=await db.doc('campaigns/'+campaignId+'/members/'+actorUid).get();
+    const actor=actorSnap.exists?actorSnap.data():null;
+    if(!actor||actor.uid!==actorUid||actor.campaignId!==campaignId||
+      actor.role!=='co-gm'||actor.status!=='active')
+      throw Error('Only an active campaign GM may read attendance.');
+  }
+  const [members,attendance]=await Promise.all([
+    db.collection('campaigns/'+campaignId+'/members').limit(101).get(),
+    db.collection('campaigns/'+campaignId+'/attendance').limit(101).get()
+  ]);
+  if(members.size>100||attendance.size>100)throw Error('Attendance roster exceeds supported size.');
+  const eligible=new Set();
+  for(const row of members.docs){
+    const item=row.data();
+    if(item.uid!==row.id||item.campaignId!==campaignId)
+      throw Error('Campaign membership requires review.');
+    if(item.role==='player'&&item.status==='active'&&validId(row.id))
+      eligible.add(row.id);
+  }
+  const entries=[];
+  const seen=new Set();
+  for(const row of attendance.docs){
+    const item=row.data();
+    if(!validId(row.id)||!item||item.uid!==row.id||
+      item.campaignId!==campaignId||!validRevision(item.revision)||
+      !validValue(item.mode)||seen.has(row.id))
+      throw Error('Attendance records require review.');
+    seen.add(row.id);
+    if(eligible.has(row.id))entries.push(attendanceSummary(item));
+  }
+  return {campaignId,entries};
+}
