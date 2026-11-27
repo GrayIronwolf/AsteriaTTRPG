@@ -15,7 +15,8 @@ import {validateBattleMapCamera} from './battleMapCamera.mjs';
 import {PRESENTATION_MEDIA_SCENES,presentationAssetId} from './presentationAssetModel.mjs';
 const object=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 export const hybridViewerId=value=>typeof value==='string'&&
-  /^[A-Za-z0-9_-]{1,128}$/.test(value);
+  /^[A-Za-z0-9_-]{1,128}$/.test(value)&&
+  !['__proto__','prototype','constructor'].includes(value);
 const exact=(value,allowed)=>{
   if(!object(value)||Object.keys(value).some(key=>!allowed.includes(key)))
     throw Error('Unsupported hybrid viewer session fields.');
