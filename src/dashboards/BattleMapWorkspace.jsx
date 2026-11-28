@@ -67,6 +67,7 @@ function useBattleMaps(campaignId,gm){
 function useMapMedia(campaignId,selected){
   const [state,setState]=useState({url:'',loading:false,error:''});
   const mapKey=selected?.id+'|'+selected?.storagePath;
+  const [retry,setRetry]=useState(0);
   useEffect(()=>{
     let active=true,url='';
     setState({url:'',loading:Boolean(selected),error:''});
@@ -75,15 +76,28 @@ function useMapMedia(campaignId,selected){
       setState({url:'',loading:false,error:'This map has an invalid media reference.'});
       return undefined;
     }
-    firebaseService.fetchBattleMapMedia(campaignId,selected).then(result=>{
+    // Bound the waiting state even if an upstream Firebase promise never settles.
+    // A retry or map switch invalidates the previous request's UI updates.
+    const timeoutMs=20000;
+    const timeout=setTimeout(()=>{
+      if(active)setState({url:'',loading:false,error:'Map media loading timed out. Check your connection and retry.'});
+      active=false;
+    },timeoutMs);
+    Promise.resolve().then(()=>firebaseService.fetchBattleMapMedia(campaignId,selected)).then(result=>{
       if(!active)return;
+      clearTimeout(timeout);
       if(!result.ok){setState({url:'',loading:false,error:result.error||'Map unavailable.'});return;}
       url=URL.createObjectURL(result.blob);
       setState({url,loading:false,error:''});
-    }).catch(error=>{if(active)setState({url:'',loading:false,error:error.message});});
-    return ()=>{active=false;if(url)URL.revokeObjectURL(url);};
-  },[campaignId,mapKey]);
-  return state;
+    }).catch(error=>{
+      if(!active)return;
+      clearTimeout(timeout);
+      console.error('Battle map media retrieval failed', {campaignId,mapId:selected.id,code:error?.code||'unknown'},error);
+      setState({url:'',loading:false,error:error?.message||'Map media could not be loaded.'});
+    });
+    return ()=>{active=false;clearTimeout(timeout);if(url)URL.revokeObjectURL(url);};
+  },[campaignId,mapKey,retry]);
+  return {...state,retry:()=>setRetry(value=>value+1)};
 }
 function MapCanvas({campaignId,map,gm=false,onPlaceToken,selectedTokenId='',fogTool='token',
   onFogStroke,onFogBegin,onPrivatePin,privatePins=[],previewPlayerFog=false,onMeasure,measurePoints=[],
@@ -159,7 +173,7 @@ function MapCanvas({campaignId,map,gm=false,onPlaceToken,selectedTokenId='',fogT
       onPointerCancel={pointerUp} onLostPointerCapture={pointerUp}
       style={{aspectRatio:map.width+' / '+map.height}}>
       {media.loading?<p className="asteria-battle-loading" role="status">Loading private map media…</p>:null}
-      {media.error?<p className="asteria-battle-loading" role="alert">{media.error}</p>:null}
+      {media.error?<div className="asteria-battle-loading" role="alert"><p>{media.error}</p><button type="button" onClick={media.retry}>Retry loading media</button></div>:null}
       {media.url?(map.kind==='video'?<video key={media.url} src={media.url} className="asteria-battle-media"
         autoPlay={playing} loop muted playsInline preload="metadata" controls={false}
         ref={element=>{if(!element)return;if(playing)element.play().catch(()=>{});else element.pause();}}
