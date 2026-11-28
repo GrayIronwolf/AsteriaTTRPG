@@ -3,6 +3,7 @@ import { normalizeInformation, publicInformation } from '../src/state/campaignIn
 import { campaignArtworkFileError } from '../src/state/campaignArtwork.mjs';
 import {battleMapFileError,battleMapFileKind,battleMapAssetPath,newBattleMapSettings,battleMapEditableSettings,battleMapDimensions,BATTLE_MAP_MAX_RECORDS} from '../src/state/battleMapModel.mjs';
 import {battleMapPrivatePins} from '../src/state/battleMapFogModel.mjs';
+import {assertBattleMapMediaSession,battleMapMediaError} from '../src/firebase/battleMapMedia.mjs';
 import {atlasFileError,atlasImagePath,atlasImageDimensions,atlasMapSettings,ATLAS_MAX_MAPS} from '../src/state/worldAtlasModel.mjs';
 import {sessionPdfInput,sessionPdfFileError,sessionPdfPath,SESSION_PDF_LIMIT} from '../src/state/sessionLibraryModel.mjs';
 import {audioFileError,audioMagicMatches,audioTrackPath,audioUploadDetails,AUDIO_TRACK_LIMIT} from '../src/state/campaignAudioModel.mjs';
@@ -908,9 +909,14 @@ async function cropProfileAvatar(file){
     return blob;
   } finally{image.close?.();}
 }
+function battleMapAuthUser(){
+  const user=auth?.currentUser;
+  return user&&currentUser?.uid===user.uid?user:null;
+}
 const firebasePublicApi = {
   isReady:()=>Boolean(db && currentUser && ownershipReadyUid === currentUser.uid),
   getUser:()=>currentUser,
+  getBattleMapSession:battleMapAuthUser,
   getDiscoveredCampaignRole:(campaignId,uid)=>currentUser?.uid===uid&&discoveryRoles?.uid===uid
     ? discoveryRoles.roles.get(campaignId)||'' : '',
   getProfile:()=>currentProfile,
@@ -1309,21 +1315,23 @@ const firebasePublicApi = {
       onChange(records);
     }, error=>reportSyncError('session-presence-listener', error, { campaignId, sessionId }));
   },
-  subscribeBattleMaps: function(campaignId,onChange,{gm=false}={}){
-    if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
+  subscribeBattleMaps: function(campaignId,onChange,{gm=false,onError}={}){
+    const user=battleMapAuthUser();
+    if(!db||!user||!campaignId||typeof onChange!=='function')return ()=>{};
     // The GM edits the canonical map; players see only server-produced,
     // allowlisted public projections, never raw GM token or hazard records.
     const source=gm?'battleMaps':'battleMapsPublic';
     const q=query(collection(db,'campaigns',campaignId,source),limit(BATTLE_MAP_MAX_RECORDS));
-    return onSnapshot(q,snapshot=>{
+    return onSnapshot(q,{includeMetadataChanges:true},snapshot=>{
+      if(battleMapAuthUser()!==user||snapshot.metadata.fromCache)return;
       onChange(snapshot.docs.map(entry=>{
         const record=entry.data();
-        return {id:entry.id,...record,...(!gm?{
-          storagePath:battleMapAssetPath(campaignId,entry.id,record.contentType)
+        return {...record,id:entry.id,...(!gm?{
+          storagePath:battleMapFileKind(record.contentType)?battleMapAssetPath(campaignId,entry.id,record.contentType):''
         }:{})};
       }).sort((a,b)=>String(a.name).localeCompare(String(b.name))));
     },error=>{
-      onChange([]);reportSyncError('battle-map-listener',error,{campaignId});
+      onChange([]);onError?.(error);reportSyncError('battle-map-listener',error,{campaignId});
     });
   },
   subscribeBattleMapPrivatePins: function(campaignId,mapId,onChange){
@@ -1350,17 +1358,19 @@ const firebasePublicApi = {
       return {ok:true};
     }catch(error){return {ok:false,error:error?.message||'Unable to save private map notes.'};}
   },
-  fetchBattleMapMedia: async function(campaignId,map){
-    if(!storage||!currentUser||!map||!campaignId)return {ok:false,error:'Sign in to view this map.'};
-    let path;
+  fetchBattleMapMedia: async function(campaignId,map,options){
     try{
-      path=battleMapAssetPath(campaignId,map.id,map.contentType);
+      if(!storage||!auth)throw Error('Firebase Storage is unavailable.');
+      const user=battleMapAuthUser();
+      assertBattleMapMediaSession(auth,user,options);
+      const path=battleMapAssetPath(campaignId,map?.id,map?.contentType);
       if(map.storagePath!==path||map.kind!==battleMapFileKind(map.contentType))
-        throw Error('Invalid map media reference.');
+        throw battleMapMediaError('storage/invalid-argument','Invalid map media reference.');
       // Authenticated Storage read: no reusable public download token is generated.
       const blob=await getBlob(storageRef(storage,path));
+      assertBattleMapMediaSession(auth,user,options);
       return {ok:true,blob};
-    }catch(error){return {ok:false,error:error?.message||'Map media is unavailable.'};}
+    }catch(error){return {ok:false,code:error?.code,error:error?.message||'Map media is unavailable.'};}
   },
   uploadBattleMap: async function(campaignId,file,settings={},dimensions={}){
     if(!db||!storage||!currentUser||!campaignId)return {ok:false,error:'Sign in to upload battle maps.'};
@@ -4003,6 +4013,7 @@ if(auth && !reactDevFixture){
         role:'account',
         characters:[]
       }, getLocalProfile(user.uid) || {});
+      window.dispatchEvent(new CustomEvent('asteria:firebase-session-changed'));
       window.AsteriaAuthBridge?.setSession(currentProfile, user);
       currentProfile = await ensureProfile(user, {});
       window.AsteriaAuthBridge?.setSession(currentProfile, user);

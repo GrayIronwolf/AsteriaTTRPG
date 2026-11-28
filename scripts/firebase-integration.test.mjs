@@ -804,6 +804,54 @@ test('campaign artwork permissions allow GM upload and member read only',async()
   await assertFails(uploadBytes(ref(gm,'campaigns/c/artwork/unsafe.svg'),new Uint8Array([1]),{contentType:'image/svg+xml'}));
   await assertSucceeds(deleteObject(ref(gm,path)));
 });
+for(const membershipSchemaVersion of [1,2]){
+  test(`WEBM battle map bytes and projections follow campaign membership schema ${membershipSchemaVersion}`,async t=>{
+    const campaignId=`battle-map-v${membershipSchemaVersion}`;
+    const mapId='00000000-0000-4000-8000-000000000001';
+    const mapPath=`campaigns/${campaignId}/battleMaps/${mapId}`;
+    const sharedPath=`campaigns/${campaignId}/battleMapsPublic/${mapId}`;
+    const storagePath=`${mapPath}/scene.webm`;
+    const storage=uid=>(uid?env.authenticatedContext(uid):env.unauthenticatedContext()).storage();
+    const readBytes=uid=>getBytes(ref(storage(uid),storagePath));
+    const campaignRef=db.doc(`campaigns/${campaignId}`);
+    await campaignRef.set({ownerUid:'gm',membershipSchemaVersion,
+      gmUids:['co-gm'],playerUids:membershipSchemaVersion===1?['player']:['removed']});
+    if(membershipSchemaVersion===2){
+      for(const [uid,role,status] of [['co-gm','co-gm','active'],['player','player','active'],['removed','player','removed']])
+        await campaignRef.collection('members').doc(uid).set({uid,campaignId,role,status});
+    }
+    const record=doc(user('gm'),mapPath);
+    const payload=Uint8Array.of(0x1a,0x45,0xdf,0xa3);
+    const object=ref(storage('gm'),storagePath);
+    await assertSucceeds(setDoc(record,{id:mapId,campaignId,name:'Cavern Preview',visibility:'gm',
+      contentType:'video/webm',kind:'video',storagePath,width:1920,height:1080,createdBy:'gm',
+      createdAt:Timestamp.now(),updatedAt:Timestamp.now(),gridColumns:2,gridRows:2,gridOpacity:40,
+      gridVisible:true,fogEnabled:true,fogCells:'1000',tokens:[
+        {id:'secret',label:'Ambush',kind:'marker',visibility:'gm',x:25,y:25}
+      ]}));
+    await assertSucceeds(uploadBytes(object,payload,{contentType:'video/webm'}));
+    t.after(()=>deleteObject(object));
+    for(const uid of ['gm','co-gm']){
+      assert.equal((await assertSucceeds(getDoc(doc(user(uid),mapPath)))).data().storagePath,storagePath);
+      assert.deepEqual(new Uint8Array(await assertSucceeds(readBytes(uid))),payload);
+    }
+    for(const uid of ['player','removed','outsider',null])await assertFails(readBytes(uid));
+
+    await assertSucceeds(updateDoc(record,{visibility:'players',updatedAt:Timestamp.now()}));
+    await synchronizeBattleMapPresentation(db,campaignId,mapId);
+    const shared=await assertSucceeds(getDoc(doc(user('player'),sharedPath)));
+    assert.equal(shared.data().contentType,'video/webm');
+    assert.equal(shared.data().storagePath,undefined);
+    assert.deepEqual(shared.data().tokens,[]);
+    await assertFails(getDoc(doc(user('player'),mapPath)));
+    assert.deepEqual(new Uint8Array(await assertSucceeds(readBytes('player'))),payload);
+    for(const uid of ['removed','outsider',null])await assertFails(readBytes(uid));
+    if(membershipSchemaVersion===2){
+      await campaignRef.collection('members').doc('player').update({status:'removed'});
+      await assertFails(readBytes('player'));
+    }
+  });
+}
 test('GM campaign artwork updates cannot alter gameplay or owner fields',async()=>{
   const gm=user('gm');
   const image='https://example.org/campaign.webp';
