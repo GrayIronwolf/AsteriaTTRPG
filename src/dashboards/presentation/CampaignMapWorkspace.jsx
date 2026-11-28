@@ -415,7 +415,7 @@ export function CampaignMapWorkspace({api,campaignId,role='player',selectedMapId
       </div>
       {map?.combatId?<p role="status">Linked combat is active. Grid, tokens and deletion stay locked.</p>:null}
     </div>:null}
-    {preview?<CampaignMapCanvas api={api} campaignId={campaignId} map={preview} mediaMap={map} camera={camera} interactive={interactive} movement={movement}
+    {preview?<CampaignMapCanvas key={campaignId+':'+map.id+':'+map.storagePath+':'+(previewFog?'preview':'normal')} api={api} campaignId={campaignId} map={preview} mediaMap={map} camera={camera} interactive={interactive} movement={movement}
       mode={mode} showGrid={showGrid} previewFog={previewFog}
       editing={mode==='gm'&&(fogMode==='terrain'||draft.fogEnabled&&fogMode!=='none')} onPoint={editFog}/>:null}
     {map?<label className={styles.compact}><input type="checkbox" checked={showGrid}
