@@ -55,6 +55,7 @@ on:
       - 'src/styles/combat.css'
       - 'src/state/combatProgressionCore.mjs'
       - 'scripts/calendar-weather-milestone4.test.mjs'
+      - 'vite.config.mjs'
       - '.github/workflows/build-combat-test-assets.yml'
 
 permissions:
