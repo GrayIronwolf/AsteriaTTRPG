@@ -239,7 +239,7 @@ function CharacterDashboardContent({campaignId,characterId,live,embedded=false})
     {activeTab === 'session-recordings' && campaignId ? <PlayerSessionRecordingWorkspace campaignId={campaignId}/> : null}
     {activeTab === 'settings' ? <DashboardSettingsTab campaignId={campaignId} character={character} editable={isOwner}
       onNavigate={navigate} /> : null}
-    {campaignId&&isOwner?<PlayerUniversalCheckPopup campaignId={campaignId} characterId={characterId} online={live.online&&!live.error}/>:null}
+    {campaignId&&isOwner?<PlayerUniversalCheckPopup campaignId={campaignId} characterId={characterId} online={live.online&&!live.error} canvasSettingsAvailable={activeTab==='dashboard'}/>:null}
     {campaignId?<PlayerItemRequestCenter campaignId={campaignId} character={character} characters={live.characters} ecosystem={live.itemEcosystem} editable={editable} />:null}
     </CombatDashboardLayout>
     {noticeError?<p className="react-action-message" role="alert">{noticeError}</p>:null}
