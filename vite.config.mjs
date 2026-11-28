@@ -20,7 +20,12 @@ export default defineConfig({
       output: {
         entryFileNames: 'asteria-react-content-v2.js',
         chunkFileNames: 'asteria-react-[name]-[hash].js',
-        assetFileNames: asset => asset.name?.endsWith('.css') ? 'asteria-react-royal-relic-v2.css' : 'assets/[name]-[hash][extname]'
+        // CSS is emitted in multiple chunks (dashboard and lazy modules). A single
+        // fixed filename overwrites/renames one chunk, leaving canvas CSS missing.
+        // Unique names keep the JS preload manifest aligned with each stylesheet.
+        assetFileNames: asset => asset.name?.endsWith('.css')
+          ? 'asteria-react-[name]-[hash][extname]'
+          : 'assets/[name]-[hash][extname]'
       }
     }
   }
