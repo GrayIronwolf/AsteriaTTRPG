@@ -278,3 +278,59 @@
  .resizeHandle{--grip:clamp(44px,calc(44px / var(--combat-scale,1)),120px);
   --edge-grip:clamp(22px,calc(22px / var(--combat-scale,1)),80px)}
 }
+
+
+/* Player dashboard: symbol-first vertical canvas controls. GM/combat remain unchanged. */
+.centre[data-testid='site-player-main-canvas'] .canvasActions{
+  top:50%;right:10px;transform:translateY(-50%);flex-direction:column;
+  gap:9px;padding:5px;background:transparent;border:0;box-shadow:none;
+}
+.centre[data-testid='site-player-main-canvas'] .canvasActions .iconButton,
+.centre[data-testid='site-player-main-canvas'] .manageActions .iconButton{
+  width:42px;height:42px;min-width:42px;min-height:42px;
+  padding:0;border:1px solid transparent;border-radius:50%;
+  background:transparent;box-shadow:none;
+  filter:drop-shadow(0 2px 3px #000);
+}
+.centre[data-testid='site-player-main-canvas'] .canvasActions .iconButton svg,
+.centre[data-testid='site-player-main-canvas'] .manageActions .iconButton svg{
+  width:30px;height:30px;
+}
+.centre[data-testid='site-player-main-canvas'] .canvasActions .iconButton:is(:hover,:focus-visible,[aria-pressed='true']),
+.centre[data-testid='site-player-main-canvas'] .manageActions .iconButton:is(:hover,:focus-visible){
+  background:rgba(22,55,77,.5);color:#e4f6ff;border-color:rgba(123,195,225,.35);
+}
+.centre[data-testid='site-player-main-canvas'] .canvasActions .zoomValue{
+  position:static;display:block;background:transparent;border:0;min-width:0;
+}
+.centre[data-testid='site-player-main-canvas'] .manageActions{
+  border:0;background:transparent;box-shadow:none;padding:0;top:11px;left:11px;
+}
+.centre[data-testid='site-player-main-canvas'] .window[data-combat-panel]{
+  border:1px solid rgba(119,145,161,.56);border-radius:4px;
+  box-shadow:0 3px 12px rgba(0,0,0,.32),inset 0 1px rgba(220,236,242,.12);
+}
+.centre[data-testid='site-player-main-canvas'] .windowBar{
+  min-height:30px;padding:2px 6px 2px 9px;
+  border-bottom:1px solid rgba(116,144,161,.32);box-shadow:none;
+}
+.centre[data-testid='site-player-main-canvas'] .resizeHandle{
+  background:transparent!important;border:0!important;box-shadow:none!important;opacity:0;
+}
+.centre[data-testid='site-player-main-canvas'] .resizeHandle:is(:hover,:focus-visible),
+.centre[data-testid='site-player-main-canvas'] .window:hover .resizeHandle[data-resize-edge='se']{
+  opacity:.48;
+}
+.centre[data-testid='site-player-main-canvas'] .resizeHandle span{font-size:11px;}
+@container combatCanvas (max-width:699px){
+  .centre[data-testid='site-player-main-canvas'] .canvasActions{
+    top:10px;right:8px;transform:none;flex-direction:row;gap:2px;
+    background:rgba(6,13,21,.85);border-radius:6px;
+  }
+  .centre[data-testid='site-player-main-canvas'] .canvasActions .iconButton{
+    width:34px;height:34px;min-width:34px;min-height:34px;
+  }
+  .centre[data-testid='site-player-main-canvas'] .canvasActions .iconButton svg{
+    width:23px;height:23px;
+  }
+}
