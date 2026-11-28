@@ -263,10 +263,14 @@ export function createFirebaseCampaignMediaService({
     return verify;
   }
   async function fetchMapMedia(id,map,mode='player',options){
+    const stage=name=>options?.onStage?.(name);
+    stage('authentication');
     const verifySession=battleMapSession(options);
     if(!mapForViewer(map,id,mode))throw Error('Invalid map media reference.');
+    stage('campaign access verification');
     await check(id,mode);
     verifySession();
+    stage('map record verification');
     const snap=await firestoreSdk.getDocFromServer(mode==='gm'?
       mapRef(id,map.id):publicMapRef(id,map.id));
     verifySession();
@@ -275,6 +279,7 @@ export function createFirebaseCampaignMediaService({
         battleMapAssetPath(id,map.id,snap.data().contentType)},id,mode):null;
     if(!fresh||fresh.storagePath!==map.storagePath||fresh.contentType!==map.contentType)
       throw Error('The map is unavailable or no longer shared.');
+    stage('Firebase Storage download');
     const blob=await storageSdk.getBlob(storageSdk.ref(storage,fresh.storagePath));
     verifySession();
     return blob;
