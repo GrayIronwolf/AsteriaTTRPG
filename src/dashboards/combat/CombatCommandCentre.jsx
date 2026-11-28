@@ -93,6 +93,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
   const [switcherExpanded,setSwitcherExpanded]=useState(true);
   const [wide,setWide]=useState(false);
   const [sidebarExpanded,setSidebarExpanded]=useState(false);
+  const [sidebarMode,setSidebarMode]=useState('settings');
   const [selectedTools,setSelectedTools]=useState(
     playerCanvas?canvasConfig.categories[0]?.id||'character':gmCanvas?'core':'overview');
   const root=useRef(null),canvas=useRef(null),stage=useRef(null),gesture=useRef(null);
@@ -158,7 +159,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
     const freshCamera=restoredCamera||DEFAULT_CAMERA;
     cameraRef.current=freshCamera;setCameraState({scope:storageKey,view:freshCamera});
     setFocused(null);setFrontWindow('');setMessage('');
-    setSidebarExpanded(false);
+    setSidebarExpanded(false);setSidebarMode('settings');
     setWindowSearch('');setSwitcherExpanded(true);
   },[storageKey]);
   useEffect(()=>{
@@ -900,10 +901,9 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
           aria-label={sidebarExpanded?
             (gmCanvas?'Close Dashboard Windows':'Close Combat Tools'):
             (gmCanvas?'Open Dashboard Windows':'Open Combat Tools')}
-          title={gmCanvas?'Dashboard Windows and Canvas Settings':
-            'Combat Tools and Canvas Settings'}
+          title={gmCanvas?'Canvas Settings':'Combat Tools and Canvas Settings'}
           aria-expanded={sidebarExpanded} aria-controls="asteria-combat-tool-list"
-          onClick={()=>setSidebarExpanded(value=>!value)}>
+          onClick={()=>{setSidebarMode('settings');setSidebarExpanded(value=>sidebarMode==='settings'?!value:true);}}>
           <AsteriaIcon name="settings" size={19}/>
         </button>
         <button type="button" className={styles.iconButton}
@@ -981,7 +981,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
           aria-label={'Add or remove '+canvasRole+' dashboard windows'}
           disabled={!canEditCanvas}
           aria-expanded={sidebarExpanded}
-          onClick={()=>{setSelectedTools(toolCategories[0]?.id||'overview');setSidebarExpanded(true);}}>
+          onClick={()=>{setSidebarMode('windows');setSelectedTools(toolCategories[0]?.id||'overview');setSidebarExpanded(true);}}>
           <AsteriaIcon name="plus" size={20}/>
         </button>
       </div>:null}
@@ -992,9 +992,9 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
         className={styles.toolSidebar} aria-label={playerCanvas?'Player Dashboard Window Library':
           gmCanvas?'GM Dashboard Window Library':'Combat Command Centre tools'}>
         <header className={styles.drawerHeader}>
-          <div><h4>{playerCanvas?'Player Dashboard Windows':
+          <div><h4>{sidebarMode==='settings'?'Canvas Settings':playerCanvas?'Player Dashboard Windows':
             gmCanvas?'GM Dashboard Windows':'Combat Tools'}</h4>
-            <span>{visible.length} of {panels.length} windows visible</span></div>
+            {sidebarMode==='windows'?<span>{visible.length} of {panels.length} windows visible</span>:null}</div>
           <button type="button" className={styles.iconButton}
             aria-label={gmCanvas?'Close Dashboard Windows menu':'Close Combat Tools menu'}
             onClick={()=>{setSidebarExpanded(false);toolToggleRef.current?.focus();}}>
@@ -1002,7 +1002,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
           </button>
         </header>
         <div className={styles.toolList}>
-          {toolCategories.map(group=><section key={group.id}>
+          {sidebarMode==='windows'?<>{toolCategories.map(group=><section key={group.id}>
             <button type="button" className={styles.toolGroup}
               aria-expanded={selectedTools===group.id}
               onClick={()=>setSelectedTools(current=>current===group.id?'':group.id)}>
@@ -1051,7 +1051,8 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
             }}>
             Apply Recommended Arrangement (keep window sizes)
           </button>:null}
-          <details className={styles.drawerSettings}>
+          </>:null}
+          {sidebarMode==='settings'?<details className={styles.drawerSettings} open>
             <summary>Canvas Preferences</summary>
             <label>Default content layout
               <select aria-label="Default canvas content layout" value={layout.defaultContentSizing}
@@ -1184,12 +1185,12 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
               per window and changes save automatically.
               Canvas lock does not disable {gmCanvas?'dashboard':'combat'} controls.
             </p>
-          </details>
+          </details>:null}
         </div>
       </aside>
       {visible.length===0?<div className={styles.empty} role="status">
         <p>No {gmCanvas?'dashboard':'combat'} windows are showing. Open the window library to restore them.</p>
-        <button type="button" onClick={()=>setSidebarExpanded(true)}>Open Window Library</button>
+        <button type="button" onClick={()=>{setSidebarMode('windows');setSidebarExpanded(true);}}>Open Window Library</button>
       </div>:null}
       {message?<p className={styles.note} role="status">{message}</p>:null}
     </div>
