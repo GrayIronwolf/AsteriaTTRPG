@@ -291,8 +291,10 @@ function normaliseBase(raw,config=COMBAT_CANVAS_CONFIG){
     snapStrength:['gentle','medium','strong'].includes(source.snapStrength)?source.snapStrength:'medium',
     gridVisible:source.gridVisible!==false,
     gridSize:[16,26,40].includes(Number(source.gridSize))?Number(source.gridSize):26,
-    canvasBackground:['midnight','obsidian','slate'].includes(source.canvasBackground)
+    canvasBackground:['midnight','obsidian','slate','navy','black','custom'].includes(source.canvasBackground)
       ?source.canvasBackground:'midnight',
+    canvasCustomColor:/^#[0-9a-fA-F]{6}$/.test(source.canvasCustomColor||'')
+      ?source.canvasCustomColor:'#060D15',
     smoothAnimations:source.smoothAnimations!==false,
     detailMode:source.detailMode==='proportional'?'proportional':'adaptive',
     canvasLocked:source.canvasLocked===true
