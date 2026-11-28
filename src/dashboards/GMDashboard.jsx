@@ -853,7 +853,7 @@ export function GMDashboard({ campaignId }) {
   if(live.membershipLoading) return <div className="react-route-state">Verifying GM campaign membership...</div>;
   if(!window.AsteriaCharacterAccess.isGM(live.campaign,accountUid,live.membership)) return <div className="react-route-state" role="alert">{live.membershipError||'You do not have GM access to this campaign.'}</div>;
   return <AsteriaAppShell
-    className={['main','combat'].includes(tab)?'react-gm-dashboard asteria-canvas-workspace-mode':'react-gm-dashboard'}
+    className="react-gm-dashboard asteria-canvas-workspace-mode"
     eyebrow="GM Dashboard"
     title={live.campaign?.name || 'Campaign'}
     subtitle="Live campaign control, party resources, rewards, encounters, and session tools."
@@ -868,7 +868,9 @@ export function GMDashboard({ campaignId }) {
         onOpen={character=>openGMCharacter(live.campaign,character,{tab,membership:live.membership})}/>
     </section>:null}
     <GMRecordingParticipationNotice key={campaignId} campaignId={campaignId}/>
+    <div className="asteria-dashboard-body" data-dashboard-role="gm">
     <DashboardNavigation role="gm" storageScope={campaignId+":"+accountUid} tabs={GM_TABS} active={tab} onChange={next=>{setGMSearchTarget(null);setGMHubDestination(null);setTab(next);}} ariaLabel="GM Dashboard menu" />
+    <div className="asteria-dashboard-page-content">
     {tab === 'player-manager' ? <GMPlayerManager key={campaignId+':'+accountUid+':player-manager'}
       campaignId={campaignId} campaign={live.campaign} characters={live.characters}
       members={live.members} rosterError={live.memberRosterError}
@@ -950,5 +952,7 @@ export function GMDashboard({ campaignId }) {
           <CharacterDashboard campaignId={campaignId} characterId={canvasCharacterId} embedded/>
         </div>
       </Modal>:null}
+    </div>
+    </div>
   </AsteriaAppShell>;
 }
