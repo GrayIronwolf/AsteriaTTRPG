@@ -2,7 +2,7 @@ import {resizeTerrainCells,publicTerrainCells} from '../../state/battleMapTerrai
 import {BattleMapVisionControls} from './BattleMapVisionControls.jsx';
 import {cellOutline} from '../../state/battleMapGrid.mjs';
 import {GridLayer,CellFog,GeometryControls,TerrainControls,terrainAtPoint,firstTerrainBrush,RouteReading,AreaControls,AreaOverlay} from './BattleMapLayers.jsx';
-import React,{useEffect,useMemo,useRef,useState} from 'react';
+import React,{useCallback,useEffect,useMemo,useRef,useState} from 'react';
 import {
   battleMapEditableSettings,battleMapFileError,BATTLE_MAP_MAX_RECORDS,
   timestampRevision
@@ -12,6 +12,7 @@ import {battleMapCameraView,DEFAULT_BATTLE_MAP_CAMERA,encounterMapLink} from '..
 import {mapCell,mapCellCenter,mapCellKey,mapReachableRoutes,mapRoutePoints,measureMapRoute} from '../../state/battleMapRoutes.mjs';
 import {MAP_MOVE_AP} from '../../state/battleMapMovement.mjs';
 import {battleMapPoint} from '../../state/battleMapModel.mjs';
+import {useBattleMapSession,useMapMedia} from './useMapMedia.js';
 import styles from './CampaignMapWorkspace.module.css';
 
 const empty=()=>({
@@ -57,24 +58,6 @@ export function useCampaignStream(api,method,args,enabled=true){
   },[api,scope]);
   return state.scope===scope?state:{data:null,error:'',loading:enabled};
 }
-function useAuthenticatedMapBlob(api,campaignId,map,mode,atlas=false,restricted=false){
-  const scope=JSON.stringify([campaignId,map?.id,map?.storagePath,map?.contentType,mode,atlas,restricted]);
-  const [result,setResult]=useState({url:'',error:'',loading:false,scope:''});
-  useEffect(()=>{
-    let alive=true,url='';
-    setResult({url:'',error:'',loading:Boolean(map),scope});
-    if(!map)return undefined;
-    Promise.resolve().then(()=>restricted?api.fetchRestrictedMapMedia(campaignId,map):
-      atlas?api.fetchAtlasMedia(campaignId,map):api.fetchMapMedia(campaignId,map,mode))
-      .then(blob=>{
-        if(!alive)return;
-        url=URL.createObjectURL(blob);
-        setResult({url,error:'',loading:false,scope});
-      }).catch(error=>{if(alive)setResult({url:'',error:error?.message||'Map cannot be loaded.',loading:false,scope});});
-    return ()=>{alive=false;if(url)URL.revokeObjectURL(url);};
-  },[api,scope]);
-  return result.scope===scope?result:{url:'',error:'',loading:Boolean(map)};
-}
 export function BattleMapToken({token,columns,rows,className,selected=false,current=false,defeated=false,onSelect}){
   const footprint=token.cells??1,offset=footprint%2===0?0.5:0;
   const style={left:(token.x+offset*100/columns)+'%',top:(token.y+offset*100/rows)+'%',
@@ -97,8 +80,14 @@ export function BattleMapToken({token,columns,rows,className,selected=false,curr
 export function CampaignMapCanvas({api,campaignId,map,mode='player',atlas=false,
   editing=false,onPoint,previewFog=false,showGrid=true,restricted=false,interactive=false,camera=null,
   movement=null,routeOverlay=[]}){
-  const media=useAuthenticatedMapBlob(api,campaignId,map,mode,atlas,restricted);
-  const node=useRef(null),drag=useRef(null),[playing,setPlaying]=useState(true);
+  const session=useBattleMapSession();
+  const load=useCallback((id,record,options)=>{
+    if(restricted)return api.fetchRestrictedMapMedia(id,record,options);
+    if(atlas)return api.fetchAtlasMedia(id,record);
+    return api.fetchMapMedia(id,record,mode,options);
+  },[api,mode,atlas,restricted]);
+  const media=useMapMedia(campaignId,map,session,load,{atlas});
+  const node=useRef(null),drag=useRef(null);
   const [localCamera,setLocalCamera]=useState(DEFAULT_BATTLE_MAP_CAMERA);
   const [tool,setTool]=useState('pan'),[selection,setSelection]=useState(''),[ruler,setRuler]=useState([]);
   const [area,setArea]=useState({shape:''});
@@ -126,7 +115,7 @@ export function CampaignMapCanvas({api,campaignId,map,mode='player',atlas=false,
     catch(error){setMoveNotice(error?.message||'The move could not be confirmed.');}
     finally{setMoving(false);}
   };
-  useEffect(()=>{setPlaying(true);setLocalCamera(DEFAULT_BATTLE_MAP_CAMERA);
+  useEffect(()=>{setLocalCamera(DEFAULT_BATTLE_MAP_CAMERA);
     setSelection('');setRuler([]);drag.current=null;},[campaignId,map?.id]);
   const view=battleMapCameraView(camera||localCamera,map||{});
   const changeZoom=delta=>setLocalCamera(previous=>({...previous,zoom:Math.max(1,Math.min(4,previous.zoom+delta))}));
@@ -177,8 +166,8 @@ export function CampaignMapCanvas({api,campaignId,map,mode='player',atlas=false,
   return <section className={styles.viewer} aria-label={'Campaign map: '+map.name}
     data-testid="site-media-map-canvas">
     {map.kind==='video'?<div className={styles.controls}>
-      <button type="button" onClick={()=>setPlaying(!playing)}>
-        {playing?'Pause looping video':'Play looping video'}</button>
+      <button type="button" onClick={media.togglePlayback} disabled={!media.url}>
+        {media.playing?'Pause looping video':'Play looping video'}</button>
       <span>Looping video plays muted.</span>
     </div>:null}
     {interactive?<div className={styles.controls} aria-label="Map tools">
@@ -206,6 +195,9 @@ export function CampaignMapCanvas({api,campaignId,map,mode='player',atlas=false,
     </div>:null}
     {moveNotice?<p role="alert">{moveNotice}</p>:null}
     {moveQueued&&movement?.disabled?<p role="status">Move awaiting GM reaction review.</p>:null}
+    {media.loading?<p role="status">{media.url?'Preparing map media…':'Loading authenticated map media…'}</p>:null}
+    {media.error?<div><p role="alert">{media.error}</p>
+      <button type="button" onClick={media.retry}>Retry loading media</button></div>:null}
     <div className={styles.canvas} data-map-zoom={view.zoom}
       style={{aspectRatio:map.width+' / '+map.height,minHeight:0,
         ...(interactive&&tool==='pan'&&view.zoom>1?{touchAction:'none',cursor:'grab'}:{})}}
@@ -216,14 +208,14 @@ export function CampaignMapCanvas({api,campaignId,map,mode='player',atlas=false,
       }} onClick={editing||moveMode||interactive&&tool==='ruler'?point:undefined} role={editing?'button':undefined}
       tabIndex={editing?0:undefined}
       onKeyDown={editing?event=>{if(event.key==='Enter')onPoint?.({x:50,y:50});}:undefined}>
-      {media.loading?<p role="status">Loading authenticated map media…</p>:null}
-      {media.error?<p role="alert">{media.error}</p>:null}
       {media.url&&(map.kind==='video'
         ?<video key={media.url} className={styles.image} src={media.url}
-          autoPlay={playing} muted loop playsInline preload="metadata"
-          ref={el=>{if(!el)return;if(playing)el.play().catch(()=>{});else el.pause();}}
+          autoPlay muted loop playsInline preload="auto" ref={media.videoRef}
+          onPlay={media.updatePlayback} onPause={media.updatePlayback}
+          onLoadedData={media.ready} onCanPlay={media.ready} onError={media.decodeFailed}
           aria-label={'Looping map: '+map.name}/>
-        :<img className={styles.image} src={media.url} alt={map.name}/>)}
+        :<img key={media.url} className={styles.image} src={media.url} alt={map.name}
+          onLoad={media.ready} onError={media.decodeFailed}/>)}
       {!atlas?<GridLayer map={mode==='gm'&&previewFog?{...map,terrainCells:publicTerrainCells(map,map.fogCells)}:map} visible={map.gridVisible&&showGrid}/>:null}
       {tool==='ruler'&&!atlas?<AreaOverlay map={map} area={area} points={ruler}/>:null}
       {moveMode?<svg className={styles.reachable} data-move-kind={movement.approvedKind||'walk'}

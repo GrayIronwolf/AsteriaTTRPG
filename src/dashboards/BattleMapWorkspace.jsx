@@ -6,11 +6,13 @@ import {partyVisibility} from '../state/battleMapVision.mjs';
 import {BattleMapVisionControls} from './presentation/BattleMapVisionControls.jsx';
 import {GridLayer,CellFog,GeometryControls,TerrainControls,terrainAtPoint,firstTerrainBrush,RouteReading,AreaControls,AreaOverlay} from './presentation/BattleMapLayers.jsx';
 import {BattleMapToken,CampaignMapWorkspace} from './presentation/CampaignMapWorkspace.jsx';
+import {useBattleMapSession,useMapMedia} from './presentation/useMapMedia.js';
 import React,{useCallback,useEffect,useMemo,useRef,useState} from 'react';
 import {firebaseService} from '../firebase/asteriaFirebaseService.js';
+import {battleMapMediaError} from '../firebase/battleMapMedia.mjs';
 import {Panel} from '../components/WorkspaceUI.jsx';
 import {
-  battleMapFileError,battleMapEditableSettings,battleMapPoint,battleMapCanPreview,battleMapTokenAppearance,
+  battleMapFileError,battleMapEditableSettings,battleMapPoint,battleMapTokenAppearance,
   BATTLE_MAP_MAX_TOKENS
 } from '../state/battleMapModel.mjs';
 import {
@@ -54,58 +56,33 @@ async function mediaDimensions(file){
     });
   }finally{URL.revokeObjectURL(url);}
 }
-function useBattleMaps(campaignId,gm){
-  const [maps,setMaps]=useState([]),[error,setError]=useState('');
+function useBattleMaps(campaignId,gm,session){
+  const scope=useMemo(()=>({}),[campaignId,gm,session]);
+  const [state,setState]=useState(null);
   useEffect(()=>{
-    setMaps([]);setError('');
-    if(!campaignId)return undefined;
-    try{return firebaseService.subscribeBattleMaps(campaignId,setMaps,{gm});}
-    catch(err){setError(err.message);return undefined;}
-  },[campaignId,gm]);
-  return {maps,error};
+    if(!campaignId||!session)return undefined;
+    let active=true;
+    const update=maps=>{if(active)setState({scope,maps,error:''});};
+    const onError=error=>{if(active)setState({scope,maps:[],error:error.message});};
+    try{
+      const stop=firebaseService.subscribeBattleMaps(campaignId,update,{gm,onError});
+      return ()=>{active=false;stop?.();};
+    }catch(error){onError(error);return undefined;}
+  },[scope]);
+  return state?.scope===scope?state:{maps:[],error:''};
 }
-function useMapMedia(campaignId,selected){
-  const [state,setState]=useState({url:'',loading:false,error:''});
-  const mapKey=selected?.id+'|'+selected?.storagePath;
-  const [retry,setRetry]=useState(0);
-  useEffect(()=>{
-    let active=true,url='';
-    setState({url:'',loading:Boolean(selected),error:''});
-    if(!selected)return undefined;
-    if(!battleMapCanPreview(selected,campaignId)){
-      setState({url:'',loading:false,error:'This map has an invalid media reference.'});
-      return undefined;
-    }
-    // Bound the waiting state even if an upstream Firebase promise never settles.
-    // A retry or map switch invalidates the previous request's UI updates.
-    const timeoutMs=20000;
-    const timeout=setTimeout(()=>{
-      if(active)setState({url:'',loading:false,error:'Map media loading timed out. Check your connection and retry.'});
-      active=false;
-    },timeoutMs);
-    Promise.resolve().then(()=>firebaseService.fetchBattleMapMedia(campaignId,selected)).then(result=>{
-      if(!active)return;
-      clearTimeout(timeout);
-      if(!result.ok){setState({url:'',loading:false,error:result.error||'Map unavailable.'});return;}
-      url=URL.createObjectURL(result.blob);
-      setState({url,loading:false,error:''});
-    }).catch(error=>{
-      if(!active)return;
-      clearTimeout(timeout);
-      console.error('Battle map media retrieval failed', {campaignId,mapId:selected.id,code:error?.code||'unknown'},error);
-      setState({url:'',loading:false,error:error?.message||'Map media could not be loaded.'});
-    });
-    return ()=>{active=false;clearTimeout(timeout);if(url)URL.revokeObjectURL(url);};
-  },[campaignId,mapKey,retry]);
-  return {...state,retry:()=>setRetry(value=>value+1)};
+async function loadWorkspaceMap(campaignId,map,options){
+  const result=await firebaseService.fetchBattleMapMedia(campaignId,map,options);
+  if(!result?.ok)throw battleMapMediaError(result?.code,result?.error||'Map media is unavailable.');
+  return result.blob;
 }
-function MapCanvas({campaignId,map,gm=false,onPlaceToken,selectedTokenId='',fogTool='token',
+function MapCanvas({campaignId,map,session,gm=false,onPlaceToken,selectedTokenId='',fogTool='token',
   onFogStroke,onFogBegin,onPrivatePin,privatePins=[],previewPlayerFog=false,onMeasure,measurePoints=[],
   encounter=null,selectedCombatantId='',onCombatMove,combatBusy=false,onTerrain,onSource,area={}}) {
-  const media=useMapMedia(campaignId,map),canvas=useRef(null);
-  const [playing,setPlaying]=useState(true),[showGrid,setShowGrid]=useState(true);
+  const media=useMapMedia(campaignId,map,session,loadWorkspaceMap),canvas=useRef(null);
+  const [showGrid,setShowGrid]=useState(true);
   const pointerLast=useRef(null);
-  useEffect(()=>{setPlaying(true);setShowGrid(true);},[map?.id]);
+  useEffect(()=>setShowGrid(true),[map?.id]);
   const playerFog=Boolean(map?.fogEnabled)&&(!gm||previewPlayerFog);
   const cols=Number(map?.gridColumns||20),rows=Number(map?.gridRows||15);
   const fogRectangles=playerFog?hiddenFogRuns(map?.fogCells,cols,rows):[];
@@ -163,22 +140,24 @@ function MapCanvas({campaignId,map,gm=false,onPlaceToken,selectedTokenId='',fogT
   return <section className="asteria-battle-viewer" aria-label={'Battle map: '+map.name}>
     <div className="asteria-battle-controls">
       <strong>{map.name}</strong>
-      {map.kind==='video'?<button type="button" onClick={()=>setPlaying(value=>!value)}
-        aria-label={playing?'Pause looping video':'Play looping video'}>{playing?'Pause animation':'Play animation'}</button>:null}
+      {map.kind==='video'?<button type="button" onClick={media.togglePlayback} disabled={!media.url}
+        aria-label={media.playing?'Pause looping video':'Play looping video'}>{media.playing?'Pause animation':'Play animation'}</button>:null}
       {map.gridVisible?<button type="button" onClick={()=>setShowGrid(value=>!value)}>
         {showGrid?'Hide grid':'Show grid'}</button>:null}
     </div>
+    {media.error?<div><p role="alert">{media.error}</p>
+      <button type="button" onClick={media.retry}>Retry loading media</button></div>:null}
     <div ref={canvas} className={'asteria-battle-canvas'+((isPlacing||isBrush||isMeasuring||isAnnotating||isCombatMove)?' token-placement':'')+(isBrush?' fog-edit':'')}
       onClick={move} onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerUp}
       onPointerCancel={pointerUp} onLostPointerCapture={pointerUp}
       style={{aspectRatio:map.width+' / '+map.height}}>
-      {media.loading?<p className="asteria-battle-loading" role="status">Loading private map media…</p>:null}
-      {media.error?<div className="asteria-battle-loading" role="alert"><p>{media.error}</p><button type="button" onClick={media.retry}>Retry loading media</button></div>:null}
       {media.url?(map.kind==='video'?<video key={media.url} src={media.url} className="asteria-battle-media"
-        autoPlay={playing} loop muted playsInline preload="metadata" controls={false}
-        ref={element=>{if(!element)return;if(playing)element.play().catch(()=>{});else element.pause();}}
-        onError={()=>{}} aria-label={'Looping animated map: '+map.name}/>:
-        <img src={media.url} alt={map.name} className="asteria-battle-media"/>):null}
+        autoPlay loop muted playsInline preload="auto" controls={false} ref={media.videoRef}
+        onPlay={media.updatePlayback} onPause={media.updatePlayback}
+        onLoadedData={media.ready} onCanPlay={media.ready}
+        onError={media.decodeFailed} aria-label={'Looping animated map: '+map.name}/>:
+        <img key={media.url} src={media.url} alt={map.name} className="asteria-battle-media"
+          onLoad={media.ready} onError={media.decodeFailed}/>):null}
       <GridLayer map={previewPlayerFog?{...map,terrainCells:publicTerrainCells(map,map.fogCells)}:map} visible={grid}/>
       {tokens.filter(token=>{
         if((!gm||previewPlayerFog)&&token.visibility==='gm')return false;
@@ -206,6 +185,8 @@ function MapCanvas({campaignId,map,gm=false,onPlaceToken,selectedTokenId='',fogT
           x2={measurePoints[1].x} y2={measurePoints[1].y}/>:null}
         {measurePoints.map((point,index)=><circle key={index} cx={point.x} cy={point.y} r=".8"/>)}
       </svg>:null}
+      {media.loading?<p className="asteria-battle-loading" role="status">
+        {media.url?'Preparing map media…':'Loading private map media…'}</p>:null}
     </div>
     {map.description?<p className="react-help">{map.description}</p>:null}
     {isPlacing?<p className="react-help">Click the map to place the selected token. Grid snapping applies when the grid is visible.</p>:null}
@@ -288,7 +269,8 @@ function TokenEditor({tokens,onChange,characters={},selectedTokenId,onSelect}){
   </section>;
 }
 export function GMBattleMapManager({campaignId,characters={},encounter={},searchTarget=null}){
-  const {maps,error:listenerError}=useBattleMaps(campaignId,true);
+  const session=useBattleMapSession();
+  const {maps,error:listenerError}=useBattleMaps(campaignId,true,session);
   const [selectedId,setSelectedId]=useState(''),[draft,setDraft]=useState(defaults);
   const [file,setFile]=useState(null),[busy,setBusy]=useState(false),[message,setMessage]=useState('');
   const [selectedTokenId,setSelectedTokenId]=useState('');
@@ -620,7 +602,7 @@ export function GMBattleMapManager({campaignId,characters={},encounter={},search
           <p className="react-help">Players can move their assigned tokens when combat allows it. GM corrections record the original position, destination and reason.</p>
         </>}
     </section>:null}
-    {selected?<MapCanvas campaignId={campaignId} map={viewMap} gm encounter={encounter}
+    {selected?<MapCanvas campaignId={campaignId} map={viewMap} session={session} gm encounter={encounter}
       selectedCombatantId={selectedCombatantId} onCombatMove={moveCombatToken} combatBusy={busy}
       selectedTokenId={selectedTokenId} onPlaceToken={moveToken}
       fogTool={fogTool} onSource={placeSource} area={area} onTerrain={point=>setDraft(previous=>({...previous,terrainCells:terrainAtPoint(previous,point,brush)}))} onFogBegin={rememberFog} onFogStroke={fogStroke}
@@ -669,7 +651,7 @@ function PlayerMapOpportunity({actor,targets,character,submit}){
   </details>;
 }
 export function PlayerBattleMapView({campaignId,encounter={},character=null,mapId='',presentation=false}){
-  const uid=firebaseService.currentUser()?.uid||'';
+  const uid=useBattleMapSession()?.uid||'';
   const api=useMemo(()=>uid?createSiteCombatMediaApi():null,[uid]);
   const combatApi=useMemo(()=>uid&&character?createSiteCombatApi():null,[uid,Boolean(character)]);
   const ownedActor=(encounter.combatants||[]).find(row=>row.characterId===character?.id);

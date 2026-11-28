@@ -27,6 +27,7 @@ function requireMethod(name) {
 export const firebaseService = {
   presentationRuntime:()=>api()?.getReactPresentationRuntime?.()||null,
   currentUser: () => api()?.getUser?.() || null,
+  battleMapSession: () => api()?.getBattleMapSession?.() || null,
   advancedDiceAction: data=>requireMethod('advancedDiceAction')(data),
   subscribeDiceWorkspace: onChange=>requireMethod('subscribeDiceWorkspace')(onChange),
   subscribeDiceAppearanceLibrary: (onChange,onError)=>requireMethod('subscribeDiceAppearanceLibrary')(onChange,onError),
@@ -36,7 +37,7 @@ export const firebaseService = {
   subscribeBattleMaps: (campaignId,onChange,options)=>requireMethod('subscribeBattleMaps')(campaignId,onChange,options),
   subscribeBattleMapPrivatePins: (campaignId,mapId,onChange)=>requireMethod('subscribeBattleMapPrivatePins')(campaignId,mapId,onChange),
   saveBattleMapPrivatePins: (campaignId,mapId,pins)=>requireMethod('saveBattleMapPrivatePins')(campaignId,mapId,pins),
-  fetchBattleMapMedia: (campaignId,map)=>requireMethod('fetchBattleMapMedia')(campaignId,map),
+  fetchBattleMapMedia: (campaignId,map,options)=>requireMethod('fetchBattleMapMedia')(campaignId,map,options),
   uploadBattleMap: (campaignId,file,settings,dimensions)=>requireMethod('uploadBattleMap')(campaignId,file,settings,dimensions),
   updateBattleMap: (campaignId,mapId,settings)=>requireMethod('updateBattleMap')(campaignId,mapId,settings),
   removeBattleMap: (campaignId,mapId)=>requireMethod('removeBattleMap')(campaignId,mapId),

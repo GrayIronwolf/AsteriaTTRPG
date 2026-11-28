@@ -65,7 +65,7 @@
     "content:build": "node scripts/generate-compendium.js",
     "content:check": "node scripts/generate-compendium.js --check && node scripts/validate-compendium.js",
     "prebuild": "npm run release:check && npm run content:build",
-    "test:digital-gm-integration": "node --test scripts/digital-gm-phase10-3.test.mjs",
+    "test:digital-gm-integration": "node --test scripts/digital-gm-phase10-3.test.mjs scripts/battle-map-media.test.mjs",
     "test:gm-search": "node --test scripts/digital-gm-phase10-2.test.mjs",
     "test:player-presentation": "node --test scripts/digital-gm-phase10-1.test.mjs scripts/site-phase7-share-present.test.mjs",
     "test:session-recording": "node --test scripts/digital-gm-phase9-3.test.mjs",

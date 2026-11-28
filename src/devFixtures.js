@@ -320,12 +320,14 @@ export function installDevFixtures() {
     reviewCompletion:async()=>({ok:true,status:'approved'}),
     deliverCompletion:async()=>({ok:true})
   };
+  const fixtureUser={uid:'player-demo',email:'preview@asteria.local'};
   const fixtureApi = {
     isReady: () => true,
     getReactCombatFixtureService:()=>fixtureCombatService,
     // The fixture already publishes clock/system snapshots through its subscriptions.
     refreshCharacterSystems: async () => ({ok:true}),
-    getUser: () => ({ uid: 'player-demo', email: 'preview@asteria.local' }),
+    getUser: () => fixtureUser,
+    getBattleMapSession: () => fixtureUser,
     getProfile: () => ({ uid: 'player-demo', displayName: 'Preview Player' }),
     // Local browser acceptance uses the real panel APIs without cloud traffic.
     getCanvasFixtureMetrics:()=>({diceRollRequests,diceListeners:listeners.diceWorkspace.length,
