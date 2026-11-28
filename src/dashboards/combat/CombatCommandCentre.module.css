@@ -346,7 +346,7 @@
  background-size:var(--combat-grid-spacing,26px) var(--combat-grid-spacing,26px);
  background-position:var(--combat-grid-x,0px) var(--combat-grid-y,60px);
 }
-.react-player-check-history-settings{margin:12px 0}
-.react-player-check-history-settings>button{min-height:36px;width:100%;padding:8px 10px;
+:global(.react-player-check-history-settings){margin:12px 0}
+:global(.react-player-check-history-settings)>button{min-height:36px;width:100%;padding:8px 10px;
  color:#eaf2f8;background:#142d40;border:1px solid #6c91a7;border-radius:4px;cursor:pointer}
-.react-player-check-history-settings>.react-panel{max-height:350px;overflow:auto;margin-top:8px}
+:global(.react-player-check-history-settings)>:global(.react-panel){max-height:350px;overflow:auto;margin-top:8px}
