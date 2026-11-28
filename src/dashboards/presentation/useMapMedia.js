@@ -25,7 +25,7 @@ export function useMapMedia(campaignId,map,session,load,{atlas=false}={}){
     if(!map||!session)return undefined;
     const controller=new AbortController();
     const {signal}=controller;
-    let url='',timer;
+    let url='',timer,stage='initialising';
     const releaseUrl=()=>{
       if(url)URL.revokeObjectURL(url);
       url='';
@@ -35,7 +35,7 @@ export function useMapMedia(campaignId,map,session,load,{atlas=false}={}){
       controller.abort();
       clearTimeout(timer);
       releaseUrl();
-      console.warn('Battle map media failed.',{campaignId,mapId:map.id,code:error?.code||error?.cause?.code||'unknown'});
+      console.warn('Battle map media failed.',{campaignId,mapId:map.id,stage,code:error?.code||error?.cause?.code||'unknown'});
       setResult({request,url:'',loading:false,error:battleMapMediaErrorMessage(error)});
     };
     const ready=()=>{
@@ -57,7 +57,7 @@ export function useMapMedia(campaignId,map,session,load,{atlas=false}={}){
 
     // A video can be up to 48 MB. Give its download more time than an image.
     timer=setTimeout(()=>fail(battleMapMediaError('map-media/timeout',
-      'Map media download timed out. Check your connection and retry.')),map.kind==='video'?60000:20000);
+      `Map media timed out during ${stage}. Check your connection and retry.`)),map.kind==='video'?60000:20000);
     Promise.resolve().then(()=>{
       if(signal.aborted)return;
       verifySession();
@@ -65,12 +65,14 @@ export function useMapMedia(campaignId,map,session,load,{atlas=false}={}){
         throw battleMapMediaError('map-media/unsupported','This map uses an unsupported media format.');
       if(!atlas&&!battleMapCanPreview(map,campaignId))
         throw battleMapMediaError('map-media/reference','This map has an invalid media reference.');
-      return load(campaignId,map,{uid:session.uid,signal});
+      stage='request preparation';
+      return load(campaignId,map,{uid:session.uid,signal,onStage:next=>{if(!signal.aborted)stage=next;}});
     }).then(blob=>{
       if(signal.aborted)return;
       verifySession();
       if(!(blob instanceof Blob)||!blob.size)
         throw battleMapMediaError('map-media/empty','The map media file is empty or invalid.');
+      stage='browser decoding';
       clearTimeout(timer);
       // Older objects may omit their MIME type. The validated map record has it.
       const media=map.contentType&&(!blob.type||blob.type==='application/octet-stream')?
