@@ -4,7 +4,7 @@ import React,{useEffect,useRef,useState} from 'react';
  * The global navigation remains in the DOM and keyboard-accessible whenever
  * expanded. The state is local to this device and can be toggled at any time.
  */
-export function DashboardHeaderFold({scope='dashboard'}){
+export function DashboardHeaderFold(){
   // The dashboard always starts with its global header collapsed. Prior
   // sessions must not leave it covering the workspace on the next visit.
   const [expanded,setExpanded]=useState(false);
