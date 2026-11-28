@@ -334,3 +334,19 @@
     width:23px;height:23px;
   }
 }
+
+
+/* Persistent canvas appearance choices, all retaining private layout storage. */
+.canvas[data-background='navy']{--combat-canvas-background:#0b1d2d}
+.canvas[data-background='black']{--combat-canvas-background:#080a0d}
+.canvas[data-background='custom']{--combat-canvas-background:var(--combat-canvas-custom-color,#060d15)}
+/* Keep the dotted overlay visible on solid-colour choices unless disabled. */
+.canvas[data-background='navy'],.canvas[data-background='black'],.canvas[data-background='custom']{
+ background-image:radial-gradient(circle,rgba(130,174,194,var(--combat-grid-opacity,.22)) .8px,transparent 1px);
+ background-size:var(--combat-grid-spacing,26px) var(--combat-grid-spacing,26px);
+ background-position:var(--combat-grid-x,0px) var(--combat-grid-y,60px);
+}
+.react-player-check-history-settings{margin:12px 0}
+.react-player-check-history-settings>button{min-height:36px;width:100%;padding:8px 10px;
+ color:#eaf2f8;background:#142d40;border:1px solid #6c91a7;border-radius:4px;cursor:pointer}
+.react-player-check-history-settings>.react-panel{max-height:350px;overflow:auto;margin-top:8px}
