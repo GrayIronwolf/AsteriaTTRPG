@@ -33,5 +33,5 @@ test('canvas settings and add window have separate drawer modes',()=>{
   assert.match(jsx,/setSidebarMode\('settings'\)/);
   assert.match(jsx,/setSidebarMode\('windows'\)/);
   assert.match(jsx,/sidebarMode==='settings'\?<details/);
-  assert.match(jsx,/sidebarMode==='windows'\?< /) === null;
+  assert.match(jsx,/sidebarMode==='windows'\?<>/);
 });
