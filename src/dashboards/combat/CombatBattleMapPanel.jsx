@@ -16,7 +16,9 @@ export function CombatBattleMapPanel({mediaApi,campaignId,combat,pending,onComma
   const [sourceKind,setSourceKind]=useState('spell'),[routeKind,setRouteKind]=useState('ground');
   const [approvedDistance,setApprovedDistance]=useState(''),[sourceResolved,setSourceResolved]=useState(false);
   const safe=useCampaignStream(mediaApi||EMPTY_MEDIA_API,'watchMaps',[campaignId,'player'],enabled&&preview);
-  const selectedId=combat?.battleMapId||combat?.preparedMapId||'';
+  // Keep the authoritative live encounter map locked, but preview an unsaved
+  // setup selection immediately rather than waiting for navigation/remount.
+  const selectedId=combat?.battleMapId||(previewMapId===null?combat?.preparedMapId||'':previewMapId);
   const map=(preview?safe.data||[]:stream.data||[]).find(row=>row.id===selectedId)||null;
   const routeOverlay=useMemo(()=>{
     const requested=pending?.mapMove;
