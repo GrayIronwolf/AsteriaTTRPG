@@ -603,7 +603,7 @@ export function GMBattleMapManager({campaignId,characters={},encounter={},search
           <p className="react-help">Players can move their assigned tokens when combat allows it. GM corrections record the original position, destination and reason.</p>
         </>}
     </section>:null}
-    {selected?<MapCanvas campaignId={campaignId} map={viewMap} session={session} gm encounter={encounter}
+    {selected?<MapCanvas key={campaignId+':'+selected.id+':'+selected.storagePath} campaignId={campaignId} map={viewMap} session={session} gm encounter={encounter}
       selectedCombatantId={selectedCombatantId} onCombatMove={moveCombatToken} combatBusy={busy}
       selectedTokenId={selectedTokenId} onPlaceToken={moveToken}
       fogTool={fogTool} onSource={placeSource} area={area} onTerrain={point=>setDraft(previous=>({...previous,terrainCells:terrainAtPoint(previous,point,brush)}))} onFogBegin={rememberFog} onFogStroke={fogStroke}

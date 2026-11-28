@@ -435,7 +435,7 @@ export function GMCombatWorkspace({api,campaignId,uid='',mediaApi=null,onNavigat
           </select></label>:null}
           <CombatBattleMapPanel key={campaignId+':'+combat.combatId+':'+combat.battleMapId}
             mediaApi={mediaApi} campaignId={campaignId} combat={combat}
-            pending={legacyCombatState?.pending} onCommand={submit} busy={busy}/>
+            previewMapId={selectedBattleMap} pending={legacyCombatState?.pending} onCommand={submit} busy={busy}/>
           <div className={styles.controls}>
             {canSetup?<button type="button" disabled={busy||!combat.sessionEditable}
               onClick={()=>submit('encounter',{operation:'map-prepare',

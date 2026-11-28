@@ -8,7 +8,7 @@ const EMPTY_MEDIA_API=Object.freeze({});
  * with the authenticated media editor or secured combat command service.
  * This component does not publish GM-only map data to players.
  */
-export function CombatBattleMapPanel({mediaApi,campaignId,combat,pending,onCommand,busy=false}){
+export function CombatBattleMapPanel({mediaApi,campaignId,combat,pending,onCommand,busy=false,previewMapId=null}){
   const enabled=Boolean(mediaApi);
   const stream=useCampaignStream(mediaApi||EMPTY_MEDIA_API,'watchMaps',[campaignId,'gm'],enabled);
   const [preview,setPreview]=useState(false),[actor,setActor]=useState(''),[reason,setReason]=useState('');
@@ -16,7 +16,9 @@ export function CombatBattleMapPanel({mediaApi,campaignId,combat,pending,onComma
   const [sourceKind,setSourceKind]=useState('spell'),[routeKind,setRouteKind]=useState('ground');
   const [approvedDistance,setApprovedDistance]=useState(''),[sourceResolved,setSourceResolved]=useState(false);
   const safe=useCampaignStream(mediaApi||EMPTY_MEDIA_API,'watchMaps',[campaignId,'player'],enabled&&preview);
-  const selectedId=combat?.battleMapId||combat?.preparedMapId||'';
+  // Keep the authoritative live encounter map locked, but preview an unsaved
+  // setup selection immediately rather than waiting for navigation/remount.
+  const selectedId=combat?.battleMapId||(previewMapId===null?combat?.preparedMapId||'':previewMapId);
   const map=(preview?safe.data||[]:stream.data||[]).find(row=>row.id===selectedId)||null;
   const routeOverlay=useMemo(()=>{
     const requested=pending?.mapMove;
@@ -108,7 +110,7 @@ export function CombatBattleMapPanel({mediaApi,campaignId,combat,pending,onComma
     {map?<><p>{combat?.battleMapId?
       'Live combat map — combatant tokens are managed by the existing server.':
       'Prepared map preview — live combat tokens will be linked on Start Combat.'}</p>
-      <CampaignMapCanvas api={mediaApi} campaignId={campaignId} map={map}
+      <CampaignMapCanvas key={campaignId+':'+map.id+':'+map.storagePath+':'+(preview?'player':'gm')} api={mediaApi} campaignId={campaignId} map={map}
         mode={preview?'player':'gm'} interactive={!positioning} editing={positioning}
         routeOverlay={routeOverlay}
         onPoint={point=>{if(positioning)onCommand('encounter',{operation:'map-move',mapId:map.id,
