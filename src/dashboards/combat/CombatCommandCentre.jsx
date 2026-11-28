@@ -745,7 +745,8 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
     data-testid={playerCanvas?'site-player-main-canvas':
       gmCanvas?'site-gm-main-canvas':'site-gm-combat-command-centre'}>
     <div className={styles.canvas} ref={canvas}
-      style={{...gridStyle,'--combat-grid-opacity':layout.gridVisible?gridStyle['--combat-grid-opacity']:'0'}}
+      style={{...gridStyle,'--combat-grid-opacity':layout.gridVisible?gridStyle['--combat-grid-opacity']:'0',
+        '--combat-canvas-custom-color':layout.canvasCustomColor||'#060D15'}}
       data-detail-level={detailLevel}
       data-detail-mode={layout.detailMode}
       data-background={layout.canvasBackground}
@@ -1097,6 +1098,7 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
                 onChange={event=>setPreference(previous=>({...previous,
                   keyboardShortcuts:event.target.checked}))}/> Keyboard shortcuts</label>
             </fieldset>
+            {playerCanvas?<div id="asteria-player-check-history-setting"/>:null}
             <fieldset className={styles.appearanceGroup}>
               <legend>Advanced</legend>
               <label><input type="checkbox" checked={layout.minimapVisible}
@@ -1129,8 +1131,17 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
                   <option value="midnight">Midnight blue-grey</option>
                   <option value="obsidian">Obsidian Stone</option>
                   <option value="slate">Stone Slate</option>
+                  <option value="navy">Deep Navy</option>
+                  <option value="black">Obsidian Black</option>
+                  <option value="custom">Custom colour</option>
                 </select>
               </label>
+              {layout.canvasBackground==='custom'?<label>Custom canvas colour
+                <input type="color" aria-label="Custom canvas colour"
+                  value={layout.canvasCustomColor||'#060D15'} disabled={!canEditCanvas}
+                  onChange={event=>setPreference(previous=>({...previous,
+                    canvasCustomColor:event.target.value}))}/>
+              </label>:null}
               <label><input type="checkbox" checked={layout.smoothAnimations}
                 disabled={!canEditCanvas}
                 onChange={event=>setPreference(previous=>({...previous,
