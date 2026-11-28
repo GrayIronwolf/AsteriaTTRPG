@@ -214,14 +214,15 @@ const painted=page=>page.evaluate(()=>new Promise(resolve=>requestAnimationFrame
   if(scale===.5){
    console.log('INTEGRATION',role);
    const countBefore=await root.locator('[data-canvas-window]').count();
-   await root.getByTestId('site-combat-tools-toggle').click();
+   await root.getByTestId(role==='combat'?'combat-canvas-add-window':role==='player'?'player-canvas-add-window':'gm-canvas-add-window').click();
    await root.getByRole('button',{name:/^Show all panels/}).click();await painted(page);
    const countAfter=await root.locator('[data-canvas-window]').count();
    assert.ok(countAfter>countBefore,'window library creates existing authorised panels '+JSON.stringify({countBefore,countAfter,
     messages:await root.getByRole('status').allTextContents(),errors,consoleErrors,
     dashboard:await page.locator('#reactDashboard').innerText()}));
    console.log('INTEGRATION windows',role,JSON.stringify({countBefore,countAfter}));
-   await root.locator('aside').getByText('Canvas Preferences',{exact:true}).click();
+   await root.getByRole('button',{name:role==='combat'?'Close Combat Tools menu':'Close Dashboard Windows menu',exact:true}).click();
+   await root.getByTestId('site-combat-tools-toggle').click();
    await root.getByRole('checkbox',{name:'Window switcher and search',exact:true}).check();
    const background=root.getByRole('combobox',{name:'Canvas background',exact:true});
    for(const theme of ['obsidian','slate','midnight']){
