@@ -12,14 +12,32 @@ export function useBattleMapSession(){
   return useSyncExternalStore(subscribeSession,firebaseService.battleMapSession,()=>null);
 }
 
-export function useMapMedia(campaignId,map,session,load,{atlas=false}={}){
+// Remember only the selection in this tab. Each mount must still obtain the
+// record from its authorised live list before any bytes are requested.
+export function useMapSelection(campaignId,uid,view){
+  const key=uid&&campaignId?JSON.stringify(['battle-map',campaignId,uid,view]):'';
+  const [choice,setChoice]=useState(null);
+  let selected='';
+  if(choice?.key===key)selected=choice.id;
+  else if(key){try{selected=window.sessionStorage.getItem(key)||'';}catch{}}
+  function select(id){
+    setChoice({key,id});
+    if(key){try{
+      if(id&&id!=='__new__')window.sessionStorage.setItem(key,id);
+      else window.sessionStorage.removeItem(key);
+    }catch{}}
+  }
+  return [selected,select];
+}
+
+export function useMapMedia(campaignId,map,session,load,{atlas=false,accessScope=load}={}){
   const [attempt,setAttempt]=useState(0);
   const [result,setResult]=useState(null);
   const videoRef=useRef(null);
   const [playingUrl,setPlayingUrl]=useState('');
   // Grid, fog and token updates can replace the map record without changing its media.
   const scope=JSON.stringify([campaignId,map?.id,map?.storagePath,map?.contentType,map?.kind,attempt,atlas]);
-  const request=useMemo(()=>({}),[scope,session,load]);
+  const request=useMemo(()=>({}),[scope,session,accessScope]);
 
   useEffect(()=>{
     if(!map||!session)return undefined;
@@ -55,9 +73,15 @@ export function useMapMedia(campaignId,map,session,load,{atlas=false}={}){
         'This browser could not decode the map image. The file may be damaged or unsupported.'));
     };
 
-    // A video can be up to 48 MB. Give its download more time than an image.
-    timer=setTimeout(()=>fail(battleMapMediaError('map-media/timeout',
-      `Map media timed out during ${stage}. Check your connection and retry.`)),map.kind==='video'?60000:20000);
+    // Each operation has its own deadline. Receiving bytes resets the idle timer.
+    const onStage=name=>{
+      if(signal.aborted)return;
+      stage=name;
+      clearTimeout(timer);
+      timer=setTimeout(()=>fail(battleMapMediaError('map-media/timeout',
+        `Map media timed out during ${stage}. Check your connection and retry.`)),map.kind==='video'?60000:20000);
+    };
+    onStage('Firebase authentication');
     Promise.resolve().then(()=>{
       if(signal.aborted)return;
       verifySession();
@@ -65,8 +89,8 @@ export function useMapMedia(campaignId,map,session,load,{atlas=false}={}){
         throw battleMapMediaError('map-media/unsupported','This map uses an unsupported media format.');
       if(!atlas&&!battleMapCanPreview(map,campaignId))
         throw battleMapMediaError('map-media/reference','This map has an invalid media reference.');
-      stage='request preparation';
-      return load(campaignId,map,{uid:session.uid,signal,onStage:next=>{if(!signal.aborted)stage=next;}});
+      onStage('request preparation');
+      return load(campaignId,map,{uid:session.uid,signal,onStage});
     }).then(blob=>{
       if(signal.aborted)return;
       verifySession();
@@ -85,7 +109,7 @@ export function useMapMedia(campaignId,map,session,load,{atlas=false}={}){
     }).catch(fail);
 
     return ()=>{
-      // getBlob has no cancellation API. Stop accepting its result and release local resources.
+      // Release a shared transfer when its final canvas detaches.
       controller.abort();
       clearTimeout(timer);
       releaseUrl();

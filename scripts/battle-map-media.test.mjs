@@ -1,4 +1,5 @@
 import test from 'node:test';
+import {createBattleMapDownloader} from '../src/firebase/battleMapMedia.mjs';
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 import {build} from 'esbuild';
@@ -54,7 +55,7 @@ function fixture(t,{session='gm',ownershipReady=true}={}){
   t.mock.method(URL,'revokeObjectURL',url=>revoked.push(url));
   let renderer;
   t.after(()=>{if(renderer)act(()=>renderer.unmount());globalThis.window=previousWindow;});
-  const playerElement=map=>React.createElement(CampaignMapCanvas,{api:playerApi,campaignId,map});
+  const playerElement=map=>React.createElement(CampaignMapCanvas,{api:{...playerApi},campaignId,map});
   async function render(element){
     await act(async()=>{
       if(renderer)renderer.update(element);
@@ -286,7 +287,7 @@ function mediaService({mapRead,download}={}){
       if(path===`campaigns/${campaignId}`)return {exists:()=>true,id:campaignId,data:()=>({ownerUid:'gm'})};
       return mapRead?mapRead():{exists:()=>true,id:video.id,data:()=>video};
     }},
-    storageSdk:{ref:(_storage,path)=>path,getBlob:download||(()=>webmBlob)}
+    storageSdk:{ref:(_storage,path)=>path,downloadMapBlob:download||(()=>webmBlob)}
   });
   return {auth,service,reads};
 }
@@ -325,4 +326,76 @@ test('the campaign media service discards downloads from a replaced Firebase ses
   auth.currentUser={uid:'gm'};
   finishDownload(webmBlob);
   await assert.rejects(result,{code:'auth/user-changed'});
+});
+
+test('a new API wrapper, token position and grid settings retain the same download and URL',async t=>{
+  const view=fixture(t);
+  await view.player(image);
+  await view.player({...image,tokens:[],gridVisible:false});
+  assert.equal(view.requests.length,1);
+  await act(async()=>view.requests[0].resolve(imageBlob));
+  await view.player({...image,name:'Updated title'});
+  assert.equal(view.media('img')[0].props.src,view.created[0].url);
+  assert.deepEqual(view.revoked,[]);
+});
+
+test('a progressing download gets its own idle deadline after record verification',async t=>{
+  const view=fixture(t);
+  t.mock.timers.enable({apis:['setTimeout']});
+  await view.player(image);
+  const {onStage}=view.requests[0].options;
+  onStage('map record verification');
+  act(()=>t.mock.timers.tick(19000));
+  onStage('Firebase Storage download');
+  act(()=>t.mock.timers.tick(19000));
+  onStage('Firebase Storage download');
+  act(()=>t.mock.timers.tick(19000));
+  assert.equal(view.text('alert'),'');
+  act(()=>t.mock.timers.tick(1000));
+  assert.match(view.text('alert'),/timed out during Firebase Storage download/);
+});
+
+function transport(t){
+  const transfers=[];
+  const previous=globalThis.XMLHttpRequest;
+  globalThis.XMLHttpRequest=class{
+    open(method,url){this.method=method;this.url=url;}
+    setRequestHeader(name,value){assert.equal(name,'Authorization');assert.equal(value,'Firebase test-token');}
+    send(){transfers.push(this);}
+    abort(){this.cancelled=true;this.onabort();this.onloadend();}
+    respond(status){this.status=status;this.response=imageBlob;this.onload();this.onloadend();}
+  };
+  t.after(()=>{if(previous)globalThis.XMLHttpRequest=previous;else delete globalThis.XMLHttpRequest;});
+  const user={uid:'gm',getIdToken:async()=>'test-token'};
+  const auth={currentUser:user};
+  const download=createBattleMapDownloader(auth);
+  const ref={bucket:'demo-bucket',fullPath:image.storagePath};
+  return {auth,transfers,request:options=>download(ref,options)};
+}
+
+test('two canvases share one authenticated GET and detaching one keeps the other alive',async t=>{
+  const {request,transfers}=transport(t);
+  const controller=new AbortController();
+  const first=request({signal:controller.signal}),second=request();
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(transfers.length,1);
+  assert.equal(transfers[0].url,'https://firebasestorage.googleapis.com/v0/b/demo-bucket/o/'+encodeURIComponent(image.storagePath)+'?alt=media');
+  controller.abort();
+  await assert.rejects(first,{name:'AbortError'});
+  assert.ok(!transfers[0].cancelled);
+  transfers[0].respond(200);
+  assert.equal(await second,imageBlob);
+});
+
+test('the last cancellation aborts the wire request and retry starts a fresh one',async t=>{
+  const {request,transfers}=transport(t);
+  const controller=new AbortController(),first=request({signal:controller.signal});
+  await new Promise(resolve=>setImmediate(resolve));
+  controller.abort();
+  await assert.rejects(first,{name:'AbortError'});
+  assert.equal(transfers[0].cancelled,true);
+  const retry=request();
+  await new Promise(resolve=>setImmediate(resolve));
+  transfers[1].respond(404);
+  await assert.rejects(retry,{code:'storage/object-not-found'});
 });
