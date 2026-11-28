@@ -12,7 +12,7 @@ import {battleMapCameraView,DEFAULT_BATTLE_MAP_CAMERA,encounterMapLink} from '..
 import {mapCell,mapCellCenter,mapCellKey,mapReachableRoutes,mapRoutePoints,measureMapRoute} from '../../state/battleMapRoutes.mjs';
 import {MAP_MOVE_AP} from '../../state/battleMapMovement.mjs';
 import {battleMapPoint} from '../../state/battleMapModel.mjs';
-import {useBattleMapSession,useMapMedia} from './useMapMedia.js';
+import {useBattleMapSession,useMapMedia,useMapSelection} from './useMapMedia.js';
 import styles from './CampaignMapWorkspace.module.css';
 
 const empty=()=>({
@@ -40,8 +40,9 @@ const fileSize=async file=>{
     });
   }finally{URL.revokeObjectURL(url);}
 };
-export function useCampaignStream(api,method,args,enabled=true){
-  const scope=JSON.stringify([method,enabled,args]);
+export function useCampaignStream(api,method,args,enabled=true,session=null){
+  const signature=JSON.stringify([method,enabled,args]);
+  const scope=useMemo(()=>({}),[signature,api,session]);
   const [state,setState]=useState({data:null,error:'',loading:true,scope:''});
   useEffect(()=>{
     setState({data:null,error:'',loading:enabled,scope});
@@ -77,7 +78,7 @@ export function BattleMapToken({token,columns,rows,className,selected=false,curr
       referrerPolicy="no-referrer" onError={event=>{event.currentTarget.hidden=true;}}/>:null}
   </Element>;
 }
-export function CampaignMapCanvas({api,campaignId,map,mode='player',atlas=false,
+export function CampaignMapCanvas({api,campaignId,map,mediaMap=map,mode='player',atlas=false,
   editing=false,onPoint,previewFog=false,showGrid=true,restricted=false,interactive=false,camera=null,
   movement=null,routeOverlay=[]}){
   const session=useBattleMapSession();
@@ -86,7 +87,7 @@ export function CampaignMapCanvas({api,campaignId,map,mode='player',atlas=false,
     if(atlas)return api.fetchAtlasMedia(id,record);
     return api.fetchMapMedia(id,record,mode,options);
   },[api,mode,atlas,restricted]);
-  const media=useMapMedia(campaignId,map,session,load,{atlas});
+  const media=useMapMedia(campaignId,mediaMap,session,load,{atlas,accessScope:restricted?'restricted':mode});
   const node=useRef(null),drag=useRef(null);
   const [localCamera,setLocalCamera]=useState(DEFAULT_BATTLE_MAP_CAMERA);
   const [tool,setTool]=useState('pan'),[selection,setSelection]=useState(''),[ruler,setRuler]=useState([]);
@@ -257,19 +258,21 @@ export function CampaignMapCanvas({api,campaignId,map,mode='player',atlas=false,
 }
 export function CampaignMapWorkspace({api,campaignId,role='player',selectedMapId='',camera=null,interactive=role!=='gm',encounter=null,movement=null }){
   const mode=role==='gm'?'gm':'player';
-  const stream=useCampaignStream(api,'watchMaps',[campaignId,mode]);
+  const session=useBattleMapSession();
+  const stream=useCampaignStream(api,'watchMaps',[campaignId,mode],Boolean(session),session);
   const maps=stream.data||[];
-  const [selected,setSelected]=useState(''),[draft,setDraft]=useState(empty);
+  const [selected,setSelected]=useMapSelection(campaignId,session?.uid,mode);
+  const [draft,setDraft]=useState(empty);
   const [file,setFile]=useState(null),[busy,setBusy]=useState(false);
   const [error,setError]=useState(''),[notice,setNotice]=useState('');
   const [brush,setBrush]=useState(firstTerrainBrush),[source,setSource]=useState(null);
   const [fogMode,setFogMode]=useState('none'),[showGrid,setShowGrid]=useState(true);
   const [previewFog,setPreviewFog]=useState(false);
-  const published=useCampaignStream(api,'watchMaps',[campaignId,'player'],mode==='gm'&&previewFog&&!!draft.vision?.automatic);
+  const published=useCampaignStream(api,'watchMaps',[campaignId,'player'],Boolean(session)&&mode==='gm'&&previewFog&&!!draft.vision?.automatic,session);
   const liveRequired=mode==='player'&&encounter?.status==='active'&&!selectedMapId;
   const liveMapId=liveRequired?encounter.battleMapId||'':'';
   const requiredMapId=selectedMapId||liveMapId;
-  const candidate=selected==='__new__'?null:maps.find(item=>item.id===(requiredMapId||selected))||
+  const candidate=!requiredMapId&&selected==='__new__'?null:maps.find(item=>item.id===(requiredMapId||selected))||
     (!requiredMapId?maps[0]:null)||null;
   const map=liveRequired&&!encounterMapLink(encounter,candidate)?null:candidate;
   useEffect(()=>{
@@ -412,7 +415,7 @@ export function CampaignMapWorkspace({api,campaignId,role='player',selectedMapId
       </div>
       {map?.combatId?<p role="status">Linked combat is active. Grid, tokens and deletion stay locked.</p>:null}
     </div>:null}
-    {preview?<CampaignMapCanvas api={api} campaignId={campaignId} map={preview} camera={camera} interactive={interactive} movement={movement}
+    {preview?<CampaignMapCanvas api={api} campaignId={campaignId} map={preview} mediaMap={map} camera={camera} interactive={interactive} movement={movement}
       mode={mode} showGrid={showGrid} previewFog={previewFog}
       editing={mode==='gm'&&(fogMode==='terrain'||draft.fogEnabled&&fogMode!=='none')} onPoint={editFog}/>:null}
     {map?<label className={styles.compact}><input type="checkbox" checked={showGrid}

@@ -15,7 +15,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - name: Verify Pages is workflow-managed with no automatic publishing job
+      - name: Verify explicit Pages source and forbid unreviewed publishing workflows
         env:
           GH_TOKEN: ${{ github.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
@@ -34,16 +34,22 @@ jobs:
           const pages=await response.json();
           console.log('Pages build mode:',pages.build_type);
           console.log('Legacy source metadata:',JSON.stringify(pages.source||null));
-          // In workflow mode the GitHub Pages source.branch value can remain from
-          // a former branch deployment, and is NOT the deployment trigger.
-          // In legacy mode a test-branch source would publish automatically.
-          if(pages.build_type!=='workflow')
-            throw Error('Pages is not in explicit GitHub Actions mode; reject test merge.');
+          // The repository owner intentionally selected this branch for a
+          // temporary live preview. Accept only that exact, explicit source;
+          // never allow legacy publishing from main or another branch.
+          // Workflow mode remains the normal protected configuration.
+          const safeWorkflow=pages.build_type==='workflow';
+          const preview=pages.build_type==='legacy'&&
+            pages.source?.branch==='Website-Build-Test'&&
+            (pages.source?.path==='/'||pages.source?.path==='/root');
+          if(!safeWorkflow&&!preview)
+            throw Error('Unsafe GitHub Pages source: expected GitHub Actions, or the explicitly selected Website-Build-Test root preview.');
+          if(preview)console.log('Temporary preview mode: Website-Build-Test root is the explicitly selected public Pages source.');
           const dir='.github/workflows';
           const files=readdirSync(dir).filter(name=>/\.ya?ml$/.test(name));
           const prohibited=/actions\/deploy-pages(?:@|\/)|actions\/upload-pages-artifact(?:@|\/)|(?:^|\n)\s*pages\s*:\s*write\b|peaceiris\/actions-gh-pages|JamesIves\/github-pages-deploy-action/i;
           const offenders=files.filter(name=>prohibited.test(readFileSync(join(dir,name),'utf8')));
           if(offenders.length)throw Error('Potential Pages publish workflow present: '+offenders.join(', '));
           console.log('Verified '+files.length+' workflows: no Pages deploy action or Pages write permission.');
-          console.log('Development branch CI builds bundles but cannot publish GitHub Pages.');
+          console.log('No direct Pages publish workflow exists; any temporary branch-based preview is controlled by GitHub Pages source settings.');
           NODE

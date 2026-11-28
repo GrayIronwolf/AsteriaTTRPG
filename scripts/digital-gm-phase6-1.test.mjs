@@ -66,7 +66,7 @@ test('GM and player dashboard mounts and loop playback are wired to authenticate
   assert.match(player,/PlayerBattleMapView/);
   assert.match(map,/<video[\s\S]{0,280}loop muted playsInline/);
   assert.match(map,/fetchBattleMapMedia/);
-  assert.match(auth,/getBlob\(storageRef\(storage,path\)\)/);
+  assert.match(auth,/downloadMapBlob\(storageRef\(storage,path\),options\)/);
   assert.match(auth,/subscribeBattleMaps/);
   assert.match(storage,/match \/campaigns\/\{campaignId\}\/battleMaps\/\{mapId\}/);
   assert.match(storage,/campaignGM\(campaignId\)/);

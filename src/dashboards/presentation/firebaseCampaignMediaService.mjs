@@ -60,9 +60,11 @@ export function createFirebaseCampaignMediaService({
   const access=(campaign,member,uid,id,mode)=>
     mode==='gm'?gmCampaignAccess(campaign,member,uid,id).allowed:
       playerCampaignAccess(campaign,member,uid,id).allowed;
-  async function check(id,mode='player'){
+  async function check(id,mode='player',beforeRead=()=>{}){
     assertGMCampaignId(id);
+    beforeRead('account profile verification');
     const uid=await verified();
+    beforeRead('campaign record verification');
     let snapshot;
     try{snapshot=await firestoreSdk.getDocFromServer(cRef(id));}
     catch(error){throw new Error('Campaign access is unavailable.',{cause:error});}
@@ -70,6 +72,7 @@ export function createFirebaseCampaignMediaService({
     if(!snapshot.exists())throw Error('Campaign is unavailable.');
     const campaign={...snapshot.data(),id:snapshot.id};
     const v2=campaign.membershipSchemaVersion===2&&campaign.ownerUid!==uid;
+    if(v2)beforeRead('campaign membership verification');
     const memberSnap=v2?await firestoreSdk.getDocFromServer(memberRef(id,uid)):null;
     same(uid);
     const member=memberSnap?.exists()?memberSnap.data():null;
@@ -135,6 +138,7 @@ export function createFirebaseCampaignMediaService({
   const presentationProject=raw=>presentationForViewer(raw);
   const notesProject=rows=>battleMapPrivatePins(rows);
   const partyProject=rows=>gmPartySummary(rows);
+  const mapSubscriptions=new Set();
   function watchMaps(id,mode,onUpdate,onError){
     const ref=mode==='gm'?
       firestoreSdk.query(mapCol(id),firestoreSdk.limit(BATTLE_MAP_MAX_RECORDS)):
@@ -144,7 +148,13 @@ export function createFirebaseCampaignMediaService({
       mapsProject(rows.map(row=>({...row,
         storagePath:battleMapAssetPath(campaignId,row.id,row.contentType)
       })),campaignId,'player');
-    return watch(id,mode,ref,projection,onUpdate,onError);
+    const subscription={id,mode,user:auth.currentUser,rows:[]};
+    const stop=watch(id,mode,ref,projection,rows=>{
+      subscription.rows=rows;
+      mapSubscriptions.add(subscription);
+      onUpdate(rows);
+    },error=>{mapSubscriptions.delete(subscription);onError?.(error);});
+    return ()=>{mapSubscriptions.delete(subscription);stop();};
   }
   function watchAtlas(id,onUpdate,onError){
     return watch(id,'player',atlasCol(id),atlasProject,onUpdate,onError);
@@ -267,20 +277,25 @@ export function createFirebaseCampaignMediaService({
     stage('authentication');
     const verifySession=battleMapSession(options);
     if(!mapForViewer(map,id,mode))throw Error('Invalid map media reference.');
-    stage('campaign access verification');
-    await check(id,mode);
-    verifySession();
-    stage('map record verification');
-    const snap=await firestoreSdk.getDocFromServer(mode==='gm'?
-      mapRef(id,map.id):publicMapRef(id,map.id));
-    verifySession();
-    const fresh=snap.exists()?mapForViewer({id:snap.id,...snap.data(),
-      storagePath:mode==='gm'?snap.data().storagePath:
-        battleMapAssetPath(id,map.id,snap.data().contentType)},id,mode):null;
-    if(!fresh||fresh.storagePath!==map.storagePath||fresh.contentType!==map.contentType)
-      throw Error('The map is unavailable or no longer shared.');
-    stage('Firebase Storage download');
-    const blob=await storageSdk.getBlob(storageSdk.ref(storage,fresh.storagePath));
+    // watchMaps publishes only after fresh map and membership snapshots.
+    // Standalone callers still verify access and the canonical record below.
+    const observed=[...mapSubscriptions].some(sub=>sub.user===auth.currentUser&&
+      sub.id===id&&sub.mode===mode&&sub.rows.some(row=>row.id===map.id&&
+        row.storagePath===map.storagePath&&row.contentType===map.contentType));
+    if(!observed){
+      await check(id,mode,name=>{verifySession();stage(name);});
+      verifySession();
+      stage('map record verification');
+      const snap=await firestoreSdk.getDocFromServer(mode==='gm'?
+        mapRef(id,map.id):publicMapRef(id,map.id));
+      verifySession();
+      const fresh=snap.exists()?mapForViewer({...snap.data(),id:snap.id,
+        storagePath:mode==='gm'?snap.data().storagePath:
+          battleMapAssetPath(id,map.id,snap.data().contentType)},id,mode):null;
+      if(!fresh||fresh.storagePath!==map.storagePath||fresh.contentType!==map.contentType)
+        throw Error('The map is unavailable or no longer shared.');
+    }
+    const blob=await storageSdk.downloadMapBlob(storageSdk.ref(storage,map.storagePath),options);
     verifySession();
     return blob;
   }
@@ -636,15 +651,17 @@ export function createFirebaseCampaignMediaService({
     const verifySession=battleMapSession(options);
     if(!map?.id||!mapId(map.id)||!mapForViewer(map,id,'player'))
       throw Error('Choose an approved published presentation map.');
+    options?.onStage?.('account profile verification');
     await verified();
     verifySession();
+    options?.onStage?.('published map record verification');
     const source=await firestoreSdk.getDocFromServer(publicMapRef(id,map.id));
     verifySession();
     if(!source.exists())throw Error('The published map is no longer available.');
     const path=battleMapAssetPath(id,map.id,source.data().contentType);
     if(map.storagePath!==path)
       throw Error('The presentation map source changed.');
-    const blob=await storageSdk.getBlob(storageSdk.ref(storage,path));
+    const blob=await storageSdk.downloadMapBlob(storageSdk.ref(storage,path),options);
     verifySession();
     return blob;
   }

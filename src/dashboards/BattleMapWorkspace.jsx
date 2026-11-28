@@ -6,7 +6,7 @@ import {partyVisibility} from '../state/battleMapVision.mjs';
 import {BattleMapVisionControls} from './presentation/BattleMapVisionControls.jsx';
 import {GridLayer,CellFog,GeometryControls,TerrainControls,terrainAtPoint,firstTerrainBrush,RouteReading,AreaControls,AreaOverlay} from './presentation/BattleMapLayers.jsx';
 import {BattleMapToken,CampaignMapWorkspace} from './presentation/CampaignMapWorkspace.jsx';
-import {useBattleMapSession,useMapMedia} from './presentation/useMapMedia.js';
+import {useBattleMapSession,useMapMedia,useMapSelection} from './presentation/useMapMedia.js';
 import React,{useCallback,useEffect,useMemo,useRef,useState} from 'react';
 import {firebaseService} from '../firebase/asteriaFirebaseService.js';
 import {battleMapMediaError} from '../firebase/battleMapMedia.mjs';
@@ -69,7 +69,7 @@ function useBattleMaps(campaignId,gm,session){
       return ()=>{active=false;stop?.();};
     }catch(error){onError(error);return undefined;}
   },[scope]);
-  return state?.scope===scope?state:{maps:[],error:''};
+  return state?.scope===scope?{...state,ready:!state.error}:{maps:[],error:'',ready:false};
 }
 async function loadWorkspaceMap(campaignId,map,options){
   const result=await firebaseService.fetchBattleMapMedia(campaignId,map,options);
@@ -270,8 +270,9 @@ function TokenEditor({tokens,onChange,characters={},selectedTokenId,onSelect}){
 }
 export function GMBattleMapManager({campaignId,characters={},encounter={},searchTarget=null}){
   const session=useBattleMapSession();
-  const {maps,error:listenerError}=useBattleMaps(campaignId,true,session);
-  const [selectedId,setSelectedId]=useState(''),[draft,setDraft]=useState(defaults);
+  const {maps,ready:mapsReady,error:listenerError}=useBattleMaps(campaignId,true,session);
+  const [selectedId,setSelectedId]=useMapSelection(campaignId,session?.uid,'editor');
+  const [draft,setDraft]=useState(defaults);
   const [file,setFile]=useState(null),[busy,setBusy]=useState(false),[message,setMessage]=useState('');
   const [selectedTokenId,setSelectedTokenId]=useState('');
   const [fogTool,setFogTool]=useState('token'),[fogBrush,setFogBrush]=useState(1);
@@ -298,15 +299,15 @@ export function GMBattleMapManager({campaignId,characters={},encounter={},search
   const combatMoveRemaining=selectedCombatantId?combatMapMovementAllowance(encounter,selectedCombatantId):null;
   const selectedCombatToken=selectedCombatantId?selected?.tokens.find(row=>row.combatantId===selectedCombatantId):null;
   useEffect(()=>{
-    if(selectedId&&!maps.some(row=>row.id===selectedId))setSelectedId('');
-  },[maps,selectedId]);
+    if(mapsReady&&selectedId&&!maps.some(row=>row.id===selectedId))setSelectedId('');
+  },[maps,selectedId,mapsReady]);
   useEffect(()=>{
     if(selected)setDraft(currentSettings(selected));
     else setDraft(defaults());
     setPreviewPlayerFog(selected?.fogEnabled===true);
     setSelectedTokenId('');setSelectedCombatantId('');setFogTool('token');setSource(null);
     setMeasurePoints([]);undoFog.current=[];setPrivateDirty(false);
-  },[selectedId]);
+  },[selected?.id,campaignId,session]);
   useEffect(()=>{
     setPrivatePins([]);setPrivateDirty(false);
     if(!campaignId||!selectedId)return undefined;

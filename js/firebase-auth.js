@@ -3,7 +3,7 @@ import { normalizeInformation, publicInformation } from '../src/state/campaignIn
 import { campaignArtworkFileError } from '../src/state/campaignArtwork.mjs';
 import {battleMapFileError,battleMapFileKind,battleMapAssetPath,newBattleMapSettings,battleMapEditableSettings,battleMapDimensions,BATTLE_MAP_MAX_RECORDS} from '../src/state/battleMapModel.mjs';
 import {battleMapPrivatePins} from '../src/state/battleMapFogModel.mjs';
-import {assertBattleMapMediaSession,battleMapMediaError} from '../src/firebase/battleMapMedia.mjs';
+import {assertBattleMapMediaSession,battleMapMediaError,createBattleMapDownloader} from '../src/firebase/battleMapMedia.mjs?v=2';
 import {atlasFileError,atlasImagePath,atlasImageDimensions,atlasMapSettings,ATLAS_MAX_MAPS} from '../src/state/worldAtlasModel.mjs';
 import {sessionPdfInput,sessionPdfFileError,sessionPdfPath,SESSION_PDF_LIMIT} from '../src/state/sessionLibraryModel.mjs';
 import {audioFileError,audioMagicMatches,audioTrackPath,audioUploadDetails,AUDIO_TRACK_LIMIT} from '../src/state/campaignAudioModel.mjs';
@@ -72,6 +72,7 @@ try {
 } catch (err) {
   if(!reactDevFixture) console.warn('Firebase failed to initialise. Account login requires Firebase setup.', err);
 }
+const downloadMapBlob=auth&&createBattleMapDownloader(auth,{emulator:firebaseMode==='emulator'});
 const trustedActionsInFlight=new Map();
 function callTrustedAction(action,args) {
   if(!functionsClient || !currentUser) return Promise.resolve({ok:false,error:'Sign in before making changes.'});
@@ -937,7 +938,7 @@ const firebasePublicApi = {
     auth,db,storage,functions:functionsClient,
     firestoreSdk:{doc,collection,getDocFromServer,onSnapshot,query,orderBy,limit,
       runTransaction,serverTimestamp},
-    storageSdk:{ref:storageRef,getBlob,uploadBytes,deleteObject},
+    storageSdk:{ref:storageRef,getBlob,downloadMapBlob,uploadBytes,deleteObject},
     functionsSdk:{httpsCallable},
     readCanonical:async user=>{
       if(!user?.uid||auth.currentUser?.uid!==user.uid)throw Error('Account changed.');
@@ -1361,13 +1362,14 @@ const firebasePublicApi = {
   fetchBattleMapMedia: async function(campaignId,map,options){
     try{
       if(!storage||!auth)throw Error('Firebase Storage is unavailable.');
+      options?.onStage?.('Firebase authentication');
       const user=battleMapAuthUser();
       assertBattleMapMediaSession(auth,user,options);
       const path=battleMapAssetPath(campaignId,map?.id,map?.contentType);
       if(map.storagePath!==path||map.kind!==battleMapFileKind(map.contentType))
         throw battleMapMediaError('storage/invalid-argument','Invalid map media reference.');
       // Authenticated Storage read: no reusable public download token is generated.
-      const blob=await getBlob(storageRef(storage,path));
+      const blob=await downloadMapBlob(storageRef(storage,path),options);
       assertBattleMapMediaSession(auth,user,options);
       return {ok:true,blob};
     }catch(error){return {ok:false,code:error?.code,error:error?.message||'Map media is unavailable.'};}

@@ -19,6 +19,16 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
+      - name: Battle map loading regression tests
+        run: node --test scripts/battle-map-media.test.mjs
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Battle map permissions and authenticated browser rendering
+        run: |
+          npx firebase emulators:exec --only auth,firestore,storage --project demo-asteria-maps \
+            "node --test scripts/digital-gm-phase6-1-emulator.test.mjs && node --test scripts/battle-map-browser.test.mjs"
       - name: Targeted milestone audit and regression suite
         run: |
           node --test \
