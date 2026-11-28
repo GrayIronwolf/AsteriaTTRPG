@@ -47,7 +47,7 @@ test('No dashboard grid, resource banner, navigation or GM roster markup is modi
 });
 
 test('Production dashboard styles use a new versioned URL while remaining lazy-loaded',()=>{
-  assert.match(vite,/asteria-react-royal-relic-v2\.css/);
+  assert.match(vite,/asteria-react-\[name\]-\[hash\]\[extname\]/);
   assert.match(vite,/asteria-react-content-v2\.js/);
   assert.match(entry,/asteria-react-content-v2\.js/);
   assert.match(entry,/react-dist\/asteria-react-royal-relic-v2\.css/);
