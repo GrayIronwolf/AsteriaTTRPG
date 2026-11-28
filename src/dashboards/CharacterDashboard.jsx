@@ -204,7 +204,7 @@ function CharacterDashboardContent({campaignId,characterId,live,embedded=false})
   const resourceEditable = editable && live.online && !live.error && !combat.active;
   const updateResource = (resource, amount) => firebaseService.updateResource(campaignId, character.id, resource, amount, { source:'Character Dashboard HUD',expectedCoreRevision:Number(character.coreRevision || 0) });
   return <AsteriaAppShell
-    className={activeTab==='dashboard'&&!embedded?'react-character-dashboard asteria-canvas-workspace-mode':'react-character-dashboard'}
+    className={embedded?'react-character-dashboard react-dashboard-embedded':'react-character-dashboard asteria-canvas-workspace-mode'}
     showHeader={false}
   >
     {!embedded?<DashboardHeaderFold scope="player"/>:null}
@@ -212,7 +212,9 @@ function CharacterDashboardContent({campaignId,characterId,live,embedded=false})
     {campaignId?<SessionGate session={live.session} />:<div className="react-unassigned-dashboard" role="status"><b>Unassigned character</b><p>You can inspect this character now. Link a campaign and join an active session to use gameplay actions.</p><div className="react-action-row"><button onClick={()=>openLegacyView('workspace',()=>window.AsteriaWorkspace?.openDashboard?.('campaigns'))}>Link a campaign</button><button onClick={()=>openLegacyView('workspace',()=>window.AsteriaGameplay?.openCharacterForgeHub?.())}>Back to Character Forge</button></div></div>}
     <DashboardInformationRow campaign={live.campaign || {}} session={live.session} character={character} partyWorkspace={live.partyWorkspace} editable={resourceEditable} onResourceChange={updateResource} online={live.online} connectionState={live.connectionState} error={live.error || coreSyncError} loading={live.loading} />
     {campaignId?<PlayerRecordingNotice key={campaignId} campaignId={campaignId}/>:null}
+    <div className="asteria-dashboard-body" data-dashboard-role="player">
     <DashboardNavigation role="player" storageScope={characterId+":"+uid} tabs={tabs} active={activeTab} onChange={navigate} ariaLabel="Character Dashboard menu" />
+    <div className="asteria-dashboard-page-content">
     <CombatDashboardLayout combat={combat}>
     {activeTab === 'dashboard' ? <><PlayerDashboardOverview combat={combat} isGM={window.AsteriaCharacterAccess.isGM(live.campaign,uid,live.membership)} sessionEditable={live.session?.editable} clock={{encounter:live.encounter,now:live.clock,sessionId:live.session?.id}} abilityEditable={editable && live.online && !live.error} campaignId={campaignId} campaign={live.campaign || {}} character={character} characters={live.characters} partyWorkspace={live.partyWorkspace} editable={editable} canEditLayout={isOwner} onNavigate={navigate} /></> : null}
     {activeTab === 'character' ? <CharacterTab campaignId={campaignId} character={character} editable={editable} /> : null}
@@ -244,5 +246,7 @@ function CharacterDashboardContent({campaignId,characterId,live,embedded=false})
     </CombatDashboardLayout>
     {noticeError?<p className="react-action-message" role="alert">{noticeError}</p>:null}
     {editable && lootEvent ? <LootModal campaignId={campaignId} character={character} event={lootEvent} editable={editable} onResolved={resolvedLoot} /> : editable && magicEvent ? <MagicRewardModal campaignId={campaignId} character={character} event={magicEvent} onResolved={resolvedMagic} /> : isOwner && questEvent ? <QuestAssignmentModal event={questEvent} onClose={()=>closeQuest(false)} onOpen={()=>closeQuest(true)} /> : isOwner && xpEvent ? <XPModal event={xpEvent} onClose={closeXP} /> : null}
+    </div>
+    </div>
   </AsteriaAppShell>;
 }

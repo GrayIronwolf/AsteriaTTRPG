@@ -84,7 +84,8 @@ test('GM Main is an in-place canvas replacement, not an overlaid grid editor',()
  assert.match(gm,/window\.AsteriaCharacterAccess\.isGM/);
  assert.doesNotMatch(gm,/DashboardLayoutWorkspace|DashboardLayoutEditor|defaultContent=/);
  assert.match(canvas,/export const CanvasWorkspace=CombatCommandCentre/);
- assert.match(canvas,/gmCanvas\?<div className=\{styles\.manageActions\}/);
+ assert.match(canvas,/className=\{styles\.manageActions\}/);
+ assert.match(canvas,/gmCanvas\?'gm-canvas-add-window':'combat-canvas-add-window'/);
  assert.match(canvas,/panelIds\.includes\(child\.props\.id\)/);
  assert.match(canvas,/panelIds\.filter\(id=>!saved\.hidden\.includes\(id\)\)/);
  assert.match(canvas,/normalizeCombatWorkspace\(value,canvasConfig\|\|undefined\)/);

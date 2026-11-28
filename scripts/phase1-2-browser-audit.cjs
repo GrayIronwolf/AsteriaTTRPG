@@ -350,7 +350,7 @@ async function metrics(page) {
     const canvas=p.locator('[aria-label="Combat freeform canvas"]');
     assert.ok(await canvas.evaluate(el=>el.getBoundingClientRect().width>1000),
       'Canvas should occupy the whole GM content width, not a sidebar grid');
-    await drawerToggle.click();
+    await p.getByTestId('combat-canvas-add-window').click();
     const tools=p.getByRole('complementary',{name:'Combat Command Centre tools'});
     await tools.waitFor({state:'visible'});
     await tools.getByRole('button',{name:'Encounter Builder',exact:true}).click();
@@ -533,7 +533,7 @@ async function metrics(page) {
     await p.getByTestId('asteria-dashboard-card-dropdown')
       .getByRole('button',{name:'Open Combat Command Centre',exact:true}).click();
     const combat=p.getByTestId('site-gm-combat');
-    await combat.getByTestId('site-combat-tools-toggle').click();
+    await combat.getByTestId('combat-canvas-add-window').click();
     const tools=combat.getByRole('complementary',{name:'Combat Command Centre tools'});
     await tools.getByRole('button',{name:'Encounter Builder',exact:true}).press('Enter');
     const setup=combat.locator('[data-combat-panel="setup"]');

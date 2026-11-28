@@ -974,18 +974,18 @@ export function CombatCommandCentre({uid,campaignId,children,canvasConfig=null,
             {panelLabels[panel.props.id]||panel.props.id}
           </button>)}</div></>:null}
       </nav>:null}
-      {gmCanvas?<div className={styles.manageActions} role="toolbar" data-canvas-ui
+      <div className={styles.manageActions} role="toolbar" data-canvas-ui
         aria-label={canvasRole+' dashboard window management'}>
         <button type="button" className={styles.iconButton}
-          data-testid={playerCanvas?'player-canvas-add-window':'gm-canvas-add-window'}
-          title={'Add or remove '+canvasRole+' dashboard windows'}
-          aria-label={'Add or remove '+canvasRole+' dashboard windows'}
+          data-testid={playerCanvas?'player-canvas-add-window':gmCanvas?'gm-canvas-add-window':'combat-canvas-add-window'}
+          title={gmCanvas?'Add or remove '+canvasRole+' dashboard windows':'Open Combat Tools'}
+          aria-label={gmCanvas?'Add or remove '+canvasRole+' dashboard windows':'Open Combat Tools'}
           disabled={!canEditCanvas}
-          aria-expanded={sidebarExpanded}
+          aria-expanded={sidebarExpanded&&sidebarMode==='windows'}
           onClick={()=>{setSidebarMode('windows');setSelectedTools(toolCategories[0]?.id||'overview');setSidebarExpanded(true);}}>
           <AsteriaIcon name="plus" size={20}/>
         </button>
-      </div>:null}
+      </div>
       {sidebarExpanded?<button type="button" className={styles.drawerBackdrop} data-canvas-ui
         aria-label={gmCanvas?'Dismiss Dashboard Windows':'Dismiss Combat Tools'}
         onClick={()=>setSidebarExpanded(false)}/>:null}
