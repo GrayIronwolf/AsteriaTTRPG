@@ -8,7 +8,7 @@ const EMPTY_MEDIA_API=Object.freeze({});
  * with the authenticated media editor or secured combat command service.
  * This component does not publish GM-only map data to players.
  */
-export function CombatBattleMapPanel({mediaApi,campaignId,combat,pending,onCommand,busy=false}){
+export function CombatBattleMapPanel({mediaApi,campaignId,combat,pending,onCommand,busy=false,previewMapId=null}){
   const enabled=Boolean(mediaApi);
   const stream=useCampaignStream(mediaApi||EMPTY_MEDIA_API,'watchMaps',[campaignId,'gm'],enabled);
   const [preview,setPreview]=useState(false),[actor,setActor]=useState(''),[reason,setReason]=useState('');
