@@ -1,4 +1,5 @@
 import React,{useEffect,useRef,useState} from 'react';
+import {createPortal} from 'react-dom';
 import {firebaseService} from '../firebase/asteriaFirebaseService.js';
 import {UNIVERSAL_CHECK_TYPES,UNIVERSAL_CHECK_RANKS,UNIVERSAL_CHARACTERISTICS} from '../state/universalCheckModel.mjs';
 
@@ -168,12 +169,17 @@ export function GMUniversalCheckNotification({campaignId,onOpen}){
     {onOpen?<button type="button" onClick={onOpen}>Open check manager</button>:null}
   </aside>;
 }
-export function PlayerUniversalCheckPopup({campaignId,characterId,online=true}){
+export function PlayerUniversalCheckPopup({campaignId,characterId,online=true,canvasSettingsAvailable=false}){
   const rows=useRequests(campaignId,false).filter(row=>row.characterId===characterId)
     .sort((a,b)=>checkEpoch(b.createdAt)-checkEpoch(a.createdAt)||String(b.id).localeCompare(String(a.id)));
   const {send,busy,error}=useAction(campaignId);
   const [first,setFirst]=useState(''),[second,setSecond]=useState(''),[reported,setReported]=useState('success');
   const [hidden,setHidden]=useState([]),[showHistory,setShowHistory]=useState(false);
+  const [historyTarget,setHistoryTarget]=useState(null);
+  useEffect(()=>{
+    setHistoryTarget(canvasSettingsAvailable?
+      document.getElementById('asteria-player-check-history-setting'):null);
+  },[canvasSettingsAvailable,campaignId,characterId]);
   const pending=rows.filter(row=>row.status==='pending');
   const row=pending.find(item=>!hidden.includes(item.id+':'+item.attempt+':'+item.notificationRevision));
   const hasDouble=row?.advantage||row?.disadvantage;
@@ -182,10 +188,9 @@ export function PlayerUniversalCheckPopup({campaignId,characterId,online=true}){
     const result=await send({action:'submit',requestId:row.id,...data});
     if(result){setFirst('');setSecond('');}
   };
-  return <section aria-label="Player check requests">
-    {pending.length?<button type="button" onClick={()=>setHidden([])}>Pending GM check requests: {pending.length}</button>:null}
-    {!online?<p role="status">Offline — check requests are read-only until synchronization resumes.</p>:null}
-    <button type="button" onClick={()=>setShowHistory(!showHistory)}>Check history ({rows.length})</button>
+  const historyControls=<div className="react-player-check-history-settings">
+    <button type="button" aria-expanded={showHistory} onClick={()=>setShowHistory(!showHistory)}>
+      Check history ({rows.length})</button>
     {showHistory?<div className="react-panel">
       <h4>My Check History</h4>
       {rows.map(entry=><article key={entry.id}><strong>{entry.skill||entry.characteristic}</strong> · {entry.status} · Attempt {entry.attempt}
@@ -194,6 +199,11 @@ export function PlayerUniversalCheckPopup({campaignId,characterId,online=true}){
         <Result row={entry}/>
       </article>)}
     </div>:null}
+  </div>;
+  return <section aria-label="Player check requests">
+    {pending.length?<button type="button" onClick={()=>setHidden([])}>Pending GM check requests: {pending.length}</button>:null}
+    {!online?<p role="status">Offline — check requests are read-only until synchronization resumes.</p>:null}
+    {canvasSettingsAvailable?(historyTarget?createPortal(historyControls,historyTarget):null):historyControls}
     {row?<div role="dialog" aria-modal="true" aria-label="GM check request" className="react-panel">
       <h3>GM Check Request</h3>
       {sourceLabel(row)?<p><strong>Interaction:</strong> {sourceLabel(row)}</p>:null}
