@@ -4716,3 +4716,59 @@ html[data-asteria-dashboard-header='expanded'] .asteria-dashboard-header-fold bu
    min-height:42px;height:42px;
  }
 }
+
+
+/* Player HUD: consistent four-zone layout across dashboard menu routes.
+   Resource columns grow vertically for class-specific resources. */
+.asteria-canvas-workspace-mode .react-player-topbar.react-player-cinematic-hud,
+.asteria-canvas-workspace-mode .react-player-cinematic-hud.react-player-hud-no-portrait{
+  grid-template-columns:minmax(0,24fr) minmax(0,37fr) minmax(0,15fr) minmax(0,24fr);
+  grid-template-rows:minmax(190px,auto);
+  height:auto;min-height:190px;overflow:visible;
+}
+.asteria-canvas-workspace-mode .react-player-cinematic-hud > .react-player-hud-information{
+  grid-column:2/4;display:grid;grid-template-columns:minmax(0,2.45fr) minmax(140px,1fr);
+  height:auto;min-height:190px;gap:10px;align-items:center;
+}
+.asteria-canvas-workspace-mode .react-player-hud-information > .react-player-resources{
+  grid-column:1;min-width:0;align-self:center;
+}
+.asteria-canvas-workspace-mode .react-player-hud-information > .react-player-characteristics{
+  grid-column:2;min-width:0;align-self:center;
+}
+.asteria-canvas-workspace-mode .react-player-hud-information .react-player-characteristic-grid{
+  grid-template-columns:repeat(3,minmax(0,1fr));gap:3px;
+}
+.asteria-canvas-workspace-mode .react-player-hud-information
+  .react-player-characteristic-grid .react-characteristic-paper--summary{
+  min-height:49px;height:49px;padding:9px 6% 5px;
+}
+.asteria-canvas-workspace-mode .react-player-cinematic-hud > .react-player-hud-campaign-art{
+  grid-column:4;height:100%;min-height:190px;
+}
+@media(max-width:1100px){
+  .asteria-canvas-workspace-mode .react-player-topbar.react-player-cinematic-hud,
+  .asteria-canvas-workspace-mode .react-player-cinematic-hud.react-player-hud-no-portrait{
+    grid-template-columns:minmax(0,24fr) minmax(0,52fr) minmax(0,24fr);
+  }
+  .asteria-canvas-workspace-mode .react-player-cinematic-hud > .react-player-hud-information{
+    grid-column:2;grid-template-columns:minmax(0,1fr) minmax(120px,.55fr);
+  }
+  .asteria-canvas-workspace-mode .react-player-cinematic-hud > .react-player-hud-campaign-art{grid-column:3;}
+}
+@media(max-width:800px){
+  .asteria-canvas-workspace-mode .react-player-topbar.react-player-cinematic-hud,
+  .asteria-canvas-workspace-mode .react-player-cinematic-hud.react-player-hud-no-portrait{
+    grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:190px auto;
+  }
+  .asteria-canvas-workspace-mode .react-player-cinematic-hud > .react-player-hud-campaign-art{grid-column:2;grid-row:1;}
+  .asteria-canvas-workspace-mode .react-player-cinematic-hud > .react-player-hud-information{
+    grid-column:1/-1;grid-row:2;grid-template-columns:minmax(0,1fr) minmax(140px,.5fr);
+  }
+}
+@media(max-width:470px){
+  .asteria-canvas-workspace-mode .react-player-cinematic-hud > .react-player-hud-information{
+    grid-template-columns:minmax(0,1fr);gap:8px;
+  }
+  .asteria-canvas-workspace-mode .react-player-hud-information > .react-player-characteristics{grid-column:1;}
+}
