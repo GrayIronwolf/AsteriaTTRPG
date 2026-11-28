@@ -4838,3 +4838,73 @@ html[data-asteria-dashboard-header='expanded'] .asteria-dashboard-header-fold bu
  }
  .react-character-dashboard .react-player-hud-information > .react-player-characteristics{grid-column:1;}
 }
+
+
+/* Shared dashboard shell: identical navigation geometry on every GM/Player tab.
+   This wrapper leaves gameplay panels and persisted canvas window geometry intact. */
+@media(min-width:801px){
+  .react-character-dashboard:not(.react-dashboard-embedded) .asteria-dashboard-body,
+  .react-gm-dashboard .asteria-dashboard-body{
+    display:grid;grid-template-columns:196px minmax(0,1fr);
+    align-items:start;column-gap:9px;min-width:0;
+  }
+  .react-character-dashboard:not(.react-dashboard-embedded) .asteria-dashboard-body > nav[data-testid='asteria-player-hybrid-menu'],
+  .react-gm-dashboard .asteria-dashboard-body > nav[data-testid='asteria-gm-hybrid-menu']{
+    grid-column:1;position:sticky;top:20px;align-self:start;
+    min-height:min(650px,calc(100dvh - 44px));height:max-content;
+    width:196px;min-width:196px;max-width:196px;
+    background:#060D15;border:1px solid #49647a;border-radius:4px;
+    box-sizing:border-box;
+  }
+  .react-character-dashboard:not(.react-dashboard-embedded) .asteria-dashboard-page-content,
+  .react-gm-dashboard .asteria-dashboard-page-content{
+    grid-column:2;min-width:0;display:grid;align-content:start;
+    gap:var(--asteria-space-3,12px);
+  }
+}
+/* Page content can use existing full-width components without stacking beneath the rail. */
+.react-gm-dashboard .asteria-dashboard-body,
+.react-character-dashboard .asteria-dashboard-body{min-width:0}
+.react-gm-dashboard .asteria-dashboard-page-content,
+.react-character-dashboard .asteria-dashboard-page-content{min-width:0}
+.react-gm-dashboard .react-workspace-main,
+.react-character-dashboard:not(.react-dashboard-embedded) .react-workspace-main{
+  grid-template-columns:minmax(0,1fr);
+}
+.react-gm-dashboard .react-workspace-main > *,
+.react-character-dashboard:not(.react-dashboard-embedded) .react-workspace-main > *{
+  grid-column:1!important;min-width:0;
+}
+.react-gm-dashboard .asteria-dashboard-page-content > *,
+.react-character-dashboard .asteria-dashboard-page-content > *{
+  min-width:0;
+}
+/* The collapsible global header is a viewport overlay, not a row below the GM campaign header. */
+html[data-asteria-dashboard-header] .asteria-dashboard-header-fold{
+  position:fixed!important;top:0!important;left:50%!important;
+  transform:translateX(-50%);z-index:4500!important;
+  height:20px;min-height:20px;width:max-content;
+  pointer-events:none;display:flex;justify-content:center;
+}
+html[data-asteria-dashboard-header] .asteria-dashboard-header-fold button{
+  position:relative!important;top:0!important;left:auto!important;
+  transform:none!important;pointer-events:auto;
+  background:rgba(22,42,57,.28);border:1px solid rgba(141,186,210,.3);
+  border-top:0;border-radius:0 0 7px 7px;backdrop-filter:blur(8px);
+}
+html[data-asteria-dashboard-header='expanded'] .asteria-dashboard-header-fold{
+  top:var(--core-header-height,150px)!important;
+}
+html[data-asteria-dashboard-header='expanded'] .asteria-dashboard-header-fold button{
+  background:rgba(22,42,57,.72);
+}
+@media(max-width:800px){
+ .react-gm-dashboard .asteria-dashboard-body,
+ .react-character-dashboard .asteria-dashboard-body{
+   display:grid;grid-template-columns:minmax(0,1fr);gap:8px;
+ }
+ .react-gm-dashboard .asteria-dashboard-page-content,
+ .react-character-dashboard .asteria-dashboard-page-content{min-width:0}
+ .react-gm-dashboard .react-workspace-main,
+ .react-character-dashboard .react-workspace-main{grid-template-columns:minmax(0,1fr)}
+}
