@@ -350,3 +350,60 @@
 :global(.react-player-check-history-settings)>button{min-height:36px;width:100%;padding:8px 10px;
  color:#eaf2f8;background:#142d40;border:1px solid #6c91a7;border-radius:4px;cursor:pointer}
 :global(.react-player-check-history-settings)>:global(.react-panel){max-height:350px;overflow:auto;margin-top:8px}
+
+
+/* Shared player, GM Main and Combat Command Centre control chrome. */
+.centre .canvasActions{
+ top:50%;right:12px;transform:translateY(-50%);display:flex;flex-direction:column;
+ gap:7px;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;
+}
+.centre .canvasActions .iconButton,
+.centre .manageActions .iconButton{
+ display:inline-flex;align-items:center;justify-content:center;
+ width:44px;height:44px;min-width:44px;min-height:44px;
+ color:var(--asteria-text);padding:0;cursor:pointer;
+ background:transparent!important;border:0!important;border-radius:0!important;
+ box-shadow:none!important;filter:drop-shadow(0 2px 3px #02070b);
+}
+.centre .canvasActions .iconButton :global(.asteria-icon),
+.centre .manageActions .iconButton :global(.asteria-icon),
+.centre .canvasActions .iconButton svg,
+.centre .manageActions .iconButton svg{
+ width:30px;height:30px;
+}
+.centre .canvasActions .iconButton:is(:hover,:focus-visible,[aria-pressed='true']),
+.centre .manageActions .iconButton:is(:hover,:focus-visible){
+ color:#c9efff;filter:drop-shadow(0 0 5px rgba(105,190,242,.88));
+ background:transparent!important;border:0!important;
+}
+.centre .canvasActions .zoomValue{
+ position:static;text-align:center;background:rgba(6,13,21,.36);
+ border:0;min-width:0;padding:1px 2px;
+}
+.centre .manageActions{
+ border:0;background:transparent;box-shadow:none;padding:0;
+ top:12px;left:12px;
+}
+.centre .window[data-combat-panel]{
+ border:1px solid rgba(119,145,161,.56);border-radius:4px;
+ box-shadow:0 3px 12px rgba(0,0,0,.32),inset 0 1px rgba(220,236,242,.12);
+}
+.centre .windowBar{
+ min-height:30px;padding:2px 6px 2px 9px;
+ border-bottom:1px solid rgba(116,144,161,.32);box-shadow:none;
+}
+.centre .resizeHandle{
+ background:transparent!important;border:0!important;box-shadow:none!important;
+ opacity:0;transition:opacity .12s;
+}
+.centre .resizeHandle:is(:hover,:focus-visible),
+.centre .window:hover .resizeHandle[data-resize-edge='se']{opacity:.46}
+.centre .resizeHandle span{font-size:11px}
+@container combatCanvas (max-width:699px){
+ .centre .canvasActions{
+   top:10px;right:8px;transform:none;flex-direction:row;
+   gap:1px;padding:2px;background:rgba(6,13,21,.6);border-radius:4px;
+ }
+ .centre .canvasActions .iconButton{width:35px;height:35px;min-width:35px;min-height:35px}
+ .centre .canvasActions .iconButton svg{width:23px;height:23px}
+}
