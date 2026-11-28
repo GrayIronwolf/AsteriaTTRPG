@@ -108,7 +108,7 @@ export function CombatBattleMapPanel({mediaApi,campaignId,combat,pending,onComma
     {map?<><p>{combat?.battleMapId?
       'Live combat map — combatant tokens are managed by the existing server.':
       'Prepared map preview — live combat tokens will be linked on Start Combat.'}</p>
-      <CampaignMapCanvas api={mediaApi} campaignId={campaignId} map={map}
+      <CampaignMapCanvas key={campaignId+':'+map.id+':'+map.storagePath+':'+(preview?'player':'gm')} api={mediaApi} campaignId={campaignId} map={map}
         mode={preview?'player':'gm'} interactive={!positioning} editing={positioning}
         routeOverlay={routeOverlay}
         onPoint={point=>{if(positioning)onCommand('encounter',{operation:'map-move',mapId:map.id,
